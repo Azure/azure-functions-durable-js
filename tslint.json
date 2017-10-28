@@ -1,0 +1,7 @@
+{
+  "extends": "tslint:latest",
+  "exclude": "./node_modules",
+  "rules": {
+    "object-literal-sort-keys": false
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "name": "durable-functions",
+  "version": "0.0.1",
+  "description": "Durable Functions library for Node.js Azure Functions",
+  "license": "MIT",
+  "repository": "",
+  "author": "christopheranderson",
+  "bin": {
+    "aft": "./lib/main.js"
+  },
+  "keywords": [
+    "azure-functions"
+  ],
+  "files": [
+    "lib"
+  ],
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "scripts": {
+    "clean": "rimraf lib",
+    "lint": "tslint --force --format verbose \"src/**/*.ts\"",
+    "build": "npm run clean && npm run lint && echo Using TypeScript && tsc --version && tsc --pretty && echo Done",
+    "test": "npm run build && mocha --compilers ts:ts-node/register --recursive test/**/*-spec.ts",
+    "watch": "npm run build -- --watch",
+    "watch:test": "npm run test -- --watch",
+    "e2etst": "npm run "
+  },
+  "dependencies": {
+    "azure-functions-typescript": "github:christopheranderson/azure-functions-typescript",
+    "commander": "~2.9.0",
+    "debug": "~2.6.1",
+    "reflect-metadata": "^0.1.10",
+    "rimraf": "~2.5.4",
+    "winston": "~2.3.1"
+  },
+  "devDependencies": {
+    "@types/chai": "3.5.0",
+    "@types/commander": "~2.3.31",
+    "@types/debug": "0.0.29",
+    "@types/mocha": "2.2.41",
+    "@types/node": "6.0.31",
+    "@types/rimraf": "0.0.28",
+    "@types/winston": "~2.2.0",
+    "chai": "~3.5.0",
+    "mocha": "~3.0.0",
+    "ts-node": "~1.0.0",
+    "tslint": "~4.0.0",
+    "typescript": "~2.3.0"
+  },
+  "engines": {
+    "node": ">=6.5.0"
+  }
+}
