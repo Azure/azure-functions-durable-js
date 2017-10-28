@@ -15,7 +15,7 @@ export class Orchestrator {
         let results: any = undefined;
         while (true) {
             try {
-                let g = f.next(results.value.input);
+                let g = f.next(results ? results.input : undefined);
                 if (g.done) {
                     console.log("Iterator is done");
                     this.finish(context, state, null, true);
