@@ -48,11 +48,12 @@ module.exports = df(function*(context){
 
 You can test this in the sample by running the sample (`func host start`) and then running a few HTTP requests (use Postman or cURL)
 
- - POST http://localhost:7071/api/chain 
+ - POST http://localhost:7071/api/chain  
+    body:
     ```json
     {}
     ```
-    resonse:
+    response:
     ```json
     {
         "isDone": false,
@@ -67,7 +68,8 @@ You can test this in the sample by running the sample (`func host start`) and th
         "output": null
     }
     ```
-- POST http://localhost:7071/api/chain 
+- POST http://localhost:7071/api/chain  
+    body:
     ```json
     {
         "hello":{
@@ -75,7 +77,7 @@ You can test this in the sample by running the sample (`func host start`) and th
         }
     }
     ```
-    resonse:
+    response:
     ```json
     {
         "isDone": false,
@@ -95,6 +97,7 @@ You can test this in the sample by running the sample (`func host start`) and th
     }
     ```
 - POST http://localhost:7071/api/chain 
+    body:
     ```json
     {
         "hello":{
@@ -103,7 +106,7 @@ You can test this in the sample by running the sample (`func host start`) and th
         }
     }
     ```
-    resonse:
+    response:
     ```json
     {
         "isDone": false,
@@ -123,7 +126,8 @@ You can test this in the sample by running the sample (`func host start`) and th
         "output": null
     }
     ```
-- POST http://localhost:7071/api/chain 
+- POST http://localhost:7071/api/chain  
+    body:
     ```json
     {
         "hello":{
@@ -133,7 +137,7 @@ You can test this in the sample by running the sample (`func host start`) and th
         }
     }
     ```
-    resonse:
+    response:
     ```json
     {
         "isDone": true,
@@ -185,11 +189,12 @@ module.exports = df(function*(context){
 
 You can test this in the sample by running the sample (`func host start`) and then running a few HTTP requests (use Postman or cURL)
 
- - POST http://localhost:7071/api/chain 
+ - POST http://localhost:7071/api/chain  
+    body:
     ```json
     {}
     ```
-    resonse:
+    response:
     ```json
     {
         "isDone": false,
@@ -204,7 +209,8 @@ You can test this in the sample by running the sample (`func host start`) and th
         "output": null
     }
     ```
-- POST http://localhost:7071/api/chain 
+- POST http://localhost:7071/api/chain  
+    body:
     ```json
     {
         "GetFiles":{
@@ -212,7 +218,7 @@ You can test this in the sample by running the sample (`func host start`) and th
         }
     }
     ```
-    resonse:
+    response:
     ```json
     {
         "isDone": false,
@@ -246,7 +252,8 @@ You can test this in the sample by running the sample (`func host start`) and th
     }
     ```
     Note that we have multiple Actions now, since we yield'd on a `Promise.all` call. We can use common `Promise` patterns like `Promise.all` and `Promise.race`.
- - POST http://localhost:7071/api/chain 
+ - POST http://localhost:7071/api/chain  
+    body:
     ```json
     {
         "GetFiles":{
@@ -259,7 +266,7 @@ You can test this in the sample by running the sample (`func host start`) and th
         }
     }
     ```
-    resonse:
+    response:
     ```json
     {
         "isDone": true,
