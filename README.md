@@ -2,7 +2,7 @@
 
 Provides a shim to write your Durable Functions orchestration for Node.js
 
-:construction: This is an early concept and isn't really functional :construction:
+🚧 This is an early concept and isn't really functional 🚧
 
 ## Getting started
 
