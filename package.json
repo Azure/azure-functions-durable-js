@@ -28,7 +28,7 @@
   "dependencies": {
     "azure-functions-typescript": "github:christopheranderson/azure-functions-typescript",
     "commander": "~2.9.0",
-    "debug": "~2.6.1",
+    "debug": "^2.6.9",
     "reflect-metadata": "^0.1.10",
     "rimraf": "~2.5.4",
     "winston": "~2.3.1"

@@ -1,3 +1,6 @@
+import * as debug from "debug";
+
+const log = debug("orchestrator");
 
 export class Orchestrator {
     constructor(public fn: GeneratorFunction) { }
@@ -8,32 +11,37 @@ export class Orchestrator {
 
     private async handle(context: any) {
         const state = context.req.body;
+
         context.df = {};
         context.df.callFunction = this.callFunction.bind(this, state);
 
         const f = this.fn(context);
-        let results: any = undefined;
+        let results: any;
         while (true) {
             try {
-                let g = f.next(results ? results.input : undefined);
+                const g = f.next(results ?
+                    (Array.isArray(results)
+                        ? results.map((v) => v.input)
+                        : results.input)
+                    : undefined);
                 if (g.done) {
-                    console.log("Iterator is done");
-                    this.finish(context, state, null, true);
+                    log("Iterator is done");
+                    this.finish(context, state, null, true, g.value);
                     return;
                 }
                 results = await g.value;
-                if (Array.isArray(results.value)) {
-                    let actions = results.filter((val: Action | StateItem) => {
+                if (Array.isArray(results)) {
+                    const actions = results.filter((val: Action | StateItem) => {
                         return val instanceof Action;
                     });
                     if (actions.length > 0) {
-                        console.log("Action received (array)");
+                        log("Action received (array)");
                         this.finish(context, state, actions);
                         return;
                     }
                 } else {
                     if (results instanceof Action) {
-                        console.log("Action received");
+                        log("Action received");
                         this.finish(context, state, [results]);
                         return;
                     }
@@ -45,9 +53,9 @@ export class Orchestrator {
         }
     }
 
-    private callFunction(state: any, name: string, input: any) {
+    private callFunction(state: any, name: string, input: any = "__activity__default") {
         return new Promise((resolve, reject) => {
-            if (state[name] && state[name][input]) {
+            if (input && state[name] && state[name][input]) {
                 resolve(new StateItem(name, state[name][input]));
             } else {
                 resolve(new Action("callFunction", name, input));
@@ -55,20 +63,23 @@ export class Orchestrator {
         });
     }
 
-    private finish(context: any, state: any, actions: any[], isDone: boolean = false ) {
-        console.log("Finish called");
+    private finish(context: any, state: any, actions: any[], isDone: boolean = false, output?: any) {
+        log("Finish called");
         context.res = {
             status: 200,
             body: {
                 isDone,
                 state,
                 actions,
+                output,
             },
         };
+
         context.done();
     }
 
     private error(context: any, err: any) {
+        log(`Error: ${err}`);
         context.res = {
             status: 500,
             body: {
