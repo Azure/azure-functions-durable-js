@@ -29,7 +29,7 @@ export class Orchestrator {
                     this.finish(context, state, null, true, g.value);
                     return;
                 }
-                results = await g.value;
+                results = await g.value; // switch this to durable task's (it's a promise right now)
                 if (Array.isArray(results)) {
                     const actions = results.filter((val: Action | StateItem) => {
                         return val instanceof Action;
