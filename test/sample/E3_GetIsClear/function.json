@@ -1,8 +1,8 @@
 {
   "bindings": [
     {
-      "name": "context",
-      "type": "orchestrationTrigger",
+      "name": "location",
+      "type": "activityTrigger",
       "direction": "in"
     }
   ],
