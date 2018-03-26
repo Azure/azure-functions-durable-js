@@ -58,7 +58,7 @@ export class Orchestrator {
             if (input && state[name] && state[name][input]) {
                 resolve(new StateItem(name, state[name][input]));
             } else {
-                resolve(new Action("callFunction", name, input));
+                resolve(new Action(ActionType.CallActivity, name, input));
             }
         });
     }
@@ -93,10 +93,21 @@ export class Orchestrator {
 // tslint:disable-next-line:max-classes-per-file
 export class Action {
     constructor(
-        public type: string,
-        public name: string,
+        public actionType: ActionType,
+        public functionName: string,
         public input: any,
     ) { }
+}
+
+// tslint:disable-next-line:max-classes-per-file
+export enum ActionType {
+    CallActivity = 0,
+    CallActivityWithRetry = 1,
+    CallSubOrchestrator = 2,
+    CallSubOrchestratorWithRetry = 3,
+    ContinueAsNew = 4,
+    CreateTimer = 5,
+    WaitForExternalEvent = 6,
 }
 
 // tslint:disable-next-line:max-classes-per-file
