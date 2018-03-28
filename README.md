@@ -1,18 +1,45 @@
 # Durable Functions for Node.js
 
-Provides a shim to write your Durable Functions orchestration for Node.js
+This library provides a shim to write your [Durable Functions](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-overview) orchestrator functions in [Node.js](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node), using Durable's out-of-proc execution protocol. **JS orchestrators have the same [code constraints](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-checkpointing-and-replay#orchestrator-code-constraints) as C# orchestrators.**
 
-🚧 This is an early concept and isn't really functional 🚧
+🚧 This library currently in **public preview** status. 🚧
 
-## Getting started
+Not all functionality has been implemented yet and there may be significant changes to both this library and the protocol.
 
-1. Install the package
+## Getting Started
 
+1. Install Durable Functions
+
+The commit enabling proper handling of out of proc orchestrator execution results has not yet been published in a release. In order to get your function app referencing a DLL containing this update, follow these steps:
+
+* Install the Durable Functions extension. Run this command from the root folder of your functions app:
 ```
-<TBD>
+func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.3.0-rc
+```
+* Go to the newly created `bin` folder in your function app's root folder. Locate the `Microsoft.Azure.WebJobs.Extensions.DurableTask.dll` file and replace it with [this version.](https://durablejspreview.blob.core.windows.net/durable-functions-preview-0-0-1/Microsoft.Azure.WebJobs.Extensions.DurableTask.dll)
+
+Or build the DLL yourself:
+* Clone the main Durable Functions repository's [dev branch](/Azure/azure-functions-durable-extension/tree/dev).
+* Verify the package version in WebJobs.Extensions.DurableTask.csproj matches the one of the `Microsoft.Azure.WebJobs.Extensions.DurableTask.dll` file in your function app's `bin` folder.
+* Build the WebJobs.Extensions.DurableTask project.
+* Within the repo, navigate to `\src\WebJobs.Extensions.DurableTask\bin\Debug\netstandard2.0\`.
+* Copy the `Microsoft.Azure.WebJobs.Extensions.DurableTask.dll` to your function app's `bin` folder, overwriting the existing one.
+
+2. Install the package
+
+Eventually this repository will be published as an npm package. For now, [download](https://durablejspreview.blob.core.windows.net/durable-functions-preview-0-0-1/durable-functions-0.0.1.tgz) the tarball of the latest version and install it to your function app's root directory:
+
+```bash
+npm install durable-functions-0.0.1.tgz
 ```
 
-2. Add shim & generator to your code
+Or clone the repo locally, build the tarball from source and install:
+
+```bash
+npm pack
+```
+
+3. Add the shim library and generator to your code:
 
 ```javascript
 const df = require('durable-functions');
@@ -21,16 +48,19 @@ module.exports = df(function*(context){
 });
 ```
 
-3. Write your orchestration logic 
+4. Write your orchestration logic :
 ```javascript
-yield context.df.callFunction("foo", "bar");
+yield context.df.callActivityAsync("foo", "bar");
 ```
 
-## Patterns
+## Samples
 
-### Chaining
+The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-install) demonstrate the documentated Durable Functions patterns. They have been translated into Node.js and are located in the [samples directory.](./test/sample/) The JS versions will be added to the official documentation as a general release approaches. For now, the docs show C# samples only, but explain the patterns in greater depth:
 
-Check out the [chain sample](./test/sample/chain/index.js) for the full code:
+* [Function Chaining - Hello Sequence](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-sequence)
+* [Fan-out/Fan-in - Cloud Backup](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-cloud-backup)
+* [Monitors - Weather Watcher](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-monitor)
+* [Human Interaction & Timeouts - Phone Verification](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-phone-verification)
 
 ```javascript
 const df = require("../../../lib/");
@@ -38,259 +68,49 @@ const df = require("../../../lib/");
 module.exports = df(function*(context){
     context.log("Starting chain sample");
     const output = [];
-    output.push(yield context.df.callFunction("hello", "Tokyo"));
-    output.push(yield context.df.callFunction("hello", "Seattle"));
-    output.push(yield context.df.callFunction("hello", "London"));
+    output.push(yield context.df.callActivityAsync("E1_SayHello", "Tokyo"));
+    output.push(yield context.df.callActivityAsync("E1_SayHello", "Seattle"));
+    output.push(yield context.df.callActivityAsync("E1_SayHello", "London"));
 
     return output;
 });
 ```
 
-You can test this in the sample by running the sample (`func host start`) and then running a few HTTP requests (use Postman or cURL)
-
- - POST http://localhost:7071/api/chain  
-    body:
-    ```json
-    {}
-    ```
-    response:
-    ```json
-    {
-        "isDone": false,
-        "state": {},
-        "actions": [
-            {
-                "type": "callFunction",
-                "name": "hello",
-                "input": "Tokyo"
-            }
-        ],
-        "output": null
-    }
-    ```
-- POST http://localhost:7071/api/chain  
-    body:
-    ```json
-    {
-        "hello":{
-            "Tokyo":"Hello Tokyo"
-        }
-    }
-    ```
-    response:
-    ```json
-    {
-        "isDone": false,
-        "state": {
-            "hello": {
-                "Tokyo": "Hello Tokyo"
-            }
-        },
-        "actions": [
-            {
-                "type": "callFunction",
-                "name": "hello",
-                "input": "Seattle"
-            }
-        ],
-        "output": null
-    }
-    ```
-- POST http://localhost:7071/api/chain 
-    body:
-    ```json
-    {
-        "hello":{
-            "Tokyo":"Hello Tokyo",
-            "Seattle":"Hello Seattle"
-        }
-    }
-    ```
-    response:
-    ```json
-    {
-        "isDone": false,
-        "state": {
-            "hello": {
-                "Tokyo": "Hello Tokyo",
-                "Seattle": "Hello Seattle"
-            }
-        },
-        "actions": [
-            {
-                "type": "callFunction",
-                "name": "hello",
-                "input": "London"
-            }
-        ],
-        "output": null
-    }
-    ```
-- POST http://localhost:7071/api/chain  
-    body:
-    ```json
-    {
-        "hello":{
-            "Tokyo":"Hello Tokyo",
-            "Seattle":"Hello Seattle",
-            "London":"Hello London"
-        }
-    }
-    ```
-    response:
-    ```json
-    {
-        "isDone": true,
-        "state": {
-            "hello": {
-                "Tokyo": "Hello Tokyo",
-                "Seattle": "Hello Seattle",
-                "London": "Hello London"
-            }
-        },
-        "actions": null,
-        "output": [
-            "Hello Tokyo",
-            "Hello Seattle",
-            "Hello London"
-        ]
-    }
-    ```
-
-Note in the final response, we have the `output` property set to all our values. The value that we `return` from our code is set to `output` and `isDone` is set to true.
-
-### Fan out/in
-
-Check out the [fan out/in sample](./test/sample/fanin-out/index.js) for the full code:
-
-```javascript
-const df = require("../../../lib/");
-
-module.exports = df(function*(context){
-    context.log("Starting chain sample");
-
-    // Fetch files from GetFiles Activity Function
-    const files = yield context.df.callFunction("GetFiles");
-
-    // Backup Files and save Promises into array
-    const tasks = [];
-    for (const file of files) {
-        tasks.push(context.df.callFunction("BackupFiles", file));
-    }
-
-    // wait for all the Backup Files Activities to complete, sum total bytes
-    const results = yield Promise.all(tasks);
-    const totalBytes = results.reduce((prev, curr) => prev + curr, 0);
-
-    // return results;
-    return totalBytes;
-});
-```
-
-You can test this in the sample by running the sample (`func host start`) and then running a few HTTP requests (use Postman or cURL)
-
- - POST http://localhost:7071/api/chain  
-    body:
-    ```json
-    {}
-    ```
-    response:
-    ```json
-    {
-        "isDone": false,
-        "state": {},
-        "actions": [
-            {
-                "type": "callFunction",
-                "name": "GetFiles",
-                "input": "__activity__default"
-            }
-        ],
-        "output": null
-    }
-    ```
-- POST http://localhost:7071/api/chain  
-    body:
-    ```json
-    {
-        "GetFiles":{
-            "__activity__default":["file1","file2","file3"]
-        }
-    }
-    ```
-    response:
-    ```json
-    {
-        "isDone": false,
-        "state": {
-            "GetFiles": {
-                "__activity__default": [
-                    "file1",
-                    "file2",
-                    "file3"
-                ]
-            }
-        },
-        "actions": [
-            {
-                "type": "callFunction",
-                "name": "BackupFiles",
-                "input": "file1"
-            },
-            {
-                "type": "callFunction",
-                "name": "BackupFiles",
-                "input": "file2"
-            },
-            {
-                "type": "callFunction",
-                "name": "BackupFiles",
-                "input": "file3"
-            }
-        ],
-        "output": null
-    }
-    ```
-    Note that we have multiple Actions now, since we yield'd on a `Promise.all` call. We can use common `Promise` patterns like `Promise.all` and `Promise.race`.
- - POST http://localhost:7071/api/chain  
-    body:
-    ```json
-    {
-        "GetFiles":{
-            "__activity__default":["file1","file2","file3"]
-        },
-        "BackupFiles":{
-            "file1":50,
-            "file2":60,
-            "file3":100
-        }
-    }
-    ```
-    response:
-    ```json
-    {
-        "isDone": true,
-        "state": {
-            "GetFiles": {
-                "__activity__default": [
-                    "file1",
-                    "file2",
-                    "file3"
-                ]
-            },
-            "BackupFiles": {
-                "file1": 50,
-                "file2": 60,
-                "file3": 100
-            }
-        },
-        "actions": null,
-        "output": 210
-    }
-    ```
-
-Now our output is the result of the `reduce` statement which sums all our bytes we returned from `BackupFiles`.
-
 ## How it works
 
-The Durable Functions orchestration trigger sends an object with all the state for a given instance to your Function. The shim takes that state object and lets you express the workflow as a generator, using yield where you want to wait for state to come back. Yield expects a Promise which will resolve `Action` or `StateItem` objects, or an array of said objects. If there are any Action items resolved, the shim will then return back to the Functions runtime the Action items to be done and call the Function again when there is an update.
+Recall that Durable Functions uses an append-only execution history to rebuild state on each execution. The Durable Functions orchestration trigger sends an object with the history for a given orchestration instance to your function. The shim library takes that state object and lets you express the workflow as a generator, using `yield` where you want to wait for state to come back. `yield` expects a Promise which will resolve a `Task` or `TaskSet` object. The shim will append the action(s) of the `Task` or `TaskSet` object to a list which it passes back to the Functions runtime, plus whether the function is completed and any output. The extension will call the Function again when there is an update.
+
+## API Comparison
+
+The shim strives to hew closely to the C# DurableOrchestrationContext API, while feeling natural to Node developers. In general, DurableOrchestrationContext methods and properties are accessed from the `context.df` object, are camel-cased, and take the same arguments as their C# counterparts. Major differences:
+
+* `yield` awaits an async operation.
+* Non-awaited calls to `context.df` methods return a `Task` object which has `all(Task[] tasks)` and `any(Task[] tasks)` methods, analogous to C#'s Task's WhenAll() and WhenAny() methods.
+* All CreateTimer calls can be cancelled by calling `cancel()` on the returned `TimerTask` object.
+
+### API Implementation Checklist
+**Implemented**
+* CurrentUtcDateTime
+* CallActivityAsync(String name, Object input)
+* CreateTimer(Date fireAt)
+* GetInput()
+* WaitForExternalEvent(String name)
+
+**Not Yet Implemented**
+* InstanceId
+* IsReplaying
+* CallActivityWithRetryAsync(String, RetryOptions, Object)
+* CallSubOrchestratorAsync(String, Object)
+* CallSubOrchestratorAsync(String, String, Object)
+* CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)
+* CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)
+* ContinueAsNew(Object)
+
+**Will Not Be Implemented**
+* CallActivityAsync\<TResult\>(String, Object)
+* CallActivityWithRetryAsync\<TResult\>(String, RetryOptions, Object)
+* CallSubOrchestratorAsync\<TResult\>(String, Object)
+* CallSubOrchestratorAsync\<TResult\>(String, String, Object)
+* CallSubOrchestratorWithRetryAsync\<TResult\>(String, RetryOptions, Object)
+* CallSubOrchestratorWithRetryAsync\<TResult\>(String, RetryOptions, String, Object)
+* CreateTimer\<T\>(DateTime, T, CancellationToken)
