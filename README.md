@@ -14,16 +14,8 @@ The commit enabling proper handling of out of proc orchestrator execution result
 
 * Install the Durable Functions extension. Run this command from the root folder of your functions app:
 ```
-func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.3.0-rc
+func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.3.3-rc -s https://www.myget.org/F/azure-appservice/api/v3/index.json
 ```
-* Go to the newly created `bin` folder in your function app's root folder. Locate the `Microsoft.Azure.WebJobs.Extensions.DurableTask.dll` file and replace it with [this version.](https://durablejspreview.blob.core.windows.net/durable-functions-preview-0-0-1/Microsoft.Azure.WebJobs.Extensions.DurableTask.dll)
-
-Or build the DLL yourself:
-* Clone the main Durable Functions repository's [dev branch](/Azure/azure-functions-durable-extension/tree/dev).
-* Verify the package version in WebJobs.Extensions.DurableTask.csproj matches the one of the `Microsoft.Azure.WebJobs.Extensions.DurableTask.dll` file in your function app's `bin` folder.
-* Build the WebJobs.Extensions.DurableTask project.
-* Within the repo, navigate to `\src\WebJobs.Extensions.DurableTask\bin\Debug\netstandard2.0\`.
-* Copy the `Microsoft.Azure.WebJobs.Extensions.DurableTask.dll` to your function app's `bin` folder, overwriting the existing one.
 
 2. Install the package
 
