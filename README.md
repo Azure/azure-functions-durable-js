@@ -22,13 +22,7 @@ func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.3
 Eventually this repository will be published as an npm package. For now, [download](https://durablejspreview.blob.core.windows.net/durable-functions-preview-0-0-1/durable-functions-0.0.1.tgz) the tarball of the latest version and install it to your function app's root directory:
 
 ```bash
-npm install durable-functions-0.0.1.tgz
-```
-
-Or clone the repo locally, build the tarball from source and install:
-
-```bash
-npm pack
+npm install durable-functions
 ```
 
 3. Add the shim library and generator to your code:
