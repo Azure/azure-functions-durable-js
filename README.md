@@ -6,6 +6,8 @@ This library provides a shim to write your [Durable Functions](https://docs.micr
 
 Not all functionality has been implemented yet and there may be significant changes to both this library and the protocol.
 
+The `OrchestrationClient` binding does not yet support `string` conversions. Orchestration starter functions must be written in C#, F#, or another supported language until this is
+
 ## Getting Started
 
 1. Install Durable Functions
@@ -41,12 +43,14 @@ yield context.df.callActivityAsync("foo", "bar");
 
 ## Samples
 
-The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-install) demonstrate the documentated Durable Functions patterns. They have been translated into Node.js and are located in the [samples directory.](./test/sample/) The JS versions will be added to the official documentation as a general release approaches. For now, the docs show C# samples only, but explain the patterns in greater depth:
+The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-install) demonstrate the documentated Durable Functions patterns. They have been translated into JavaScript and are located in the [samples directory.](./test/sample/) The JavaScript versions will be added to the official documentation as a general release approaches. For now, some docs show C# samples only, but all explain the patterns in greater depth:
 
 * [Function Chaining - Hello Sequence](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-sequence)
 * [Fan-out/Fan-in - Cloud Backup](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-cloud-backup)
-* [Monitors - Weather Watcher](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-monitor)
-* [Human Interaction & Timeouts - Phone Verification](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-phone-verification)
+* [Monitors - Weather Watcher](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-monitor) \*
+* [Human Interaction & Timeouts - Phone Verification](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-phone-verification) \*
+
+\* <sub>Currently available in C# only</sub>
 
 ```javascript
 const df = require("../../../lib/");
@@ -76,27 +80,28 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 
 ### API Implementation Checklist
 **Implemented**
-* CurrentUtcDateTime
-* CallActivityAsync(String name, Object input)
-* CreateTimer(Date fireAt)
-* GetInput()
-* WaitForExternalEvent(String name)
+* `CurrentUtcDateTime`
+* `CallActivityAsync(String name, Object input)`
+* `CreateTimer(Date fireAt)`
+* `GetInput()`
+* `WaitForExternalEvent(String name)`
 
 **Not Yet Implemented**
-* InstanceId
-* IsReplaying
-* CallActivityWithRetryAsync(String, RetryOptions, Object)
-* CallSubOrchestratorAsync(String, Object)
-* CallSubOrchestratorAsync(String, String, Object)
-* CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)
-* CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)
-* ContinueAsNew(Object)
+* `OrchestrationClient` binding to `string`
+* `InstanceId`
+* `IsReplaying`
+* `CallActivityWithRetryAsync(String, RetryOptions, Object)`
+* `CallSubOrchestratorAsync(String, Object)`
+* `CallSubOrchestratorAsync(String, String, Object)`
+* `CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)`
+* `CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)`
+* `ContinueAsNew(Object)`
 
 **Will Not Be Implemented**
-* CallActivityAsync\<TResult\>(String, Object)
-* CallActivityWithRetryAsync\<TResult\>(String, RetryOptions, Object)
-* CallSubOrchestratorAsync\<TResult\>(String, Object)
-* CallSubOrchestratorAsync\<TResult\>(String, String, Object)
-* CallSubOrchestratorWithRetryAsync\<TResult\>(String, RetryOptions, Object)
-* CallSubOrchestratorWithRetryAsync\<TResult\>(String, RetryOptions, String, Object)
-* CreateTimer\<T\>(DateTime, T, CancellationToken)
+* `CallActivityAsync<TResult>(String, Object)`
+* `CallActivityWithRetryAsync<TResult>(String, RetryOptions, Object)`
+* `CallSubOrchestratorAsync<TResult>(String, Object)`
+* `CallSubOrchestratorAsync<TResult>(String, String, Object)`
+* `CallSubOrchestratorWithRetryAsync<TResult>(String, RetryOptions, Object)`
+* `CallSubOrchestratorWithRetryAsync<TResult>(String, RetryOptions, String, Object)`
+* `CreateTimer<T>(DateTime, T, CancellationToken)`
