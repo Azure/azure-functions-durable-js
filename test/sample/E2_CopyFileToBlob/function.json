@@ -1,9 +1,16 @@
 {
   "bindings": [
     {
-      "name": "context",
-      "type": "orchestrationTrigger",
+      "name": "filePath",
+      "type": "activityTrigger",
       "direction": "in"
+    },
+    {
+      "name": "out",
+      "type": "blob",
+      "path": "",
+      "connection": "AzureWebJobsStorage",
+      "direction": "out"
     }
   ],
   "disabled": false

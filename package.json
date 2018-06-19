@@ -27,11 +27,15 @@
   },
   "dependencies": {
     "azure-functions-typescript": "github:christopheranderson/azure-functions-typescript",
+    "azure-storage": "^2.9.0-preview",
     "commander": "~2.9.0",
     "debug": "^2.6.9",
     "moment": "^2.22.1",
+    "readdirp": "^2.1.0",
     "reflect-metadata": "^0.1.10",
+    "request": "^2.87.0",
     "rimraf": "~2.5.4",
+    "seedrandom": "^2.4.3",
     "winston": "~2.3.1"
   },
   "devDependencies": {
@@ -43,7 +47,7 @@
     "@types/rimraf": "0.0.28",
     "@types/winston": "~2.2.0",
     "chai": "~3.5.0",
-    "mocha": "~3.0.0",
+    "mocha": "^5.2.0",
     "ts-node": "~1.0.0",
     "tslint": "^5.9.1",
     "typescript": "~2.3.0"

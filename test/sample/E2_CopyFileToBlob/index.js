@@ -1,21 +1,36 @@
-const df = require("../../../lib/");
+const fs = require("fs");
+const path = require("path");
+const storage = require("azure-storage");
 
-module.exports = df(function*(context){
-    context.log("Starting fan in/fan out sample");
+module.exports = function (context, filePath) {
+    const container = "backups";
+    const root = path.parse(filePath).root;
+    const blobPath = filePath
+        .substring(root.length)
+        .replace("\\", "/");
+    const outputLocation = `backups/${blobPath}`;
+    const blobService = storage.createBlobService();
 
-    // Fetch files from GetFiles Activity Function
-    const files = yield context.df.callActivityAsync("E2_GetFiles");
+    blobService.createContainerIfNotExists(container, (error) => {
+        if (error) {
+            throw error;
+        }
 
-    // Backup Files and save Promises into array
-    const tasks = [];
-    for (const file of files) {
-        tasks.push(context.df.callActivityAsync("E2_BackupFile", file));
-    }
+        fs.stat(filePath, function (error, stats) {
+            if (error) {
+                throw error;
+            }
+            context.log(`Copying '${filePath}' to '${outputLocation}'. Total bytes = ${stats.size}.`);
 
-    // wait for all the Backup Files Activities to complete, sum total bytes
-    const results = yield context.df.Task.all(tasks);
-    const totalBytes = results.reduce((prev, curr) => prev + curr, 0);
+            const readStream = fs.createReadStream(filePath);
 
-    // return results;
-    return totalBytes;
-});
+            blobService.createBlockBlobFromStream(container, blobPath, readStream, stats.size, function (error) {
+                if (error) {
+                    throw error;
+                }
+
+                context.done(null, stats.size);
+            });
+        });
+    });
+};
