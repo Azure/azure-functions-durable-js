@@ -1,4 +1,4 @@
-const df = require("../../../lib/");
+const df = require("durable-functions");
 
 module.exports = df(function*(context){
     const rootDirectory = context.df.getInput();

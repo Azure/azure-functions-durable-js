@@ -1,4 +1,4 @@
-const df = require("../../../lib/");
+const df = require("durable-functions");
 
 module.exports = df(function*(context){
     context.log("Starting chain sample");

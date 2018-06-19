@@ -1,4 +1,4 @@
-const df = require("../../../lib/");
+const df = require("durable-functions");
 const moment = require('moment');
 
 module.exports = df(function*(context) {
