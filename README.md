@@ -6,22 +6,16 @@ This library provides a shim to write your [Durable Functions](https://docs.micr
 
 Not all functionality has been implemented yet and there may be significant changes to both this library and the protocol.
 
-The `OrchestrationClient` binding does not yet support `string` conversions. Orchestration starter functions must be written in C#, F#, or another supported language until this is
-
 ## Getting Started
 
 1. Install Durable Functions
 
-The commit enabling proper handling of out of proc orchestrator execution results has not yet been published in a release. In order to get your function app referencing a DLL containing this update, follow these steps:
-
-* Install the Durable Functions extension. Run this command from the root folder of your functions app:
+Run this command from the root folder of your functions app:
 ```
-func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.3.3-rc -s https://www.myget.org/F/azure-appservice/api/v3/index.json
+func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.5.0
 ```
 
 2. Install the package
-
-Eventually this repository will be published as an npm package. For now, [download](https://durablejspreview.blob.core.windows.net/durable-functions-preview-0-0-1/durable-functions-0.0.1.tgz) the tarball of the latest version and install it to your function app's root directory:
 
 ```bash
 npm install durable-functions
@@ -39,6 +33,20 @@ module.exports = df(function*(context){
 4. Write your orchestration logic :
 ```javascript
 yield context.df.callActivityAsync("foo", "bar");
+```
+
+5. Write your [orchestration starter](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-instance-management#starting-instances):
+```javascript
+module.exports = function (context, input) {
+    var id = generateSomeUniqueId();
+    context.bindings.starter = [{
+        FunctionName: "HelloWorld",
+        Input: input,
+        InstanceId: id
+    }];
+
+    context.done(null);
+};
 ```
 
 ## Samples
@@ -85,9 +93,9 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 * `CreateTimer(Date fireAt)`
 * `GetInput()`
 * `WaitForExternalEvent(String name)`
+* `OrchestrationClient` binding to `string`
 
 **Not Yet Implemented**
-* `OrchestrationClient` binding to `string`
 * `InstanceId`
 * `IsReplaying`
 * `CallActivityWithRetryAsync(String, RetryOptions, Object)`
@@ -96,6 +104,8 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)`
 * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)`
 * `ContinueAsNew(Object)`
+
+* `DurableOrchestrationClient` API
 
 **Will Not Be Implemented**
 * `CallActivityAsync<TResult>(String, Object)`
