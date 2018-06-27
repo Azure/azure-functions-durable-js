@@ -5,22 +5,20 @@
   "license": "MIT",
   "repository": "",
   "author": "christopheranderson",
-  "bin": {
-    "aft": "./lib/main.js"
-  },
   "keywords": [
     "azure-functions"
   ],
   "files": [
-    "lib"
+    "lib/src"
   ],
-  "main": "lib/index.js",
-  "typings": "lib/index.d.ts",
+  "main": "lib/src/index.js",
+  "typings": "lib/src/index.d.ts",
   "scripts": {
     "clean": "rimraf lib",
     "lint": "tslint --force --format verbose \"src/**/*.ts\"",
-    "build": "npm run clean && npm run lint && echo Using TypeScript && tsc --version && tsc --pretty && echo Done",
-    "test": "npm run build && mocha --compilers ts:ts-node/register --recursive test/**/*-spec.ts",
+    "lint:test": "tslint --force --format verbose \"test/**/*.ts\"",
+    "build": "npm run clean && npm run lint && npm run lint:test && echo Using TypeScript && tsc --version && tsc --pretty && echo Done",
+    "test": "npm run build && mocha --recursive ./lib/test/**/*-spec.js",
     "watch": "npm run build -- --watch",
     "watch:test": "npm run test -- --watch",
     "e2etst": "npm run "
@@ -39,15 +37,15 @@
     "winston": "~2.3.1"
   },
   "devDependencies": {
-    "@types/chai": "3.5.0",
+    "@types/chai": "*",
     "@types/commander": "~2.3.31",
     "@types/debug": "0.0.29",
-    "@types/mocha": "2.2.41",
-    "@types/node": "6.0.31",
+    "@types/mocha": "*",
+    "@types/node": "^6.0.31",
     "@types/rimraf": "0.0.28",
     "@types/winston": "~2.2.0",
-    "chai": "~3.5.0",
-    "mocha": "^5.2.0",
+    "chai": "*",
+    "mocha": "*",
     "ts-node": "~1.0.0",
     "tslint": "^5.9.1",
     "typescript": "~2.3.0"

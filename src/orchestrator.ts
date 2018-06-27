@@ -6,7 +6,7 @@ const log = debug("orchestrator");
 
 export class Orchestrator {
 
-    constructor(public fn: GeneratorFunction) { }
+    constructor(public fn: (context: any) => IterableIterator<any>) { }
 
     public listen() {
         return this.handle.bind(this);
@@ -69,12 +69,12 @@ export class Orchestrator {
         }
     }
 
-    private callActivityAsync(state: HistoryEvent[], name: string, input: any = "__activity__default") {
+    private callActivityAsync(state: HistoryEvent[], name: string, input: any) {
         const newAction = new CallActivityAction(name, input);
 
         const taskScheduled = this.findTaskScheduled(state, name);
         const taskCompleted = this.findTaskCompleted(state, taskScheduled);
-        if (input && taskCompleted) {
+        if (taskCompleted) {
             taskScheduled.IsProcessed = true;
             taskCompleted.IsProcessed = true;
 
@@ -95,9 +95,9 @@ export class Orchestrator {
             timerCreated.IsProcessed = true;
             timerFired.IsProcessed = true;
 
-            return new TimerTask(true, false, newAction, undefined, timerFired.Timestamp, timerFired.TimerId);
+            return new TimerTask(true, newAction, undefined, timerFired.Timestamp, timerFired.TimerId);
         } else {
-            return new TimerTask(false, false, newAction);
+            return new TimerTask(false, newAction);
         }
     }
 

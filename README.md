@@ -102,7 +102,7 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)`
 * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)`
 * `ContinueAsNew(Object)`
-
+* `SetCustomStatus(Object)`
 * `DurableOrchestrationClient` API
 
 **Will Not Be Implemented**
