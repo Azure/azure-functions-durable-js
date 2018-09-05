@@ -12,7 +12,13 @@ describe("TimerTask", () => {
     });
 
     it ("cancels an incomplete task", (done) => {
-        const task = new TimerTask(false, new CreateTimerAction(new Date()), undefined, undefined, undefined);
+        const task = new TimerTask(
+            false,
+            false,
+            new CreateTimerAction(new Date()),
+            undefined,
+            undefined,
+            undefined);
         task.cancel();
         expect(task.action.isCanceled).to.equal(true);
         expect(task.isCanceled).to.equal(true);
@@ -20,7 +26,13 @@ describe("TimerTask", () => {
     });
 
     it ("is canceled when its action is canceled", (done) => {
-        const task = new TimerTask(false, new CreateTimerAction(new Date(), true), undefined, undefined, undefined);
+        const task = new TimerTask(
+            false,
+            false,
+            new CreateTimerAction(new Date(), true),
+            undefined,
+            undefined,
+            undefined);
         expect(task.isCanceled).to.equal(true);
         done();
     });

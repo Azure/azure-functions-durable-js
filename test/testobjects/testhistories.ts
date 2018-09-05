@@ -366,6 +366,43 @@ export class TestHistories {
         ];
     }
 
+    public static GetThrowsExceptionFromActivityReplayOne(firstTimestamp: Date) {
+        return [
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetExecutionStarted(
+                firstTimestamp,
+                true,
+                "DoesntHandleExceptionFromActivity",
+                undefined,
+            ),
+            HistoryEventFactory.GetTaskScheduled(
+                0,
+                firstTimestamp,
+                false,
+                "ThrowsErrorActivity",
+                undefined,
+            ),
+            HistoryEventFactory.GetOrchestratorCompleted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetOrchestratorStarted(
+                moment(firstTimestamp).add(1, "s").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetTaskFailed(
+                moment(firstTimestamp).add(1, "s").toDate(),
+                false,
+                0,
+                "Big stack trace here",
+                "Activity function 'ThrowsErrorActivity' failed: Result: Failure",
+            ),
+        ];
+    }
+
     public static GetWaitForExternalEventEventReceived(firstTimestamp: Date, eventName: string, input?: any) {
         const firstMoment = moment(firstTimestamp);
 

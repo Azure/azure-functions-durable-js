@@ -11,3 +11,5 @@ export { HistoryEvent } from "./historyevent";
 export { TaskSet } from "./taskset";
 export { Task } from "./task";
 export { TimerTask } from "./timertask";
+
+export { OrchestratorState } from "./orchestratorstate";

@@ -5,6 +5,6 @@ export class CallActivityAction implements IAction {
 
     constructor(
         public functionName: string,
-        public input: any,
+        public input?: any,
     ) { }
 }

@@ -1,6 +1,7 @@
 import * as debug from "debug";
 import { ActionType, CallActivityAction, CreateTimerAction, HistoryEvent, HistoryEventType,
     IAction, Task, TaskSet, TimerTask, WaitForExternalEventAction } from "./classes";
+import { OrchestratorState } from "./orchestratorstate";
 
 const log = debug("orchestrator");
 
@@ -56,6 +57,8 @@ export class Orchestrator {
                 if (!partialResult.isCompleted) {
                     this.finish(context, state, actions);
                     return;
+                } else if (partialResult instanceof Task && partialResult.isFaulted) {
+                    gen.throw(partialResult.exception);
                 }
 
                 decisionStartedEvent = state.find((e) =>
@@ -63,26 +66,44 @@ export class Orchestrator {
                     e.Timestamp > decisionStartedEvent.Timestamp);
                 context.df.currentUtcDateTime = decisionStartedEvent.Timestamp;
             } catch (error) {
-                this.error(context, error);
+                this.error(context, actions, error);
                 return;
             }
         }
     }
 
-    private callActivityAsync(state: HistoryEvent[], name: string, input: any) {
+    private callActivityAsync(state: HistoryEvent[], name: string, input?: any) {
         const newAction = new CallActivityAction(name, input);
 
         const taskScheduled = this.findTaskScheduled(state, name);
         const taskCompleted = this.findTaskCompleted(state, taskScheduled);
+        const taskFailed = this.findTaskFailed(state, taskScheduled);
         if (taskCompleted) {
             taskScheduled.IsProcessed = true;
             taskCompleted.IsProcessed = true;
 
             const result = this.parseHistoryEvent(taskCompleted);
 
-            return new Task(true, newAction, result, taskCompleted.Timestamp, taskCompleted.TaskScheduledId);
+            return new Task(true, false, newAction, result, taskCompleted.Timestamp, taskCompleted.TaskScheduledId);
+        } else if (taskFailed) {
+            taskScheduled.IsProcessed = true;
+            taskFailed.IsProcessed = true;
+
+            return new Task(
+                true,
+                true,
+                newAction,
+                taskFailed.Reason,
+                taskFailed.Timestamp,
+                taskFailed.TaskScheduledId,
+                new Error(taskFailed.Reason),
+            );
         } else {
-            return new Task(false, newAction);
+            return new Task(
+                false,
+                false,
+                newAction,
+            );
         }
     }
 
@@ -95,9 +116,9 @@ export class Orchestrator {
             timerCreated.IsProcessed = true;
             timerFired.IsProcessed = true;
 
-            return new TimerTask(true, newAction, undefined, timerFired.Timestamp, timerFired.TimerId);
+            return new TimerTask(true, false, newAction, undefined, timerFired.Timestamp, timerFired.TimerId);
         } else {
-            return new TimerTask(false, newAction);
+            return new TimerTask(false, false, newAction);
         }
     }
 
@@ -114,9 +135,9 @@ export class Orchestrator {
 
             const result = this.parseHistoryEvent(eventRaised);
 
-            return new Task(true, newAction, result, eventRaised.Timestamp, eventRaised.EventId);
+            return new Task(true, false, newAction, result, eventRaised.Timestamp, eventRaised.EventId);
         } else {
-            return new Task(false, newAction);
+            return new Task(false, false, newAction);
         }
     }
 
@@ -177,19 +198,16 @@ export class Orchestrator {
 
     private finish(context: any, state: HistoryEvent[], actions: IAction[][], isDone: boolean = false, output?: any) {
         log("Finish called");
-        const returnValue = {
-            isDone,
-            actions,
-            output,
-        };
+        const returnValue = new OrchestratorState(isDone, actions, output);
 
         context.done(null, returnValue);
     }
 
-    private error(context: any, err: any) {
+    private error(context: any, actions: IAction[][], err: Error) {
         log(`Error: ${err}`);
+        const returnValue = new OrchestratorState(false, actions, undefined);
 
-        context.done(null, { error: err });
+        context.done(err, undefined);
     }
 
     /* Returns undefined if not found. */
@@ -217,8 +235,18 @@ export class Orchestrator {
     /* Returns undefined if not found. */
     private findTaskCompleted(state: HistoryEvent[], scheduledTask: HistoryEvent) {
         return scheduledTask ?
-             state.filter((val: HistoryEvent) => {
+            state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskCompleted
+                    && val.TaskScheduledId === scheduledTask.EventId;
+            })[0]
+            : undefined;
+    }
+
+    /* Returns undefined if not found. */
+    private findTaskFailed(state: HistoryEvent[], scheduledTask: HistoryEvent) {
+        return scheduledTask ?
+            state.filter((val: HistoryEvent) => {
+                return val.EventType === HistoryEventType.TaskFailed
                     && val.TaskScheduledId === scheduledTask.EventId;
             })[0]
             : undefined;

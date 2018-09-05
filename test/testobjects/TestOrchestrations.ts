@@ -68,4 +68,16 @@ export class TestOrchestrations {
 
         return "Timer fired!";
     });
+
+    public static ThrowsExceptionFromActivity: any = () => {
+        (df as any)(function*(context: any): IterableIterator<any> {
+            yield context.df.callActivityAsync("ThrowsErrorActivity");
+        });
+    }
+
+    public static ThrowsError: any = () => {
+        (df as any)(function*(context: any): IterableIterator<any> {
+            throw Error("Exception from Orchestrator");
+        });
+    }
 }
