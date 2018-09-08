@@ -19,6 +19,8 @@ export class Orchestrator {
 
         // Assign methods to context
         context.df = {};
+        context.df.instanceId = context.bindings.context.instanceId;
+        context.df.isReplaying = context.bindings.context.isReplaying;
         context.df.callActivityAsync = this.callActivityAsync.bind(this, state);
         context.df.createTimer = this.createTimer.bind(this, state);
         context.df.getInput = this.getInput.bind(this, input);

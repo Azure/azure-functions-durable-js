@@ -3,6 +3,7 @@
   "exclude": "./node_modules",
   "rules": {
     "no-implicit-dependencies": [true, "dev"],
+    "no-submodule-imports": false,
     "object-literal-sort-keys": false
   }
 }

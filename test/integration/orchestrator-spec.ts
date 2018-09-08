@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
+import * as uuidv1 from "uuid/v1";
 import {
     CallActivityAction, CreateTimerAction, HistoryEvent,
     HistoryEventType, OrchestratorState, WaitForExternalEventAction,
@@ -30,6 +31,48 @@ describe("Orchestrator", () => {
     });
 
     describe("Properties", () => {
+        it("assigns InstanceId", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloInline;
+            const name = "World";
+            const id = uuidv1();
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetOrchestratorStart(
+                        "SayHelloInline",
+                        moment.utc().toDate(),
+                        name),
+                    input: name,
+                    instanceId: id,
+                },
+            });
+            orchestrator(mockContext);
+
+            expect(mockContext.df.instanceId).to.be.equal(id);
+            done();
+        });
+
+        it("assigns IsReplaying", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloSequence;
+            const name = "World";
+            const replaying = true;
+
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithActivityReplayOne(
+                        "SayHelloWithActivity",
+                        moment.utc().toDate(),
+                        name),
+                    input: name,
+                    isReplaying: replaying,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.df.isReplaying).to.be.equal(replaying);
+            done();
+        });
+
         it("updates CurrentUtcDateTime to the most recent OrchestratorStarted timestamp", (done) => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";

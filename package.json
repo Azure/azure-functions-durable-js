@@ -43,12 +43,14 @@
     "@types/mocha": "*",
     "@types/node": "^6.0.31",
     "@types/rimraf": "0.0.28",
+    "@types/uuid": "^3.4.4",
     "@types/winston": "~2.2.0",
     "chai": "*",
     "mocha": "*",
     "ts-node": "~1.0.0",
     "tslint": "^5.9.1",
-    "typescript": "~2.3.0"
+    "typescript": "~2.3.0",
+    "uuid": "^3.3.2"
   },
   "engines": {
     "node": ">=6.5.0"
