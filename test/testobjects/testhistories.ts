@@ -42,8 +42,8 @@ export class TestHistories {
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(1, "s").toDate(),
                 false,
-                completeInOrder ? 0 : 1,
                 completeInOrder ? JSON.stringify("A") : JSON.stringify("B"),
+                completeInOrder ? 0 : 1,
             ),
         ];
     }
@@ -80,8 +80,8 @@ export class TestHistories {
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(1, "s").toDate(),
                 false,
-                0,
                 JSON.stringify(files),
+                0,
             ),
             HistoryEventFactory.GetOrchestratorCompleted(
                 firstTimestamp,
@@ -110,20 +110,20 @@ export class TestHistories {
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(3, "s").toDate(),
                 false,
-                1,
                 JSON.stringify(1),
+                1,
             ),
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(3, "s").toDate(),
                 false,
-                2,
                 JSON.stringify(2),
+                2,
             ),
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(3, "s").toDate(),
                 false,
-                3,
                 JSON.stringify(3),
+                3,
             ),
         ]);
     }
@@ -160,8 +160,8 @@ export class TestHistories {
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(1, "s").toDate(),
                 false,
-                0,
                 JSON.stringify(files),
+                0,
             ),
             HistoryEventFactory.GetOrchestratorCompleted(
                 firstTimestamp,
@@ -190,8 +190,8 @@ export class TestHistories {
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(3, "s").toDate(),
                 false,
-                2,
                 JSON.stringify(2),
+                2,
             ),
         ]);
     }
@@ -228,46 +228,8 @@ export class TestHistories {
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(1, "s").toDate(),
                 false,
-                0,
                 JSON.stringify(files),
-            ),
-        ];
-    }
-
-    public static GetSayHelloWithActivityReplayOne(name: string, firstTimestamp: Date, input: any) {
-        const firstMoment = moment(firstTimestamp);
-
-        return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
-            ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                name,
-                input,
-            ),
-            HistoryEventFactory.GetTaskScheduled(
                 0,
-                firstTimestamp,
-                false,
-                "Hello",
-                input,
-            ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
-            ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").toDate(),
-                false,
-            ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(1, "s").toDate(),
-                false,
-                0,
-                JSON.stringify(`Hello, ${input}!`),
             ),
         ];
     }
@@ -304,8 +266,8 @@ export class TestHistories {
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(1, "s").toDate(),
                 true,
-                0,
                 JSON.stringify("Hello, Tokyo!"),
+                0,
             ),
             HistoryEventFactory.GetTaskScheduled(
                 1,
@@ -325,8 +287,8 @@ export class TestHistories {
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(2, "s").toDate(),
                 true,
-                1,
                 JSON.stringify("Hello, Seattle!"),
+                1,
             ),
             HistoryEventFactory.GetTaskScheduled(
                 2,
@@ -346,8 +308,8 @@ export class TestHistories {
             HistoryEventFactory.GetTaskCompleted(
                 firstMoment.add(3, "s").toDate(),
                 true,
-                2,
                 JSON.stringify("Hello, London!"),
+                2,
             ),
         ];
     }
@@ -363,6 +325,87 @@ export class TestHistories {
                 false,
                 name,
                 input),
+        ];
+    }
+
+    public static GetSayHelloWithActivityReplayOne(name: string, firstTimestamp: Date, input: any) {
+        const firstMoment = moment(firstTimestamp);
+
+        return [
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetExecutionStarted(
+                firstTimestamp,
+                true,
+                name,
+                input,
+            ),
+            HistoryEventFactory.GetTaskScheduled(
+                0,
+                firstTimestamp,
+                false,
+                "Hello",
+                input,
+            ),
+            HistoryEventFactory.GetOrchestratorCompleted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstMoment.add(1, "s").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetTaskCompleted(
+                firstMoment.add(1, "s").toDate(),
+                false,
+                JSON.stringify(`Hello, ${input}!`),
+                0,
+            ),
+        ];
+    }
+
+    public static GetSayHelloWithSubOrchestratorReplayOne(
+        firstTimestamp: Date,
+        subInstanceId: string,
+        input?: any,
+    ) {
+        const firstMoment = moment(firstTimestamp);
+
+        return [
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetExecutionStarted(
+                firstTimestamp,
+                true,
+                "SayHelloWithSubOrchestrator",
+                input,
+            ),
+            HistoryEventFactory.GetSubOrchestrationInstanceCreated(
+                0,
+                firstTimestamp,
+                false,
+                "SayHelloWithActivity",
+                input,
+                subInstanceId,
+            ),
+            HistoryEventFactory.GetOrchestratorCompleted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstMoment.add(1, "s").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetSubOrchestrationInstanceCompleted(
+                firstMoment.add(1, "s").toDate(),
+                false,
+                JSON.stringify(`Hello, ${input}!`),
+                0,
+            ),
         ];
     }
 

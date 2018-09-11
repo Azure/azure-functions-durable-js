@@ -3,6 +3,7 @@ export { HistoryEventType } from "./historyeventtype";
 
 export { IAction } from "./iaction";
 export { CallActivityAction } from "./callactivityaction";
+export { CallSubOrchestratorAction } from "./callsuborchestratoraction";
 export { CreateTimerAction } from "./createtimeraction";
 export { WaitForExternalEventAction } from "./waitforexternaleventaction";
 

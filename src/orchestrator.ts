@@ -1,6 +1,7 @@
 import * as debug from "debug";
-import { ActionType, CallActivityAction, CreateTimerAction, HistoryEvent, HistoryEventType,
-    IAction, Task, TaskSet, TimerTask, WaitForExternalEventAction } from "./classes";
+import { ActionType, CallActivityAction, CallSubOrchestratorAction, CreateTimerAction,
+    HistoryEvent, HistoryEventType, IAction, Task, TaskSet, TimerTask,
+    WaitForExternalEventAction } from "./classes";
 import { OrchestratorState } from "./orchestratorstate";
 
 const log = debug("orchestrator");
@@ -22,6 +23,7 @@ export class Orchestrator {
         context.df.instanceId = context.bindings.context.instanceId;
         context.df.isReplaying = context.bindings.context.isReplaying;
         context.df.callActivityAsync = this.callActivityAsync.bind(this, state);
+        context.df.callSubOrchestratorAsync = this.callSubOrchestratorAsync.bind(this, state);
         context.df.createTimer = this.createTimer.bind(this, state);
         context.df.getInput = this.getInput.bind(this, input);
         context.df.waitForExternalEvent = this.waitForExternalEvent.bind(this, state);
@@ -109,6 +111,35 @@ export class Orchestrator {
         }
     }
 
+    private callSubOrchestratorAsync(state: HistoryEvent[], name: string, input: any, instanceId?: string): Task {
+        const newAction = new CallSubOrchestratorAction(name, instanceId, input);
+
+        const subOrchestratorCreated = this.findSubOrchestrationInstanceCreated(state, name, instanceId);
+        const subOrchestratorCompleted = this.findSubOrchestrationInstanceCompleted(state, subOrchestratorCreated);
+
+        if (subOrchestratorCompleted) {
+            subOrchestratorCreated.IsProcessed = true;
+            subOrchestratorCompleted.IsProcessed = true;
+
+            const result = this.parseHistoryEvent(subOrchestratorCompleted);
+
+            return new Task(
+                true,
+                false,
+                newAction,
+                result,
+                subOrchestratorCompleted.Timestamp,
+                subOrchestratorCompleted.TaskScheduledId,
+            );
+        } else {
+            return new Task(
+                false,
+                false,
+                newAction,
+            );
+        }
+    }
+
     private createTimer(state: HistoryEvent[], fireAt: Date) {
         const newAction = new CreateTimerAction(fireAt);
 
@@ -185,11 +216,14 @@ export class Orchestrator {
         let parsedDirectiveResult: any;
 
         switch (directiveResult.EventType) {
-            case (HistoryEventType.TaskCompleted):
-                parsedDirectiveResult = JSON.parse(directiveResult.Result);
-                break;
             case (HistoryEventType.EventRaised):
                 parsedDirectiveResult = JSON.parse(directiveResult.Input);
+                break;
+            case (HistoryEventType.SubOrchestrationInstanceCompleted):
+                parsedDirectiveResult = JSON.parse(directiveResult.Result);
+                break;
+            case (HistoryEventType.TaskCompleted):
+                parsedDirectiveResult = JSON.parse(directiveResult.Result);
                 break;
             default:
                 break;
@@ -219,6 +253,28 @@ export class Orchestrator {
                 return val.EventType === HistoryEventType.EventRaised
                     && val.Name === eventName
                     && !val.IsProcessed;
+            })[0]
+            : undefined;
+    }
+
+    /* Returns undefined if not found. */
+    private findSubOrchestrationInstanceCreated(state: HistoryEvent[], name: string, instanceId: string) {
+        return name ?
+            state.filter((val: HistoryEvent) => {
+                return val.EventType === HistoryEventType.SubOrchestrationInstanceCreated
+                    && val.Name === name
+                    && val.InstanceId === instanceId
+                    && !val.IsProcessed;
+            })[0]
+            : undefined;
+    }
+
+    /* Returns undefined if not found. */
+    private findSubOrchestrationInstanceCompleted(state: HistoryEvent[], createdSubOrchInstance: HistoryEvent) {
+        return createdSubOrchInstance ?
+            state.filter((val: HistoryEvent) => {
+                return val.EventType === HistoryEventType.SubOrchestrationInstanceCompleted
+                    && val.TaskScheduledId === createdSubOrchInstance.EventId;
             })[0]
             : undefined;
     }

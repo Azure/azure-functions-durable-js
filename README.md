@@ -87,23 +87,24 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 ### API Implementation Checklist
 **Implemented**
 * `CurrentUtcDateTime`
+* `InstanceId`
+* `IsReplaying`
 * `CallActivityAsync(String name, Object input)`
+* `CallSubOrchestratorAsync(String, Object)`
+* `CallSubOrchestratorAsync(String, String, Object)`
 * `CreateTimer(Date fireAt)`
 * `GetInput()`
 * `WaitForExternalEvent(String name)`
 * `OrchestrationClient` binding to `string`
 
 **Not Yet Implemented**
-* `InstanceId`
-* `IsReplaying`
 * `CallActivityWithRetryAsync(String, RetryOptions, Object)`
-* `CallSubOrchestratorAsync(String, Object)`
-* `CallSubOrchestratorAsync(String, String, Object)`
 * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)`
 * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)`
 * `ContinueAsNew(Object)`
 * `SetCustomStatus(Object)`
 * `DurableOrchestrationClient` API
+* `ParentInstanceId`
 
 **Will Not Be Implemented**
 * `CallActivityAsync<TResult>(String, Object)`

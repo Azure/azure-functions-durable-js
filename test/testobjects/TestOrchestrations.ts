@@ -43,6 +43,19 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static SayHelloWithSubOrchestrator: any = (df as any)(function*(context: any) {
+        const input = context.df.getInput();
+        const childId = context.df.instanceId + ":0";
+        const output = yield context.df.callSubOrchestratorAsync("SayHelloWithActivity", input, childId);
+        return output;
+    });
+
+    public static SayHelloWithSubOrchestratorNoSubId: any = (df as any)(function*(context: any) {
+        const input = context.df.getInput();
+        const output = yield context.df.callSubOrchestratorAsync("SayHelloWithActivity", input);
+        return output;
+    });
+
     public static SayHelloSequence: any = (df as any)(function*(context: any) {
         const output = [];
 

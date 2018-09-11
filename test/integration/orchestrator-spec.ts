@@ -4,7 +4,7 @@ import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
 import {
     CallActivityAction, CreateTimerAction, HistoryEvent,
-    HistoryEventType, OrchestratorState, WaitForExternalEventAction,
+    HistoryEventType, OrchestratorState, WaitForExternalEventAction, CallSubOrchestratorAction,
     } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/testorchestrations";
@@ -294,6 +294,98 @@ describe("Orchestrator", () => {
                         "Hello, Seattle!",
                         "Hello, London!",
                     ],
+                ),
+            );
+            done();
+        });
+    });
+
+    describe("callSubOrchestratorAsync()", () => {
+        it("schedules a suborchestrator function", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
+            const name = "World";
+            const id = uuidv1();
+            const childId = `${id}:0`;
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetOrchestratorStart(
+                        "SayHelloWithSubOrchestrator",
+                        moment.utc().toDate(),
+                    ),
+                    input: name,
+                    instanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    false,
+                    [
+                        [ new CallSubOrchestratorAction("SayHelloWithActivity", childId, name) ],
+                    ],
+                    undefined,
+                ),
+            );
+            done();
+        });
+
+        it("schedules a suborchestrator function with no instanceId", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorNoSubId;
+            const name = "World";
+            const id = uuidv1();
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetOrchestratorStart(
+                        "SayHelloWithSubOrchestrator",
+                        moment.utc().toDate(),
+                    ),
+                    input: name,
+                    instanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    false,
+                    [
+                        [ new CallSubOrchestratorAction("SayHelloWithActivity", undefined, name) ],
+                    ],
+                    undefined,
+                ),
+            );
+            done();
+        });
+
+        it("handles a completed suborchestrator function", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
+            const name = "World";
+            const id = uuidv1();
+            const childId = `${id}:0`;
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
+                        moment.utc().toDate(),
+                        childId,
+                        name,
+                    ),
+                    input: name,
+                    instanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    true,
+                    [
+                        [ new CallSubOrchestratorAction("SayHelloWithActivity", childId, name) ],
+                    ],
+                    "Hello, World!",
                 ),
             );
             done();

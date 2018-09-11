@@ -14,6 +14,7 @@ export class HistoryEventFactory {
             undefined,
             isPlayed,
             input,
+            undefined,
             name,
             undefined,
             undefined,
@@ -36,6 +37,7 @@ export class HistoryEventFactory {
             undefined,
             isPlayed,
             input,
+            undefined,
             name,
             undefined,
             undefined,
@@ -54,6 +56,7 @@ export class HistoryEventFactory {
             HistoryEventType.OrchestratorCompleted,
             undefined,
             isPlayed,
+            undefined,
             undefined,
             undefined,
             undefined,
@@ -79,6 +82,80 @@ export class HistoryEventFactory {
             undefined,
             undefined,
             undefined,
+            undefined,
+            timeStamp,
+        );
+    }
+
+    public static GetSubOrchestrationInstanceCreated(
+        eventId: number,
+        timeStamp: Date,
+        isPlayed: boolean,
+        name: string,
+        input: string,
+        instanceId: string,
+        version: string = "",
+    ) {
+        return new HistoryEvent(
+            undefined,
+            eventId,
+            HistoryEventType.SubOrchestrationInstanceCreated,
+            undefined,
+            isPlayed,
+            input,
+            instanceId,
+            name,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            timeStamp,
+        );
+    }
+
+    public static GetSubOrchestrationInstanceCompleted(
+        timeStamp: Date,
+        isPlayed: boolean,
+        result: string,
+        taskScheduledId: number,
+    ) {
+        return new HistoryEvent(
+            undefined,
+            -1,
+            HistoryEventType.SubOrchestrationInstanceCompleted,
+            undefined,
+            isPlayed,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            result,
+            taskScheduledId,
+            undefined,
+            timeStamp,
+        );
+    }
+
+    public static GetSubOrchestrationInstanceFailed(
+        timeStamp: Date,
+        isPlayed: boolean,
+        details: string,
+        reason: string,
+        taskScheduledId: number,
+    ) {
+        return new HistoryEvent(
+            details,
+            -1,
+            HistoryEventType.SubOrchestrationInstanceFailed,
+            undefined,
+            isPlayed,
+            undefined,
+            undefined,
+            undefined,
+            reason,
+            undefined,
+            taskScheduledId,
+            undefined,
             timeStamp,
         );
     }
@@ -86,8 +163,8 @@ export class HistoryEventFactory {
     public static GetTaskCompleted(
         timeStamp: Date,
         isPlayed: boolean,
-        taskScheduledId: number,
         result: any,
+        taskScheduledId: number,
     ) {
         return new HistoryEvent(
             undefined,
@@ -95,6 +172,7 @@ export class HistoryEventFactory {
             HistoryEventType.TaskCompleted,
             undefined,
             isPlayed,
+            undefined,
             undefined,
             undefined,
             undefined,
@@ -120,6 +198,7 @@ export class HistoryEventFactory {
             isPlayed,
             undefined,
             undefined,
+            undefined,
             reason,
             undefined,
             taskScheduledId,
@@ -143,6 +222,7 @@ export class HistoryEventFactory {
             undefined,
             isPlayed,
             null,
+            undefined,
             name,
             undefined,
             undefined,
@@ -170,6 +250,7 @@ export class HistoryEventFactory {
             undefined,
             undefined,
             undefined,
+            undefined,
             timeStamp,
         );
     }
@@ -186,6 +267,7 @@ export class HistoryEventFactory {
             HistoryEventType.TimerFired,
             fireAt,
             isPlayed,
+            undefined,
             undefined,
             undefined,
             undefined,
