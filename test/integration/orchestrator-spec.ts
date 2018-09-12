@@ -31,7 +31,7 @@ describe("Orchestrator", () => {
     });
 
     describe("Properties", () => {
-        it("assigns InstanceId", (done) => {
+        it("assigns instanceId", (done) => {
             const orchestrator = TestOrchestrations.SayHelloInline;
             const name = "World";
             const id = uuidv1();
@@ -51,7 +51,7 @@ describe("Orchestrator", () => {
             done();
         });
 
-        it("assigns IsReplaying", (done) => {
+        it("assigns isReplaying", (done) => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";
             const replaying = true;
@@ -73,7 +73,29 @@ describe("Orchestrator", () => {
             done();
         });
 
-        it("updates CurrentUtcDateTime to the most recent OrchestratorStarted timestamp", (done) => {
+        it("assigns parentInstanceId", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloSequence;
+            const name = "World";
+            const id = uuidv1();
+
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithActivityReplayOne(
+                        "SayHelloWithActivity",
+                        moment.utc().toDate(),
+                        name),
+                    input: name,
+                    parentInstanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.df.parentInstanceId).to.be.equal(id);
+            done();
+        });
+
+        it("updates currentUtcDateTime to the most recent OrchestratorStarted timestamp", (done) => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";
             const startTimestamp = moment.utc().toDate();

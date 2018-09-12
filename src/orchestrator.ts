@@ -22,6 +22,7 @@ export class Orchestrator {
         context.df = {};
         context.df.instanceId = context.bindings.context.instanceId;
         context.df.isReplaying = context.bindings.context.isReplaying;
+        context.df.parentInstanceId = context.bindings.context.parentInstanceId;
         context.df.callActivity = this.callActivity.bind(this, state);
         context.df.callSubOrchestrator = this.callSubOrchestrator.bind(this, state);
         context.df.createTimer = this.createTimer.bind(this, state);

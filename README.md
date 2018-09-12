@@ -89,6 +89,7 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 * `CurrentUtcDateTime`
 * `InstanceId`
 * `IsReplaying`
+* `ParentInstanceId`
 * `CallActivityAsync(String name, Object input)`
 * `CallSubOrchestratorAsync(String, Object)`
 * `CallSubOrchestratorAsync(String, String, Object)`
@@ -104,7 +105,6 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 * `ContinueAsNew(Object)`
 * `SetCustomStatus(Object)`
 * `DurableOrchestrationClient` API
-* `ParentInstanceId`
 
 **Will Not Be Implemented**
 * `CallActivityAsync<TResult>(String, Object)`
