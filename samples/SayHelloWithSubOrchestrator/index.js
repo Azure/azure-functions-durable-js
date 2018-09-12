@@ -3,6 +3,6 @@ const df = require("../../lib/src");
 module.exports = df(function*(context){
     const input = context.df.getInput();
 
-    const output = yield context.df.callSubOrchestratorAsync("SayHelloWithActivity", input);
+    const output = yield context.df.callSubOrchestrator("SayHelloWithActivity", input);
     return output;
 });

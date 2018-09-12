@@ -131,7 +131,7 @@ describe("Orchestrator", () => {
         });
     });
 
-    describe("callActivityAsync()", () => {
+    describe("callActivity()", () => {
         it("schedules an activity function", (done) => {
             const orchestrator = TestOrchestrations.SayHelloWithActivity;
             const name = "World";
@@ -300,7 +300,7 @@ describe("Orchestrator", () => {
         });
     });
 
-    describe("callSubOrchestratorAsync()", () => {
+    describe("callSubOrchestrator()", () => {
         it("schedules a suborchestrator function", (done) => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
             const name = "World";

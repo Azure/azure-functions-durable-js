@@ -22,8 +22,8 @@ export class Orchestrator {
         context.df = {};
         context.df.instanceId = context.bindings.context.instanceId;
         context.df.isReplaying = context.bindings.context.isReplaying;
-        context.df.callActivityAsync = this.callActivityAsync.bind(this, state);
-        context.df.callSubOrchestratorAsync = this.callSubOrchestratorAsync.bind(this, state);
+        context.df.callActivity = this.callActivity.bind(this, state);
+        context.df.callSubOrchestrator = this.callSubOrchestrator.bind(this, state);
         context.df.createTimer = this.createTimer.bind(this, state);
         context.df.getInput = this.getInput.bind(this, input);
         context.df.waitForExternalEvent = this.waitForExternalEvent.bind(this, state);
@@ -76,7 +76,7 @@ export class Orchestrator {
         }
     }
 
-    private callActivityAsync(state: HistoryEvent[], name: string, input?: any) {
+    private callActivity(state: HistoryEvent[], name: string, input?: any) {
         const newAction = new CallActivityAction(name, input);
 
         const taskScheduled = this.findTaskScheduled(state, name);
@@ -111,7 +111,7 @@ export class Orchestrator {
         }
     }
 
-    private callSubOrchestratorAsync(state: HistoryEvent[], name: string, input: any, instanceId?: string): Task {
+    private callSubOrchestrator(state: HistoryEvent[], name: string, input: any, instanceId?: string): Task {
         const newAction = new CallSubOrchestratorAction(name, instanceId, input);
 
         const subOrchestratorCreated = this.findSubOrchestrationInstanceCreated(state, name, instanceId);
