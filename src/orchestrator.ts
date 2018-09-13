@@ -3,6 +3,7 @@ import { ActionType, CallActivityAction, CallSubOrchestratorAction, CreateTimerA
     HistoryEvent, HistoryEventType, IAction, Task, TaskSet, TimerTask,
     WaitForExternalEventAction } from "./classes";
 import { OrchestratorState } from "./orchestratorstate";
+import { ContinueAsNewAction } from "./continueasnewaction";
 
 const log = debug("orchestrator");
 
@@ -25,6 +26,7 @@ export class Orchestrator {
         context.df.parentInstanceId = context.bindings.context.parentInstanceId;
         context.df.callActivity = this.callActivity.bind(this, state);
         context.df.callSubOrchestrator = this.callSubOrchestrator.bind(this, state);
+        context.df.continueAsNew = this.continueAsNew.bind(this, state);
         context.df.createTimer = this.createTimer.bind(this, state);
         context.df.getInput = this.getInput.bind(this, input);
         context.df.waitForExternalEvent = this.waitForExternalEvent.bind(this, state);
@@ -59,7 +61,7 @@ export class Orchestrator {
                     actions.push(partialResult.actions);
                 }
 
-                if (!partialResult.isCompleted) {
+                if (this.shouldFinish(partialResult)) {
                     this.finish(context, state, actions);
                     return;
                 } else if (partialResult instanceof Task && partialResult.isFaulted) {
@@ -139,6 +141,16 @@ export class Orchestrator {
                 newAction,
             );
         }
+    }
+
+    private continueAsNew(state: HistoryEvent[], input: any) {
+        const newAction = new ContinueAsNewAction(input);
+
+        return new Task(
+            false,
+            false,
+            newAction,
+        );
     }
 
     private createTimer(state: HistoryEvent[], fireAt: Date) {
@@ -329,5 +341,9 @@ export class Orchestrator {
                     && val.TimerId === createdTimer.EventId;
             })[0]
             : undefined;
+    }
+
+    private shouldFinish(result: any) {
+        return !result.isCompleted || result instanceof Task && result.action instanceof ContinueAsNewAction;
     }
 }

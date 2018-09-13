@@ -3,7 +3,7 @@ import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
 import {
-    CallActivityAction, CreateTimerAction, HistoryEvent,
+    CallActivityAction, ContinueAsNewAction, CreateTimerAction, HistoryEvent,
     HistoryEventType, OrchestratorState, WaitForExternalEventAction, CallSubOrchestratorAction,
     } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
@@ -411,6 +411,33 @@ describe("Orchestrator", () => {
                 ),
             );
             done();
+        });
+    });
+
+    describe("continueAsNew()", () => {
+        it("schedules a continueAsNew request", () => {
+            const orchestrator = TestOrchestrations.ContinueAsNewCounter;
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetOrchestratorStart(
+                        "ContinueAsNewCounter",
+                        moment.utc().toDate(),
+                    ),
+                    input: { value: 5 },
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    false,
+                    [
+                        [ new ContinueAsNewAction({ value: 6 }) ],
+                    ],
+                    undefined,
+                ),
+            );
         });
     });
 

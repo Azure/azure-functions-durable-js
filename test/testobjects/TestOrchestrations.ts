@@ -17,6 +17,20 @@ export class TestOrchestrations {
        return returnValue;
     });
 
+    public static ContinueAsNewCounter: any = (df as any)(function*(context: any) {
+        const currentValueObject = context.df.getInput();
+        let currentValue = currentValueObject
+            ? currentValueObject.value
+                ? currentValueObject.value
+                : 0
+            : 0;
+        currentValue++;
+
+        yield context.df.continueAsNew({ value: currentValue });
+
+        return currentValue;
+    });
+
     public static FanOutFanInDiskUsage: any = (df as any)(function*(context: any) {
         const directory = context.df.getInput();
         const files = yield context.df.callActivity("GetFileList", directory);

@@ -93,6 +93,7 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 * `CallActivityAsync(String name, Object input)`
 * `CallSubOrchestratorAsync(String, Object)`
 * `CallSubOrchestratorAsync(String, String, Object)`
+* `ContinueAsNew(Object)`
 * `CreateTimer(Date fireAt)`
 * `GetInput()`
 * `WaitForExternalEvent(String name)`
@@ -102,7 +103,6 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 * `CallActivityWithRetryAsync(String, RetryOptions, Object)`
 * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)`
 * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)`
-* `ContinueAsNew(Object)`
 * `SetCustomStatus(Object)`
 * `DurableOrchestrationClient` API
 
