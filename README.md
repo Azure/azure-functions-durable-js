@@ -91,6 +91,7 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 * `IsReplaying`
 * `ParentInstanceId`
 * `CallActivityAsync(String name, Object input)`
+* `CallActivityWithRetryAsync(String, RetryOptions, Object)`
 * `CallSubOrchestratorAsync(String, Object)`
 * `CallSubOrchestratorAsync(String, String, Object)`
 * `ContinueAsNew(Object)`
@@ -100,7 +101,6 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 * `OrchestrationClient` binding to `string`
 
 **Not Yet Implemented**
-* `CallActivityWithRetryAsync(String, RetryOptions, Object)`
 * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)`
 * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)`
 * `SetCustomStatus(Object)`

@@ -366,11 +366,103 @@ export class TestHistories {
         ];
     }
 
-    public static GetSayHelloWithSubOrchestratorReplayOne(
-        firstTimestamp: Date,
-        subInstanceId: string,
-        input?: any,
-    ) {
+    public static GetSayHelloWithActivityRetryFailOne(firstTimestamp: Date, input: any) {
+        return [
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetExecutionStarted(
+                firstTimestamp,
+                true,
+                "SayHelloWithActivityRetry",
+                input,
+            ),
+            HistoryEventFactory.GetTaskScheduled(
+                0,
+                firstTimestamp,
+                false,
+                "Hello",
+                undefined,
+            ),
+            HistoryEventFactory.GetOrchestratorCompleted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetOrchestratorStarted(
+                moment(firstTimestamp).add(1, "s").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetTaskFailed(
+                moment(firstTimestamp).add(1, "s").toDate(),
+                false,
+                0,
+                "Big stack trace here",
+                "Activity function 'Hello' failed: Result: Failure",
+            ),
+        ];
+    }
+
+    public static GetSayHelloWithActivityRetryRetryOne(firstTimestamp: Date, input: any, retryInterval: number) {
+        const firstMoment = moment(firstTimestamp);
+
+        return [
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetExecutionStarted(
+                firstTimestamp,
+                true,
+                "SayHelloWithActivityRetry",
+                input,
+            ),
+            HistoryEventFactory.GetTaskScheduled(
+                0,
+                firstTimestamp,
+                false,
+                "Hello",
+                undefined,
+            ),
+            HistoryEventFactory.GetOrchestratorCompleted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstMoment.add(1, "s").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetTaskFailed(
+                firstMoment.add(1, "s").toDate(),
+                true,
+                0,
+                "Big stack trace here",
+                "Activity function 'Hello' failed: Result: Failure",
+            ),
+            HistoryEventFactory.GetTimerCreated(
+                1,
+                firstMoment.add(1, "s").toDate(),
+                false,
+                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+            ),
+            HistoryEventFactory.GetOrchestratorCompleted(
+                firstMoment.add(1, "s").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetTimerFired(
+                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                false,
+                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                1,
+            ),
+        ];
+    }
+
+    public static GetSayHelloWithSubOrchestratorReplayOne(firstTimestamp: Date, subInstanceId: string, input?: any) {
         const firstMoment = moment(firstTimestamp);
 
         return [

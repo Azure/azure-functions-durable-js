@@ -1,7 +1,7 @@
 import * as debug from "debug";
-import { ActionType, CallActivityAction, CallSubOrchestratorAction, CreateTimerAction,
-    HistoryEvent, HistoryEventType, IAction, Task, TaskSet, TimerTask,
-    WaitForExternalEventAction } from "./classes";
+import { ActionType, CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
+    CreateTimerAction, HistoryEvent, HistoryEventType, IAction, RetryOptions, Task, TaskSet,
+    TimerTask, WaitForExternalEventAction } from "./classes";
 import { OrchestratorState } from "./orchestratorstate";
 import { ContinueAsNewAction } from "./continueasnewaction";
 
@@ -25,6 +25,7 @@ export class Orchestrator {
         context.df.isReplaying = context.bindings.context.isReplaying;
         context.df.parentInstanceId = context.bindings.context.parentInstanceId;
         context.df.callActivity = this.callActivity.bind(this, state);
+        context.df.callActivityWithRetry = this.callActivityWithRetry.bind(this, state);
         context.df.callSubOrchestrator = this.callSubOrchestrator.bind(this, state);
         context.df.continueAsNew = this.continueAsNew.bind(this, state);
         context.df.createTimer = this.createTimer.bind(this, state);
@@ -112,6 +113,43 @@ export class Orchestrator {
                 newAction,
             );
         }
+    }
+
+    private callActivityWithRetry(state: HistoryEvent[], name: string, retryOptions: RetryOptions, input?: any) {
+        const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
+
+        for (let attempt = 1; attempt <= retryOptions.maxNumberOfAttempts; attempt++) {
+            const taskScheduled = this.findTaskScheduled(state, name);
+            const taskCompleted = this.findTaskCompleted(state, taskScheduled);
+            const taskFailed = this.findTaskFailed(state, taskScheduled);
+            const taskRetryTimer = this.findTaskRetryTimer(state, taskFailed);
+            const taskRetryTimerFired = this.findTimerFired(state, taskRetryTimer);
+            this.setProcessed([ taskScheduled, taskCompleted, taskFailed, taskRetryTimer, taskRetryTimerFired ]);
+
+            if (!taskScheduled) { break; }
+
+            if (taskCompleted) {
+                const result = this.parseHistoryEvent(taskCompleted);
+
+                return new Task(true, false, newAction, result, taskCompleted.Timestamp, taskCompleted.TaskScheduledId);
+            } else if (taskFailed && taskRetryTimer && attempt >= retryOptions.maxNumberOfAttempts) {
+                return new Task(
+                    true,
+                    true,
+                    newAction,
+                    taskFailed.Reason,
+                    taskFailed.Timestamp,
+                    taskFailed.TaskScheduledId,
+                    new Error(taskFailed.Reason),
+                );
+            }
+        }
+
+        return new Task(
+            false,
+            false,
+            newAction,
+        );
     }
 
     private callSubOrchestrator(state: HistoryEvent[], name: string, input: any, instanceId?: string): Task {
@@ -324,6 +362,17 @@ export class Orchestrator {
     }
 
     /* Returns undefined if not found. */
+    private findTaskRetryTimer(state: HistoryEvent[], failedTask: HistoryEvent) {
+        return failedTask ?
+            state.filter((val: HistoryEvent, index: number, array: HistoryEvent[]) => {
+                const failedTaskIndex = array.indexOf(failedTask);
+                return val.EventType === HistoryEventType.TimerCreated
+                    && index === (failedTaskIndex + 1);
+            })[0]
+            : undefined;
+    }
+
+    /* Returns undefined if not found. */
     private findTimerCreated(state: HistoryEvent[], fireAt: Date) {
         return fireAt ?
             state.filter((val: HistoryEvent) => {
@@ -341,6 +390,12 @@ export class Orchestrator {
                     && val.TimerId === createdTimer.EventId;
             })[0]
             : undefined;
+    }
+
+    private setProcessed(events: HistoryEvent[]) {
+        events.map((val: HistoryEvent) => {
+            if (val) { val.IsProcessed = true; }
+        });
     }
 
     private shouldFinish(result: any) {

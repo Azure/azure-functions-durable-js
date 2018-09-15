@@ -1,9 +1,4 @@
-import { Orchestrator } from "./orchestrator";
+import { RetryOptions } from "./classes";
+import { shim } from "./shim";
 
-module.exports = (fn: (context: any) => IterableIterator<any>) => {
-    const orchestrator = new Orchestrator(fn);
-    const listener = orchestrator.listen();
-    return (context: any) => {
-        listener(context);
-    };
-};
+export { RetryOptions, shim as orchestrator };

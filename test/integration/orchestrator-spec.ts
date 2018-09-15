@@ -3,8 +3,10 @@ import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
 import {
-    CallActivityAction, ContinueAsNewAction, CreateTimerAction, HistoryEvent,
-    HistoryEventType, OrchestratorState, WaitForExternalEventAction, CallSubOrchestratorAction,
+    CallActivityAction, CallActivityWithRetryAction, ContinueAsNewAction, CreateTimerAction,
+    HistoryEvent, HistoryEventType, OrchestratorState, WaitForExternalEventAction,
+    CallSubOrchestratorAction,
+    RetryOptions,
     } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/testorchestrations";
@@ -316,6 +318,145 @@ describe("Orchestrator", () => {
                         "Hello, Seattle!",
                         "Hello, London!",
                     ],
+                ),
+            );
+            done();
+        });
+    });
+
+    describe("callActivityWithRetry()", () => {
+        it("throws an error when retryOptions is undefined", (done) => {
+            done();
+        });
+
+        it("schedules an activity function", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
+            const name = "World";
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetOrchestratorStart(
+                        "SayHelloWithActivityRetry",
+                        moment.utc().toDate(),
+                        name),
+                    input: name,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    false,
+                    [
+                        [
+                            new CallActivityWithRetryAction(
+                                "Hello",
+                                new RetryOptions(10000, 2),
+                                name),
+                        ],
+                    ],
+                    undefined,
+                ),
+            );
+            done();
+        });
+
+        it("schedules an activity funtion if < max attempts", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
+            const name = "World";
+            const retryOptions = new RetryOptions(10000, 2);
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithActivityRetryRetryOne(
+                        moment.utc().toDate(),
+                        name,
+                        retryOptions.firstRetryIntervalInMilliseconds),
+                    input: name,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    false,
+                    [
+                        [
+                            new CallActivityWithRetryAction(
+                                "Hello",
+                                retryOptions,
+                                name),
+                        ],
+                    ],
+                    undefined,
+                ),
+            );
+            done();
+        });
+
+        it("retries a failed activity function if < max attempts", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
+            const name = "World";
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithActivityRetryFailOne(
+                        moment.utc().toDate(),
+                        name),
+                    input: name,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    false,
+                    [
+                        [
+                            new CallActivityWithRetryAction(
+                                "Hello",
+                                new RetryOptions(10000, 2),
+                                name),
+                        ],
+                    ],
+                    undefined,
+                ),
+            );
+            done();
+        });
+
+        it("faults a failed activity function if >= max attempts", (done) => {
+            // needs exception catching figured out
+            done();
+        });
+
+        it("handles a completed activity function", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
+            const name = "World";
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithActivityReplayOne(
+                        "SayHelloWithActivityRetry",
+                        moment.utc().toDate(),
+                        name),
+                    input: name,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    true,
+                    [
+                        [
+                            new CallActivityWithRetryAction(
+                                "Hello",
+                                new RetryOptions(10000, 2),
+                                name),
+                        ],
+                    ],
+                    `Hello, ${name}!`,
                 ),
             );
             done();
