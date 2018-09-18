@@ -86,17 +86,13 @@ export class Orchestrator {
         const taskScheduled = this.findTaskScheduled(state, name);
         const taskCompleted = this.findTaskCompleted(state, taskScheduled);
         const taskFailed = this.findTaskFailed(state, taskScheduled);
-        if (taskCompleted) {
-            taskScheduled.IsProcessed = true;
-            taskCompleted.IsProcessed = true;
+        this.setProcessed([taskScheduled, taskCompleted, taskFailed]);
 
+        if (taskCompleted) {
             const result = this.parseHistoryEvent(taskCompleted);
 
             return new Task(true, false, newAction, result, taskCompleted.Timestamp, taskCompleted.TaskScheduledId);
         } else if (taskFailed) {
-            taskScheduled.IsProcessed = true;
-            taskFailed.IsProcessed = true;
-
             return new Task(
                 true,
                 true,
@@ -157,11 +153,9 @@ export class Orchestrator {
 
         const subOrchestratorCreated = this.findSubOrchestrationInstanceCreated(state, name, instanceId);
         const subOrchestratorCompleted = this.findSubOrchestrationInstanceCompleted(state, subOrchestratorCreated);
+        this.setProcessed([subOrchestratorCreated, subOrchestratorCompleted]);
 
         if (subOrchestratorCompleted) {
-            subOrchestratorCreated.IsProcessed = true;
-            subOrchestratorCompleted.IsProcessed = true;
-
             const result = this.parseHistoryEvent(subOrchestratorCompleted);
 
             return new Task(
@@ -196,10 +190,9 @@ export class Orchestrator {
 
         const timerCreated = this.findTimerCreated(state, fireAt);
         const timerFired = this.findTimerFired(state, timerCreated);
-        if (timerFired) {
-            timerCreated.IsProcessed = true;
-            timerFired.IsProcessed = true;
+        this.setProcessed([ timerCreated, timerFired ]);
 
+        if (timerFired) {
             return new TimerTask(true, false, newAction, undefined, timerFired.Timestamp, timerFired.TimerId);
         } else {
             return new TimerTask(false, false, newAction);
@@ -214,9 +207,9 @@ export class Orchestrator {
         const newAction = new WaitForExternalEventAction(name);
 
         const eventRaised = this.findEventRaised(state, name);
+        this.setProcessed([ eventRaised ]);
+        
         if (eventRaised) {
-            eventRaised.IsProcessed = true;
-
             const result = this.parseHistoryEvent(eventRaised);
 
             return new Task(true, false, newAction, result, eventRaised.Timestamp, eventRaised.EventId);
