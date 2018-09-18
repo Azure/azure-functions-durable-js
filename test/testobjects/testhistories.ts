@@ -462,7 +462,13 @@ export class TestHistories {
         ];
     }
 
-    public static GetSayHelloWithSubOrchestratorReplayOne(firstTimestamp: Date, subInstanceId: string, input?: any) {
+    public static GetSayHelloWithSubOrchestratorReplayOne(
+        firstTimestamp: Date,
+        orchestratorName: string,
+        subOrchestratorName: string,
+        subInstanceId: string,
+        input?: any,
+    ) {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -473,14 +479,14 @@ export class TestHistories {
             HistoryEventFactory.GetExecutionStarted(
                 firstTimestamp,
                 true,
-                "SayHelloWithSubOrchestrator",
+                orchestratorName,
                 input,
             ),
             HistoryEventFactory.GetSubOrchestrationInstanceCreated(
                 0,
                 firstTimestamp,
                 false,
-                "SayHelloWithActivity",
+                subOrchestratorName,
                 input,
                 subInstanceId,
             ),
@@ -497,6 +503,109 @@ export class TestHistories {
                 false,
                 JSON.stringify(`Hello, ${input}!`),
                 0,
+            ),
+        ];
+    }
+
+    public static GetSayHelloWithSubOrchestratorRetryFailOne(firstTimestamp: Date, subInstanceId: string, input: any) {
+        return [
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetExecutionStarted(
+                firstTimestamp,
+                true,
+                "SayHelloWithSubOrchestratorRetry",
+                input,
+            ),
+            HistoryEventFactory.GetSubOrchestrationInstanceCreated(
+                0,
+                firstTimestamp,
+                false,
+                "SayHelloInline",
+                input,
+                subInstanceId,
+            ),
+            HistoryEventFactory.GetOrchestratorCompleted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetOrchestratorStarted(
+                moment(firstTimestamp).add(1, "s").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetSubOrchestrationInstanceFailed(
+                moment(firstTimestamp).add(1, "s").toDate(),
+                false,
+                "Big stack trace here",
+                "Sub orchestrator function 'SayHelloinline' failed: Result: Failure",
+                0,
+            ),
+        ];
+    }
+
+    public static GetSayHelloWithSubOrchestratorRetryRetryOne(
+        firstTimestamp: Date,
+        subInstanceId: string,
+        input: any,
+        retryInterval: number,
+    ) {
+        const firstMoment = moment(firstTimestamp);
+
+        return [
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetExecutionStarted(
+                firstTimestamp,
+                true,
+                "SayHelloWithSubOrchestratorRetry",
+                input,
+            ),
+            HistoryEventFactory.GetSubOrchestrationInstanceCreated(
+                0,
+                firstTimestamp,
+                false,
+                "SayHelloInline",
+                input,
+                subInstanceId,
+            ),
+            HistoryEventFactory.GetOrchestratorCompleted(
+                firstTimestamp,
+                false,
+            ),
+            HistoryEventFactory.GetOrchestratorStarted(
+                moment(firstTimestamp).add(1, "s").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetSubOrchestrationInstanceFailed(
+                moment(firstTimestamp).add(1, "s").toDate(),
+                false,
+                "Big stack trace here",
+                "Sub orchestrator function 'SayHelloinline' failed: Result: Failure",
+                0,
+            ),
+            HistoryEventFactory.GetTimerCreated(
+                1,
+                firstMoment.add(1, "s").toDate(),
+                false,
+                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+            ),
+            HistoryEventFactory.GetOrchestratorCompleted(
+                firstMoment.add(1, "s").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetOrchestratorStarted(
+                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                false,
+            ),
+            HistoryEventFactory.GetTimerFired(
+                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                false,
+                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                1,
             ),
         ];
     }

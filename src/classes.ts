@@ -5,6 +5,7 @@ export { IAction } from "./iaction";
 export { CallActivityAction } from "./callactivityaction";
 export { CallActivityWithRetryAction } from "./callactivitywithretryaction";
 export { CallSubOrchestratorAction } from "./callsuborchestratoraction";
+export { CallSubOrchestratorWithRetryAction } from "./callsuborchestratorwithretryaction";
 export { ContinueAsNewAction } from "./continueasnewaction";
 export { CreateTimerAction } from "./createtimeraction";
 export { WaitForExternalEventAction } from "./waitforexternaleventaction";

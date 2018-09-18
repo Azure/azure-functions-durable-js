@@ -1,7 +1,7 @@
 import * as debug from "debug";
 import { ActionType, CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
-    CreateTimerAction, HistoryEvent, HistoryEventType, IAction, RetryOptions, Task, TaskSet,
-    TimerTask, WaitForExternalEventAction } from "./classes";
+    CallSubOrchestratorWithRetryAction, CreateTimerAction, HistoryEvent, HistoryEventType, IAction,
+    RetryOptions, Task, TaskSet, TimerTask, WaitForExternalEventAction } from "./classes";
 import { OrchestratorState } from "./orchestratorstate";
 import { ContinueAsNewAction } from "./continueasnewaction";
 
@@ -27,6 +27,7 @@ export class Orchestrator {
         context.df.callActivity = this.callActivity.bind(this, state);
         context.df.callActivityWithRetry = this.callActivityWithRetry.bind(this, state);
         context.df.callSubOrchestrator = this.callSubOrchestrator.bind(this, state);
+        context.df.callSubOrchestratorWithRetry = this.callSubOrchestratorWithRetry.bind(this, state);
         context.df.continueAsNew = this.continueAsNew.bind(this, state);
         context.df.createTimer = this.createTimer.bind(this, state);
         context.df.getInput = this.getInput.bind(this, input);
@@ -118,7 +119,7 @@ export class Orchestrator {
             const taskScheduled = this.findTaskScheduled(state, name);
             const taskCompleted = this.findTaskCompleted(state, taskScheduled);
             const taskFailed = this.findTaskFailed(state, taskScheduled);
-            const taskRetryTimer = this.findTaskRetryTimer(state, taskFailed);
+            const taskRetryTimer = this.findRetryTimer(state, taskFailed);
             const taskRetryTimerFired = this.findTimerFired(state, taskRetryTimer);
             this.setProcessed([ taskScheduled, taskCompleted, taskFailed, taskRetryTimer, taskRetryTimerFired ]);
 
@@ -186,6 +187,62 @@ export class Orchestrator {
         }
     }
 
+    private callSubOrchestratorWithRetry(
+        state: HistoryEvent[],
+        name: string,
+        retryOptions: RetryOptions,
+        input: any,
+        instanceId?: string,
+    ) {
+        const newAction = new CallSubOrchestratorWithRetryAction(name, retryOptions, input, instanceId);
+
+        for (let attempt = 1; attempt <= retryOptions.maxNumberOfAttempts; attempt++) {
+            const subOrchestratorCreated = this.findSubOrchestrationInstanceCreated(state, name, instanceId);
+            const subOrchestratorCompleted = this.findSubOrchestrationInstanceCompleted(state, subOrchestratorCreated);
+            const subOrchestratorFailed = this.findSubOrchestrationInstanceFailed(state, subOrchestratorCreated);
+            const retryTimer = this.findRetryTimer(state, subOrchestratorFailed);
+            const retryTimerFired = this.findTimerFired(state, retryTimer);
+            this.setProcessed([
+                subOrchestratorCreated,
+                subOrchestratorCompleted,
+                subOrchestratorFailed,
+                retryTimer,
+                retryTimerFired,
+            ]);
+
+            if (!subOrchestratorCreated) { break; }
+
+            if (subOrchestratorCompleted) {
+                const result = this.parseHistoryEvent(subOrchestratorCompleted);
+
+                return new Task(
+                    true,
+                    false,
+                    newAction,
+                    result,
+                    subOrchestratorCompleted.Timestamp,
+                    subOrchestratorCompleted.TaskScheduledId,
+                );
+            } else if (subOrchestratorFailed && retryTimer && attempt >= retryOptions.maxNumberOfAttempts) {
+                return new Task(
+                    true,
+                    true,
+                    newAction,
+                    subOrchestratorFailed.Reason,
+                    subOrchestratorFailed.Timestamp,
+                    subOrchestratorFailed.TaskScheduledId,
+                    new Error(subOrchestratorFailed.Reason),
+                );
+            }
+        }
+
+        return new Task(
+            false,
+            false,
+            newAction,
+        );
+    }
+
     private continueAsNew(state: HistoryEvent[], input: any) {
         const newAction = new ContinueAsNewAction(input);
 
@@ -219,7 +276,7 @@ export class Orchestrator {
 
         const eventRaised = this.findEventRaised(state, name);
         this.setProcessed([ eventRaised ]);
-        
+
         if (eventRaised) {
             const result = this.parseHistoryEvent(eventRaised);
 
@@ -313,6 +370,17 @@ export class Orchestrator {
     }
 
     /* Returns undefined if not found. */
+    private findRetryTimer(state: HistoryEvent[], failedTask: HistoryEvent) {
+        return failedTask ?
+            state.filter((val: HistoryEvent, index: number, array: HistoryEvent[]) => {
+                const failedTaskIndex = array.indexOf(failedTask);
+                return val.EventType === HistoryEventType.TimerCreated
+                    && index === (failedTaskIndex + 1);
+            })[0]
+            : undefined;
+    }
+
+    /* Returns undefined if not found. */
     private findSubOrchestrationInstanceCreated(state: HistoryEvent[], name: string, instanceId: string) {
         return name ?
             state.filter((val: HistoryEvent) => {
@@ -371,17 +439,6 @@ export class Orchestrator {
             state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskFailed
                     && val.TaskScheduledId === scheduledTask.EventId;
-            })[0]
-            : undefined;
-    }
-
-    /* Returns undefined if not found. */
-    private findTaskRetryTimer(state: HistoryEvent[], failedTask: HistoryEvent) {
-        return failedTask ?
-            state.filter((val: HistoryEvent, index: number, array: HistoryEvent[]) => {
-                const failedTaskIndex = array.indexOf(failedTask);
-                return val.EventType === HistoryEventType.TimerCreated
-                    && index === (failedTaskIndex + 1);
             })[0]
             : undefined;
     }

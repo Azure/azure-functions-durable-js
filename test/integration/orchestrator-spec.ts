@@ -7,6 +7,7 @@ import {
     HistoryEvent, HistoryEventType, OrchestratorState, WaitForExternalEventAction,
     CallSubOrchestratorAction,
     RetryOptions,
+    CallSubOrchestratorWithRetryAction,
     } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/testorchestrations";
@@ -428,7 +429,7 @@ describe("Orchestrator", () => {
             done();
         });
 
-        it("faults a failed activity function if >= max attempts", (done) => {
+        it.skip("faults a failed activity function if >= max attempts", (done) => {
             // needs exception catching figured out
             done();
         });
@@ -535,6 +536,8 @@ describe("Orchestrator", () => {
                 context: {
                     history: TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
                         moment.utc().toDate(),
+                        "SayHelloWithSubOrchestrator",
+                        "SayHelloWithActivity",
                         childId,
                         name,
                     ),
@@ -559,6 +562,171 @@ describe("Orchestrator", () => {
 
         it.skip("throws an exception when sub-orchestrator throws unhandled exception", (done) => {
             // needs exception catching figured out
+            done();
+        });
+    });
+
+    describe("callSubOrchestratorWithRetry()", () => {
+        it.skip("throws an error when retryOptions is undefined", (done) => {
+            // needs exception catching figured out
+            done();
+        });
+
+        it("schedules a suborchestrator function", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetry;
+            const name = "World";
+            const id = uuidv1();
+            const childId = `${id}:0`;
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetOrchestratorStart(
+                        "SayHelloWithSubOrchestratorRetry",
+                        moment.utc().toDate(),
+                        name),
+                    input: name,
+                    instanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    false,
+                    [
+                        [
+                            new CallSubOrchestratorWithRetryAction(
+                                "SayHelloInline",
+                                new RetryOptions(10000, 2),
+                                name,
+                                childId,
+                            ),
+                        ],
+                    ],
+                    undefined,
+                ),
+            );
+            done();
+        });
+
+        it("schedules a suborchestrator function if < max attempts", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetry;
+            const name = "World";
+            const id = uuidv1();
+            const childId = `${id}:0`;
+            const retryOptions = new RetryOptions(10000, 2);
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithSubOrchestratorRetryRetryOne(
+                        moment.utc().toDate(),
+                        childId,
+                        name,
+                        retryOptions.firstRetryIntervalInMilliseconds),
+                    input: name,
+                    instanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    false,
+                    [
+                        [
+                            new CallSubOrchestratorWithRetryAction(
+                                "SayHelloInline",
+                                retryOptions,
+                                name,
+                                childId,
+                            ),
+                        ],
+                    ],
+                    undefined,
+                ),
+            );
+            done();
+        });
+
+        it("retries a failed suborchestrator function if < max attempts", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetry;
+            const name = "World";
+            const id = uuidv1();
+            const childId = `${id}:0`;
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithSubOrchestratorRetryFailOne(
+                        moment.utc().toDate(),
+                        childId,
+                        name,
+                    ),
+                    input: name,
+                    instanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    false,
+                    [
+                        [
+                            new CallSubOrchestratorWithRetryAction(
+                                "SayHelloInline",
+                                new RetryOptions(10000, 2),
+                                name,
+                                childId,
+                            ),
+                        ],
+                    ],
+                    undefined,
+                ),
+            );
+            done();
+        });
+
+        it.skip("faults a failed suborchestrator function if >= max attempts", (done) => {
+            // needs exception catching figured out
+            done();
+        });
+
+        it("handles a completed suborchestrator function", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetry;
+            const name = "World";
+            const id = uuidv1();
+            const childId = `${id}:0`;
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
+                        moment.utc().toDate(),
+                        "SayHelloWithSubOrchestratorRetry",
+                        "SayHelloInline",
+                        childId,
+                        name),
+                    input: name,
+                    instanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState(
+                    true,
+                    [
+                        [
+                            new CallSubOrchestratorWithRetryAction(
+                                "SayHelloInline",
+                                new RetryOptions(10000, 2),
+                                name,
+                                childId,
+                            ),
+                        ],
+                    ],
+                    `Hello, ${name}!`,
+                ),
+            );
             done();
         });
     });

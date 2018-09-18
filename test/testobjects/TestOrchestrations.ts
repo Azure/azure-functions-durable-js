@@ -77,6 +77,14 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static SayHelloWithSubOrchestratorRetry: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput();
+        const childId = context.df.instanceId + ":0";
+        const retryOptions = new df.RetryOptions(10000, 2);
+        const output = yield context.df.callSubOrchestratorWithRetry("SayHelloInline", retryOptions, input, childId);
+        return output;
+    });
+
     public static SayHelloSequence: any = df.orchestrator(function*(context: any) {
         const output = [];
 
