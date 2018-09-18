@@ -153,6 +153,7 @@ export class Orchestrator {
 
         const subOrchestratorCreated = this.findSubOrchestrationInstanceCreated(state, name, instanceId);
         const subOrchestratorCompleted = this.findSubOrchestrationInstanceCompleted(state, subOrchestratorCreated);
+        const subOrchestratorFailed = this.findSubOrchestrationInstanceFailed(state, subOrchestratorCreated);
         this.setProcessed([subOrchestratorCreated, subOrchestratorCompleted]);
 
         if (subOrchestratorCompleted) {
@@ -165,6 +166,16 @@ export class Orchestrator {
                 result,
                 subOrchestratorCompleted.Timestamp,
                 subOrchestratorCompleted.TaskScheduledId,
+            );
+        } else if (subOrchestratorFailed) {
+            return new Task(
+                true,
+                true,
+                newAction,
+                subOrchestratorFailed.Reason,
+                subOrchestratorFailed.Timestamp,
+                subOrchestratorFailed.TaskScheduledId,
+                new Error(subOrchestratorFailed.Reason),
             );
         } else {
             return new Task(
@@ -318,6 +329,16 @@ export class Orchestrator {
         return createdSubOrchInstance ?
             state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.SubOrchestrationInstanceCompleted
+                    && val.TaskScheduledId === createdSubOrchInstance.EventId;
+            })[0]
+            : undefined;
+    }
+
+    /* Returns undefined if not found. */
+    private findSubOrchestrationInstanceFailed(state: HistoryEvent[], createdSubOrchInstance: HistoryEvent) {
+        return createdSubOrchInstance ?
+            state.filter((val: HistoryEvent) => {
+                return val.EventType === HistoryEventType.SubOrchestrationInstanceFailed
                     && val.TaskScheduledId === createdSubOrchInstance.EventId;
             })[0]
             : undefined;

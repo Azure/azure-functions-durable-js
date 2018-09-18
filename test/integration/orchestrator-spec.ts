@@ -556,6 +556,11 @@ describe("Orchestrator", () => {
             );
             done();
         });
+
+        it.skip("throws an exception when sub-orchestrator throws unhandled exception", (done) => {
+            // needs exception catching figured out
+            done();
+        });
     });
 
     describe("continueAsNew()", () => {
