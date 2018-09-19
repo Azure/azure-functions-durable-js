@@ -8,6 +8,7 @@ import { ContinueAsNewAction } from "./continueasnewaction";
 const log = debug("orchestrator");
 
 export class Orchestrator {
+    private customStatus: any;
 
     constructor(public fn: (context: any) => IterableIterator<any>) { }
 
@@ -31,6 +32,7 @@ export class Orchestrator {
         context.df.continueAsNew = this.continueAsNew.bind(this, state);
         context.df.createTimer = this.createTimer.bind(this, state);
         context.df.getInput = this.getInput.bind(this, input);
+        context.df.setCustomStatus = this.setCustomStatus.bind(this);
         context.df.waitForExternalEvent = this.waitForExternalEvent.bind(this, state);
         context.df.Task = {};
         context.df.Task.all = this.all.bind(this, state);
@@ -271,6 +273,10 @@ export class Orchestrator {
         return input;
     }
 
+    private setCustomStatus(customStatusObject: any) {
+        this.customStatus = customStatusObject;
+    }
+
     private waitForExternalEvent(state: HistoryEvent[], name: string) {
         const newAction = new WaitForExternalEventAction(name);
 
@@ -346,14 +352,14 @@ export class Orchestrator {
 
     private finish(context: any, state: HistoryEvent[], actions: IAction[][], isDone: boolean = false, output?: any) {
         log("Finish called");
-        const returnValue = new OrchestratorState(isDone, actions, output);
+        const returnValue = new OrchestratorState(isDone, actions, output, this.customStatus);
 
         context.done(null, returnValue);
     }
 
     private error(context: any, actions: IAction[][], err: Error) {
         log(`Error: ${err}`);
-        const returnValue = new OrchestratorState(false, actions, undefined);
+        const returnValue = new OrchestratorState(false, actions, undefined, this.customStatus);
 
         context.done(err, undefined);
     }

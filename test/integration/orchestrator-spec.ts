@@ -818,6 +818,38 @@ describe("Orchestrator", () => {
         });
     });
 
+    describe("setCustomStatus()", () => {
+        it("sets a custom status", (done) => {
+            const orchestrator = TestOrchestrations.SayHelloWithCustomStatus;
+            const name = "World!";
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithActivityReplayOne(
+                        "SayHelloWithCustomStatus",
+                        moment.utc().toDate(),
+                        name,
+                    ),
+                    input: name,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.deep.eq(
+                new OrchestratorState(
+                    false,
+                    [
+                        [ new CallActivityAction("Hello", "Tokyo") ],
+                        [ new CallActivityAction("Hello", "Seattle") ],
+                    ],
+                    undefined,
+                    "Tokyo",
+                ),
+            );
+            done();
+        });
+    });
+
     describe("waitForExternalEvent()", () => {
         it("waits for an external event", (done) => {
             const orchestrator = TestOrchestrations.WaitForExternalEvent;

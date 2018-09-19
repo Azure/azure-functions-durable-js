@@ -64,6 +64,19 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static SayHelloWithCustomStatus: any = df.orchestrator(function*(context: any) {
+        const output = [];
+
+        output.push(yield context.df.callActivity("Hello", "Tokyo"));
+        context.df.setCustomStatus("Tokyo");
+        output.push(yield context.df.callActivity("Hello", "Seattle"));
+        context.df.setCustomStatus("Seattle");
+        output.push(yield context.df.callActivity("Hello", "London"));
+        context.df.setCustomStatus("London");
+
+        return output;
+    });
+
     public static SayHelloWithSubOrchestrator: any = df.orchestrator(function*(context: any) {
         const input = context.df.getInput();
         const childId = context.df.instanceId + ":0";

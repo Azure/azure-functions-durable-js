@@ -5,5 +5,6 @@ export class OrchestratorState {
         public isDone: boolean,
         public actions: IAction[][],
         public output: any,
+        public customStatus?: any,
     ) { }
 }
