@@ -1,9 +1,8 @@
 import * as debug from "debug";
 import { ActionType, CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction, CreateTimerAction, HistoryEvent, HistoryEventType, IAction,
-    RetryOptions, Task, TaskSet, TimerTask, WaitForExternalEventAction } from "./classes";
+    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, HistoryEvent,
+    HistoryEventType, IAction, RetryOptions, Task, TaskSet, TimerTask, WaitForExternalEventAction } from "./classes";
 import { OrchestratorState } from "./orchestratorstate";
-import { ContinueAsNewAction } from "./continueasnewaction";
 
 const log = debug("orchestrator");
 

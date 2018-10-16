@@ -1,3 +1,5 @@
+export { Constants } from "./constants";
+
 export { ActionType } from "./actiontype";
 export { HistoryEventType } from "./historyeventtype";
 
@@ -19,3 +21,16 @@ export { TimerTask } from "./timertask";
 export { OrchestratorState } from "./orchestratorstate";
 
 export { RetryOptions } from "./retryoptions";
+
+export { OrchestrationClient } from "./orchestrationclient";
+export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
+export { HttpCreationPayload } from "./httpcreationpayload";
+export { HttpManagementPayload } from "./httpmanagementpayload";
+
+export { WebhookClient } from "./webhookclient";
+export { HttpResponse } from "./httpresponse";
+
+export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
+export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
+
+export { Utils } from "./utils";

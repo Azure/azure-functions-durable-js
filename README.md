@@ -86,31 +86,43 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 
 ### API Implementation Checklist
 **Implemented**
-* `CurrentUtcDateTime`
-* `InstanceId`
-* `IsReplaying`
-* `ParentInstanceId`
-* `CallActivityAsync(String name, Object input)`
-* `CallActivityWithRetryAsync(String, RetryOptions, Object)`
-* `CallSubOrchestratorAsync(String, Object)`
-* `CallSubOrchestratorAsync(String, String, Object)`
-* `CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)`
-* `CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)`
-* `ContinueAsNew(Object)`
-* `CreateTimer(Date fireAt)`
-* `GetInput()`
-* `WaitForExternalEvent(String name)`
+* DurableOrchestrationContext
+    * `CurrentUtcDateTime`
+    * `InstanceId`
+    * `IsReplaying`
+    * `ParentInstanceId`
+    * `CallActivityAsync(String, Object)`
+    * `CallActivityWithRetryAsync(String, RetryOptions, Object)`
+    * `CallSubOrchestratorAsync(String, Object)`
+    * `CallSubOrchestratorAsync(String, String, Object)`
+    * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)`
+    * `CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)`
+    * `ContinueAsNew(Object)`
+    * `CreateTimer(Date)`
+    * `GetInput()`
+    * `SetCustomStatus(Object)`
+    * `WaitForExternalEvent(String)`
+* DurableOrchestrationClient
+    * `TaskHubName`
+    * `CreateCheckStatusResponse(HttpRequestMessage, String)`
+    * `CreateHttpManagementPayload(String)`
+    * `GetStatusAsync(CancellationToken)`
+    * `GetStatusAsync(String, Boolean, Boolean)`
+    * `GetStatusAsync(DateTime, DateTime, IEnumerable<OrchestrationRuntimeStatus>, CancellationToken)`
+    * `RaiseEventAsync(String, String, Object)`
+    * `RaiseEventAsync(String, String, String, Object, String)`
+    * `RewindAsync(String, String)`
+    * `StartNewAsync(String, String, Object)`
+    * `TerminateAsync(String, String)`
+    * `WaitForCompletionOrCreateCheckStatusResponseAsync(HttpRequestMessage, String, TimeSpan, TimeSpan)`
 * `OrchestrationClient` binding to `string`
 
-**Not Yet Implemented**
-* `SetCustomStatus(Object)`
-* `DurableOrchestrationClient` API
-
 **Will Not Be Implemented**
-* `CallActivityAsync<TResult>(String, Object)`
-* `CallActivityWithRetryAsync<TResult>(String, RetryOptions, Object)`
-* `CallSubOrchestratorAsync<TResult>(String, Object)`
-* `CallSubOrchestratorAsync<TResult>(String, String, Object)`
-* `CallSubOrchestratorWithRetryAsync<TResult>(String, RetryOptions, Object)`
-* `CallSubOrchestratorWithRetryAsync<TResult>(String, RetryOptions, String, Object)`
-* `CreateTimer<T>(DateTime, T, CancellationToken)`
+* DurableOrchestrationContext
+    * `CallActivityAsync<TResult>(String, Object)`
+    * `CallActivityWithRetryAsync<TResult>(String, RetryOptions, Object)`
+    * `CallSubOrchestratorAsync<TResult>(String, Object)`
+    * `CallSubOrchestratorAsync<TResult>(String, String, Object)`
+    * `CallSubOrchestratorWithRetryAsync<TResult>(String, RetryOptions, Object)`
+    * `CallSubOrchestratorWithRetryAsync<TResult>(String, RetryOptions, String, Object)`
+    * `CreateTimer<T>(DateTime, T, CancellationToken)`

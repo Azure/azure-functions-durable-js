@@ -1,4 +1,10 @@
-import { RetryOptions } from "./classes";
+import { OrchestrationRuntimeStatus, RetryOptions } from "./classes";
+import { orchestrationClient } from "./orchestrationclient";
 import { shim } from "./shim";
 
-export { RetryOptions, shim as orchestrator };
+export {
+    orchestrationClient as getClient,
+    OrchestrationRuntimeStatus,
+    RetryOptions,
+    shim as orchestrator,
+};

@@ -5,7 +5,7 @@
         "name": "req",
         "type": "httpTrigger",
         "direction": "in",
-        "route": "orchestrators/js/{functionName}",
+        "route": "orchestrators/wait/{functionName}",
         "methods": ["post"]
       },
       {
@@ -16,7 +16,7 @@
       {
         "name": "starter",
         "type": "orchestrationClient",
-        "direction": "out"
+        "direction": "in"
       }
     ],
     "disabled": false

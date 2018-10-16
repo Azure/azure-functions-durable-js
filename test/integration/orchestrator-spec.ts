@@ -3,11 +3,9 @@ import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
 import {
-    CallActivityAction, CallActivityWithRetryAction, ContinueAsNewAction, CreateTimerAction,
-    HistoryEvent, HistoryEventType, OrchestratorState, WaitForExternalEventAction,
-    CallSubOrchestratorAction,
-    RetryOptions,
-    CallSubOrchestratorWithRetryAction,
+    CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
+    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction,
+    OrchestratorState, RetryOptions, WaitForExternalEventAction,
     } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/testorchestrations";
