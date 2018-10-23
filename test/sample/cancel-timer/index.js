@@ -1,11 +1,11 @@
-const df = require("../../../lib/");
+const df = require("durable-functions");
 const moment = require('moment');
 
-module.exports = df(function*(context){
+module.exports = df.orchestrator(function*(context){
     const expiration = moment.utc(context.df.currentUtcDateTime).add(2, 'm');
     const timeoutTask = context.df.createTimer(expiration.toDate());
 
-    const hello = yield context.df.callActivityAsync("E1_SayHello", "from the other side");
+    const hello = yield context.df.callActivity("E1_SayHello", "from the other side");
 
     if (!timeoutTask.isCompleted) {
         timeoutTask.cancel();
