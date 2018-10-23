@@ -61,9 +61,9 @@ The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-fun
 \* <sub>Currently available in C# only</sub>
 
 ```javascript
-const df = require("../../../lib/");
+const df = require("durable-functions");
 
-module.exports = df(function*(context){
+module.exports = df.orchestrator(function*(context){
     context.log("Starting chain sample");
     const output = [];
     output.push(yield context.df.callActivityAsync("E1_SayHello", "Tokyo"));
