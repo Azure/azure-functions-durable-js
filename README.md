@@ -12,7 +12,7 @@ Not all functionality has been implemented yet and there may be significant chan
 
 Run this command from the root folder of your functions app:
 ```
-func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.5.0
+func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.6.2
 ```
 
 2. Install the package
