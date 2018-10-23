@@ -32,7 +32,7 @@ module.exports = df.orchestrator(function*(context){
 
 4. Write your orchestration logic :
 ```javascript
-yield context.df.callActivityAsync("foo", "bar");
+yield context.df.callActivity("foo", "bar");
 ```
 
 5. Write your [orchestration starter](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-instance-management#starting-instances):
@@ -66,9 +66,9 @@ const df = require("durable-functions");
 module.exports = df.orchestrator(function*(context){
     context.log("Starting chain sample");
     const output = [];
-    output.push(yield context.df.callActivityAsync("E1_SayHello", "Tokyo"));
-    output.push(yield context.df.callActivityAsync("E1_SayHello", "Seattle"));
-    output.push(yield context.df.callActivityAsync("E1_SayHello", "London"));
+    output.push(yield context.df.callActivity("E1_SayHello", "Tokyo"));
+    output.push(yield context.df.callActivity("E1_SayHello", "Seattle"));
+    output.push(yield context.df.callActivity("E1_SayHello", "London"));
 
     return output;
 });
