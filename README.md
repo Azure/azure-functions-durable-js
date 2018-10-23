@@ -25,7 +25,7 @@ npm install durable-functions
 
 ```javascript
 const df = require('durable-functions');
-module.exports = df(function*(context){
+module.exports = df.orchestrator(function*(context){
     // ... your code here
 });
 ```
