@@ -12,7 +12,7 @@ Not all functionality has been implemented yet and there may be significant chan
 
 Run this command from the root folder of your functions app:
 ```
-func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.5.0
+func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.6.2
 ```
 
 2. Install the package
@@ -25,14 +25,14 @@ npm install durable-functions
 
 ```javascript
 const df = require('durable-functions');
-module.exports = df(function*(context){
+module.exports = df.orchestrator(function*(context){
     // ... your code here
 });
 ```
 
 4. Write your orchestration logic :
 ```javascript
-yield context.df.callActivityAsync("foo", "bar");
+yield context.df.callActivity("foo", "bar");
 ```
 
 5. Write your [orchestration starter](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-instance-management#starting-instances):
@@ -61,14 +61,14 @@ The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-fun
 \* <sub>Currently available in C# only</sub>
 
 ```javascript
-const df = require("../../../lib/");
+const df = require("durable-functions");
 
-module.exports = df(function*(context){
+module.exports = df.orchestrator(function*(context){
     context.log("Starting chain sample");
     const output = [];
-    output.push(yield context.df.callActivityAsync("E1_SayHello", "Tokyo"));
-    output.push(yield context.df.callActivityAsync("E1_SayHello", "Seattle"));
-    output.push(yield context.df.callActivityAsync("E1_SayHello", "London"));
+    output.push(yield context.df.callActivity("E1_SayHello", "Tokyo"));
+    output.push(yield context.df.callActivity("E1_SayHello", "Seattle"));
+    output.push(yield context.df.callActivity("E1_SayHello", "London"));
 
     return output;
 });
