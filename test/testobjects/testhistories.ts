@@ -1,49 +1,76 @@
 import * as moment from "moment";
-import { HistoryEvent, HistoryEventType } from "../../src/classes";
-import { HistoryEventFactory } from "./historyeventfactory";
+import { SubOrchestrationInstanceFailedEvent, TaskFailedEvent, TimerCreatedEvent,
+    TimerFiredEvent, 
+    EventRaisedEvent,
+    ExecutionStartedEvent,
+    SubOrchestrationInstanceCreatedEvent,
+    TaskScheduledEvent,
+    SubOrchestrationInstanceCompletedEvent,
+    TaskCompletedEvent,
+    OrchestratorStartedEvent,
+    OrchestratorCompletedEvent} from "../../src/classes";
 
 export class TestHistories {
     public static GetAnyAOrB(firstTimestamp: Date, completeInOrder: boolean) {
         const firstMoment = moment(firstTimestamp);
 
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "AnyAOrB",
-                completeInOrder,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "AnyAOrB",
+                    input: JSON.stringify(completeInOrder),
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                0,
-                firstTimestamp,
-                false,
-                "TaskA",
-                JSON.stringify(!completeInOrder),
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "TaskA",
+                    input: JSON.stringify(completeInOrder),
+                },
+            ),            
+            new TaskScheduledEvent(
+                {
+                    eventId: 1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "TaskB",
+                    input: JSON.stringify(completeInOrder),
+                },
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                1,
-                firstTimestamp,
-                false,
-                "TaskB",
-                JSON.stringify(completeInOrder),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").toDate(),
-                false,
-            ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(1, "s").toDate(),
-                false,
-                completeInOrder ? JSON.stringify("A") : JSON.stringify("B"),
-                completeInOrder ? 0 : 1,
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(completeInOrder ? "A" : "B"),
+                    taskScheduledId: completeInOrder ? 0 : 1,
+                },
             ),
         ];
     }
@@ -52,78 +79,118 @@ export class TestHistories {
         const firstMoment = moment(firstTimestamp);
 
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "FanOutFanInDiskUsage",
-                undefined,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "FanOutFanInDiskUsage",
+                    input: undefined,
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                0,
-                firstTimestamp,
-                false,
-                "GetFileList",
-                "C:\\Dev",
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "GetFileList",
+                    input: "C:\\Dev",
+                },
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
+            ),            
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(files),
+                    taskScheduledId: 0,
+                },
+            ),            
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(1, "s").toDate(),
-                false,
-                JSON.stringify(files),
-                0,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
-            ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(2, "s").toDate(),
-                false,
-            ),
-        ].concat(files.map((file, index) => HistoryEventFactory.GetTaskScheduled(
-            index + 1,
-            firstMoment.add(2, "s").toDate(),
-            false,
-            "GetFileSize",
-            file)),
-        ).concat(
+        ].concat(files.map((file, index) => new TaskScheduledEvent(
+            {
+                eventId: index + 1,
+                timestamp: firstMoment.add(2, "s").toDate(),
+                isPlayed: false,
+                name: "GetFileSize",
+                input: file,
+            },
+        ))).concat(
         [
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(3, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(3, "s").toDate(),
-                false,
-                JSON.stringify(1),
-                1,
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(1),
+                    taskScheduledId: 1,
+                },
             ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(3, "s").toDate(),
-                false,
-                JSON.stringify(2),
-                2,
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(2),
+                    taskScheduledId: 2,
+                },
             ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(3, "s").toDate(),
-                false,
-                JSON.stringify(3),
-                3,
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(3),
+                    taskScheduledId: 3,
+                },
             ),
         ]);
     }
@@ -132,67 +199,101 @@ export class TestHistories {
         const firstMoment = moment(firstTimestamp);
 
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "FanOutFanInDiskUsage",
-                undefined,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "FanOutFanInDiskUsage",
+                    input: undefined,
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                0,
-                firstTimestamp,
-                false,
-                "GetFileList",
-                "C:\\Dev",
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "GetFileList",
+                    input: "C:\\Dev",
+                },
+            ),            
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(files),
+                    taskScheduledId: 0,
+                },
             ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(1, "s").toDate(),
-                false,
-                JSON.stringify(files),
-                0,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(2, "s").toDate(),
-                false,
-            ),
-        ].concat(files.map((file, index) => HistoryEventFactory.GetTaskScheduled(
-            index + 1,
-            firstMoment.add(2, "s").toDate(),
-            false,
-            "GetFileSize",
-            file)),
-        ).concat(
+        ].concat(files.map((file, index) => new TaskScheduledEvent(
+            {
+                eventId: index + 1,
+                timestamp: firstMoment.add(2, "s").toDate(),
+                isPlayed: false,
+                name: "GetFileSize",
+                input: file,
+            },
+        ))).concat(
         [
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(3, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(3, "s").toDate(),
-                false,
-                JSON.stringify(2),
-                2,
-            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(2),
+                    taskScheduledId: 2,
+                },
+            ),            
         ]);
     }
 
@@ -200,37 +301,54 @@ export class TestHistories {
         const firstMoment = moment(firstTimestamp);
 
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "FanOutFanInDiskUsage",
-                undefined,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "FanOutFanInDiskUsage",
+                    input: undefined,
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                0,
-                firstTimestamp,
-                false,
-                "GetFileList",
-                "C:\\Dev",
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "GetFileList",
+                    input: "C:\\Dev",
+                },
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(1, "s").toDate(),
-                false,
-                JSON.stringify(files),
-                0,
-            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(files),
+                    taskScheduledId: 0,
+                },
+            ),            
         ];
     }
 
@@ -238,93 +356,139 @@ export class TestHistories {
         const firstMoment = moment(firstTimestamp);
 
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
+            ),            
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: name,
+                    input: undefined,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                name,
-                undefined,
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "Hello",
+                    input: null,
+                },
+            ),            
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                0,
-                firstTimestamp,
-                false,
-                "Hello",
-                null,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: true,
+                    result: JSON.stringify("Hello, Tokyo!"),
+                    taskScheduledId: 0,
+                },
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new TaskScheduledEvent(
+                {
+                    eventId: 1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    name: "Hello",
+                    input: null,
+                },
             ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(1, "s").toDate(),
-                true,
-                JSON.stringify("Hello, Tokyo!"),
-                0,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                1,
-                firstMoment.add(1, "s").toDate(),
-                false,
-                "Hello",
-                null,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").toDate(),
+                    isPlayed: true,
+                    result: JSON.stringify("Hello, Seattle!"),
+                    taskScheduledId: 1,
+                },
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(2, "s").toDate(),
-                false,
+            new TaskScheduledEvent(
+                {
+                    eventId: 2,
+                    timestamp: firstMoment.add(2, "s").toDate(),
+                    isPlayed: false,
+                    name: "Hello",
+                    input: null,
+                },
             ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(2, "s").toDate(),
-                true,
-                JSON.stringify("Hello, Seattle!"),
-                1,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").toDate(),
+                    isPlayed: false,
+                }
+            ),            
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                2,
-                firstMoment.add(2, "s").toDate(),
-                false,
-                "Hello",
-                null,
-            ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstMoment.add(2, "s").toDate(),
-                false,
-            ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(3, "s").toDate(),
-                false,
-            ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(3, "s").toDate(),
-                true,
-                JSON.stringify("Hello, London!"),
-                2,
-            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: true,
+                    result: JSON.stringify("Hello, London!"),
+                    taskScheduledId: 2,
+                },
+            ),            
         ];
     }
 
     public static GetOrchestratorStart(name: string, firstTimestamp: Date, input?: any) {
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                moment(firstTimestamp).add(5, "ms").toDate(),
-                false,
-                name,
-                input),
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(5, "ms").toDate(),
+                    isPlayed: false,
+                    name: name,
+                    input: input,
+                }
+            ),
         ];
     }
 
@@ -332,73 +496,107 @@ export class TestHistories {
         const firstMoment = moment(firstTimestamp);
 
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                name,
-                input,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: name,
+                    input: input,
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                0,
-                firstTimestamp,
-                false,
-                "Hello",
-                input,
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "Hello",
+                    input: input,
+                },
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTaskCompleted(
-                firstMoment.add(1, "s").toDate(),
-                false,
-                JSON.stringify(`Hello, ${input}!`),
-                0,
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(`Hello, ${input}!`),
+                    taskScheduledId: 0,
+                },
             ),
         ];
     }
 
     public static GetSayHelloWithActivityRetryFailOne(firstTimestamp: Date, input: any) {
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "SayHelloWithActivityRetry",
-                input,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "SayHelloWithActivityRetry",
+                    input: input,
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                0,
-                firstTimestamp,
-                false,
-                "Hello",
-                undefined,
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "Hello",
+                    input: undefined,
+                },
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                moment(firstTimestamp).add(1, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTaskFailed(
-                moment(firstTimestamp).add(1, "s").toDate(),
-                false,
-                0,
-                "Big stack trace here",
-                "Activity function 'Hello' failed: Result: Failure",
+            new TaskFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
+                    isPlayed: false,
+                    taskScheduledId: 0,
+                    details: "Big stack trace here",
+                    reason: "Activity function 'Hello' failed: Result: Failure",
+                }
             ),
         ];
     }
@@ -407,57 +605,85 @@ export class TestHistories {
         const firstMoment = moment(firstTimestamp);
 
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "SayHelloWithActivityRetry",
-                input,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "SayHelloWithActivityRetry",
+                    input: input,
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                0,
-                firstTimestamp,
-                false,
-                "Hello",
-                undefined,
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "Hello",
+                    input: undefined,
+                },
+            ),            
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new TaskFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    taskScheduledId: 0,
+                    details: "Big stack trace here",
+                    reason: "Activity function 'Hello' failed: Result: Failure",
+                }
             ),
-            HistoryEventFactory.GetTaskFailed(
-                firstMoment.add(1, "s").toDate(),
-                true,
-                0,
-                "Big stack trace here",
-                "Activity function 'Hello' failed: Result: Failure",
+            new TimerCreatedEvent(
+                {
+                    eventId: 1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                }
             ),
-            HistoryEventFactory.GetTimerCreated(
-                1,
-                firstMoment.add(1, "s").toDate(),
-                false,
-                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
-                false,
-            ),
-            HistoryEventFactory.GetTimerFired(
-                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
-                false,
-                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
-                1,
+            new TimerFiredEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                    timerId: 1,
+                },
             ),
         ];
     }
@@ -472,75 +698,109 @@ export class TestHistories {
         const firstMoment = moment(firstTimestamp);
 
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                orchestratorName,
-                input,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: orchestratorName,
+                    input: input,
+                }
             ),
-            HistoryEventFactory.GetSubOrchestrationInstanceCreated(
-                0,
-                firstTimestamp,
-                false,
-                subOrchestratorName,
-                input,
-                subInstanceId,
+            new SubOrchestrationInstanceCreatedEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: subOrchestratorName,
+                    input: input,
+                    instanceId: subInstanceId,
+                },
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetSubOrchestrationInstanceCompleted(
-                firstMoment.add(1, "s").toDate(),
-                false,
-                JSON.stringify(`Hello, ${input}!`),
-                0,
+            new SubOrchestrationInstanceCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(`Hello, ${input}!`),
+                    taskScheduledId: 0,
+                },
             ),
         ];
     }
 
     public static GetSayHelloWithSubOrchestratorRetryFailOne(firstTimestamp: Date, subInstanceId: string, input: any) {
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "SayHelloWithSubOrchestratorRetry",
-                input,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "SayHelloWithSubOrchestratorRetry",
+                    input: input,
+                }
             ),
-            HistoryEventFactory.GetSubOrchestrationInstanceCreated(
-                0,
-                firstTimestamp,
-                false,
-                "SayHelloInline",
-                input,
-                subInstanceId,
+            new SubOrchestrationInstanceCreatedEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "SayHelloInline",
+                    input: input,
+                    instanceId: subInstanceId,
+                },
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                moment(firstTimestamp).add(1, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetSubOrchestrationInstanceFailed(
-                moment(firstTimestamp).add(1, "s").toDate(),
-                false,
-                "Big stack trace here",
-                "Sub orchestrator function 'SayHelloinline' failed: Result: Failure",
-                0,
+            new SubOrchestrationInstanceFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
+                    isPlayed: false,
+                    details: "Big stack trace here",
+                    reason: "Sub orchestrator function 'SayHelloInline' failed: Result: Failure",
+                    taskScheduledId: 0,
+                },
             ),
         ];
     }
@@ -554,95 +814,140 @@ export class TestHistories {
         const firstMoment = moment(firstTimestamp);
 
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "SayHelloWithSubOrchestratorRetry",
-                input,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "SayHelloWithSubOrchestratorRetry",
+                    input: input,
+                }
             ),
-            HistoryEventFactory.GetSubOrchestrationInstanceCreated(
-                0,
-                firstTimestamp,
-                false,
-                "SayHelloInline",
-                input,
-                subInstanceId,
+            new SubOrchestrationInstanceCreatedEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "SayHelloInline",
+                    input: input,
+                    instanceId: subInstanceId,
+                },
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                moment(firstTimestamp).add(1, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetSubOrchestrationInstanceFailed(
-                moment(firstTimestamp).add(1, "s").toDate(),
-                false,
-                "Big stack trace here",
-                "Sub orchestrator function 'SayHelloinline' failed: Result: Failure",
-                0,
+            new SubOrchestrationInstanceFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
+                    isPlayed: false,
+                    details: "Big stack trace here",
+                    reason: "Sub orchestrator function 'SayHelloInline' failed: Result: Failure",
+                    taskScheduledId: 0,
+                },
             ),
-            HistoryEventFactory.GetTimerCreated(
-                1,
-                firstMoment.add(1, "s").toDate(),
-                false,
-                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+            new TimerCreatedEvent(
+                {
+                    eventId: 1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTimerFired(
-                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
-                false,
-                firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
-                1,
+            new TimerFiredEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                    timerId: 1,
+                },
             ),
         ];
     }
 
     public static GetThrowsExceptionFromActivityReplayOne(firstTimestamp: Date) {
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "DoesntHandleExceptionFromActivity",
-                undefined,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "DoesntHandleExceptionFromActivity",
+                    input: undefined,
+                }
             ),
-            HistoryEventFactory.GetTaskScheduled(
-                0,
-                firstTimestamp,
-                false,
-                "ThrowsErrorActivity",
-                undefined,
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "ThrowsErrorActivity",
+                    input: undefined,
+                },
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                moment(firstTimestamp).add(1, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTaskFailed(
-                moment(firstTimestamp).add(1, "s").toDate(),
-                false,
-                0,
-                "Big stack trace here",
-                "Activity function 'ThrowsErrorActivity' failed: Result: Failure",
+            new TaskFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
+                    isPlayed: false,
+                    taskScheduledId: 0,
+                    details: "Big stack trace here",
+                    reason: "Activity function 'Hello' failed: Result: Failure",
+                }
             ),
         ];
     }
@@ -651,64 +956,96 @@ export class TestHistories {
         const firstMoment = moment(firstTimestamp);
 
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "WaitForExternalEvent",
-                input,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "WaitForExternalEvent",
+                    input: input,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstMoment.add(1, "s").toDate(),
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetEventRaised(
-                firstMoment.add(1, "s").toDate(),
-                false,
-                JSON.stringify(input),
-                eventName,
+            new EventRaisedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    input: JSON.stringify(input),
+                    name: eventName,
+                },
             ),
         ];
     }
 
     public static GetWaitOnTimerFired(firstTimestamp: Date, fireAt: Date) {
         return [
-            HistoryEventFactory.GetOrchestratorStarted(
-                firstTimestamp,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetExecutionStarted(
-                firstTimestamp,
-                true,
-                "WaitOnTimer",
-                fireAt,
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "WaitOnTimer",
+                    input: JSON.stringify(fireAt),
+                }
             ),
-            HistoryEventFactory.GetTimerCreated(
-                0,
-                firstTimestamp,
-                false,
-                fireAt,
+            new TimerCreatedEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    fireAt: fireAt,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorCompleted(
-                firstTimestamp,
-                false,
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetOrchestratorStarted(
-                fireAt,
-                false,
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: fireAt,
+                    isPlayed: false,
+                }
             ),
-            HistoryEventFactory.GetTimerFired(
-                fireAt,
-                false,
-                fireAt,
-                0,
+            new TimerFiredEvent(
+                {
+                    eventId: -1,
+                    timestamp: fireAt,
+                    isPlayed: false,
+                    fireAt: fireAt,
+                    timerId: 0,
+                },
             ),
         ];
     }

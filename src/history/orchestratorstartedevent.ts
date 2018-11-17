@@ -1,0 +1,14 @@
+import { HistoryEvent, HistoryEventOptions, HistoryEventType } from "../classes";
+
+export class OrchestratorStartedEvent extends HistoryEvent {
+    constructor(
+        options: HistoryEventOptions,
+    ) {
+        super(
+            HistoryEventType.OrchestratorStarted,
+            options.eventId,
+            options.isPlayed,
+            options.timestamp,
+        );
+    }
+}

@@ -1,4 +1,4 @@
-import { ActionType, IAction } from "./classes";
+import { ActionType, IAction } from "../classes";
 
 export class WaitForExternalEventAction implements IAction {
     public actionType: ActionType = ActionType.WaitForExternalEvent;

@@ -1,4 +1,4 @@
-import { ActionType, IAction } from "./classes";
+import { ActionType, IAction } from "../classes";
 
 export class ContinueAsNewAction implements IAction {
     public actionType: ActionType = ActionType.ContinueAsNew;

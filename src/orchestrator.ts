@@ -1,15 +1,17 @@
 import * as debug from "debug";
-import { ActionType, CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, HistoryEvent,
-    HistoryEventType, IAction, RetryOptions, Task, TaskSet, TimerTask, WaitForExternalEventAction } from "./classes";
-import { OrchestratorState } from "./orchestratorstate";
+import { CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
+    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, EventRaisedEvent, HistoryEvent,
+    HistoryEventType, IAction, OrchestratorState, RetryOptions, SubOrchestrationInstanceCompletedEvent,
+    SubOrchestrationInstanceCreatedEvent, SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent,
+    TaskFailedEvent, TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask, WaitForExternalEventAction
+    } from "./classes";
 
 const log = debug("orchestrator");
 
 export class Orchestrator {
     private customStatus: any;
 
-    constructor(public fn: (context: any) => IterableIterator<any>) { }
+    constructor(public fn: (context: any) => IterableIterator<any>) { } // TODO: define shape of context
 
     public listen() {
         return this.handle.bind(this);
@@ -38,7 +40,8 @@ export class Orchestrator {
         context.df.Task.any = this.any.bind(this, state);
 
         // Initialize currentUtcDateTime
-        let decisionStartedEvent = state.find((e) => (e.EventType === HistoryEventType.OrchestratorStarted));
+        let decisionStartedEvent = state.find((e) => 
+            (e.EventType === HistoryEventType.OrchestratorStarted));
         if (decisionStartedEvent) {
             context.df.currentUtcDateTime = decisionStartedEvent.Timestamp;
         }
@@ -334,13 +337,13 @@ export class Orchestrator {
 
         switch (directiveResult.EventType) {
             case (HistoryEventType.EventRaised):
-                parsedDirectiveResult = JSON.parse(directiveResult.Input);
+                parsedDirectiveResult = JSON.parse((directiveResult as EventRaisedEvent).Input);
                 break;
             case (HistoryEventType.SubOrchestrationInstanceCompleted):
-                parsedDirectiveResult = JSON.parse(directiveResult.Result);
+                parsedDirectiveResult = JSON.parse((directiveResult as SubOrchestrationInstanceCompletedEvent).Result);
                 break;
             case (HistoryEventType.TaskCompleted):
-                parsedDirectiveResult = JSON.parse(directiveResult.Result);
+                parsedDirectiveResult = JSON.parse((directiveResult as TaskCompletedEvent).Result);
                 break;
             default:
                 break;
@@ -364,108 +367,128 @@ export class Orchestrator {
     }
 
     /* Returns undefined if not found. */
-    private findEventRaised(state: HistoryEvent[], eventName: string) {
-        return eventName ?
-            state.filter((val: HistoryEvent) => {
+    private findEventRaised(state: HistoryEvent[], eventName: string): EventRaisedEvent {
+        const returnValue = eventName 
+            ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.EventRaised
-                    && val.Name === eventName
+                    && (val as EventRaisedEvent).Name === eventName
                     && !val.IsProcessed;
             })[0]
             : undefined;
+        return returnValue as EventRaisedEvent;
     }
 
     /* Returns undefined if not found. */
-    private findRetryTimer(state: HistoryEvent[], failedTask: HistoryEvent) {
-        return failedTask ?
-            state.filter((val: HistoryEvent, index: number, array: HistoryEvent[]) => {
+    private findRetryTimer(state: HistoryEvent[], failedTask: HistoryEvent): TimerCreatedEvent {
+        const returnValue = failedTask 
+            ? state.filter((val: HistoryEvent, index: number, array: HistoryEvent[]) => {
                 const failedTaskIndex = array.indexOf(failedTask);
                 return val.EventType === HistoryEventType.TimerCreated
                     && index === (failedTaskIndex + 1);
             })[0]
             : undefined;
+        return returnValue as TimerCreatedEvent;
     }
 
     /* Returns undefined if not found. */
-    private findSubOrchestrationInstanceCreated(state: HistoryEvent[], name: string, instanceId: string) {
-        return name ?
-            state.filter((val: HistoryEvent) => {
+    private findSubOrchestrationInstanceCreated(
+        state: HistoryEvent[],
+        name: string,
+        instanceId: string)
+        : SubOrchestrationInstanceCreatedEvent {
+        const returnValue = name 
+            ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.SubOrchestrationInstanceCreated
-                    && val.Name === name
-                    && val.InstanceId === instanceId
+                    && (val as SubOrchestrationInstanceCreatedEvent).Name === name
+                    && (val as SubOrchestrationInstanceCreatedEvent).InstanceId === instanceId
                     && !val.IsProcessed;
             })[0]
             : undefined;
+        return returnValue as SubOrchestrationInstanceCreatedEvent;
     }
 
     /* Returns undefined if not found. */
-    private findSubOrchestrationInstanceCompleted(state: HistoryEvent[], createdSubOrchInstance: HistoryEvent) {
-        return createdSubOrchInstance ?
-            state.filter((val: HistoryEvent) => {
+    private findSubOrchestrationInstanceCompleted(
+        state: HistoryEvent[], 
+        createdSubOrchInstance: SubOrchestrationInstanceCreatedEvent)
+        : SubOrchestrationInstanceCompletedEvent {
+        const returnValue = createdSubOrchInstance 
+            ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.SubOrchestrationInstanceCompleted
-                    && val.TaskScheduledId === createdSubOrchInstance.EventId;
+                    && (val as SubOrchestrationInstanceCompletedEvent).TaskScheduledId === createdSubOrchInstance.EventId;
             })[0]
             : undefined;
+        return returnValue as SubOrchestrationInstanceCompletedEvent;
     }
 
     /* Returns undefined if not found. */
-    private findSubOrchestrationInstanceFailed(state: HistoryEvent[], createdSubOrchInstance: HistoryEvent) {
-        return createdSubOrchInstance ?
-            state.filter((val: HistoryEvent) => {
+    private findSubOrchestrationInstanceFailed(
+        state: HistoryEvent[],
+        createdSubOrchInstance: SubOrchestrationInstanceCreatedEvent)
+        : SubOrchestrationInstanceFailedEvent {
+        const returnValue = createdSubOrchInstance 
+            ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.SubOrchestrationInstanceFailed
-                    && val.TaskScheduledId === createdSubOrchInstance.EventId;
+                    && (val as SubOrchestrationInstanceFailedEvent).TaskScheduledId === createdSubOrchInstance.EventId;
             })[0]
             : undefined;
+        return returnValue as SubOrchestrationInstanceFailedEvent;
     }
 
     /* Returns undefined if not found. */
-    private findTaskScheduled(state: HistoryEvent[], name: string) {
-        return name ?
-            state.filter((val: HistoryEvent) => {
+    private findTaskScheduled(state: HistoryEvent[], name: string): TaskScheduledEvent {
+        const returnValue = name 
+            ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskScheduled
-                    && val.Name === name
+                    && (val as TaskScheduledEvent).Name === name
                     && !val.IsProcessed;
             })[0]
             : undefined;
+        return returnValue as TaskScheduledEvent;
     }
 
     /* Returns undefined if not found. */
-    private findTaskCompleted(state: HistoryEvent[], scheduledTask: HistoryEvent) {
-        return scheduledTask ?
-            state.filter((val: HistoryEvent) => {
+    private findTaskCompleted(state: HistoryEvent[], scheduledTask: TaskScheduledEvent): TaskCompletedEvent {
+        const returnValue = scheduledTask 
+            ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskCompleted
-                    && val.TaskScheduledId === scheduledTask.EventId;
+                    && (val as TaskCompletedEvent).TaskScheduledId === scheduledTask.EventId;
             })[0]
             : undefined;
+        return returnValue as TaskCompletedEvent;
     }
 
     /* Returns undefined if not found. */
-    private findTaskFailed(state: HistoryEvent[], scheduledTask: HistoryEvent) {
-        return scheduledTask ?
-            state.filter((val: HistoryEvent) => {
+    private findTaskFailed(state: HistoryEvent[], scheduledTask: HistoryEvent): TaskFailedEvent {
+        const returnValue = scheduledTask 
+        ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskFailed
-                    && val.TaskScheduledId === scheduledTask.EventId;
+                    && (val as TaskFailedEvent).TaskScheduledId === scheduledTask.EventId;
             })[0]
             : undefined;
+        return returnValue as TaskFailedEvent;
     }
 
     /* Returns undefined if not found. */
-    private findTimerCreated(state: HistoryEvent[], fireAt: Date) {
-        return fireAt ?
-            state.filter((val: HistoryEvent) => {
+    private findTimerCreated(state: HistoryEvent[], fireAt: Date): TimerCreatedEvent {
+        const returnValue = fireAt 
+            ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TimerCreated
-                    && new Date(val.FireAt).getTime() === fireAt.getTime();
+                    && new Date((val as TimerCreatedEvent).FireAt).getTime() === fireAt.getTime();
             })[0]
             : undefined;
+        return returnValue as TimerCreatedEvent;
     }
 
     /* Returns undefined if not found. */
-    private findTimerFired(state: HistoryEvent[], createdTimer: HistoryEvent) {
-        return createdTimer ?
-            state.filter((val: HistoryEvent) => {
+    private findTimerFired(state: HistoryEvent[], createdTimer: HistoryEvent): TimerFiredEvent {
+        const returnValue = createdTimer 
+            ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TimerFired
-                    && val.TimerId === createdTimer.EventId;
+                    && (val as TimerFiredEvent).TimerId === createdTimer.EventId;
             })[0]
             : undefined;
+        return returnValue as TimerFiredEvent;
     }
 
     private setProcessed(events: HistoryEvent[]) {
