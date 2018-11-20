@@ -7,20 +7,20 @@ export class WebhookClient {
         return this.callWebhook(url, "GET", undefined, timeoutInMilliseconds);
     }
 
-    public post(url: URL, input?: any, timeoutInMilliseconds?: number): Promise<HttpResponse> {
+    public post(url: URL, input?: unknown, timeoutInMilliseconds?: number): Promise<HttpResponse> {
         return this.callWebhook(url, "POST", input, timeoutInMilliseconds);
     }
 
     private callWebhook(
         url: URL,
         httpMethod: string,
-        input?: any,
+        input?: unknown,
         timeoutInMilliseconds?: number,
         ): Promise<HttpResponse> {
         return new Promise((resolve, reject) => {
             const requestData = JSON.stringify(input);
 
-            const options: any = {
+            const options: IRequestOptions = {
                 hostname: url.hostname,
                 path: url.pathname + url.search,
                 method: httpMethod,
@@ -38,7 +38,7 @@ export class WebhookClient {
                 options.timeout = timeoutInMilliseconds + 500;
             }
 
-            let requestModule: any;
+            let requestModule: unknown;
             switch (url.protocol) {
                 case "http:":
                     requestModule = http;
@@ -50,7 +50,7 @@ export class WebhookClient {
                     throw new Error(`Unrecognized request protocol: ${url.protocol}. Only http: and https: are accepted.`); // tslint:disable-line max-line-length
             }
 
-            const req = requestModule.request(options, (res: http.IncomingMessage) => {
+            const req = (requestModule as IModule).request(options, (res: http.IncomingMessage) => {
                 let body = "";
                 res.setEncoding("utf8");
 
@@ -65,7 +65,7 @@ export class WebhookClient {
                 });
             });
 
-            req.on("error", (error: any) => {
+            req.on("error", (error: Error) => {
                 reject(error);
             });
 
@@ -76,3 +76,29 @@ export class WebhookClient {
         });
     }
 }
+
+interface IModule {
+    request: IRequest;
+}
+
+interface IRequestHandler {
+    on: IOn;
+    write: IWrite;
+    end: IEnd;
+}
+
+interface IRequestOptions {
+    hostname: string;
+    path: string;
+    method: string;
+    headers: {
+        [key: string]: unknown;
+    };
+    port?: string;
+    timeout?: number;
+}
+
+type IRequest = (options: object, callback: unknown) => IRequestHandler; // TODO: define callback as function
+type IOn = (event: string, callback: unknown) => void;
+type IWrite = (data: unknown) => void;
+type IEnd = () => void;

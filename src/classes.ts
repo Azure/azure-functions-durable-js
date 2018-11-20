@@ -1,13 +1,20 @@
 export { Constants } from "./constants";
+export { Utils } from "./utils";
 
-export { IAction } from "./iaction";
+export { Orchestrator } from "./orchestrator";
+
+export { IFunctionContext } from "./ifunctioncontext";
+export { IDurableOrchestrationBindingInfo } from "./idurableorchestrationbindinginfo";
+export { IDurableOrchestrationContext } from "./idurableorchestrationcontext";
+
+export { IAction } from "./actions/iaction";
 export { ActionType } from "./actions/actiontype";
 export { CallActivityAction } from "./actions/callactivityaction";
 export { CallActivityWithRetryAction } from "./actions/callactivitywithretryaction";
 export { CallSubOrchestratorAction } from "./actions/callsuborchestratoraction";
 export { CallSubOrchestratorWithRetryAction } from "./actions/callsuborchestratorwithretryaction";
 export { ContinueAsNewAction } from "./actions/continueasnewaction";
-export { CreateTimerAction } from "./createtimeraction";
+export { CreateTimerAction } from "./actions/createtimeraction";
 export { WaitForExternalEventAction } from "./actions/waitforexternaleventaction";
 
 export { HistoryEvent } from "./history/historyevent";
@@ -26,6 +33,7 @@ export { TaskScheduledEvent } from "./history/taskscheduledevent";
 export { TimerCreatedEvent } from "./history/timercreatedevent";
 export { TimerFiredEvent } from "./history/timerfiredevent";
 
+export { ITaskMethods } from "./itaskmethods";
 export { TaskSet } from "./taskset";
 export { Task } from "./task";
 export { TimerTask } from "./timertask";
@@ -39,10 +47,9 @@ export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
 export { HttpCreationPayload } from "./httpcreationpayload";
 export { HttpManagementPayload } from "./httpmanagementpayload";
 
+export { IRequest } from "./irequest";
 export { WebhookClient } from "./webhookclient";
 export { HttpResponse } from "./httpresponse";
 
 export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
 export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
-
-export { Utils } from "./utils";

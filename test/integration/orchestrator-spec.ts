@@ -5,8 +5,8 @@ import * as uuidv1 from "uuid/v1";
 import {
     CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
     CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction,
-    OrchestratorState, RetryOptions, WaitForExternalEventAction,
-    } from "../../src/classes";
+    IDurableOrchestrationContext, OrchestratorState, RetryOptions, WaitForExternalEventAction,
+} from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/testorchestrations";
 
@@ -1096,16 +1096,20 @@ describe("Orchestrator", () => {
 
 class MockContext {
     constructor(
-        public bindings: any,
-        public df?: any,
-        public doneValue?: any,
+        public bindings: IBindings,
+        public df?: IDurableOrchestrationContext,
+        public doneValue?: unknown,
     ) { }
 
-    public done(err?: any, result?: any) {
+    public done(err?: string, result?: unknown) {
         if (err) {
             throw new Error(err);
         } else {
             this.doneValue = result;
         }
     }
+}
+
+interface IBindings {
+    [key: string]: unknown;
 }

@@ -6,10 +6,10 @@ export class DurableOrchestrationStatus {
         public instanceId: string,
         public createdTime: Date,
         public lastUpdatedTime: Date,
-        public input: any,
-        public output: any,
+        public input: unknown,
+        public output: unknown,
         public runtimeStatus: OrchestrationRuntimeStatus,
-        public customStatus?: any,
-        public history?: any[],
+        public customStatus?: unknown,
+        public history?: Array<unknown>,
     ) { }
 }

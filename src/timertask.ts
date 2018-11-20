@@ -2,12 +2,12 @@ import { CreateTimerAction, Task } from "./classes";
 
 export class TimerTask extends Task {
     constructor(
-        public isCompleted: boolean,
-        public isFaulted: boolean,
-        public action: CreateTimerAction,
-        public result?: any,
-        public timestamp?: Date,
-        public id?: number,
+        public readonly isCompleted: boolean,
+        public readonly isFaulted: boolean,
+        public readonly action: CreateTimerAction,
+        public readonly result?: unknown,
+        public readonly timestamp?: Date,
+        public readonly id?: number,
     ) { super(isCompleted, isFaulted, action, result, timestamp, id); }
 
     get isCanceled(): boolean {

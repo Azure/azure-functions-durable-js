@@ -96,46 +96,32 @@ describe("Orchestration Client", () => {
     });
 
     describe("createCheckStatusResponse()", () => {
-        const reqShapes = [
-            {
-                urlProperty: "request.url",
-                requestObj: {
-                    url: defaultRequestUrl,
+        it(`returns a proper response object from request.url`, (done) => {
+            const client = new OrchestrationClient(defaultContext);
+            const requestObj = {
+                url: defaultRequestUrl,
+                method: "GET",
+            };
+
+            const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
+
+            const expectedPayload = createHttpManagementPayload(
+                defaultInstanceId,
+                notificationUrlHost,
+                defaultTaskHub,
+                defaultConnection);
+            const expectedResponse = {
+                status: 202,
+                body: expectedPayload,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Location": expectedPayload.statusQueryGetUri,
+                    "Retry-After": 10,
                 },
-            },
-            {
-                urlProperty: "request.http.url",
-                requestObj: {
-                    http: {
-                        url: defaultRequestUrl,
-                    },
-                },
-            },
-        ];
+            };
+            expect(response).to.be.deep.equal(expectedResponse);
 
-        reqShapes.forEach((shape) => {
-            it(`returns a proper response object from ${shape.urlProperty}`, (done) => {
-                const client = new OrchestrationClient(defaultContext);
-                const response = client.createCheckStatusResponse(shape.requestObj, defaultInstanceId);
-
-                const expectedPayload = createHttpManagementPayload(
-                    defaultInstanceId,
-                    notificationUrlHost,
-                    defaultTaskHub,
-                    defaultConnection);
-                const expectedResponse = {
-                    status: 202,
-                    body: expectedPayload,
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Location": expectedPayload.statusQueryGetUri,
-                        "Retry-After": 10,
-                    },
-                };
-                expect(response).to.be.deep.equal(expectedResponse);
-
-                done();
-            });
+            done();
         });
 
         it("returns a proper response object when request is undefined", (done) => {
@@ -521,6 +507,7 @@ describe("Orchestration Client", () => {
     describe("waitForCompletionOrCreateCheckStatusResponse()", () => {
         const defaultRequest = {
             url: defaultRequestUrl,
+            method: "GET",
         };
         const defaultTimeout = 50;
         const defaultInterval = 10;

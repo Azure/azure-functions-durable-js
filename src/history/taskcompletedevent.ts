@@ -16,5 +16,5 @@ export class TaskCompletedEvent extends HistoryEvent {
 
         this.TaskScheduledId = options.taskScheduledId;
         this.Result = options.result;
-    } 
+    }
 }

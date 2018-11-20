@@ -1,12 +1,12 @@
 import { ActionType, IAction, RetryOptions } from "../classes";
 
 export class CallActivityWithRetryAction implements IAction {
-    public actionType: ActionType = ActionType.CallActivityWithRetry;
+    public readonly actionType: ActionType = ActionType.CallActivityWithRetry;
 
     constructor(
-        public functionName: string,
-        public retryOptions: RetryOptions,
-        public input?: any,
+        public readonly functionName: string,
+        public readonly retryOptions: RetryOptions,
+        public readonly input?: unknown,
     ) {
         if (!retryOptions) {
             throw new TypeError(`retryOptions: expected type RetryOptions but got ${typeof retryOptions}`);

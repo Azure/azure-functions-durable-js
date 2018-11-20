@@ -1,10 +1,8 @@
 import { isURL } from "validator";
-import { Constants, DurableOrchestrationStatus, HttpManagementPayload,
-    OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils,
-    WebhookClient } from "./classes";
-import { HttpResponse } from "./httpresponse";
+import { Constants, DurableOrchestrationStatus, HttpManagementPayload, HttpResponse, IFunctionContext,
+    IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils, WebhookClient } from "./classes";
 
-export function orchestrationClient(context: any): OrchestrationClient {
+export function orchestrationClient(context: unknown): OrchestrationClient {
     return new OrchestrationClient(context);
 }
 
@@ -24,14 +22,14 @@ export class OrchestrationClient {
 
     private clientData: OrchestrationClientInputData;
     private webhookClient: WebhookClient;
-    private urlValidationOptions: any = {
+    private urlValidationOptions: ValidatorJS.IsURLOptions = {
         protocols: ["http", "https"],
         require_tld: false,
         require_protocol: true,
         require_valid_protocol: true,
     };
 
-    constructor(private context: any) {
+    constructor(private context: unknown) {
         if (!context) {
             throw new Error("context must have a value.");
         }
@@ -46,7 +44,7 @@ export class OrchestrationClient {
      * @param request todo
      * @param instanceId todo
      */
-    public createCheckStatusResponse(request: any, instanceId: string): HttpResponse {
+    public createCheckStatusResponse(request: IRequest, instanceId: string): HttpResponse {
         const httpManagementPayload = this.getClientResponseLinks(request, instanceId);
 
         return new HttpResponse(
@@ -97,7 +95,7 @@ export class OrchestrationClient {
             case 400: // instance failed or terminated
             case 404: // instance not found or pending
             case 500: // instance failed with unhandled exception
-                return res.body;
+                return res.body as DurableOrchestrationStatus;
             default:
                 throw new Error(`Webhook returned unrecognized status ${res.status}: ${res.body}`);
         }
@@ -113,7 +111,7 @@ export class OrchestrationClient {
             .replace(idPlaceholder, "");
 
         const res = await this.webhookClient.get(new URL(url));
-        return res.body;
+        return res.body as DurableOrchestrationStatus[];
     }
 
     /**
@@ -153,13 +151,13 @@ export class OrchestrationClient {
         if (res.status > 202) {
             throw new Error(`Webhook returned status code ${res.status}: ${res.body}`);
         }   // TODO: Make this better.. message and conditional
-        return res.body;
+        return res.body as DurableOrchestrationStatus[];
     }
 
     public async raiseEvent(
         instanceId: string,
         eventName: string,
-        eventData: any,
+        eventData: unknown,
         taskHubName?: string,
         connectionName?: string,
         ): Promise<void> {
@@ -225,7 +223,7 @@ export class OrchestrationClient {
      * @param instanceId todo
      * @param input todo
      */
-    public async startNew(orchestratorFunctionName: string, instanceId?: string, input?: any): Promise<string> {
+    public async startNew(orchestratorFunctionName: string, instanceId?: string, input?: unknown): Promise<string> {
         if (!orchestratorFunctionName) {
             throw new Error("orchestratorFunctionName must be a valid string.");
         }
@@ -237,9 +235,9 @@ export class OrchestrationClient {
 
         const res = await this.webhookClient.post(new URL(url), input);
         if (res.status > 202) {
-            throw new Error(res.body);
+            throw new Error(res.body as string);
         } else if (res.body) {
-            return res.body.id;
+            return (res.body as HttpManagementPayload).id;
         }
     }
 
@@ -274,7 +272,7 @@ export class OrchestrationClient {
      * @param retryIntervalInMilliseconds todo
      */
     public async waitForCompletionOrCreateCheckStatusResponse(
-        request: any, // TODO: give request an actual type
+        request: IRequest, // TODO: give request an actual type
         instanceId: string,
         timeoutInMilliseconds: number = 10000,
         retryIntervalInMilliseconds: number = 1000,
@@ -313,7 +311,7 @@ export class OrchestrationClient {
         }
     }
 
-    private createHttpResponse(statusCode: number, body: any): HttpResponse {
+    private createHttpResponse(statusCode: number, body: unknown): HttpResponse {
         const bodyAsJson = JSON.stringify(body);
         return new HttpResponse(
             statusCode,
@@ -326,25 +324,27 @@ export class OrchestrationClient {
     }
 
     private getClientData(): OrchestrationClientInputData {
-        const dataKey = this.context.bindings ? Object.keys(this.context.bindings).filter((val: string) => {
-            return Object.keys(new OrchestrationClientInputData(undefined, undefined, undefined)).every((key) => {
-                return this.context.bindings[val].hasOwnProperty(key);
-            });
-        })[0] : undefined;
+        const dataKey = (this.context as IFunctionContext).bindings
+            ? Object.keys((this.context as IFunctionContext).bindings).filter((val: string) => {
+                return Object.keys(new OrchestrationClientInputData(undefined, undefined, undefined)).every((key) => {
+                    return (this.context as IFunctionContext).bindings[val].hasOwnProperty(key);
+                });
+            })[0]
+            : undefined;
 
         if (!dataKey) {
             throw new Error(Constants.OrchestrationClientNoBindingFoundMessage);
         }
 
-        return this.context.bindings[dataKey];
+        return (this.context as IFunctionContext).bindings[dataKey] as OrchestrationClientInputData;
     }
 
-    private getClientResponseLinks(request: any, instanceId: string): HttpManagementPayload {
+    private getClientResponseLinks(request: IRequest, instanceId: string): HttpManagementPayload {
         const payload = { ...this.clientData.managementUrls };
 
-        (Object.keys(payload) as Array<(keyof HttpManagementPayload)>).forEach((key, index, array) => {
+        (Object.keys(payload) as Array<(keyof HttpManagementPayload)>).forEach((key) => {
             if (this.hasValidRequestUrl(request) && isURL(payload[key], this.urlValidationOptions)) {
-                const requestUrl = new URL(request.http ? request.http.url : request.url);
+                const requestUrl = new URL(request.url);
                 const dataUrl = new URL(payload[key]);
                 payload[key] = payload[key].replace(dataUrl.origin, requestUrl.origin);
             }
@@ -355,7 +355,11 @@ export class OrchestrationClient {
         return payload;
     }
 
-    private hasValidRequestUrl(request: any): boolean {
-        return request && (request.http && request.http.url || request.url);
+    private hasValidRequestUrl(request: IRequest): boolean {
+        if (request && request.url) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

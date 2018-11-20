@@ -1,17 +1,11 @@
 import * as moment from "moment";
-import { SubOrchestrationInstanceFailedEvent, TaskFailedEvent, TimerCreatedEvent,
-    TimerFiredEvent, 
-    EventRaisedEvent,
-    ExecutionStartedEvent,
-    SubOrchestrationInstanceCreatedEvent,
-    TaskScheduledEvent,
-    SubOrchestrationInstanceCompletedEvent,
-    TaskCompletedEvent,
-    OrchestratorStartedEvent,
-    OrchestratorCompletedEvent} from "../../src/classes";
+import { EventRaisedEvent, ExecutionStartedEvent, HistoryEvent, OrchestratorCompletedEvent,
+    OrchestratorStartedEvent, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
+    SubOrchestrationInstanceFailedEvent, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent,
+    TimerCreatedEvent, TimerFiredEvent } from "../../src/classes";
 
 export class TestHistories {
-    public static GetAnyAOrB(firstTimestamp: Date, completeInOrder: boolean) {
+    public static GetAnyAOrB(firstTimestamp: Date, completeInOrder: boolean): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -20,7 +14,7 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -29,7 +23,7 @@ export class TestHistories {
                     isPlayed: true,
                     name: "AnyAOrB",
                     input: JSON.stringify(completeInOrder),
-                }
+                },
             ),
             new TaskScheduledEvent(
                 {
@@ -39,7 +33,7 @@ export class TestHistories {
                     name: "TaskA",
                     input: JSON.stringify(completeInOrder),
                 },
-            ),            
+            ),
             new TaskScheduledEvent(
                 {
                     eventId: 1,
@@ -54,14 +48,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskCompletedEvent(
                 {
@@ -75,7 +69,7 @@ export class TestHistories {
         ];
     }
 
-    public static GetFanOutFanInDiskUsageComplete(firstTimestamp: Date, files: string[]) {
+    public static GetFanOutFanInDiskUsageComplete(firstTimestamp: Date, files: string[]): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -84,7 +78,7 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -93,7 +87,7 @@ export class TestHistories {
                     isPlayed: true,
                     name: "FanOutFanInDiskUsage",
                     input: undefined,
-                }
+                },
             ),
             new TaskScheduledEvent(
                 {
@@ -109,15 +103,15 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
-            ),            
+                },
+            ),
             new TaskCompletedEvent(
                 {
                     eventId: -1,
@@ -126,20 +120,20 @@ export class TestHistories {
                     result: JSON.stringify(files),
                     taskScheduledId: 0,
                 },
-            ),            
+            ),
             new OrchestratorCompletedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(2, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
         ].concat(files.map((file, index) => new TaskScheduledEvent(
             {
@@ -156,14 +150,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(2, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskCompletedEvent(
                 {
@@ -195,7 +189,7 @@ export class TestHistories {
         ]);
     }
 
-    public static GetFanOutFanInDiskUsagePartComplete(firstTimestamp: Date, files: string[]) {
+    public static GetFanOutFanInDiskUsagePartComplete(firstTimestamp: Date, files: string[]): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -204,7 +198,7 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -213,7 +207,7 @@ export class TestHistories {
                     isPlayed: true,
                     name: "FanOutFanInDiskUsage",
                     input: undefined,
-                }
+                },
             ),
             new TaskScheduledEvent(
                 {
@@ -223,20 +217,20 @@ export class TestHistories {
                     name: "GetFileList",
                     input: "C:\\Dev",
                 },
-            ),            
+            ),
             new OrchestratorCompletedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskCompletedEvent(
                 {
@@ -252,14 +246,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(2, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
         ].concat(files.map((file, index) => new TaskScheduledEvent(
             {
@@ -276,14 +270,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(3, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskCompletedEvent(
                 {
@@ -293,11 +287,11 @@ export class TestHistories {
                     result: JSON.stringify(2),
                     taskScheduledId: 2,
                 },
-            ),            
+            ),
         ]);
     }
 
-    public static GetFanOutFanInDiskUsageReplayOne(firstTimestamp: Date, files: string[]) {
+    public static GetFanOutFanInDiskUsageReplayOne(firstTimestamp: Date, files: string[]): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -306,7 +300,7 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -315,7 +309,7 @@ export class TestHistories {
                     isPlayed: true,
                     name: "FanOutFanInDiskUsage",
                     input: undefined,
-                }
+                },
             ),
             new TaskScheduledEvent(
                 {
@@ -331,14 +325,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskCompletedEvent(
                 {
@@ -348,11 +342,11 @@ export class TestHistories {
                     result: JSON.stringify(files),
                     taskScheduledId: 0,
                 },
-            ),            
+            ),
         ];
     }
 
-    public static GetHelloSequenceReplayFinal(name: string, firstTimestamp: Date) {
+    public static GetHelloSequenceReplayFinal(name: string, firstTimestamp: Date): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -361,16 +355,16 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
-            ),            
+                },
+            ),
             new ExecutionStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: true,
-                    name: name,
+                    name,
                     input: undefined,
-                }
+                },
             ),
             new TaskScheduledEvent(
                 {
@@ -380,20 +374,20 @@ export class TestHistories {
                     name: "Hello",
                     input: null,
                 },
-            ),            
+            ),
             new OrchestratorCompletedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskCompletedEvent(
                 {
@@ -418,14 +412,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(2, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskCompletedEvent(
                 {
@@ -450,14 +444,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstMoment.add(2, "s").toDate(),
                     isPlayed: false,
-                }
-            ),            
+                },
+            ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskCompletedEvent(
                 {
@@ -467,32 +461,36 @@ export class TestHistories {
                     result: JSON.stringify("Hello, London!"),
                     taskScheduledId: 2,
                 },
-            ),            
+            ),
         ];
     }
 
-    public static GetOrchestratorStart(name: string, firstTimestamp: Date, input?: any) {
+    public static GetOrchestratorStart(name: string, firstTimestamp: Date, input?: unknown): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
                     eventId: -1,
                     timestamp: moment(firstTimestamp).add(5, "ms").toDate(),
                     isPlayed: false,
-                    name: name,
-                    input: input,
-                }
+                    name,
+                    input: JSON.stringify(input),
+                },
             ),
         ];
     }
 
-    public static GetSayHelloWithActivityReplayOne(name: string, firstTimestamp: Date, input: any) {
+    public static GetSayHelloWithActivityReplayOne(
+        name: string,
+        firstTimestamp: Date,
+        input: unknown)
+        : HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -501,16 +499,16 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: true,
-                    name: name,
-                    input: input,
-                }
+                    name,
+                    input: JSON.stringify(input),
+                },
             ),
             new TaskScheduledEvent(
                 {
@@ -518,7 +516,7 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: false,
                     name: "Hello",
-                    input: input,
+                    input: JSON.stringify(input),
                 },
             ),
             new OrchestratorCompletedEvent(
@@ -526,14 +524,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskCompletedEvent(
                 {
@@ -547,14 +545,14 @@ export class TestHistories {
         ];
     }
 
-    public static GetSayHelloWithActivityRetryFailOne(firstTimestamp: Date, input: any) {
+    public static GetSayHelloWithActivityRetryFailOne(firstTimestamp: Date, input: unknown): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -562,8 +560,8 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: true,
                     name: "SayHelloWithActivityRetry",
-                    input: input,
-                }
+                    input: JSON.stringify(input),
+                },
             ),
             new TaskScheduledEvent(
                 {
@@ -579,14 +577,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskFailedEvent(
                 {
@@ -596,12 +594,16 @@ export class TestHistories {
                     taskScheduledId: 0,
                     details: "Big stack trace here",
                     reason: "Activity function 'Hello' failed: Result: Failure",
-                }
+                },
             ),
         ];
     }
 
-    public static GetSayHelloWithActivityRetryRetryOne(firstTimestamp: Date, input: any, retryInterval: number) {
+    public static GetSayHelloWithActivityRetryRetryOne(
+        firstTimestamp: Date,
+        input: unknown,
+        retryInterval: number)
+        : HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -610,7 +612,7 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -618,8 +620,8 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: true,
                     name: "SayHelloWithActivityRetry",
-                    input: input,
-                }
+                    input: JSON.stringify(input),
+                },
             ),
             new TaskScheduledEvent(
                 {
@@ -629,20 +631,20 @@ export class TestHistories {
                     name: "Hello",
                     input: undefined,
                 },
-            ),            
+            ),
             new OrchestratorCompletedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskFailedEvent(
                 {
@@ -652,7 +654,7 @@ export class TestHistories {
                     taskScheduledId: 0,
                     details: "Big stack trace here",
                     reason: "Activity function 'Hello' failed: Result: Failure",
-                }
+                },
             ),
             new TimerCreatedEvent(
                 {
@@ -660,21 +662,21 @@ export class TestHistories {
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
                     fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
-                }
+                },
             ),
             new OrchestratorCompletedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TimerFiredEvent(
                 {
@@ -693,8 +695,8 @@ export class TestHistories {
         orchestratorName: string,
         subOrchestratorName: string,
         subInstanceId: string,
-        input?: any,
-    ) {
+        input?: string)
+        : HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -703,7 +705,7 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -711,8 +713,8 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: true,
                     name: orchestratorName,
-                    input: input,
-                }
+                    input,
+                },
             ),
             new SubOrchestrationInstanceCreatedEvent(
                 {
@@ -720,7 +722,7 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: false,
                     name: subOrchestratorName,
-                    input: input,
+                    input,
                     instanceId: subInstanceId,
                 },
             ),
@@ -729,14 +731,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new SubOrchestrationInstanceCompletedEvent(
                 {
@@ -750,14 +752,18 @@ export class TestHistories {
         ];
     }
 
-    public static GetSayHelloWithSubOrchestratorRetryFailOne(firstTimestamp: Date, subInstanceId: string, input: any) {
+    public static GetSayHelloWithSubOrchestratorRetryFailOne(
+        firstTimestamp: Date,
+        subInstanceId: string,
+        input: unknown)
+        : HistoryEvent[] {
         return [
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -765,8 +771,8 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: true,
                     name: "SayHelloWithSubOrchestratorRetry",
-                    input: input,
-                }
+                    input: JSON.stringify(input),
+                },
             ),
             new SubOrchestrationInstanceCreatedEvent(
                 {
@@ -774,7 +780,7 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: false,
                     name: "SayHelloInline",
-                    input: input,
+                    input: JSON.stringify(input),
                     instanceId: subInstanceId,
                 },
             ),
@@ -783,14 +789,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new SubOrchestrationInstanceFailedEvent(
                 {
@@ -808,9 +814,9 @@ export class TestHistories {
     public static GetSayHelloWithSubOrchestratorRetryRetryOne(
         firstTimestamp: Date,
         subInstanceId: string,
-        input: any,
-        retryInterval: number,
-    ) {
+        input: string,
+        retryInterval: number)
+        : HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -819,7 +825,7 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -827,8 +833,8 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: true,
                     name: "SayHelloWithSubOrchestratorRetry",
-                    input: input,
-                }
+                    input,
+                },
             ),
             new SubOrchestrationInstanceCreatedEvent(
                 {
@@ -836,7 +842,7 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: false,
                     name: "SayHelloInline",
-                    input: input,
+                    input,
                     instanceId: subInstanceId,
                 },
             ),
@@ -845,14 +851,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new SubOrchestrationInstanceFailedEvent(
                 {
@@ -870,21 +876,21 @@ export class TestHistories {
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
                     fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
-                }
+                },
             ),
             new OrchestratorCompletedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TimerFiredEvent(
                 {
@@ -898,14 +904,14 @@ export class TestHistories {
         ];
     }
 
-    public static GetThrowsExceptionFromActivityReplayOne(firstTimestamp: Date) {
+    public static GetThrowsExceptionFromActivityReplayOne(firstTimestamp: Date): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -914,7 +920,7 @@ export class TestHistories {
                     isPlayed: true,
                     name: "DoesntHandleExceptionFromActivity",
                     input: undefined,
-                }
+                },
             ),
             new TaskScheduledEvent(
                 {
@@ -930,14 +936,14 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new TaskFailedEvent(
                 {
@@ -947,12 +953,16 @@ export class TestHistories {
                     taskScheduledId: 0,
                     details: "Big stack trace here",
                     reason: "Activity function 'Hello' failed: Result: Failure",
-                }
+                },
             ),
         ];
     }
 
-    public static GetWaitForExternalEventEventReceived(firstTimestamp: Date, eventName: string, input?: any) {
+    public static GetWaitForExternalEventEventReceived(
+        firstTimestamp: Date,
+        eventName: string,
+        input?: unknown)
+        : HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -961,7 +971,7 @@ export class TestHistories {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -969,22 +979,22 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: true,
                     name: "WaitForExternalEvent",
-                    input: input,
-                }
+                    input: JSON.stringify(input),
+                },
             ),
             new OrchestratorCompletedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
-                }
+                },
             ),
             new EventRaisedEvent(
                 {
@@ -998,14 +1008,14 @@ export class TestHistories {
         ];
     }
 
-    public static GetWaitOnTimerFired(firstTimestamp: Date, fireAt: Date) {
+    public static GetWaitOnTimerFired(firstTimestamp: Date, fireAt: Date): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new ExecutionStartedEvent(
                 {
@@ -1014,36 +1024,36 @@ export class TestHistories {
                     isPlayed: true,
                     name: "WaitOnTimer",
                     input: JSON.stringify(fireAt),
-                }
+                },
             ),
             new TimerCreatedEvent(
                 {
                     eventId: 0,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                    fireAt: fireAt,
-                }
+                    fireAt,
+                },
             ),
             new OrchestratorCompletedEvent(
                 {
                     eventId: -1,
                     timestamp: firstTimestamp,
                     isPlayed: false,
-                }
+                },
             ),
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
                     timestamp: fireAt,
                     isPlayed: false,
-                }
+                },
             ),
             new TimerFiredEvent(
                 {
                     eventId: -1,
                     timestamp: fireAt,
                     isPlayed: false,
-                    fireAt: fireAt,
+                    fireAt,
                     timerId: 0,
                 },
             ),

@@ -3,7 +3,7 @@ import { HistoryEvent, HistoryEventOptions, HistoryEventType } from "../classes"
 export class TimerCreatedEvent extends HistoryEvent {
     public FireAt: Date;
 
-    constructor (
+    constructor(
         options: HistoryEventOptions,
     ) {
         super(

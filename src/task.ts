@@ -5,9 +5,9 @@ export class Task {
         public isCompleted: boolean,
         public isFaulted: boolean,
         public action: IAction,
-        public result?: any,
+        public result?: unknown,
         public timestamp?: Date,
         public id?: number,
-        public exception?: any,
+        public exception?: unknown,
     ) { }
 }

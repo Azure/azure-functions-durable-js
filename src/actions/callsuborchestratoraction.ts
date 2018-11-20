@@ -1,11 +1,11 @@
 import { ActionType, IAction } from "../classes";
 
 export class CallSubOrchestratorAction implements IAction {
-    public actionType: ActionType = ActionType.CallSubOrchestrator;
+    public readonly actionType: ActionType = ActionType.CallSubOrchestrator;
 
     constructor(
-        public functionName: string,
-        public instanceId: string,
-        public input?: any,
+        public readonly functionName: string,
+        public readonly instanceId: string,
+        public readonly input?: unknown,
     ) { }
 }

@@ -7,14 +7,14 @@ export class SubOrchestrationInstanceFailedEvent extends HistoryEvent {
 
     constructor(
         options: HistoryEventOptions,
-    ) { 
+    ) {
         super(
-            HistoryEventType.SubOrchestrationInstanceFailed, 
+            HistoryEventType.SubOrchestrationInstanceFailed,
             options.eventId,
             options.isPlayed,
             options.timestamp,
         );
-        
+
         this.TaskScheduledId = options.taskScheduledId;
         this.Reason = options.reason;
         this.Details = options.details;
