@@ -124,15 +124,13 @@ export class TestOrchestrations {
         return "Timer fired!";
     });
 
-    public static ThrowsExceptionFromActivity: any = () => {
-        df.orchestrator(function*(context: any): IterableIterator<any> {
-            yield context.df.callActivity("ThrowsErrorActivity");
-        });
-    }
+    public static ThrowsExceptionFromActivity: any = df.orchestrator(function*(context: any)
+    : IterableIterator<unknown> {
+        yield context.df.callActivity("ThrowsErrorActivity");
+    });
 
-    public static ThrowsError: any = () => {
-        df.orchestrator(function*(context: any): IterableIterator<any> {
-            throw Error("Exception from Orchestrator");
-        });
-    }
+    public static ThrowsExceptionInline: any = df.orchestrator(function*(context: any)
+    : IterableIterator<unknown> {
+        throw Error("Exception from Orchestrator");
+    });
 }

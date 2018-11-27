@@ -39,6 +39,7 @@ export { Task } from "./task";
 export { TimerTask } from "./timertask";
 
 export { OrchestratorState } from "./orchestratorstate";
+export { IOrchestratorState } from "./iorchestratorstate";
 
 export { RetryOptions } from "./retryoptions";
 

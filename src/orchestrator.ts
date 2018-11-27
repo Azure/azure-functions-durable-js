@@ -62,7 +62,14 @@ export class Orchestrator {
                 const g = gen.next(partialResult ? partialResult.result : undefined);
                 if (g.done) {
                     log("Iterator is done");
-                    this.finish(context, actions, true, g.value);
+                    context.done(null,
+                        new OrchestratorState({
+                            isDone: true,
+                            actions,
+                            output: g.value,
+                            customStatus: this.customStatus,
+                        }),
+                    );
                     return;
                 }
 
@@ -74,7 +81,14 @@ export class Orchestrator {
                 }
 
                 if (this.shouldFinish(partialResult)) {
-                    this.finish(context, actions);
+                    context.done(
+                        null,
+                        new OrchestratorState({
+                            isDone: false,
+                            actions,
+                            customStatus: this.customStatus,
+                        }),
+                    );
                     return;
                 } else if (partialResult instanceof Task && partialResult.isFaulted) {
                     gen.throw(partialResult.exception);
@@ -85,7 +99,16 @@ export class Orchestrator {
                     e.Timestamp > decisionStartedEvent.Timestamp);
                 context.df.currentUtcDateTime = decisionStartedEvent.Timestamp;
             } catch (error) {
-                this.error(context, actions, error);
+                log(`Error: ${error}`);
+                context.done(
+                    null,
+                    new OrchestratorState({
+                        isDone: false,
+                        actions,
+                        error: error.stack,
+                        customStatus: this.customStatus,
+                    }),
+                );
                 return;
             }
         }
@@ -364,23 +387,9 @@ export class Orchestrator {
     }
 
     private finish(
-        context: IFunctionContext,
-        actions: IAction[][],
-        isDone: boolean = false,
-        output?: unknown)
-        : void {
+        context: IFunctionContext, state: OrchestratorState): void {
         log("Finish called");
-        const returnValue = new OrchestratorState(isDone, actions, output, this.customStatus);
-
-        context.done(null, returnValue);
-    }
-
-    private error(context: IFunctionContext, actions: IAction[][], err: Error): void {
-        log(`Error: ${err}`);
-        const returnValue = new OrchestratorState(false, actions, undefined, this.customStatus);
-        // TODO: look at this; does it need to be here?
-
-        context.done(err, undefined);
+        context.done(null, state);
     }
 
     /* Returns undefined if not found. */

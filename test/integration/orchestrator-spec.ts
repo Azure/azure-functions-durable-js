@@ -5,7 +5,8 @@ import * as uuidv1 from "uuid/v1";
 import {
     CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
     CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction,
-    IDurableOrchestrationContext, OrchestratorState, RetryOptions, WaitForExternalEventAction,
+    IDurableOrchestrationContext, IOrchestratorState, OrchestratorState,
+    RetryOptions, WaitForExternalEventAction,
 } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/testorchestrations";
@@ -26,7 +27,11 @@ describe("Orchestrator", () => {
         orchestrator(mockContext);
 
         expect(mockContext.doneValue).to.be.deep.equal(
-            new OrchestratorState(true, [], `Hello, ${name}!`),
+            new OrchestratorState({
+                isDone: true,
+                actions: [],
+                output: `Hello, ${name}!`,
+            }),
         );
         done();
     });
@@ -119,40 +124,47 @@ describe("Orchestrator", () => {
         });
     });
 
-    describe.skip("Error Handling", () => {
-        it("throws an exception orchestrator function throws and doesn't handle", (done) => {
-            // needs exception catching figured out
-            expect(() => {
-                const orchestrator = TestOrchestrations.ThrowsError();
-                const mockContext = new MockContext({
-                    context: {
-                        history: TestHistories.GetOrchestratorStart(
-                            "ThrowsError",
-                            moment.utc().toDate(),
-                        ),
-                    },
-                });
+    describe("Error Handling", () => {
+        it("reports an unhandled exception from orchestrator", async () => {
+            const orchestrator = TestOrchestrations.ThrowsExceptionInline;
+            const mockContext =  new MockContext({
+                context: {
+                    history: TestHistories.GetOrchestratorStart(
+                        "ThrowsExceptionInline",
+                        moment.utc().toDate(),
+                    ),
+                },
+            });
 
-                orchestrator(mockContext);
-            }).to.throw();
-            done();
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions: [],
+            });
+            expect(mockContext.doneValue.error).to.include("Exception from Orchestrator");
         });
 
-        it("throws an exception activity function throws and orchestrator function doesn't handle", (done) => {
-            // needs exception catching figured out
-            expect(() => {
-                const orchestrator = TestOrchestrations.ThrowsExceptionFromActivity();
-                const mockContext =  new MockContext({
-                    context: {
-                        history: TestHistories.GetThrowsExceptionFromActivityReplayOne(
-                            moment.utc().toDate(),
-                        ),
-                    },
-                });
+        it("reports an unhandled exception from activity passed through orchestrator", async () => {
+            const orchestrator = TestOrchestrations.ThrowsExceptionFromActivity;
+            const mockContext =  new MockContext({
+                context: {
+                    history: TestHistories.GetThrowsExceptionFromActivityReplayOne(
+                        moment.utc().toDate(),
+                    ),
+                },
+            });
 
-                orchestrator(mockContext);
-            }).to.throw();
-            done();
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions:
+                [
+                    [ new CallActivityAction("ThrowsErrorActivity") ],
+                ],
+            });
+            expect(mockContext.doneValue.error).to.include("Activity function 'ThrowsErrorActivity' failed.");
         });
     });
 
@@ -173,13 +185,13 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new CallActivityAction("Hello", name) ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -197,13 +209,13 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new CallActivityAction("ReturnsFour") ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -226,13 +238,13 @@ describe("Orchestrator", () => {
                     orchestrator(mockContext);
 
                     expect(mockContext.doneValue).to.be.deep.equal(
-                        new OrchestratorState(
-                            false,
+                        new OrchestratorState({
+                            isDone: false,
+                            actions:
                             [
                                 [ new CallActivityAction("Hello", falsyValue) ],
                             ],
-                            undefined,
-                        ),
+                        }),
                     );
                     done();
                 });
@@ -252,13 +264,14 @@ describe("Orchestrator", () => {
                     orchestrator(mockContext);
 
                     expect(mockContext.doneValue).to.be.deep.equal(
-                        new OrchestratorState(
-                            true,
+                        new OrchestratorState({
+                            isDone: true,
+                            actions:
                             [
                                 [ new CallActivityAction("Hello", falsyValue) ],
                             ],
-                            `Hello, ${falsyValue}!`,
-                        ),
+                            output: `Hello, ${falsyValue}!`,
+                        }),
                     );
                     done();
                 });
@@ -281,13 +294,14 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    true,
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
                     [
                         [ new CallActivityAction("Hello", name) ],
                     ],
-                    `Hello, ${name}!`,
-                ),
+                    output: `Hello, ${name}!`,
+                }),
             );
             done();
         });
@@ -307,19 +321,21 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    true,
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
                     [
                         [ new CallActivityAction("Hello", "Tokyo")],
                         [ new CallActivityAction("Hello", "Seattle")],
                         [ new CallActivityAction("Hello", "London")],
                     ],
+                    output:
                     [
                         "Hello, Tokyo!",
                         "Hello, Seattle!",
                         "Hello, London!",
                     ],
-                ),
+                }),
             );
             done();
         });
@@ -347,8 +363,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [
                             new CallActivityWithRetryAction(
@@ -357,8 +374,7 @@ describe("Orchestrator", () => {
                                 name),
                         ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -380,8 +396,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [
                             new CallActivityWithRetryAction(
@@ -390,8 +407,7 @@ describe("Orchestrator", () => {
                                 name),
                         ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -411,9 +427,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
-                    [
+                new OrchestratorState({
+                    isDone: false,
+                    actions: [
                         [
                             new CallActivityWithRetryAction(
                                 "Hello",
@@ -421,8 +437,7 @@ describe("Orchestrator", () => {
                                 name),
                         ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -448,8 +463,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    true,
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
                     [
                         [
                             new CallActivityWithRetryAction(
@@ -458,8 +474,8 @@ describe("Orchestrator", () => {
                                 name),
                         ],
                     ],
-                    `Hello, ${name}!`,
-                ),
+                    output: `Hello, ${name}!`,
+                }),
             );
             done();
         });
@@ -485,13 +501,13 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new CallSubOrchestratorAction("SayHelloWithActivity", childId, name) ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -514,13 +530,13 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new CallSubOrchestratorAction("SayHelloWithActivity", undefined, name) ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -547,13 +563,14 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    true,
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
                     [
                         [ new CallSubOrchestratorAction("SayHelloWithActivity", childId, name) ],
                     ],
-                    "Hello, World!",
-                ),
+                    output: "Hello, World!",
+                }),
             );
             done();
         });
@@ -589,8 +606,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [
                             new CallSubOrchestratorWithRetryAction(
@@ -601,8 +619,7 @@ describe("Orchestrator", () => {
                             ),
                         ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -628,8 +645,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [
                             new CallSubOrchestratorWithRetryAction(
@@ -640,8 +658,7 @@ describe("Orchestrator", () => {
                             ),
                         ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -666,8 +683,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [
                             new CallSubOrchestratorWithRetryAction(
@@ -678,8 +696,7 @@ describe("Orchestrator", () => {
                             ),
                         ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -710,8 +727,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    true,
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
                     [
                         [
                             new CallSubOrchestratorWithRetryAction(
@@ -722,8 +740,8 @@ describe("Orchestrator", () => {
                             ),
                         ],
                     ],
-                    `Hello, ${name}!`,
-                ),
+                    output: `Hello, ${name}!`,
+                }),
             );
             done();
         });
@@ -745,13 +763,13 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new ContinueAsNewAction({ value: 6 }) ],
                     ],
-                    undefined,
-                ),
+                }),
             );
         });
     });
@@ -775,13 +793,13 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new CreateTimerAction(fireAt) ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -804,13 +822,14 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    true,
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
                     [
                         [ new CreateTimerAction(fireAt) ],
                     ],
-                    "Timer fired!",
-                ),
+                    output: "Timer fired!",
+                }),
             );
             done();
         });
@@ -834,15 +853,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.eq(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new CallActivityAction("Hello", "Tokyo") ],
                         [ new CallActivityAction("Hello", "Seattle") ],
                     ],
-                    undefined,
-                    "Tokyo",
-                ),
+                    customStatus: "Tokyo",
+                }),
             );
             done();
         });
@@ -864,13 +883,13 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new WaitForExternalEventAction("start") ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -892,14 +911,14 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new WaitForExternalEventAction("start") ],
                         [ new CallActivityAction("Hello", name) ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -921,13 +940,13 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new WaitForExternalEventAction("start") ],
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -950,14 +969,14 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new CallActivityAction("GetFileList", "C:\\Dev")],
                         filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -978,14 +997,14 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    false,
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
                     [
                         [ new CallActivityAction("GetFileList", "C:\\Dev")],
                         filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                     ],
-                    undefined,
-                ),
+                }),
             );
             done();
         });
@@ -1006,14 +1025,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    true,
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
                     [
                         [ new CallActivityAction("GetFileList", "C:\\Dev")],
                         filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                     ],
-                    6,
-                ),
+                    output: 6,
+                }),
             );
             done();
         });
@@ -1034,13 +1054,14 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    true,
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
                     [
                         [ new CallActivityAction("TaskA", false), new CallActivityAction("TaskB", true) ],
                     ],
-                    "A",
-                ),
+                    output: "A",
+                }),
             );
             done();
         });
@@ -1061,13 +1082,14 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState(
-                    true,
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
                     [
                         [ new CallActivityAction("TaskA", true), new CallActivityAction("TaskB", false) ],
                     ],
-                    "B",
-                ),
+                    output: "B",
+                }),
             );
             done();
         });
@@ -1098,10 +1120,10 @@ class MockContext {
     constructor(
         public bindings: IBindings,
         public df?: IDurableOrchestrationContext,
-        public doneValue?: unknown,
+        public doneValue?: IOrchestratorState,
     ) { }
 
-    public done(err?: string, result?: unknown) {
+    public done(err?: string, result?: IOrchestratorState) {
         if (err) {
             throw new Error(err);
         } else {

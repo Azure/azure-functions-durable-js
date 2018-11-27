@@ -952,7 +952,7 @@ export class TestHistories {
                     isPlayed: false,
                     taskScheduledId: 0,
                     details: "Big stack trace here",
-                    reason: "Activity function 'Hello' failed: Result: Failure",
+                    reason: "Activity function 'ThrowsErrorActivity' failed.",
                 },
             ),
         ];

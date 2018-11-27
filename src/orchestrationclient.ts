@@ -166,7 +166,6 @@ export class OrchestrationClient {
         }
 
         const idPlaceholder = this.clientData.managementUrls.id;
-        // TODO: replace idPlaceholder get with a getter variable
         let url = this.clientData.managementUrls.sendEventPostUri
             .replace(idPlaceholder, instanceId)
             .replace(this.eventNamePlaceholder, eventName);
@@ -272,7 +271,7 @@ export class OrchestrationClient {
      * @param retryIntervalInMilliseconds todo
      */
     public async waitForCompletionOrCreateCheckStatusResponse(
-        request: IRequest, // TODO: give request an actual type
+        request: IRequest,
         instanceId: string,
         timeoutInMilliseconds: number = 10000,
         retryIntervalInMilliseconds: number = 1000,

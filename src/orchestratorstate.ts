@@ -1,10 +1,26 @@
-import { IAction } from "./classes";
+import { IAction, IOrchestratorState } from "./classes";
 
-export class OrchestratorState {
-    constructor(
-        public isDone: boolean,
-        public actions: IAction[][],
-        public output: unknown,
-        public customStatus?: unknown,
-    ) { }
+export class OrchestratorState implements IOrchestratorState {
+    public readonly isDone: boolean;
+    public readonly actions: IAction[][];
+    public readonly output?: unknown;
+    public readonly error?: string;
+    public readonly customStatus?: unknown;
+
+    constructor(options: IOrchestratorState) {
+        this.isDone = options.isDone;
+        this.actions = options.actions;
+
+        if (options.output) {
+            this.output = options.output;
+        }
+
+        if (options.error) {
+            this.error = options.error;
+        }
+
+        if (options.customStatus) {
+            this.customStatus = options.customStatus;
+        }
+    }
 }
