@@ -161,6 +161,32 @@ describe("Orchestrator", () => {
             });
             expect(mockContext.doneValue.error).to.include("Activity function 'ThrowsErrorActivity' failed.");
         });
+
+        it("schedules an activity function after orchestrator catches an exception", async () => {
+            const orchestrator = TestOrchestrations.ThrowsExceptionFromActivityWithCatch;
+            const name = "World";
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetThrowsExceptionFromActivityReplayOne(
+                        moment.utc().toDate(),
+                    ),
+                    input: name,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
+                    [
+                        [ new CallActivityAction("ThrowsErrorActivity")],
+                        [ new CallActivityAction("Hello", name) ],
+                    ],
+                }),
+            );
+        });
     });
 
     describe("callActivity()", () => {

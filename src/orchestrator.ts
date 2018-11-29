@@ -57,22 +57,10 @@ export class Orchestrator {
         const actions: IAction[][] = [];
         let partialResult: Task | TaskSet;
 
-        while (true) {
-            try {
-                const g = gen.next(partialResult ? partialResult.result : undefined);
-                if (g.done) {
-                    log("Iterator is done");
-                    context.done(null,
-                        new OrchestratorState({
-                            isDone: true,
-                            actions,
-                            output: g.value,
-                            customStatus: this.customStatus,
-                        }),
-                    );
-                    return;
-                }
+        try {
+            let g = gen.next(partialResult ? partialResult.result : undefined);
 
+            while (true) {
                 partialResult = g.value as Task | TaskSet;
                 if (partialResult instanceof Task && partialResult.action) {
                     actions.push([ partialResult.action ]);
@@ -91,26 +79,40 @@ export class Orchestrator {
                     );
                     return;
                 } else if (partialResult instanceof Task && partialResult.isFaulted) {
-                    gen.throw(partialResult.exception);
+                    g = gen.throw(partialResult.exception);
+                    continue;
+                } else if (g.done) {
+                    log("Iterator is done");
+                    context.done(null,
+                        new OrchestratorState({
+                            isDone: true,
+                            actions,
+                            output: g.value,
+                            customStatus: this.customStatus,
+                        }),
+                    );
+                    return;
                 }
 
                 decisionStartedEvent = state.find((e) =>
                     e.EventType === HistoryEventType.OrchestratorStarted &&
                     e.Timestamp > decisionStartedEvent.Timestamp);
                 context.df.currentUtcDateTime = decisionStartedEvent.Timestamp;
-            } catch (error) {
-                log(`Error: ${error}`);
-                context.done(
-                    null,
-                    new OrchestratorState({
-                        isDone: false,
-                        actions,
-                        error: error.stack,
-                        customStatus: this.customStatus,
-                    }),
-                );
-                return;
+
+                g = gen.next(partialResult ? partialResult.result : undefined);
             }
+        } catch (error) {
+            log(`Error: ${error}`);
+            context.done(
+                null,
+                new OrchestratorState({
+                    isDone: false,
+                    actions,
+                    error: error.stack,
+                    customStatus: this.customStatus,
+                }),
+            );
+            return;
         }
     }
 
@@ -518,6 +520,7 @@ export class Orchestrator {
     }
 
     private shouldFinish(result: unknown): boolean {
-        return !(result as Task).isCompleted || result instanceof Task && result.action instanceof ContinueAsNewAction;
+        return Object.prototype.hasOwnProperty.call(result, "isCompleted") && !(result as Task).isCompleted
+            || result instanceof Task && result.action instanceof ContinueAsNewAction;
     }
 }

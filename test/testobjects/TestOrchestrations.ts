@@ -140,6 +140,18 @@ export class TestOrchestrations {
         yield context.df.callActivity("ThrowsErrorActivity");
     });
 
+    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function*(context: any)
+    : IterableIterator<unknown> {
+        try {
+            yield context.df.callActivity("ThrowsErrorActivity");
+        } catch (e) {
+            const input = context.df.getInput();
+            const output = yield context.df.callActivity("Hello", input);
+
+            return output;
+        }
+    });
+
     public static ThrowsExceptionInline: any = df.orchestrator(function*(context: any)
     : IterableIterator<unknown> {
         throw Error("Exception from Orchestrator");
