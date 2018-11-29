@@ -386,12 +386,6 @@ export class Orchestrator {
         return parsedDirectiveResult;
     }
 
-    private finish(
-        context: IFunctionContext, state: OrchestratorState): void {
-        log("Finish called");
-        context.done(null, state);
-    }
-
     /* Returns undefined if not found. */
     private findEventRaised(state: HistoryEvent[], eventName: string): EventRaisedEvent {
         const returnValue = eventName

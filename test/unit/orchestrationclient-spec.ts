@@ -53,21 +53,19 @@ describe("Orchestration Client", () => {
     };
 
     describe("Constructor", () => {
-        it("throws if context is undefined", (done) => {
+        it("throws if context is undefined", async () => {
             expect(() => {
                 const client = new OrchestrationClient(undefined);
             }).to.throw("context must have a value.");
-            done();
         });
 
-        it("throws if context.bindings is undefined", (done) => {
+        it("throws if context.bindings is undefined", async () => {
             expect(() => {
                 const client = new OrchestrationClient({});
             }).to.throw(Constants.OrchestrationClientNoBindingFoundMessage);
-            done();
         });
 
-        it("throws if context.bindings does not contain valid orchestrationClient input binding", (done) => {
+        it("throws if context.bindings does not contain valid orchestrationClient input binding", async () => {
             expect(() => {
                 const badContext = {
                     bindings: {
@@ -76,27 +74,24 @@ describe("Orchestration Client", () => {
                 };
                 const client = new OrchestrationClient(badContext);
             }).to.throw(Constants.OrchestrationClientNoBindingFoundMessage);
-            done();
         });
 
-        it("successfully initializes if context.bindings contains valid orchestrationClient input binding", (done) => {
+        it("initializes if context.bindings contains valid orchestrationClient input binding", async () => {
             expect(() => {
                 const client = new OrchestrationClient(defaultContext);
             }).to.not.throw(Constants.OrchestrationClientNoBindingFoundMessage);
-            done();
         });
     });
 
     describe("Properties", () => {
-        it("assigns taskHubName", (done) => {
+        it("assigns taskHubName", async () => {
             const client = new OrchestrationClient(defaultContext);
             expect(client.taskHubName).to.be.equal(defaultTaskHub);
-            done();
         });
     });
 
     describe("createCheckStatusResponse()", () => {
-        it(`returns a proper response object from request.url`, (done) => {
+        it(`returns a proper response object from request.url`, async () => {
             const client = new OrchestrationClient(defaultContext);
             const requestObj = {
                 url: defaultRequestUrl,
@@ -120,11 +115,9 @@ describe("Orchestration Client", () => {
                 },
             };
             expect(response).to.be.deep.equal(expectedResponse);
-
-            done();
         });
 
-        it("returns a proper response object when request is undefined", (done) => {
+        it("returns a proper response object when request is undefined", async () => {
             const client = new OrchestrationClient(defaultContext);
 
             const expectedPayload = createHttpManagementPayload(
@@ -144,13 +137,11 @@ describe("Orchestration Client", () => {
 
             const response = client.createCheckStatusResponse(undefined, defaultInstanceId);
             expect(response).to.be.deep.equal(expectedResponse);
-
-            done();
         });
     });
 
     describe("createHttpManagementPayload()", () => {
-        it("returns a proper payload", (done) => {
+        it("returns a proper payload", async () => {
             const client = new OrchestrationClient(defaultContext);
             const payload = client.createHttpManagementPayload(defaultInstanceId);
 
@@ -160,21 +151,17 @@ describe("Orchestration Client", () => {
                 defaultTaskHub,
                 defaultConnection);
             expect(payload).to.be.deep.equal(expectedPayload);
-
-            done();
         });
     });
 
     describe("getStatus()", () => {
-        beforeEach((done) => {
+        beforeEach(async () => {
             sinon.stub(WebhookClient.prototype, "get");
             this.getStub = (WebhookClient.prototype.get as sinon.SinonStub);
-            done();
         });
 
-        afterEach((done) => {
+        afterEach(async () => {
             this.getStub.restore();
-            done();
         });
 
         it("calls expected webhook", async () => {
@@ -202,15 +189,13 @@ describe("Orchestration Client", () => {
     });
 
     describe("getStatusAll()", () => {
-        beforeEach((done) => {
+        beforeEach(async () => {
             sinon.stub(WebhookClient.prototype, "get");
             this.getStub = (WebhookClient.prototype.get as sinon.SinonStub);
-            done();
         });
 
-        afterEach((done) => {
+        afterEach(async () => {
             this.getStub.restore();
-            done();
         });
 
         it("calls expected webhook", async () => {
@@ -229,15 +214,13 @@ describe("Orchestration Client", () => {
     });
 
     describe("getStatusBy()", () => {
-        beforeEach((done) => {
+        beforeEach(async () => {
             sinon.stub(WebhookClient.prototype, "get");
             this.getStub = (WebhookClient.prototype.get as sinon.SinonStub);
-            done();
         });
 
-        afterEach((done) => {
+        afterEach(async () => {
             this.getStub.restore();
-            done();
         });
 
         it("calls expected webhook with all filters", async () => {
@@ -283,15 +266,13 @@ describe("Orchestration Client", () => {
         const defaultTestEvent = "test";
         const defaultTestData = 42;
 
-        beforeEach((done) => {
+        beforeEach(async () => {
             sinon.stub(WebhookClient.prototype, "post");
             this.postStub = (WebhookClient.prototype.post as sinon.SinonStub);
-            done();
         });
 
-        afterEach((done) => {
+        afterEach(async () => {
             this.postStub.restore();
-            done();
         });
 
         it("calls expected webhook and completes when event request accepted", async () => {
@@ -362,15 +343,13 @@ describe("Orchestration Client", () => {
     });
 
     describe("rewind()", () => {
-        beforeEach((done) => {
+        beforeEach(async () => {
             sinon.stub(WebhookClient.prototype, "post");
             this.postStub = (WebhookClient.prototype.post as sinon.SinonStub);
-            done();
         });
 
-        afterEach((done) => {
+        afterEach(async () => {
             this.postStub.restore();
-            done();
         });
 
         it("calls expected webhook and completes for valid instance", async () => {
@@ -409,18 +388,16 @@ describe("Orchestration Client", () => {
     });
 
     describe("startNew()", () => {
-        beforeEach((done) => {
+        beforeEach(async () => {
             sinon.stub(WebhookClient.prototype, "get");
             sinon.stub(WebhookClient.prototype, "post");
             this.getStub = (WebhookClient.prototype.get as sinon.SinonStub);
             this.postStub = (WebhookClient.prototype.post as sinon.SinonStub);
-            done();
         });
 
-        afterEach((done) => {
+        afterEach(async () => {
             this.getStub.restore();
             this.postStub.restore();
-            done();
         });
 
         it("starts new instance with random id and no input", async () => {
@@ -458,15 +435,13 @@ describe("Orchestration Client", () => {
     });
 
     describe("terminate()", () => {
-        beforeEach((done) => {
+        beforeEach(async () => {
             sinon.stub(WebhookClient.prototype, "post");
             this.postStub = (WebhookClient.prototype.post as sinon.SinonStub);
-            done();
         });
 
-        afterEach((done) => {
+        afterEach(async () => {
             this.postStub.restore();
-            done();
         });
 
         it("calls expected webhook and completes for valid instance", async () => {
@@ -512,15 +487,13 @@ describe("Orchestration Client", () => {
         const defaultTimeout = 50;
         const defaultInterval = 10;
 
-        beforeEach((done) => {
+        beforeEach(async () => {
             sinon.stub(WebhookClient.prototype, "get");
             this.getStub = (WebhookClient.prototype.get as sinon.SinonStub);
-            done();
         });
 
-        afterEach((done) => {
+        afterEach(async () => {
             this.getStub.restore();
-            done();
         });
 
         it("throws when retryIntervalInMilliseconds > timeoutInMilliseconds", async () => {

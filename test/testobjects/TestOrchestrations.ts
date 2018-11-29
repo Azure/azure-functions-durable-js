@@ -64,6 +64,11 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static SayHelloWithActivityRetryNoOptions: any = df.orchestrator(function*(context: any) {
+        const output = yield context.df.callActivityWithRetry("Hello", undefined, "World");
+        return output;
+    });
+
     public static SayHelloWithCustomStatus: any = df.orchestrator(function*(context: any) {
         const output = [];
 
@@ -95,6 +100,12 @@ export class TestOrchestrations {
         const childId = context.df.instanceId + ":0";
         const retryOptions = new df.RetryOptions(10000, 2);
         const output = yield context.df.callSubOrchestratorWithRetry("SayHelloInline", retryOptions, input, childId);
+        return output;
+    });
+
+    public static SayHelloWithSubOrchestratorRetryNoOptions: any = df.orchestrator(function*(context: any) {
+        const childId = context.df.instanceId + ":0";
+        const output = yield context.df.callSubOrchestratorWithRetry("SayHelloInline", undefined, "World", childId);
         return output;
     });
 

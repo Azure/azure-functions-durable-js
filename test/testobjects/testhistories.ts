@@ -690,6 +690,161 @@ export class TestHistories {
         ];
     }
 
+    public static GetSayHelloWithActivityRetryRetryTwo(
+        firstTimestamp: Date,
+        input: unknown,
+        retryInterval: number)
+        : HistoryEvent[] {
+        const firstMoment = moment(firstTimestamp);
+
+        return [
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "SayHelloWithActivityRetry",
+                    input: JSON.stringify(input),
+                },
+            ),
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "Hello",
+                    input: undefined,
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new TaskFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    taskScheduledId: 0,
+                    details: "Big stack trace here",
+                    reason: "Activity function 'Hello' failed: Result: Failure",
+                },
+            ),
+            new TimerCreatedEvent(
+                {
+                    eventId: 1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new TimerFiredEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                    timerId: 1,
+                },
+            ),
+            new TaskScheduledEvent(
+                {
+                    eventId: 2,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "Hello",
+                    input: undefined,
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new TaskFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                    taskScheduledId: 2,
+                    details: "Big stack trace here",
+                    reason: "Activity function 'Hello' failed: Result: Failure",
+                },
+            ),
+            new TimerCreatedEvent(
+                {
+                    eventId: 3,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(3, "s").add(retryInterval, "ms").toDate(),
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new TimerFiredEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                    timerId: 3,
+                },
+            ),
+        ];
+    }
+
     public static GetSayHelloWithSubOrchestratorReplayOne(
         firstTimestamp: Date,
         orchestratorName: string,
@@ -746,6 +901,69 @@ export class TestHistories {
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
                     result: JSON.stringify(`Hello, ${input}!`),
+                    taskScheduledId: 0,
+                },
+            ),
+        ];
+    }
+
+    public static GetSayHelloWithSubOrchestratorFail(
+        firstTimestamp: Date,
+        orchestratorName: string,
+        subOrchestratorName: string,
+        subInstanceId: string,
+        input?: string)
+        : HistoryEvent[] {
+        const firstMoment = moment(firstTimestamp);
+
+        return [
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: orchestratorName,
+                    input,
+                },
+            ),
+            new SubOrchestrationInstanceCreatedEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: subOrchestratorName,
+                    input,
+                    instanceId: subInstanceId,
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new SubOrchestrationInstanceFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    details: "Big stack trace here",
+                    reason: "Sub orchestrator function 'SayHelloInline' failed: Result: Failure",
                     taskScheduledId: 0,
                 },
             ),
@@ -899,6 +1117,164 @@ export class TestHistories {
                     isPlayed: false,
                     fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
                     timerId: 1,
+                },
+            ),
+        ];
+    }
+
+    public static GetSayHelloWithSubOrchestratorRetryRetryTwo(
+        firstTimestamp: Date,
+        subInstanceId: string,
+        input: string,
+        retryInterval: number)
+        : HistoryEvent[] {
+        const firstMoment = moment(firstTimestamp);
+
+        return [
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "SayHelloWithSubOrchestratorRetry",
+                    input,
+                },
+            ),
+            new SubOrchestrationInstanceCreatedEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "SayHelloInline",
+                    input,
+                    instanceId: subInstanceId,
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new SubOrchestrationInstanceFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
+                    isPlayed: false,
+                    details: "Big stack trace here",
+                    reason: "Sub orchestrator function 'SayHelloInline' failed: Result: Failure",
+                    taskScheduledId: 0,
+                },
+            ),
+            new TimerCreatedEvent(
+                {
+                    eventId: 1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new TimerFiredEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                    timerId: 1,
+                },
+            ),
+            new SubOrchestrationInstanceCreatedEvent(
+                {
+                    eventId: 2,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "SayHelloInline",
+                    input,
+                    instanceId: subInstanceId,
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(3, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new SubOrchestrationInstanceFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: moment(firstTimestamp).add(3, "s").toDate(),
+                    isPlayed: false,
+                    details: "Big stack trace here",
+                    reason: "Sub orchestrator function 'SayHelloInline' failed: Result: Failure",
+                    taskScheduledId: 2,
+                },
+            ),
+            new TimerCreatedEvent(
+                {
+                    eventId: 3,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(3, "s").add(retryInterval, "ms").toDate(),
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new TimerFiredEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: false,
+                    fireAt: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                    timerId: 3,
                 },
             ),
         ];

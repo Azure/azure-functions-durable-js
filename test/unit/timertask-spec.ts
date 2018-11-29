@@ -3,15 +3,14 @@ import "mocha";
 import { CreateTimerAction, TimerTask } from "../../src/classes";
 
 describe("TimerTask", () => {
-    it ("throws cannot cancel a completed task", (done) => {
+    it ("throws cannot cancel a completed task", async () => {
         const task = new TimerTask(true, undefined, undefined, undefined, undefined);
         expect(() => {
             task.cancel();
         }).to.throw("Cannot cancel a completed task.");
-        done();
     });
 
-    it ("cancels an incomplete task", (done) => {
+    it ("cancels an incomplete task", async () => {
         const task = new TimerTask(
             false,
             false,
@@ -22,10 +21,9 @@ describe("TimerTask", () => {
         task.cancel();
         expect(task.action.isCanceled).to.equal(true);
         expect(task.isCanceled).to.equal(true);
-        done();
     });
 
-    it ("is canceled when its action is canceled", (done) => {
+    it ("is canceled when its action is canceled", async () => {
         const task = new TimerTask(
             false,
             false,
@@ -34,6 +32,5 @@ describe("TimerTask", () => {
             undefined,
             undefined);
         expect(task.isCanceled).to.equal(true);
-        done();
     });
 });

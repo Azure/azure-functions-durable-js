@@ -12,7 +12,7 @@ import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/testorchestrations";
 
 describe("Orchestrator", () => {
-    it("handles a simple orchestration function (no activity functions)", (done) => {
+    it("handles a simple orchestration function (no activity functions)", async () => {
         const orchestrator = TestOrchestrations.SayHelloInline;
         const name = "World";
         const mockContext = new MockContext({
@@ -33,11 +33,10 @@ describe("Orchestrator", () => {
                 output: `Hello, ${name}!`,
             }),
         );
-        done();
     });
 
     describe("Properties", () => {
-        it("assigns instanceId", (done) => {
+        it("assigns instanceId", async () => {
             const orchestrator = TestOrchestrations.SayHelloInline;
             const name = "World";
             const id = uuidv1();
@@ -54,10 +53,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.df.instanceId).to.be.equal(id);
-            done();
         });
 
-        it("assigns isReplaying", (done) => {
+        it("assigns isReplaying", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";
             const replaying = true;
@@ -76,10 +74,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.df.isReplaying).to.be.equal(replaying);
-            done();
         });
 
-        it("assigns parentInstanceId", (done) => {
+        it("assigns parentInstanceId", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";
             const id = uuidv1();
@@ -98,10 +95,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.df.parentInstanceId).to.be.equal(id);
-            done();
         });
 
-        it("updates currentUtcDateTime to the most recent OrchestratorStarted timestamp", (done) => {
+        it("updates currentUtcDateTime to the most recent OrchestratorStarted timestamp", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";
             const startTimestamp = moment.utc().toDate();
@@ -120,7 +116,6 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.df.currentUtcDateTime).to.be.deep.equal(nextTimestamp);
-            done();
         });
     });
 
@@ -169,7 +164,7 @@ describe("Orchestrator", () => {
     });
 
     describe("callActivity()", () => {
-        it("schedules an activity function", (done) => {
+        it("schedules an activity function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivity;
             const name = "World";
             const mockContext = new MockContext({
@@ -193,10 +188,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("schedules an activity function with no input", (done) => {
+        it("schedules an activity function with no input", async () => {
             const orchestrator = TestOrchestrations.CallActivityNoInput;
             const mockContext = new MockContext({
                 context: {
@@ -217,13 +211,12 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
         describe("Falsy Input", () => {
             const falsyValues = [ false, 0, "", null, undefined, NaN ];
             falsyValues.forEach((falsyValue) => {
-                it(`schedules an activity function with falsy input ${falsyValue}`, (done) => {
+                it(`schedules an activity function with falsy input ${falsyValue}`, async () => {
                     const orchestrator = TestOrchestrations.SayHelloWithActivity;
                     const mockContext = new MockContext({
                         context: {
@@ -246,10 +239,9 @@ describe("Orchestrator", () => {
                             ],
                         }),
                     );
-                    done();
                 });
 
-                it(`handles a completed activity function with falsy input ${falsyValue}`, (done) => {
+                it(`handles a completed activity function with falsy input ${falsyValue}`, async () => {
                     const orchestrator = TestOrchestrations.SayHelloWithActivity;
                     const mockContext = new MockContext({
                         context: {
@@ -273,12 +265,11 @@ describe("Orchestrator", () => {
                             output: `Hello, ${falsyValue}!`,
                         }),
                     );
-                    done();
                 });
             });
         });
 
-        it("handles a completed activity function", (done) => {
+        it("handles a completed activity function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivity;
             const name = "World";
             const mockContext = new MockContext({
@@ -303,10 +294,9 @@ describe("Orchestrator", () => {
                     output: `Hello, ${name}!`,
                 }),
             );
-            done();
         });
 
-        it("handles a completed series of activity functions", (done) => {
+        it("handles a completed series of activity functions", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const mockContext = new MockContext({
                 context: {
@@ -337,17 +327,33 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
     });
 
     describe("callActivityWithRetry()", () => {
-        it.skip("throws an error when retryOptions is undefined", (done) => {
-            // needs exception catching figured out
-            done();
+        it("reports an error when retryOptions is undefined", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithActivityRetryNoOptions;
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetOrchestratorStart(
+                        "SayHelloWithActivityRetryOptionsUndefined",
+                        moment.utc().toDate()),
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.an("object").that.deep.include(
+                new OrchestratorState({
+                    isDone: false,
+                    actions: [],
+                }),
+            );
+            expect(mockContext.doneValue.error).to
+                .include("retryOptions: expected type RetryOptions but got undefined");
         });
 
-        it("schedules an activity function", (done) => {
+        it("schedules an activity function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
             const name = "World";
             const mockContext = new MockContext({
@@ -376,10 +382,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("schedules an activity funtion if < max attempts", (done) => {
+        it("schedules an activity funtion if < max attempts", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
             const name = "World";
             const retryOptions = new RetryOptions(10000, 2);
@@ -409,10 +414,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("retries a failed activity function if < max attempts", (done) => {
+        it("retries a failed activity function if < max attempts", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
             const name = "World";
             const mockContext = new MockContext({
@@ -439,15 +443,41 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it.skip("faults a failed activity function if >= max attempts", (done) => {
-            // needs exception catching figured out
-            done();
+        it("reports a failed activity function if >= max attempts", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
+            const name = "World";
+            const retryOptions = new RetryOptions(10000, 2);
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithActivityRetryRetryTwo(
+                        moment.utc().toDate(),
+                        name,
+                        retryOptions.firstRetryIntervalInMilliseconds),
+                    input: name,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions:
+                [
+                    [
+                        new CallActivityWithRetryAction(
+                            "Hello",
+                            retryOptions,
+                            name),
+                    ],
+                ],
+            });
+            expect(mockContext.doneValue.error).to
+                .include("Activity function 'Hello' failed: Result: Failure");
         });
 
-        it("handles a completed activity function", (done) => {
+        it("handles a completed activity function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
             const name = "World";
             const mockContext = new MockContext({
@@ -477,12 +507,11 @@ describe("Orchestrator", () => {
                     output: `Hello, ${name}!`,
                 }),
             );
-            done();
         });
     });
 
     describe("callSubOrchestrator()", () => {
-        it("schedules a suborchestrator function", (done) => {
+        it("schedules a suborchestrator function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
             const name = "World";
             const id = uuidv1();
@@ -509,10 +538,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("schedules a suborchestrator function with no instanceId", (done) => {
+        it("schedules a suborchestrator function with no instanceId", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorNoSubId;
             const name = "World";
             const id = uuidv1();
@@ -538,10 +566,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("handles a completed suborchestrator function", (done) => {
+        it("handles a completed suborchestrator function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
             const name = "World";
             const id = uuidv1();
@@ -572,22 +599,65 @@ describe("Orchestrator", () => {
                     output: "Hello, World!",
                 }),
             );
-            done();
         });
 
-        it.skip("throws an exception when sub-orchestrator throws unhandled exception", (done) => {
-            // needs exception catching figured out
-            done();
+        it("reports an unhandled exception from suborchestrator", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
+            const name = "World";
+            const id = uuidv1();
+            const childId = `${id}:0`;
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithSubOrchestratorFail(
+                        moment.utc().toDate(),
+                        "SayHelloWithSubOrchestrator",
+                        "SayHelloWithActivity",
+                        childId,
+                        name,
+                    ),
+                    input: name,
+                    instanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions:
+                [
+                    [ new CallSubOrchestratorAction("SayHelloWithActivity", childId, name) ],
+                ],
+            });
+            expect(mockContext.doneValue.error).to
+                .include("Sub orchestrator function 'SayHelloInline' failed: Result: Failure");
         });
     });
 
     describe("callSubOrchestratorWithRetry()", () => {
-        it.skip("throws an error when retryOptions is undefined", (done) => {
-            // needs exception catching figured out
-            done();
+        it("reports an error when retryOptions is undefined", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetryNoOptions;
+            const id = uuidv1();
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetOrchestratorStart(
+                        "SayHelloWithSubOrchestratorRetryNoOptions",
+                        moment.utc().toDate()),
+                    instanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions: [],
+            });
+            expect(mockContext.doneValue.error).to
+                .include("retryOptions: expected type RetryOptions but got undefined");
         });
 
-        it("schedules a suborchestrator function", (done) => {
+        it("schedules a suborchestrator function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetry;
             const name = "World";
             const id = uuidv1();
@@ -621,10 +691,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("schedules a suborchestrator function if < max attempts", (done) => {
+        it("schedules a suborchestrator function if < max attempts", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetry;
             const name = "World";
             const id = uuidv1();
@@ -660,10 +729,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("retries a failed suborchestrator function if < max attempts", (done) => {
+        it("retries a failed suborchestrator function if < max attempts", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetry;
             const name = "World";
             const id = uuidv1();
@@ -698,15 +766,47 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it.skip("faults a failed suborchestrator function if >= max attempts", (done) => {
-            // needs exception catching figured out
-            done();
+        it("reports a failed suborchestrator function if >= max attempts", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetry;
+            const name = "World";
+            const id = uuidv1();
+            const childId = `${id}:0`;
+            const retryOptions = new RetryOptions(10000, 2);
+            const mockContext = new MockContext({
+                context: {
+                    history: TestHistories.GetSayHelloWithSubOrchestratorRetryRetryTwo(
+                        moment.utc().toDate(),
+                        childId,
+                        name,
+                        retryOptions.firstRetryIntervalInMilliseconds),
+                    input: name,
+                    instanceId: id,
+                },
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions:
+                [
+                    [
+                        new CallSubOrchestratorWithRetryAction(
+                            "SayHelloInline",
+                            new RetryOptions(10000, 2),
+                            name,
+                            childId,
+                        ),
+                    ],
+                ],
+            });
+            expect(mockContext.doneValue.error).to
+                .include("Sub orchestrator function 'SayHelloInline' failed: Result: Failure");
         });
 
-        it("handles a completed suborchestrator function", (done) => {
+        it("handles a completed suborchestrator function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetry;
             const name = "World";
             const id = uuidv1();
@@ -743,7 +843,6 @@ describe("Orchestrator", () => {
                     output: `Hello, ${name}!`,
                 }),
             );
-            done();
         });
     });
 
@@ -775,7 +874,7 @@ describe("Orchestrator", () => {
     });
 
     describe("createTimer()", () => {
-        it("schedules a timer", (done) => {
+        it("schedules a timer", async () => {
             const orchestrator = TestOrchestrations.WaitOnTimer;
             const startMoment = moment.utc();
             const fireAt = startMoment.add(5, "m").toDate();
@@ -801,10 +900,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("proceeds after a timer fires", (done) => {
+        it("proceeds after a timer fires", async () => {
             const orchestrator = TestOrchestrations.WaitOnTimer;
             const startTimestamp = moment.utc().toDate();
             const fireAt = moment(startTimestamp).add(5, "m").toDate();
@@ -831,12 +929,11 @@ describe("Orchestrator", () => {
                     output: "Timer fired!",
                 }),
             );
-            done();
         });
     });
 
     describe("setCustomStatus()", () => {
-        it("sets a custom status", (done) => {
+        it("sets a custom status", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithCustomStatus;
             const name = "World!";
             const mockContext = new MockContext({
@@ -863,12 +960,11 @@ describe("Orchestrator", () => {
                     customStatus: "Tokyo",
                 }),
             );
-            done();
         });
     });
 
     describe("waitForExternalEvent()", () => {
-        it("waits for an external event", (done) => {
+        it("waits for an external event", async () => {
             const orchestrator = TestOrchestrations.WaitForExternalEvent;
             const mockContext = new MockContext({
                 context: {
@@ -891,10 +987,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("proceeds when the correctly-named event is received", (done) => {
+        it("proceeds when the correctly-named event is received", async () => {
             const orchestrator = TestOrchestrations.WaitForExternalEvent;
             const name = "Reykjavik";
             const mockContext = new MockContext({
@@ -920,10 +1015,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("does not proceed when an incorrectly-named event is received", (done) => {
+        it("does not proceed when an incorrectly-named event is received", async () => {
             const orchestrator = TestOrchestrations.WaitForExternalEvent;
             const name = "Reykjavik";
             const mockContext = new MockContext({
@@ -948,12 +1042,11 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
     });
 
     describe("Task.all() and Task.any()", () => {
-        it("schedules a parallel set of tasks", (done) => {
+        it("schedules a parallel set of tasks", async () => {
             const orchestrator = TestOrchestrations.FanOutFanInDiskUsage;
             const filePaths = ["file1.txt", "file2.png", "file3.csx"];
             const mockContext = new MockContext({
@@ -978,10 +1071,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("Task.all does not proceed if some parallel tasks have completed", (done) => {
+        it("Task.all does not proceed if some parallel tasks have completed", async () => {
             const orchestrator = TestOrchestrations.FanOutFanInDiskUsage;
             const filePaths = ["file1.txt", "file2.png", "file3.csx"];
             const mockContext = new MockContext({
@@ -1006,10 +1098,9 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            done();
         });
 
-        it("Task.all proceeds if all parallel tasks have completed", (done) => {
+        it("Task.all proceeds if all parallel tasks have completed", async () => {
             const orchestrator = TestOrchestrations.FanOutFanInDiskUsage;
             const filePaths = ["file1.txt", "file2.png", "file3.csx"];
             const mockContext = new MockContext({
@@ -1035,10 +1126,9 @@ describe("Orchestrator", () => {
                     output: 6,
                 }),
             );
-            done();
         });
 
-        it("Task.any proceeds if a scheduled parallel task completes in order", (done) => {
+        it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
             const orchestrator = TestOrchestrations.AnyAOrB;
             const completeInOrder = true;
             const mockContext = new MockContext({
@@ -1063,10 +1153,9 @@ describe("Orchestrator", () => {
                     output: "A",
                 }),
             );
-            done();
         });
 
-        it("Task.any proceeds if a scheduled parallel task completes out of order", (done) => {
+        it("Task.any proceeds if a scheduled parallel task completes out of order", async () => {
             const orchestrator = TestOrchestrations.AnyAOrB;
             const completeInOrder = false;
             const mockContext = new MockContext({
@@ -1091,23 +1180,8 @@ describe("Orchestrator", () => {
                     output: "B",
                 }),
             );
-            done();
         });
     });
-
-    // instanceid
-
-    // isreplaying
-
-    // call activity retries
-
-    // call suborchestration
-
-    // call suborchestration retries
-
-    // continueasnew
-
-    // custom statuses
 
     // rewind
 
