@@ -1,5 +1,6 @@
 import { HistoryEvent, HistoryEventOptions, HistoryEventType } from "../classes";
 
+/** @hidden */
 export class SubOrchestrationInstanceCreatedEvent extends HistoryEvent {
     public Name: string;
     public InstanceId: string;

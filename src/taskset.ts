@@ -1,5 +1,6 @@
 import { IAction } from "./classes";
 
+/** @hidden */
 export class TaskSet {
     constructor(
         public isCompleted: boolean,

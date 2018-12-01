@@ -1,3 +1,4 @@
+/** @hidden */
 export class HttpResponse {
     constructor(
         public status: number,

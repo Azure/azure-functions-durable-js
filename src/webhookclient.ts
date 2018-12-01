@@ -2,6 +2,7 @@ import http = require("http");
 import https = require("https");
 import { HttpResponse } from "./classes";
 
+/** @hidden */
 export class WebhookClient {
     public get(url: URL, timeoutInMilliseconds?: number): Promise<HttpResponse> {
         return this.callWebhook(url, "GET", undefined, timeoutInMilliseconds);
@@ -77,16 +78,19 @@ export class WebhookClient {
     }
 }
 
+/** @hidden */
 interface IModule {
     request: IRequest;
 }
 
+/** @hidden */
 interface IRequestHandler {
     on: IOn;
     write: IWrite;
     end: IEnd;
 }
 
+/** @hidden */
 interface IRequestOptions {
     hostname: string;
     path: string;
@@ -98,7 +102,11 @@ interface IRequestOptions {
     timeout?: number;
 }
 
+/** @hidden */
 type IRequest = (options: object, callback: unknown) => IRequestHandler; // TODO: define callback as function
+/** @hidden */
 type IOn = (event: string, callback: unknown) => void;
+/** @hidden */
 type IWrite = (data: unknown) => void;
+/** @hidden */
 type IEnd = () => void;

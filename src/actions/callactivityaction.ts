@@ -1,5 +1,6 @@
 import { ActionType, IAction } from "../classes";
 
+/** @hidden */
 export class CallActivityAction implements IAction {
     public readonly actionType: ActionType = ActionType.CallActivity;
 

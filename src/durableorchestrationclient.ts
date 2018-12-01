@@ -2,11 +2,35 @@ import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, HttpManagementPayload, HttpResponse, IFunctionContext,
     IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils, WebhookClient } from "./classes";
 
-export function orchestrationClient(context: unknown): OrchestrationClient {
-    return new OrchestrationClient(context);
+/**
+ * Returns an OrchestrationClient instance.
+ * @param context The context object of the Azure function whose body
+ *  calls this method.
+ * @example Get an orchestration client instance
+ * ```javascript
+ * const df = require("durable-functions");
+ *
+ * module.exports = df.orchestrator(function*(context) {
+ *     const client = df.getClient(context);
+ *     const instanceId = await client.startNew(req.params.functionName, undefined, req.body);
+ *
+ *     return client.createCheckStatusResponse(instanceId);
+ * });
+ * ```
+ */
+export function getClient(context: unknown): DurableOrchestrationClient {
+    return new DurableOrchestrationClient(context);
 }
 
-export class OrchestrationClient {
+/**
+ * Client for starting, querying, terminating and raising events to
+ * orchestration instances.
+ */
+export class DurableOrchestrationClient {
+    /**
+     * The name of the task hub configured on this orchestration client
+     * instance.
+     */
     public taskHubName: string;
 
     private readonly eventNamePlaceholder = "{eventName}";
@@ -29,6 +53,10 @@ export class OrchestrationClient {
         require_valid_protocol: true,
     };
 
+    /**
+     * @param context The context object of the Azure function whose body
+     * calls this constructor.
+     */
     constructor(private context: unknown) {
         if (!context) {
             throw new Error("context must have a value.");
@@ -40,9 +68,13 @@ export class OrchestrationClient {
     }
 
     /**
-     * todo
-     * @param request todo
-     * @param instanceId todo
+     * Creates an HTTP response that is useful for checking the status of the
+     * specified instance.
+     * @param request The HTTP request that triggered the current orchestration
+     *  instance.
+     * @param instanceId The ID of the orchestration instance to check.
+     * @returns An HTTP 202 response with a Location header and a payload
+     *  containing instance management URLs.
      */
     public createCheckStatusResponse(request: IRequest, instanceId: string): HttpResponse {
         const httpManagementPayload = this.getClientResponseLinks(request, instanceId);
@@ -59,18 +91,21 @@ export class OrchestrationClient {
     }
 
     /**
-     * todo
-     * @param instanceId todo
+     * Creates an [[HttpManagementPayload]] object that contains instance
+     * management HTTP endpoints.
+     * @param instanceId The ID of the orchestration instance to check.
      */
-    public createHttpManagementPayload(instanceId: string) {
+    public createHttpManagementPayload(instanceId: string): HttpManagementPayload {
         return this.getClientResponseLinks(undefined, instanceId);
     }
 
     /**
-     * todo
-     * @param instanceId todo
-     * @param showHistory todo
-     * @param showHistoryOutput todo
+     * Gets the status of the specified orchestration instance.
+     * @param instanceId The ID of the orchestration instance to query.
+     * @param showHistory Boolean marker for including execution history in the
+     *  response.
+     * @param showHistoryOutput Boolean marker for including input and output
+     *  in the execution history response.
      */
     public async getStatus(
         instanceId: string,
@@ -102,7 +137,7 @@ export class OrchestrationClient {
     }
 
     /**
-     * todo
+     * Gets the status of all orchestration instances.
      */
     public async getStatusAll(): Promise<DurableOrchestrationStatus[]> {
         // omit instanceId to get status for all instances
@@ -115,10 +150,14 @@ export class OrchestrationClient {
     }
 
     /**
-     * todo
-     * @param createdTimeFrom todo
-     * @param createdTimeTo todo
-     * @param runtimeStatus todo
+     * Gets the status of all orchestration instances that match the specified
+     * conditions.
+     * @param createdTimeFrom Return orchestration instances which were created
+     *  after this Date.
+     * @param createdTimeTo Return orchestration instances which were created
+     *  before this DateTime.
+     * @param runtimeStatus Return orchestration instances which match any of
+     *  the runtimeStatus values in this array.
      */
     public async getStatusBy(
         createdTimeFrom: Date,
@@ -154,6 +193,26 @@ export class OrchestrationClient {
         return res.body as DurableOrchestrationStatus[];
     }
 
+    /**
+     * Sends an event notification message to a waiting orchestration instance.
+     * @param instanceId The ID of the orchestration instance that will handl
+     *  the event.
+     * @param eventName The name of the event.
+     * @param eventData The JSON-serializeable data associated with the event.
+     * @param taskHubName The TaskHubName of the orchestration that will handle
+     *  the event.
+     * @param connectionName The name of the connection string associated with
+     *  `taskHubName.`
+     * @returns A promise that resolves when the event notification message has
+     *  been enqueued.
+     *
+     * In order to handle the event, the target orchestration instance must be
+     * waiting for an event named `eventName` using
+     * [[waitForExternalEvent]].
+     *
+     * If the specified instance is not found or not running, this operation
+     * will have no effect.
+     */
     public async raiseEvent(
         instanceId: string,
         eventName: string,
@@ -193,9 +252,12 @@ export class OrchestrationClient {
     }
 
     /**
-     * todo
-     * @param instanceId todo
-     * @param reason todo
+     * Rewinds the specified failed orchestration instance with a reason.
+     * @param instanceId The ID of the orchestration instance to rewind.
+     * @param reason The reason for rewinding the orchestration instance.
+     * @returns A promise that resolves when the rewind message is enqueued.
+     *
+     * This feature is currently in preview.
      */
     public async rewind(instanceId: string, reason: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
@@ -217,10 +279,18 @@ export class OrchestrationClient {
     }
 
     /**
-     * todo
-     * @param orchestratorFunctionName todo
-     * @param instanceId todo
-     * @param input todo
+     * Starts a new instance of the specified orchestrator function.
+     *
+     * If an orchestration instance with the specified ID already exists, the
+     * existing instance will be silently replaced by this new instance.
+     * @param orchestratorFunctionName The name of the orchestrator function to
+     *  start.
+     * @param instanceId The ID to use for the new orchestration instance. If
+     *  no instanceId is specified, the Durable Functions extension will
+     *  generate a random GUID (recommended).
+     * @param input JSON-serializeable input value for the orchestrator
+     *  function.
+     * @returns The ID of the new orchestration instance.
      */
     public async startNew(orchestratorFunctionName: string, instanceId?: string, input?: unknown): Promise<string> {
         if (!orchestratorFunctionName) {
@@ -241,11 +311,16 @@ export class OrchestrationClient {
     }
 
     /**
-     * todo
-     * @param instanceId todo
-     * @param reason todo
+     * Terminates a running orchestration instance.
+     * @param instanceId The ID of the orchestration instance to terminate.
+     * @param reason The reason for terminating the orchestration instance.
+     * @returns A promise that resolves when the terminate message is enqueued.
+     *
+     * Terminating an orchestration instance has no effect on any in-flight
+     * activity function executions or sub-orchestrations that were started
+     * by the current orchestration instance.
      */
-    public async terminate(instanceId: string, reason: string) {
+    public async terminate(instanceId: string, reason: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
         const url = this.clientData.managementUrls.terminatePostUri
             .replace(idPlaceholder, instanceId)
@@ -264,11 +339,20 @@ export class OrchestrationClient {
     }
 
     /**
-     * todo
-     * @param request todo
-     * @param instanceId todo
-     * @param timeoutInMilliseconds todo
-     * @param retryIntervalInMilliseconds todo
+     * Creates an HTTP response which either contains a payload of management
+     * URLs for a non-completed instance or contains the payload containing
+     * the output of the completed orchestration.
+     *
+     * If the orchestration does not complete within the specified timeout,
+     * then the HTTP response will be identical to that of
+     * [[createCheckStatusResponse]].
+     *
+     * @param request The HTTP request that triggered the current function.
+     * @param instanceId The unique ID of the instance to check.
+     * @param timeoutInMilliseconds Total allowed timeout for output from the
+     *  durable function. The default value is 10 seconds.
+     * @param retryIntervalInMilliseconds The timeout between checks for output
+     *  from the durable function. The default value is 1 second.
      */
     public async waitForCompletionOrCreateCheckStatusResponse(
         request: IRequest,

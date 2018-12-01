@@ -1,3 +1,4 @@
+/** @hidden */
 export { Constants } from "./constants";
 export { Utils } from "./utils";
 
@@ -43,7 +44,7 @@ export { IOrchestratorState } from "./iorchestratorstate";
 
 export { RetryOptions } from "./retryoptions";
 
-export { OrchestrationClient } from "./orchestrationclient";
+export { DurableOrchestrationClient } from "./durableorchestrationclient";
 export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
 export { HttpCreationPayload } from "./httpcreationpayload";
 export { HttpManagementPayload } from "./httpmanagementpayload";

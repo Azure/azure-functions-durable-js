@@ -1,5 +1,6 @@
 import { HistoryEventType } from "../classes";
 
+/** @hidden */
 export abstract class HistoryEvent {
     constructor(
         public EventType: HistoryEventType,

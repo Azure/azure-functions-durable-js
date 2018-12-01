@@ -1,5 +1,6 @@
 import { HistoryEvent, HistoryEventOptions, HistoryEventType } from "../classes";
 
+/** @hidden */
 export class TaskFailedEvent extends HistoryEvent {
     public TaskScheduledId: number;
     public Reason: string;

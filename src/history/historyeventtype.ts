@@ -1,3 +1,7 @@
+/**
+ * @hidden
+ * Corresponds to subclasses of HistoryEvent type in [Durable Task framework.](https://github.com/Azure/durabletask)
+ */
 export enum HistoryEventType {
     ExecutionStarted = 0,
     ExecutionCompleted = 1,

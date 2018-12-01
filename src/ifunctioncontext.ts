@@ -1,5 +1,6 @@
 import { IDurableOrchestrationContext } from "./classes";
 
+/** @hidden */
 export interface IFunctionContext {
     bindings: {
         [key: string]: object;
@@ -8,4 +9,5 @@ export interface IFunctionContext {
     done: IDoneCallback;
 }
 
+/** @hidden */
 type IDoneCallback = (err?: unknown, result?: unknown) => void;

@@ -1,5 +1,6 @@
 import { ActionType, IAction } from "../classes";
 
+/** @hidden */
 export class CallSubOrchestratorAction implements IAction {
     public readonly actionType: ActionType = ActionType.CallSubOrchestrator;
 

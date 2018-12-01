@@ -2,8 +2,6 @@
 
 This library provides a shim to write your [Durable Functions](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-overview) orchestrator functions in [Node.js](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node), using Durable's out-of-proc execution protocol. **JS orchestrators have the same [code constraints](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-checkpointing-and-replay#orchestrator-code-constraints) as C# orchestrators.**
 
-🚧 This library currently in **public preview** status. 🚧
-
 Not all functionality has been implemented yet and there may be significant changes to both this library and the protocol.
 
 ## Getting Started
@@ -12,7 +10,7 @@ Not all functionality has been implemented yet and there may be significant chan
 
 Run this command from the root folder of your functions app:
 ```
-func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.6.2
+func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.7.0
 ```
 
 2. Install the package
@@ -37,21 +35,17 @@ yield context.df.callActivity("foo", "bar");
 
 5. Write your [orchestration starter](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-instance-management#starting-instances):
 ```javascript
-module.exports = function (context, input) {
-    var id = generateSomeUniqueId();
-    context.bindings.starter = [{
-        FunctionName: "HelloWorld",
-        Input: input,
-        InstanceId: id
-    }];
+module.exports = async function (context, input) {
+    const client = df.getClient(context);
+    const instanceId = await client.startNew("HelloWorld", input);
 
-    context.done(null);
+    return client.createCheckStatusResponse(context.bindingData.req, instanceId);
 };
 ```
 
 ## Samples
 
-The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-install) demonstrate the documentated Durable Functions patterns. They have been translated into JavaScript and are located in the [samples directory.](./test/sample/) The JavaScript versions will be added to the official documentation as a general release approaches. For now, some docs show C# samples only, but all explain the patterns in greater depth:
+The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-install) demonstrate the documentated Durable Functions patterns. They have been translated into JavaScript and are located in the [samples directory.](./test/sample/)
 
 * [Function Chaining - Hello Sequence](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-sequence)
 * [Fan-out/Fan-in - Cloud Backup](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-cloud-backup)
@@ -84,8 +78,21 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
 * Non-awaited calls to `context.df` methods return a `Task` object which has `all(Task[] tasks)` and `any(Task[] tasks)` methods, analogous to C#'s Task's WhenAll() and WhenAny() methods.
 * All CreateTimer calls can be cancelled by calling `cancel()` on the returned `TimerTask` object.
 
-### API Implementation Checklist
+### C# API Parity Tracker
 **Implemented**
+* DurableOrchestrationClient
+    * `TaskHubName`
+    * `CreateCheckStatusResponse(HttpRequestMessage, String)`
+    * `CreateHttpManagementPayload(String)`
+    * `GetStatusAsync(CancellationToken)`
+    * `GetStatusAsync(String, Boolean, Boolean)`
+    * `GetStatusAsync(DateTime, DateTime, IEnumerable<OrchestrationRuntimeStatus>, CancellationToken)`
+    * `RaiseEventAsync(String, String, Object)`
+    * `RaiseEventAsync(String, String, String, Object, String)`
+    * `RewindAsync(String, String)`
+    * `StartNewAsync(String, String, Object)`
+    * `TerminateAsync(String, String)`
+    * `WaitForCompletionOrCreateCheckStatusResponseAsync(HttpRequestMessage, String, TimeSpan, TimeSpan)`
 * DurableOrchestrationContext
     * `CurrentUtcDateTime`
     * `InstanceId`
@@ -102,20 +109,17 @@ The shim strives to hew closely to the C# DurableOrchestrationContext API, while
     * `GetInput()`
     * `SetCustomStatus(Object)`
     * `WaitForExternalEvent(String)`
-* DurableOrchestrationClient
-    * `TaskHubName`
-    * `CreateCheckStatusResponse(HttpRequestMessage, String)`
-    * `CreateHttpManagementPayload(String)`
-    * `GetStatusAsync(CancellationToken)`
-    * `GetStatusAsync(String, Boolean, Boolean)`
-    * `GetStatusAsync(DateTime, DateTime, IEnumerable<OrchestrationRuntimeStatus>, CancellationToken)`
-    * `RaiseEventAsync(String, String, Object)`
-    * `RaiseEventAsync(String, String, String, Object, String)`
-    * `RewindAsync(String, String)`
-    * `StartNewAsync(String, String, Object)`
-    * `TerminateAsync(String, String)`
-    * `WaitForCompletionOrCreateCheckStatusResponseAsync(HttpRequestMessage, String, TimeSpan, TimeSpan)`
 * `OrchestrationClient` binding to `string`
+
+**Not Yet Implemented**
+* DurableOrchestrationClient
+    * `GetStatusAsync(String, Boolean, Boolean, Boolean)`
+    * `PurgeInstanceHistoryAsync(DateTime, DateTime, IEnumerable<OrchestrationRuntimeStatus>)`
+    * `PurgeInstanceHistoryAsync(String)`
+* DurableOrchestrationContext
+    * `NewGuid()`
+    * `WaitForExternalEvent<T>(String, TimeSpan)`
+    * `WaitForExternalEvent<T>(String, TimeSpan, T)`
 
 **Will Not Be Implemented**
 * DurableOrchestrationContext

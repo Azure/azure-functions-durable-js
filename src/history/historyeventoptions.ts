@@ -1,3 +1,4 @@
+/** @hidden */
 export class HistoryEventOptions {
     public details?: string;
     public fireAt?: Date;

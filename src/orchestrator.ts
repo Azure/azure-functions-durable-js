@@ -6,8 +6,10 @@ import { CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAct
     Task, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent,
     TimerTask, WaitForExternalEventAction } from "./classes";
 
+/** @hidden */
 const log = debug("orchestrator");
 
+/** @hidden */
 export class Orchestrator {
     private customStatus: unknown;
 

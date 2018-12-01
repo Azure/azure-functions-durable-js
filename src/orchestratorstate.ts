@@ -1,5 +1,6 @@
 import { IAction, IOrchestratorState } from "./classes";
 
+/** @hidden */
 export class OrchestratorState implements IOrchestratorState {
     public readonly isDone: boolean;
     public readonly actions: IAction[][];

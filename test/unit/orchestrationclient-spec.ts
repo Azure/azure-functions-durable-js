@@ -4,7 +4,7 @@ import "mocha";
 import * as sinon from "sinon";
 import * as uuidv1 from "uuid/v1";
 import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagementPayload,
-    HttpResponse, OrchestrationClient, OrchestrationClientInputData, OrchestrationRuntimeStatus,
+    HttpResponse, DurableOrchestrationClient, OrchestrationClientInputData, OrchestrationRuntimeStatus,
     WebhookClient } from "../../src/classes";
 
 const expect = chai.expect;
@@ -55,13 +55,13 @@ describe("Orchestration Client", () => {
     describe("Constructor", () => {
         it("throws if context is undefined", async () => {
             expect(() => {
-                const client = new OrchestrationClient(undefined);
+                const client = new DurableOrchestrationClient(undefined);
             }).to.throw("context must have a value.");
         });
 
         it("throws if context.bindings is undefined", async () => {
             expect(() => {
-                const client = new OrchestrationClient({});
+                const client = new DurableOrchestrationClient({});
             }).to.throw(Constants.OrchestrationClientNoBindingFoundMessage);
         });
 
@@ -72,27 +72,27 @@ describe("Orchestration Client", () => {
                         orchestrationClient: { id: "" },
                     },
                 };
-                const client = new OrchestrationClient(badContext);
+                const client = new DurableOrchestrationClient(badContext);
             }).to.throw(Constants.OrchestrationClientNoBindingFoundMessage);
         });
 
         it("initializes if context.bindings contains valid orchestrationClient input binding", async () => {
             expect(() => {
-                const client = new OrchestrationClient(defaultContext);
+                const client = new DurableOrchestrationClient(defaultContext);
             }).to.not.throw(Constants.OrchestrationClientNoBindingFoundMessage);
         });
     });
 
     describe("Properties", () => {
         it("assigns taskHubName", async () => {
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             expect(client.taskHubName).to.be.equal(defaultTaskHub);
         });
     });
 
     describe("createCheckStatusResponse()", () => {
         it(`returns a proper response object from request.url`, async () => {
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             const requestObj = {
                 url: defaultRequestUrl,
                 method: "GET",
@@ -118,7 +118,7 @@ describe("Orchestration Client", () => {
         });
 
         it("returns a proper response object when request is undefined", async () => {
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
 
             const expectedPayload = createHttpManagementPayload(
                 defaultInstanceId,
@@ -142,7 +142,7 @@ describe("Orchestration Client", () => {
 
     describe("createHttpManagementPayload()", () => {
         it("returns a proper payload", async () => {
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             const payload = client.createHttpManagementPayload(defaultInstanceId);
 
             const expectedPayload = createHttpManagementPayload(
@@ -169,7 +169,7 @@ describe("Orchestration Client", () => {
             const webhookUrl = new URL(context.bindings.starter.managementUrls.statusQueryGetUri
                 .replace(idPlaceholder, defaultInstanceId));
 
-            const client = new OrchestrationClient(context);
+            const client = new DurableOrchestrationClient(context);
             const expectedStatus = new DurableOrchestrationStatus(
                 defaultOrchestrationName,
                 defaultInstanceId,
@@ -203,7 +203,7 @@ describe("Orchestration Client", () => {
             const webhookUrl = new URL(context.bindings.starter.managementUrls.statusQueryGetUri
                 .replace(idPlaceholder, ""));
 
-            const client = new OrchestrationClient(context);
+            const client = new DurableOrchestrationClient(context);
             const expectedStatuses: DurableOrchestrationStatus[] = [ ];
             this.getStub.resolves(new HttpResponse(202, expectedStatuses));
 
@@ -235,7 +235,7 @@ describe("Orchestration Client", () => {
                 .concat(`&createdTimeTo=${createdTimeTo.toISOString()}`)
                 .concat("&runtimeStatus=Failed,Terminated"));
 
-            const client = new OrchestrationClient(context);
+            const client = new DurableOrchestrationClient(context);
             const expectedStatuses: DurableOrchestrationStatus[] = [ ];
             this.getStub.resolves(new HttpResponse(202, expectedStatuses));
 
@@ -252,7 +252,7 @@ describe("Orchestration Client", () => {
                 .replace(idPlaceholder, "")
                 .concat("&runtimeStatus=Failed,Terminated"));
 
-            const client = new OrchestrationClient(context);
+            const client = new DurableOrchestrationClient(context);
             const expectedStatuses: DurableOrchestrationStatus[] = [ ];
             this.getStub.resolves(new HttpResponse(202, expectedStatuses));
 
@@ -281,7 +281,7 @@ describe("Orchestration Client", () => {
                 .replace(idPlaceholder, defaultInstanceId)
                 .replace(eventNamePlaceholder, defaultTestEvent));
 
-            const client = new OrchestrationClient(context);
+            const client = new DurableOrchestrationClient(context);
             this.postStub.resolves(new HttpResponse(202, undefined));
 
             const result = await client.raiseEvent(defaultInstanceId, defaultTestEvent, defaultTestData);
@@ -297,7 +297,7 @@ describe("Orchestration Client", () => {
                 .replace(eventNamePlaceholder, defaultTestEvent)
                 .replace(defaultTaskHub, testTaskHub));
 
-            const client = new OrchestrationClient(context);
+            const client = new DurableOrchestrationClient(context);
             this.postStub.resolves(new HttpResponse(202, undefined));
 
             const result = await client.raiseEvent(defaultInstanceId, defaultTestEvent, defaultTestData, testTaskHub);
@@ -313,7 +313,7 @@ describe("Orchestration Client", () => {
                 .replace(eventNamePlaceholder, defaultTestEvent)
                 .replace(defaultConnection, testConnection));
 
-            const client = new OrchestrationClient(context);
+            const client = new DurableOrchestrationClient(context);
             this.postStub.resolves(new HttpResponse(202, undefined));
 
             const result = await client.raiseEvent(
@@ -334,7 +334,7 @@ describe("Orchestration Client", () => {
                 .replace(idPlaceholder, id)
                 .replace(eventNamePlaceholder, defaultTestEvent));
 
-            const client = new OrchestrationClient(context);
+            const client = new DurableOrchestrationClient(context);
             this.postStub.resolves(new HttpResponse(404, undefined));
 
             await expect (client.raiseEvent(id, defaultTestEvent, defaultTestData))
@@ -360,7 +360,7 @@ describe("Orchestration Client", () => {
                 .replace(idPlaceholder, defaultInstanceId)
                 .replace(reasonPlaceholder, testReason));
 
-            const client = new OrchestrationClient(context);
+            const client = new DurableOrchestrationClient(context);
             this.postStub.resolves(new HttpResponse(202, undefined));
 
             const result = await client.rewind(defaultInstanceId, testReason);
@@ -379,7 +379,7 @@ describe("Orchestration Client", () => {
                 const webhookUrl = new URL(context.bindings.starter.managementUrls.rewindPostUri
                     .replace(idPlaceholder, id)
                     .replace(reasonPlaceholder, testReason));
-                const client = new OrchestrationClient(context);
+                const client = new DurableOrchestrationClient(context);
                 this.postStub.resolves(new HttpResponse(statusCode, undefined));
 
                 await expect(client.rewind(id, testReason)).to.be.rejectedWith(Error);
@@ -404,7 +404,7 @@ describe("Orchestration Client", () => {
             const functionName = defaultOrchestrationName;
             const webhookUrl = createInstanceWebhookUrl(notificationUrlHost, functionName);
 
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             this.postStub.resolves(new HttpResponse(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "")));
 
             const result = await client.startNew(functionName);
@@ -416,7 +416,7 @@ describe("Orchestration Client", () => {
             const functionName = defaultOrchestrationName;
             const webhookUrl = createInstanceWebhookUrl(notificationUrlHost, functionName, defaultInstanceId);
 
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             this.postStub.resolves(new HttpResponse(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "")));
 
             const result = await client.startNew(functionName, defaultInstanceId, { key: "value" });
@@ -427,7 +427,7 @@ describe("Orchestration Client", () => {
         it("throws if webhook client returns error", async () => {
             const functionName = "BadOrchestration";
 
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             this.postStub.resolves(new HttpResponse(500, undefined));
 
             await expect(client.startNew(functionName)).to.be.rejectedWith(Error);
@@ -452,7 +452,7 @@ describe("Orchestration Client", () => {
                 .replace(idPlaceholder, defaultInstanceId)
                 .replace(reasonPlaceholder, testReason));
 
-            const client = new OrchestrationClient(context);
+            const client = new DurableOrchestrationClient(context);
             this.postStub.resolves(new HttpResponse(202, undefined));
 
             const result = await client.terminate(defaultInstanceId, testReason);
@@ -471,7 +471,7 @@ describe("Orchestration Client", () => {
                 const webhookUrl = new URL(context.bindings.starter.managementUrls.terminatePostUri
                     .replace(idPlaceholder, id)
                     .replace(reasonPlaceholder, testReason));
-                const client = new OrchestrationClient(context);
+                const client = new DurableOrchestrationClient(context);
                 this.postStub.resolves(new HttpResponse(404, undefined));
 
                 await expect(client.terminate(id, testReason)).to.be.rejectedWith(Error);
@@ -499,7 +499,7 @@ describe("Orchestration Client", () => {
         it("throws when retryIntervalInMilliseconds > timeoutInMilliseconds", async () => {
             const badInterval = 1e6;
 
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             await expect(client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
@@ -519,7 +519,7 @@ describe("Orchestration Client", () => {
                 },
             );
 
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             this.getStub.resolves(
                 new HttpResponse(
                     202,
@@ -562,7 +562,7 @@ describe("Orchestration Client", () => {
                 },
             );
 
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             this.getStub.resolves(
                 new HttpResponse(
                     200,
@@ -597,7 +597,7 @@ describe("Orchestration Client", () => {
                 },
             );
 
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             this.getStub.resolves(
                 new HttpResponse(
                     200,
@@ -632,7 +632,7 @@ describe("Orchestration Client", () => {
                 },
             );
 
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             this.getStub.resolves(
                 new HttpResponse(
                     200,
@@ -676,7 +676,7 @@ describe("Orchestration Client", () => {
                 },
             );
 
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             this.getStub.onFirstCall().resolves(
                 new HttpResponse(
                     202,
@@ -715,7 +715,7 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Running,
             );
 
-            const client = new OrchestrationClient(defaultContext);
+            const client = new DurableOrchestrationClient(defaultContext);
             const expectedResponse = client.createCheckStatusResponse(defaultRequest, defaultInstanceId);
             this.getStub.resolves(
                 new HttpResponse(

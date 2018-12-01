@@ -1,5 +1,6 @@
 import { HistoryEvent, HistoryEventOptions, HistoryEventType } from "../classes";
 
+/** @hidden */
 export class TimerFiredEvent extends HistoryEvent {
     public TimerId: number;
     public FireAt: Date;

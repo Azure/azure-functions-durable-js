@@ -1,3 +1,4 @@
+/** @hidden */
 export class HttpCreationPayload {
     constructor(
         public createNewInstancePostUri: string,

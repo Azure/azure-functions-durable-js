@@ -1,5 +1,6 @@
 import { ActionType, IAction } from "../classes";
 
+/** @hidden */
 export class CreateTimerAction implements IAction {
     public readonly actionType: ActionType = ActionType.CreateTimer;
 

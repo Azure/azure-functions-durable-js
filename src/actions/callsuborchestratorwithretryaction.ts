@@ -1,5 +1,6 @@
 import { ActionType, IAction, RetryOptions } from "../classes";
 
+/** @hidden */
 export class CallSubOrchestratorWithRetryAction implements IAction {
     public readonly actionType: ActionType = ActionType.CallSubOrchestratorWithRetry;
 

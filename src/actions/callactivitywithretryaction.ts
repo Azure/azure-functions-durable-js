@@ -1,5 +1,6 @@
 import { ActionType, IAction, RetryOptions } from "../classes";
 
+/** @hidden */
 export class CallActivityWithRetryAction implements IAction {
     public readonly actionType: ActionType = ActionType.CallActivityWithRetry;
 
