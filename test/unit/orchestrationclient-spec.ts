@@ -56,7 +56,7 @@ describe("Orchestration Client", () => {
         it("throws if context is undefined", async () => {
             expect(() => {
                 const client = new DurableOrchestrationClient(undefined);
-            }).to.throw("context must have a value.");
+            }).to.throw(`context: Expected context object but got undefined`);
         });
 
         it("throws if context.bindings is undefined", async () => {

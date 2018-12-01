@@ -1,3 +1,4 @@
+import { isDate } from "util";
 import { ActionType, IAction } from "../classes";
 
 /** @hidden */
@@ -7,5 +8,9 @@ export class CreateTimerAction implements IAction {
     constructor(
         public readonly fireAt: Date,
         public isCanceled: boolean = false,
-    ) { }
+    ) {
+        if (!isDate(fireAt)) {
+            throw new TypeError(`fireAt: Expected valid Date object but got ${fireAt}`);
+        }
+    }
 }

@@ -59,7 +59,7 @@ export class DurableOrchestrationClient {
      */
     constructor(private context: unknown) {
         if (!context) {
-            throw new Error("context must have a value.");
+            throw new TypeError(`context: Expected context object but got ${typeof context}`);
         }
 
         this.clientData = this.getClientData();
@@ -407,19 +407,15 @@ export class DurableOrchestrationClient {
     }
 
     private getClientData(): OrchestrationClientInputData {
-        const dataKey = (this.context as IFunctionContext).bindings
-            ? Object.keys((this.context as IFunctionContext).bindings).filter((val: string) => {
-                return Object.keys(new OrchestrationClientInputData(undefined, undefined, undefined)).every((key) => {
-                    return (this.context as IFunctionContext).bindings[val].hasOwnProperty(key);
-                });
-            })[0]
-            : undefined;
+        const matchingInstances = Utils.getInstancesOf<OrchestrationClientInputData>(
+            (this.context as IFunctionContext).bindings,
+            new OrchestrationClientInputData(undefined, undefined, undefined));
 
-        if (!dataKey) {
+        if (!matchingInstances || matchingInstances.length === 0) {
             throw new Error(Constants.OrchestrationClientNoBindingFoundMessage);
         }
 
-        return (this.context as IFunctionContext).bindings[dataKey] as OrchestrationClientInputData;
+        return matchingInstances[0];
     }
 
     private getClientResponseLinks(request: IRequest, instanceId: string): HttpManagementPayload {
@@ -439,10 +435,6 @@ export class DurableOrchestrationClient {
     }
 
     private hasValidRequestUrl(request: IRequest): boolean {
-        if (request && request.url) {
-            return true;
-        } else {
-            return false;
-        }
+        return request !== undefined && request.url !== undefined;
     }
 }
