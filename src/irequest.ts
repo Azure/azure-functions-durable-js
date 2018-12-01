@@ -1,4 +1,3 @@
-/** @hidden */
 export interface IRequest {
     method: string;
     url: string;

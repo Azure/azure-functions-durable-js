@@ -1,13 +1,9 @@
-import { IDurableOrchestrationContext } from "./classes";
+import { DurableOrchestrationContext } from "./classes";
 
-/** @hidden */
 export interface IFunctionContext {
     bindings: {
         [key: string]: object;
     };
-    df: IDurableOrchestrationContext;
-    done: IDoneCallback;
+    df: DurableOrchestrationContext;
+    done: (err?: unknown, result?: unknown) => void;
 }
-
-/** @hidden */
-type IDoneCallback = (err?: unknown, result?: unknown) => void;

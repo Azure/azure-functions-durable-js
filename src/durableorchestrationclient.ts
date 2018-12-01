@@ -1,5 +1,5 @@
 import { isURL } from "validator";
-import { Constants, DurableOrchestrationStatus, HttpManagementPayload, HttpResponse, IFunctionContext,
+import { Constants, DurableOrchestrationStatus, HttpManagementPayload, IFunctionContext, IHttpResponse,
     IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils, WebhookClient } from "./classes";
 
 /**
@@ -76,18 +76,18 @@ export class DurableOrchestrationClient {
      * @returns An HTTP 202 response with a Location header and a payload
      *  containing instance management URLs.
      */
-    public createCheckStatusResponse(request: IRequest, instanceId: string): HttpResponse {
+    public createCheckStatusResponse(request: IRequest, instanceId: string): IHttpResponse {
         const httpManagementPayload = this.getClientResponseLinks(request, instanceId);
 
-        return new HttpResponse(
-            202,
-            httpManagementPayload,
-            {
+        return {
+            status: 202,
+            body: httpManagementPayload,
+            headers: {
                 "Content-Type": "application/json",
                 "Location": httpManagementPayload.statusQueryGetUri,
                 "Retry-After": 10,
             },
-        );
+        };
     }
 
     /**
@@ -359,7 +359,7 @@ export class DurableOrchestrationClient {
         instanceId: string,
         timeoutInMilliseconds: number = 10000,
         retryIntervalInMilliseconds: number = 1000,
-        ): Promise<HttpResponse> {
+        ): Promise<IHttpResponse> {
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
             throw new Error(`Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`); // tslint:disable-line max-line-length
         }
@@ -394,16 +394,16 @@ export class DurableOrchestrationClient {
         }
     }
 
-    private createHttpResponse(statusCode: number, body: unknown): HttpResponse {
+    private createHttpResponse(statusCode: number, body: unknown): IHttpResponse {
         const bodyAsJson = JSON.stringify(body);
-        return new HttpResponse(
-            statusCode,
-            bodyAsJson,
-            {
+        return {
+            status: statusCode,
+            body: bodyAsJson,
+            headers: {
                 "Content-Type": "application/json",
                 "Content-Length": bodyAsJson !== undefined ? bodyAsJson.length : 0,
             },
-        );
+        };
     }
 
     private getClientData(): OrchestrationClientInputData {

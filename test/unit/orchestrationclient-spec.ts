@@ -3,8 +3,8 @@ import chaiAsPromised = require("chai-as-promised");
 import "mocha";
 import * as sinon from "sinon";
 import * as uuidv1 from "uuid/v1";
-import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagementPayload,
-    HttpResponse, DurableOrchestrationClient, OrchestrationClientInputData, OrchestrationRuntimeStatus,
+import { Constants, DurableOrchestrationClient, DurableOrchestrationStatus, HttpCreationPayload,
+    HttpManagementPayload, OrchestrationClientInputData, OrchestrationRuntimeStatus,
     WebhookClient } from "../../src/classes";
 
 const expect = chai.expect;
@@ -178,7 +178,7 @@ describe("Orchestration Client", () => {
                 null,
                 null,
                 OrchestrationRuntimeStatus.Pending);
-            this.getStub.resolves(new HttpResponse(202, expectedStatus));
+            this.getStub.resolves({ status: 202, body: expectedStatus});
 
             const result = await client.getStatus(defaultInstanceId);
             sinon.assert.calledWithExactly(this.getStub, webhookUrl);
@@ -205,7 +205,7 @@ describe("Orchestration Client", () => {
 
             const client = new DurableOrchestrationClient(context);
             const expectedStatuses: DurableOrchestrationStatus[] = [ ];
-            this.getStub.resolves(new HttpResponse(202, expectedStatuses));
+            this.getStub.resolves({ status: 202, body: expectedStatuses});
 
             const result = await client.getStatusAll();
             sinon.assert.calledWithExactly(this.getStub, webhookUrl);
@@ -237,7 +237,7 @@ describe("Orchestration Client", () => {
 
             const client = new DurableOrchestrationClient(context);
             const expectedStatuses: DurableOrchestrationStatus[] = [ ];
-            this.getStub.resolves(new HttpResponse(202, expectedStatuses));
+            this.getStub.resolves({ status: 202, body: expectedStatuses});
 
             const result = await client.getStatusBy(createdTimeFrom, createdTimeTo, runtimeStatuses);
             sinon.assert.calledWithExactly(this.getStub, webhookUrl);
@@ -254,7 +254,7 @@ describe("Orchestration Client", () => {
 
             const client = new DurableOrchestrationClient(context);
             const expectedStatuses: DurableOrchestrationStatus[] = [ ];
-            this.getStub.resolves(new HttpResponse(202, expectedStatuses));
+            this.getStub.resolves({ status: 202, body: expectedStatuses });
 
             const result = await client.getStatusBy(undefined, undefined, runtimeStatuses);
             sinon.assert.calledWithExactly(this.getStub, webhookUrl);
@@ -282,7 +282,7 @@ describe("Orchestration Client", () => {
                 .replace(eventNamePlaceholder, defaultTestEvent));
 
             const client = new DurableOrchestrationClient(context);
-            this.postStub.resolves(new HttpResponse(202, undefined));
+            this.postStub.resolves({ status: 202, body: undefined});
 
             const result = await client.raiseEvent(defaultInstanceId, defaultTestEvent, defaultTestData);
             sinon.assert.calledWithExactly(this.postStub, webhookUrl, defaultTestData);
@@ -298,7 +298,7 @@ describe("Orchestration Client", () => {
                 .replace(defaultTaskHub, testTaskHub));
 
             const client = new DurableOrchestrationClient(context);
-            this.postStub.resolves(new HttpResponse(202, undefined));
+            this.postStub.resolves({ status: 202, body: undefined });
 
             const result = await client.raiseEvent(defaultInstanceId, defaultTestEvent, defaultTestData, testTaskHub);
             sinon.assert.calledWithExactly(this.postStub, webhookUrl, defaultTestData);
@@ -314,7 +314,7 @@ describe("Orchestration Client", () => {
                 .replace(defaultConnection, testConnection));
 
             const client = new DurableOrchestrationClient(context);
-            this.postStub.resolves(new HttpResponse(202, undefined));
+            this.postStub.resolves({ status: 202, body: undefined});
 
             const result = await client.raiseEvent(
                 defaultInstanceId,
@@ -335,7 +335,7 @@ describe("Orchestration Client", () => {
                 .replace(eventNamePlaceholder, defaultTestEvent));
 
             const client = new DurableOrchestrationClient(context);
-            this.postStub.resolves(new HttpResponse(404, undefined));
+            this.postStub.resolves({ status: 404, body: undefined });
 
             await expect (client.raiseEvent(id, defaultTestEvent, defaultTestData))
                 .to.be.rejectedWith(`No instance with ID '${id}' found.`);
@@ -361,7 +361,7 @@ describe("Orchestration Client", () => {
                 .replace(reasonPlaceholder, testReason));
 
             const client = new DurableOrchestrationClient(context);
-            this.postStub.resolves(new HttpResponse(202, undefined));
+            this.postStub.resolves({ status: 202, body: undefined });
 
             const result = await client.rewind(defaultInstanceId, testReason);
             sinon.assert.calledWithExactly(this.postStub, webhookUrl);
@@ -380,7 +380,7 @@ describe("Orchestration Client", () => {
                     .replace(idPlaceholder, id)
                     .replace(reasonPlaceholder, testReason));
                 const client = new DurableOrchestrationClient(context);
-                this.postStub.resolves(new HttpResponse(statusCode, undefined));
+                this.postStub.resolves({ status: statusCode, body: undefined });
 
                 await expect(client.rewind(id, testReason)).to.be.rejectedWith(Error);
             });
@@ -405,7 +405,10 @@ describe("Orchestration Client", () => {
             const webhookUrl = createInstanceWebhookUrl(notificationUrlHost, functionName);
 
             const client = new DurableOrchestrationClient(defaultContext);
-            this.postStub.resolves(new HttpResponse(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "")));
+            this.postStub.resolves({
+                status: 202,
+                body: new HttpManagementPayload(defaultInstanceId, "", "", "", ""),
+            });
 
             const result = await client.startNew(functionName);
             sinon.assert.calledWithExactly(this.postStub, webhookUrl, undefined);
@@ -417,7 +420,10 @@ describe("Orchestration Client", () => {
             const webhookUrl = createInstanceWebhookUrl(notificationUrlHost, functionName, defaultInstanceId);
 
             const client = new DurableOrchestrationClient(defaultContext);
-            this.postStub.resolves(new HttpResponse(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "")));
+            this.postStub.resolves({
+                status: 202,
+                body: new HttpManagementPayload(defaultInstanceId, "", "", "", ""),
+            });
 
             const result = await client.startNew(functionName, defaultInstanceId, { key: "value" });
             sinon.assert.calledWithExactly(this.postStub, webhookUrl, { key: "value" });
@@ -428,7 +434,7 @@ describe("Orchestration Client", () => {
             const functionName = "BadOrchestration";
 
             const client = new DurableOrchestrationClient(defaultContext);
-            this.postStub.resolves(new HttpResponse(500, undefined));
+            this.postStub.resolves({ status: 500, body: undefined });
 
             await expect(client.startNew(functionName)).to.be.rejectedWith(Error);
         });
@@ -453,7 +459,7 @@ describe("Orchestration Client", () => {
                 .replace(reasonPlaceholder, testReason));
 
             const client = new DurableOrchestrationClient(context);
-            this.postStub.resolves(new HttpResponse(202, undefined));
+            this.postStub.resolves({ status: 202, body: undefined });
 
             const result = await client.terminate(defaultInstanceId, testReason);
             sinon.assert.calledWithExactly(this.postStub, webhookUrl);
@@ -472,7 +478,7 @@ describe("Orchestration Client", () => {
                     .replace(idPlaceholder, id)
                     .replace(reasonPlaceholder, testReason));
                 const client = new DurableOrchestrationClient(context);
-                this.postStub.resolves(new HttpResponse(404, undefined));
+                this.postStub.resolves({ status: 404, body: undefined });
 
                 await expect(client.terminate(id, testReason)).to.be.rejectedWith(Error);
             });
@@ -510,30 +516,29 @@ describe("Orchestration Client", () => {
 
         it("returns expected result for completed instance", async () => {
             const expectedOutput = 42;
-            const expectedResponse = new HttpResponse(
-                200,
-                JSON.stringify(expectedOutput),
-                {
+            const expectedResponse = {
+                status: 200,
+                body: JSON.stringify(expectedOutput),
+                headers: {
                     "Content-Type": "application/json",
                     "Content-Length": 2,
                 },
-            );
+            };
 
             const client = new DurableOrchestrationClient(defaultContext);
-            this.getStub.resolves(
-                new HttpResponse(
-                    202,
-                    new DurableOrchestrationStatus(
-                        defaultOrchestrationName,
-                        defaultInstanceId,
-                        undefined,
-                        undefined,
-                        undefined,
-                        expectedOutput,
-                        OrchestrationRuntimeStatus.Completed,
-                    ),
+            this.getStub.resolves({
+                status: 202,
+                body: new DurableOrchestrationStatus(
+                    defaultOrchestrationName,
+                    defaultInstanceId,
+                    undefined,
+                    undefined,
+                    undefined,
+                    expectedOutput,
+                    OrchestrationRuntimeStatus.Completed,
                 ),
-            );
+            });
+
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
@@ -553,22 +558,20 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Canceled,
             );
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
-            const expectedResponse = new HttpResponse(
-                200,
-                expectedStatusAsJson,
-                {
+            const expectedResponse = {
+                status: 200,
+                body: expectedStatusAsJson,
+                headers: {
                     "Content-Type": "application/json",
                     "Content-Length": expectedStatusAsJson.length,
                 },
-            );
+            };
 
             const client = new DurableOrchestrationClient(defaultContext);
-            this.getStub.resolves(
-                new HttpResponse(
-                    200,
-                    expectedStatus,
-                ),
-            );
+            this.getStub.resolves({
+                status: 200,
+                body: expectedStatus,
+            });
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
@@ -588,22 +591,20 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Terminated,
             );
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
-            const expectedResponse = new HttpResponse(
-                200,
-                expectedStatusAsJson,
-                {
+            const expectedResponse = {
+                status: 200,
+                body: expectedStatusAsJson,
+                headers: {
                     "Content-Type": "application/json",
                     "Content-Length": expectedStatusAsJson.length,
                 },
-            );
+            };
 
             const client = new DurableOrchestrationClient(defaultContext);
-            this.getStub.resolves(
-                new HttpResponse(
-                    200,
-                    expectedStatus,
-                ),
-            );
+            this.getStub.resolves({
+                status: 200,
+                body: expectedStatus,
+            });
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
@@ -623,22 +624,20 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Failed,
             );
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
-            const expectedResponse = new HttpResponse(
-                500,
-                expectedStatusAsJson,
-                {
+            const expectedResponse = {
+                status: 500,
+                body: expectedStatusAsJson,
+                headers: {
                     "Content-Type": "application/json",
                     "Content-Length": expectedStatusAsJson.length,
                 },
-            );
+            };
 
             const client = new DurableOrchestrationClient(defaultContext);
-            this.getStub.resolves(
-                new HttpResponse(
-                    200,
-                    expectedStatus,
-                ),
-            );
+            this.getStub.resolves({
+                status: 200,
+                body: expectedStatus,
+            });
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
@@ -667,33 +666,38 @@ describe("Orchestration Client", () => {
                 expectedOutput,
                 OrchestrationRuntimeStatus.Completed,
             );
-            const expectedResponse = new HttpResponse(
-                200,
-                JSON.stringify(expectedOutput),
-                {
+            const expectedResponse = {
+                status: 200,
+                body: JSON.stringify(expectedOutput),
+                headers:                 {
                     "Content-Type": "application/json",
                     "Content-Length": 2,
                 },
-            );
+            };
+            const httpManagementPayload = createHttpManagementPayload(
+                defaultInstanceId,
+                hostPlaceholder,
+                defaultTaskHub,
+                defaultConnection);
 
             const client = new DurableOrchestrationClient(defaultContext);
-            this.getStub.onFirstCall().resolves(
-                new HttpResponse(
-                    202,
-                    runningStatus,
-                    // TODO: some headers should go here for the sake of accuracy
-                ),
-            );
-            this.getStub.onSecondCall().resolves(
-                new HttpResponse(
-                    200,
-                    completedStatus,
-                    {
-                        "Content-Type": "application/json",
-                        "Content-Length": 2,
-                    },
-                ),
-            );
+            this.getStub.onFirstCall().resolves({
+                status: 202,
+                body: runningStatus,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Location": httpManagementPayload.statusQueryGetUri,
+                    "Retry-After": 10,
+                },
+            });
+            this.getStub.onSecondCall().resolves({
+                status: 200,
+                body: completedStatus,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Content-Length": 2,
+                },
+            });
 
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
@@ -714,16 +718,23 @@ describe("Orchestration Client", () => {
                 undefined,
                 OrchestrationRuntimeStatus.Running,
             );
+            const httpManagementPayload = createHttpManagementPayload(
+                defaultInstanceId,
+                hostPlaceholder,
+                defaultTaskHub,
+                defaultConnection);
 
             const client = new DurableOrchestrationClient(defaultContext);
             const expectedResponse = client.createCheckStatusResponse(defaultRequest, defaultInstanceId);
-            this.getStub.resolves(
-                new HttpResponse(
-                    202,
-                    runningStatus,
-                    // TODO: some headers should go here for the sake of accuracy
-                ),
-            );
+            this.getStub.resolves({
+                status: 202,
+                body: runningStatus,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Location": httpManagementPayload.statusQueryGetUri,
+                    "Retry-After": 10,
+                },
+            });
 
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,

@@ -2,8 +2,8 @@ import { CreateTimerAction, Task } from "./classes";
 
 /**
  * Returned from [[DurableOrchestrationClient]].[[createTimer]] if the call is
- * not `yield`ed. Represents a pending timer. See documentation on [[Task]] for
- * more information.
+ * not `yield`-ed. Represents a pending timer. See documentation on [[Task]]
+ * for more information.
  *
  * All pending timers must be completed or canceled for an orchestration to
  * complete.

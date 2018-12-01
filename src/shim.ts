@@ -2,7 +2,7 @@ import { IFunctionContext, Orchestrator } from "./classes";
 
 /**
  * Enables a generator function to act as an orchestrator function.
- * 
+ *
  * Orchestration context methods can be acces
  * @param fn the generator function that should act as an orchestrator
  * @example Initialize an orchestrator

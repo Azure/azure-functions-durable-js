@@ -1,10 +1,9 @@
 /** @hidden */
 export class Utils {
-    // TODO: unit test
-    public static getInstancesOf<T>(collection: { [index: string]: unknown }, refInstance: T): T[] {
-        return collection
+    public static getInstancesOf<T>(collection: { [index: string]: unknown }, typeInstance: T): T[] {
+        return collection && typeInstance
             ? Object.keys(collection)
-                .filter((key: string) => this.hasAllPropertiesOf(refInstance, collection[key]))
+                .filter((key: string) => this.hasAllPropertiesOf(collection[key], typeInstance))
                 .map((key: string) => collection[key]) as T[]
             : [];
     }
@@ -13,11 +12,12 @@ export class Utils {
         return times[0] * 1000 + times[1] / 1e6;
     }
 
-    // TODO: unit test
-    public static hasAllPropertiesOf<T>(refInstance: T, obj: unknown) {
-        return Object.keys(refInstance).every((key: string) => {
-            return typeof obj === "object" && obj.hasOwnProperty(key);
-        });
+    public static hasAllPropertiesOf<T>(obj: unknown, refInstance: T) {
+        return typeof refInstance === "object"
+            && typeof obj === "object"
+            && Object.keys(refInstance).every((key: string) => {
+                return obj.hasOwnProperty(key);
+            });
     }
 
     public static sleep(delayInMilliseconds: number): Promise<NodeJS.Timer> {

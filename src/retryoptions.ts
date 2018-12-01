@@ -11,7 +11,7 @@ export class RetryOptions {
     public retryTimeoutInMilliseconds: number;
 
     /**
-     * Creates a new instance RetryOptions with the supplied first retry and
+     * Creates a new instance of RetryOptions with the supplied first retry and
      * max attempts.
      * @param firstRetryIntervalInMilliseconds Must be greater than 0.
      */

@@ -5,8 +5,8 @@ import * as uuidv1 from "uuid/v1";
 import {
     CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
     CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction,
-    IDurableOrchestrationContext, IOrchestratorState, OrchestratorState,
-    RetryOptions, WaitForExternalEventAction,
+    DurableOrchestrationBindingInfo, DurableOrchestrationContext, IOrchestratorState,
+    OrchestratorState, RetryOptions, WaitForExternalEventAction,
 } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/testorchestrations";
@@ -16,13 +16,13 @@ describe("Orchestrator", () => {
         const orchestrator = TestOrchestrations.SayHelloInline;
         const name = "World";
         const mockContext = new MockContext({
-            context: {
-                history: TestHistories.GetOrchestratorStart(
+            context: new DurableOrchestrationBindingInfo(
+                TestHistories.GetOrchestratorStart(
                     "SayHelloInline",
                     moment.utc().toDate(),
                     name),
-                input: name,
-            },
+                name,
+            ),
         });
         orchestrator(mockContext);
 
@@ -41,14 +41,14 @@ describe("Orchestrator", () => {
             const name = "World";
             const id = uuidv1();
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "SayHelloInline",
                         moment.utc().toDate(),
                         name),
-                    input: name,
-                    instanceId: id,
-                },
+                    name,
+                    id,
+                ),
             });
             orchestrator(mockContext);
 
@@ -61,14 +61,15 @@ describe("Orchestrator", () => {
             const replaying = true;
 
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithActivityReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityReplayOne(
                         "SayHelloWithActivity",
                         moment.utc().toDate(),
                         name),
-                    input: name,
-                    isReplaying: replaying,
-                },
+                    name,
+                    undefined,
+                    replaying,
+                ),
             });
 
             orchestrator(mockContext);
@@ -82,14 +83,16 @@ describe("Orchestrator", () => {
             const id = uuidv1();
 
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithActivityReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityReplayOne(
                         "SayHelloWithActivity",
                         moment.utc().toDate(),
                         name),
-                    input: name,
-                    parentInstanceId: id,
-                },
+                    name,
+                    undefined,
+                    undefined,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -104,13 +107,13 @@ describe("Orchestrator", () => {
             const nextTimestamp = moment(startTimestamp).add(1, "s").toDate();
 
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithActivityReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityReplayOne(
                         "SayHelloWithActivity",
                         startTimestamp,
                         name),
-                    input: name,
-                },
+                    name,
+                ),
             });
 
             orchestrator(mockContext);
@@ -123,12 +126,12 @@ describe("Orchestrator", () => {
         it("reports an unhandled exception from orchestrator", async () => {
             const orchestrator = TestOrchestrations.ThrowsExceptionInline;
             const mockContext =  new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "ThrowsExceptionInline",
                         moment.utc().toDate(),
                     ),
-                },
+                ),
             });
 
             orchestrator(mockContext);
@@ -143,11 +146,11 @@ describe("Orchestrator", () => {
         it("reports an unhandled exception from activity passed through orchestrator", async () => {
             const orchestrator = TestOrchestrations.ThrowsExceptionFromActivity;
             const mockContext =  new MockContext({
-                context: {
-                    history: TestHistories.GetThrowsExceptionFromActivityReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetThrowsExceptionFromActivityReplayOne(
                         moment.utc().toDate(),
                     ),
-                },
+                ),
             });
 
             orchestrator(mockContext);
@@ -166,12 +169,12 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.ThrowsExceptionFromActivityWithCatch;
             const name = "World";
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetThrowsExceptionFromActivityReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetThrowsExceptionFromActivityReplayOne(
                         moment.utc().toDate(),
                     ),
-                    input: name,
-                },
+                    name,
+                ),
             });
 
             orchestrator(mockContext);
@@ -194,13 +197,13 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivity;
             const name = "World";
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "SayHelloWithActivity",
                         moment.utc().toDate(),
                         name),
-                    input: name,
-                },
+                    name,
+                ),
             });
 
             orchestrator(mockContext);
@@ -219,11 +222,11 @@ describe("Orchestrator", () => {
         it("schedules an activity function with no input", async () => {
             const orchestrator = TestOrchestrations.CallActivityNoInput;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "CallActivityNoInput",
                         moment.utc().toDate()),
-                },
+                ),
             });
 
             orchestrator(mockContext);
@@ -245,13 +248,13 @@ describe("Orchestrator", () => {
                 it(`schedules an activity function with falsy input ${falsyValue}`, async () => {
                     const orchestrator = TestOrchestrations.SayHelloWithActivity;
                     const mockContext = new MockContext({
-                        context: {
-                            history: TestHistories.GetOrchestratorStart(
+                        context: new DurableOrchestrationBindingInfo(
+                            TestHistories.GetOrchestratorStart(
                                 "SayHelloWithActivity",
                                 moment.utc().toDate(),
                                 falsyValue),
-                            input: falsyValue,
-                        },
+                            falsyValue,
+                        ),
                     });
 
                     orchestrator(mockContext);
@@ -270,13 +273,13 @@ describe("Orchestrator", () => {
                 it(`handles a completed activity function with falsy input ${falsyValue}`, async () => {
                     const orchestrator = TestOrchestrations.SayHelloWithActivity;
                     const mockContext = new MockContext({
-                        context: {
-                            history: TestHistories.GetSayHelloWithActivityReplayOne(
+                        context: new DurableOrchestrationBindingInfo(
+                            TestHistories.GetSayHelloWithActivityReplayOne(
                                 "SayHelloWithActivity",
                                 moment.utc().toDate(),
                                 falsyValue),
-                            input: falsyValue,
-                        },
+                            falsyValue,
+                        ),
                     });
 
                     orchestrator(mockContext);
@@ -299,13 +302,13 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivity;
             const name = "World";
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithActivityReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityReplayOne(
                         "SayHelloWithActivity",
                         moment.utc().toDate(),
                         name),
-                    input: name,
-                },
+                    name,
+                ),
             });
 
             orchestrator(mockContext);
@@ -325,13 +328,12 @@ describe("Orchestrator", () => {
         it("handles a completed series of activity functions", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetHelloSequenceReplayFinal(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetHelloSequenceReplayFinal(
                         "SayHelloSequence",
                         moment.utc().toDate(),
                     ),
-                    input: undefined,
-                },
+                ),
             });
 
             orchestrator(mockContext);
@@ -360,11 +362,11 @@ describe("Orchestrator", () => {
         it("reports an error when retryOptions is undefined", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityRetryNoOptions;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "SayHelloWithActivityRetryOptionsUndefined",
                         moment.utc().toDate()),
-                },
+                ),
             });
 
             orchestrator(mockContext);
@@ -383,13 +385,13 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
             const name = "World";
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "SayHelloWithActivityRetry",
                         moment.utc().toDate(),
                         name),
-                    input: name,
-                },
+                    name,
+                ),
             });
 
             orchestrator(mockContext);
@@ -415,13 +417,13 @@ describe("Orchestrator", () => {
             const name = "World";
             const retryOptions = new RetryOptions(10000, 2);
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithActivityRetryRetryOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityRetryRetryOne(
                         moment.utc().toDate(),
                         name,
                         retryOptions.firstRetryIntervalInMilliseconds),
-                    input: name,
-                },
+                    name,
+                ),
             });
 
             orchestrator(mockContext);
@@ -446,12 +448,12 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
             const name = "World";
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithActivityRetryFailOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityRetryFailOne(
                         moment.utc().toDate(),
                         name),
-                    input: name,
-                },
+                    name,
+                ),
             });
 
             orchestrator(mockContext);
@@ -476,13 +478,13 @@ describe("Orchestrator", () => {
             const name = "World";
             const retryOptions = new RetryOptions(10000, 2);
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithActivityRetryRetryTwo(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityRetryRetryTwo(
                         moment.utc().toDate(),
                         name,
                         retryOptions.firstRetryIntervalInMilliseconds),
-                    input: name,
-                },
+                    name,
+                ),
             });
 
             orchestrator(mockContext);
@@ -507,13 +509,13 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
             const name = "World";
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithActivityReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityReplayOne(
                         "SayHelloWithActivityRetry",
                         moment.utc().toDate(),
                         name),
-                    input: name,
-                },
+                    name,
+                ),
             });
 
             orchestrator(mockContext);
@@ -543,14 +545,14 @@ describe("Orchestrator", () => {
             const id = uuidv1();
             const childId = `${id}:0`;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "SayHelloWithSubOrchestrator",
                         moment.utc().toDate(),
                     ),
-                    input: name,
-                    instanceId: id,
-                },
+                    name,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -571,14 +573,14 @@ describe("Orchestrator", () => {
             const name = "World";
             const id = uuidv1();
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "SayHelloWithSubOrchestrator",
                         moment.utc().toDate(),
                     ),
-                    input: name,
-                    instanceId: id,
-                },
+                    name,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -600,17 +602,17 @@ describe("Orchestrator", () => {
             const id = uuidv1();
             const childId = `${id}:0`;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
                         moment.utc().toDate(),
                         "SayHelloWithSubOrchestrator",
                         "SayHelloWithActivity",
                         childId,
                         name,
                     ),
-                    input: name,
-                    instanceId: id,
-                },
+                    name,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -633,17 +635,17 @@ describe("Orchestrator", () => {
             const id = uuidv1();
             const childId = `${id}:0`;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithSubOrchestratorFail(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithSubOrchestratorFail(
                         moment.utc().toDate(),
                         "SayHelloWithSubOrchestrator",
                         "SayHelloWithActivity",
                         childId,
                         name,
                     ),
-                    input: name,
-                    instanceId: id,
-                },
+                    name,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -665,12 +667,13 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetryNoOptions;
             const id = uuidv1();
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "SayHelloWithSubOrchestratorRetryNoOptions",
                         moment.utc().toDate()),
-                    instanceId: id,
-                },
+                    undefined,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -689,14 +692,14 @@ describe("Orchestrator", () => {
             const id = uuidv1();
             const childId = `${id}:0`;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "SayHelloWithSubOrchestratorRetry",
                         moment.utc().toDate(),
                         name),
-                    input: name,
-                    instanceId: id,
-                },
+                    name,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -726,15 +729,15 @@ describe("Orchestrator", () => {
             const childId = `${id}:0`;
             const retryOptions = new RetryOptions(10000, 2);
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithSubOrchestratorRetryRetryOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithSubOrchestratorRetryRetryOne(
                         moment.utc().toDate(),
                         childId,
                         name,
                         retryOptions.firstRetryIntervalInMilliseconds),
-                    input: name,
-                    instanceId: id,
-                },
+                    name,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -763,15 +766,15 @@ describe("Orchestrator", () => {
             const id = uuidv1();
             const childId = `${id}:0`;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithSubOrchestratorRetryFailOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithSubOrchestratorRetryFailOne(
                         moment.utc().toDate(),
                         childId,
                         name,
                     ),
-                    input: name,
-                    instanceId: id,
-                },
+                    name,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -801,15 +804,15 @@ describe("Orchestrator", () => {
             const childId = `${id}:0`;
             const retryOptions = new RetryOptions(10000, 2);
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithSubOrchestratorRetryRetryTwo(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithSubOrchestratorRetryRetryTwo(
                         moment.utc().toDate(),
                         childId,
                         name,
                         retryOptions.firstRetryIntervalInMilliseconds),
-                    input: name,
-                    instanceId: id,
-                },
+                    name,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -838,16 +841,16 @@ describe("Orchestrator", () => {
             const id = uuidv1();
             const childId = `${id}:0`;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
                         moment.utc().toDate(),
                         "SayHelloWithSubOrchestratorRetry",
                         "SayHelloInline",
                         childId,
                         name),
-                    input: name,
-                    instanceId: id,
-                },
+                    name,
+                    id,
+                ),
             });
 
             orchestrator(mockContext);
@@ -876,13 +879,13 @@ describe("Orchestrator", () => {
         it("schedules a continueAsNew request", () => {
             const orchestrator = TestOrchestrations.ContinueAsNewCounter;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "ContinueAsNewCounter",
                         moment.utc().toDate(),
                     ),
-                    input: { value: 5 },
-                },
+                    { value: 5 },
+                ),
             });
 
             orchestrator(mockContext);
@@ -906,13 +909,13 @@ describe("Orchestrator", () => {
             const fireAt = startMoment.add(5, "m").toDate();
 
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "WaitOnTimer",
                         startMoment.toDate(),
                     ),
-                    input: fireAt,
-                },
+                    fireAt,
+                ),
             });
 
             orchestrator(mockContext);
@@ -934,13 +937,13 @@ describe("Orchestrator", () => {
             const fireAt = moment(startTimestamp).add(5, "m").toDate();
 
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetWaitOnTimerFired(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetWaitOnTimerFired(
                         startTimestamp,
                         fireAt,
                     ),
-                    input: fireAt,
-                },
+                    fireAt,
+                ),
             });
 
             orchestrator(mockContext);
@@ -963,14 +966,14 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.SayHelloWithCustomStatus;
             const name = "World!";
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetSayHelloWithActivityReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityReplayOne(
                         "SayHelloWithCustomStatus",
                         moment.utc().toDate(),
                         name,
                     ),
-                    input: name,
-                },
+                    name,
+                ),
             });
 
             orchestrator(mockContext);
@@ -993,13 +996,13 @@ describe("Orchestrator", () => {
         it("waits for an external event", async () => {
             const orchestrator = TestOrchestrations.WaitForExternalEvent;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetOrchestratorStart(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
                         "WaitForExternalEvent,",
                         moment.utc().toDate(),
                     ),
-                    input: undefined,
-                },
+                    undefined,
+                ),
             });
 
             orchestrator(mockContext);
@@ -1019,14 +1022,14 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.WaitForExternalEvent;
             const name = "Reykjavik";
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetWaitForExternalEventEventReceived(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetWaitForExternalEventEventReceived(
                         moment.utc().toDate(),
                         "start",
                         name,
                     ),
-                    input: undefined,
-                },
+                    undefined,
+                ),
             });
 
             orchestrator(mockContext);
@@ -1047,14 +1050,14 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.WaitForExternalEvent;
             const name = "Reykjavik";
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetWaitForExternalEventEventReceived(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetWaitForExternalEventEventReceived(
                         moment.utc().toDate(),
                         "wrongEvent",
                         name,
                     ),
-                    input: undefined,
-                },
+                    undefined,
+                ),
             });
 
             orchestrator(mockContext);
@@ -1076,13 +1079,13 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.FanOutFanInDiskUsage;
             const filePaths = ["file1.txt", "file2.png", "file3.csx"];
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetFanOutFanInDiskUsageReplayOne(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetFanOutFanInDiskUsageReplayOne(
                         moment.utc().toDate(),
                         filePaths,
                     ),
-                    input: "C:\\Dev",
-                },
+                    "C:\\Dev",
+                ),
             });
 
             orchestrator(mockContext);
@@ -1103,13 +1106,13 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.FanOutFanInDiskUsage;
             const filePaths = ["file1.txt", "file2.png", "file3.csx"];
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetFanOutFanInDiskUsagePartComplete(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetFanOutFanInDiskUsagePartComplete(
                         moment.utc().toDate(),
                         filePaths,
                     ),
-                    input: "C:\\Dev",
-                },
+                    "C:\\Dev",
+                ),
             });
 
             orchestrator(mockContext);
@@ -1130,13 +1133,13 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.FanOutFanInDiskUsage;
             const filePaths = ["file1.txt", "file2.png", "file3.csx"];
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetFanOutFanInDiskUsageComplete(
+                context: new DurableOrchestrationBindingInfo (
+                    TestHistories.GetFanOutFanInDiskUsageComplete(
                         moment.utc().toDate(),
                         filePaths,
                     ),
-                    input: "C:\\Dev",
-                },
+                    "C:\\Dev",
+                ),
             });
 
             orchestrator(mockContext);
@@ -1158,13 +1161,13 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.AnyAOrB;
             const completeInOrder = true;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetAnyAOrB(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetAnyAOrB(
                         moment.utc().toDate(),
                         completeInOrder,
                     ),
-                    input: completeInOrder,
-                },
+                    completeInOrder,
+                ),
             });
 
             orchestrator(mockContext);
@@ -1185,13 +1188,13 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.AnyAOrB;
             const completeInOrder = false;
             const mockContext = new MockContext({
-                context: {
-                    history: TestHistories.GetAnyAOrB(
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetAnyAOrB(
                         moment.utc().toDate(),
                         completeInOrder,
                     ),
-                    input: completeInOrder,
-                },
+                    completeInOrder,
+                ),
             });
 
             orchestrator(mockContext);
@@ -1219,7 +1222,7 @@ describe("Orchestrator", () => {
 class MockContext {
     constructor(
         public bindings: IBindings,
-        public df?: IDurableOrchestrationContext,
+        public df?: DurableOrchestrationContext,
         public doneValue?: IOrchestratorState,
     ) { }
 

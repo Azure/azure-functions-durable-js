@@ -5,8 +5,8 @@ import { IAction } from "./classes";
  * that it acts as a placeholder for outstanding asynchronous work, but has
  * a synchronous implementation and is specific to Durable Functions.
  *
- * Tasks are only returned to an orchestration function when an
- * [[IDurableOrchestrationContext]] operation is not called with `yield`. They
+ * Tasks are only returned to an orchestration function when a
+ * [[DurableOrchestrationContext]] operation is not called with `yield`. They
  * are useful for parallelization and timeout operations in conjunction with
  * Task.all and Task.any.
  *
@@ -36,7 +36,8 @@ export class Task {
     /** @hidden */
     constructor(
         /**
-         * Whether the task has completed, regardless of success.
+         * Whether the task has completed. Note that completion is not
+         * equivalent to success.
          */
         public readonly isCompleted: boolean,
         /**
@@ -61,7 +62,8 @@ export class Task {
         public readonly id?: number,
         /**
          * The error thrown when attempting to perform the task's action. If
-         * the Task has not completed or completed successfully, `undefined`.
+         * the Task has not yet completed or has completed successfully,
+         * `undefined`.
          */
         public readonly exception?: unknown,
     ) { }

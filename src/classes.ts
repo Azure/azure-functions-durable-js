@@ -5,8 +5,8 @@ export { Utils } from "./utils";
 export { Orchestrator } from "./orchestrator";
 
 export { IFunctionContext } from "./ifunctioncontext";
-export { IDurableOrchestrationBindingInfo } from "./idurableorchestrationbindinginfo";
-export { IDurableOrchestrationContext } from "./idurableorchestrationcontext";
+export { DurableOrchestrationBindingInfo } from "./durableorchestrationbindinginfo";
+export { DurableOrchestrationContext } from "./durableorchestrationcontext";
 
 export { IAction } from "./actions/iaction";
 export { ActionType } from "./actions/actiontype";
@@ -51,7 +51,7 @@ export { HttpManagementPayload } from "./httpmanagementpayload";
 
 export { IRequest } from "./irequest";
 export { WebhookClient } from "./webhookclient";
-export { HttpResponse } from "./httpresponse";
+export { IHttpResponse } from "./ihttpresponse";
 
 export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
 export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";

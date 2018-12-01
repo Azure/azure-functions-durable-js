@@ -1,14 +1,14 @@
 import http = require("http");
 import https = require("https");
-import { HttpResponse } from "./classes";
+import { IHttpResponse } from "./classes";
 
 /** @hidden */
 export class WebhookClient {
-    public get(url: URL, timeoutInMilliseconds?: number): Promise<HttpResponse> {
+    public get(url: URL, timeoutInMilliseconds?: number): Promise<IHttpResponse> {
         return this.callWebhook(url, "GET", undefined, timeoutInMilliseconds);
     }
 
-    public post(url: URL, input?: unknown, timeoutInMilliseconds?: number): Promise<HttpResponse> {
+    public post(url: URL, input?: unknown, timeoutInMilliseconds?: number): Promise<IHttpResponse> {
         return this.callWebhook(url, "POST", input, timeoutInMilliseconds);
     }
 
@@ -17,7 +17,7 @@ export class WebhookClient {
         httpMethod: string,
         input?: unknown,
         timeoutInMilliseconds?: number,
-        ): Promise<HttpResponse> {
+        ): Promise<IHttpResponse> {
         return new Promise((resolve, reject) => {
             const requestData = JSON.stringify(input);
 
@@ -61,7 +61,11 @@ export class WebhookClient {
 
                 res.on("end", () => {
                     const bodyObj = JSON.parse(body);
-                    const responseObj = new HttpResponse(res.statusCode, bodyObj, res.headers);
+                    const responseObj = {
+                        status: res.statusCode,
+                        body: bodyObj,
+                        headers: res.headers,
+                    };
                     resolve(responseObj);
                 });
             });

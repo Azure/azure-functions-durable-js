@@ -1,10 +1,10 @@
 import * as debug from "debug";
 import { CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, EventRaisedEvent, HistoryEvent,
-    HistoryEventType, IAction, IDurableOrchestrationBindingInfo, IFunctionContext, OrchestratorState, RetryOptions,
-    SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent, SubOrchestrationInstanceFailedEvent,
-    Task, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent,
-    TimerTask, WaitForExternalEventAction } from "./classes";
+    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, DurableOrchestrationBindingInfo,
+    DurableOrchestrationContext, EventRaisedEvent, HistoryEvent, HistoryEventType, IAction, IFunctionContext,
+    OrchestratorState, RetryOptions, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
+    SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent, TaskSet,
+    TimerCreatedEvent, TimerFiredEvent, TimerTask, Utils, WaitForExternalEventAction } from "./classes";
 
 /** @hidden */
 const log = debug("orchestrator");
@@ -20,9 +20,12 @@ export class Orchestrator {
     }
 
     private async handle(context: IFunctionContext): Promise<void> {
-        const orchestrationBinding: IDurableOrchestrationBindingInfo =
-            (context.bindings["context"] as IDurableOrchestrationBindingInfo);
-        // TODO: locate IDurableOrchestrationBindingInfo binding in a better way than this!
+        const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
+            context.bindings, new DurableOrchestrationBindingInfo())[0];
+
+        if (!orchestrationBinding) {
+            throw new Error(`Could not finding an orchestrationClient binding on context.`);
+        }
 
         const state: HistoryEvent[] = orchestrationBinding.history;
         const input: unknown = orchestrationBinding.input;

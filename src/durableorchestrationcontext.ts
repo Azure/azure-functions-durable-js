@@ -4,7 +4,7 @@ import { ITaskMethods, RetryOptions, Task, TimerTask } from "./classes";
  * Parameter data for orchestration bindings that can be used to schedule
  * function-based activities.
  */
-export interface IDurableOrchestrationContext {
+export class DurableOrchestrationContext {
     /**
      * The ID of the current orchestration instance.
      *
@@ -12,7 +12,7 @@ export interface IDurableOrchestrationContext {
      * scheduled. It can be either auto-generated, in which case it is
      * formatted as a GUID, or it can be user-specified with any format.
      */
-    instanceId: string;
+    public readonly instanceId: string;
 
     /**
      * Gets a value indicating whether the orchestrator function is currently
@@ -25,7 +25,7 @@ export interface IDurableOrchestrationContext {
      * whether the function is being replayed and then issue the log statements
      * when this value is `false`.
      */
-    isReplaying: boolean;
+    public readonly isReplaying: boolean;
 
     /**
      * The ID of the parent orchestration of the current sub-orchestration
@@ -36,7 +36,7 @@ export interface IDurableOrchestrationContext {
      * which case it is formatted as a GUID, or it can be user-specified with
      * any format.
      */
-    parentInstanceId: string;
+    public readonly parentInstanceId: string;
 
     /**
      * Gets the current date/time in a way that is safe for use by orchestrator
@@ -46,7 +46,12 @@ export interface IDurableOrchestrationContext {
      * always returns the same value at specific points in the orchestrator
      * function code, making it deterministic and safe for replay.
      */
-    currentUtcDateTime: Date;
+    public currentUtcDateTime: Date;
+
+    /**
+     *
+     */
+    public Task: ITaskMethods;
 
     /**
      * Schedules an activity function named `name` for execution.
@@ -57,7 +62,9 @@ export interface IDurableOrchestrationContext {
      * @returns A Durable Task that completes when the called activity
      * function completes or fails.
      */
-    callActivity: (name: string, input?: unknown) => Task;
+    public callActivity(name: string, input?: unknown): Task {
+        throw new Error("Not implemented");
+    }
 
     /**
      * Schedules an activity function named `name` for execution with
@@ -68,7 +75,9 @@ export interface IDurableOrchestrationContext {
      * @param input The JSON-serializable input to pass to the activity
      * function.
      */
-    callActivityWithRetry: (name: string, retryOptions: RetryOptions, input?: unknown) => Task;
+    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
+        throw new Error("Not implemented");
+    }
 
     /**
      * Schedules an orchestration function named `name` for execution.
@@ -80,7 +89,9 @@ export interface IDurableOrchestrationContext {
      * If `instanceId` is not specified, the extension will generate an id in
      * the format `<calling orchestrator instance ID>:<#>`
      */
-    callSubOrchestrator: (name: string, input?: unknown, instanceId?: string) => Task;
+    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
+        throw new Error("Not implemented");
+    }
 
     /**
      * Schedules an orchestrator function named `name` for execution with retry
@@ -92,18 +103,23 @@ export interface IDurableOrchestrationContext {
      * function.
      * @param instanceId A unique ID to use for the sub-orchestration instance.
      */
-    callSubOrchestratorWithRetry: (
+    public callSubOrchestratorWithRetry(
         name: string,
         retryOptions: RetryOptions,
         input?: unknown,
-        instanceId?: string) => Task;
+        instanceId?: string)
+        : Task {
+            throw new Error("Not implemented");
+        }
 
     /**
      * Restarts the orchestration by clearing its history.
      *
      * @param The JSON-serializable data to re-initialize the instance with.
      */
-    continueAsNew: (input: unknown) => Task;
+    public continueAsNew(input: unknown): Task {
+        throw new Error("Not implemented");
+    }
 
     /**
      * Creates a durable timer that expires at a specified time.
@@ -119,13 +135,17 @@ export interface IDurableOrchestrationContext {
      * @param fireAt The time at which the timer should expire.
      * @returns A TimerTask that completes when the durable timer expires.
      */
-    createTimer: (fireAt: Date) => TimerTask;
+    public createTimer(fireAt: Date): TimerTask {
+        throw new Error("Not implemented");
+    }
 
     /**
      * Gets the input of the current orchestrator function as a deserialized
      * value.
      */
-    getInput: () => unknown;
+    public getInput(): unknown {
+        throw new Error("Not implemented");
+    }
 
     /**
      * Sets the JSON-serializable status of the current orchestrator function.
@@ -140,7 +160,9 @@ export interface IDurableOrchestrationContext {
      * @param customStatusObject The JSON-serializable value to use as the
      * orchestrator function's custom status.
      */
-    setCustomStatus: (customStatusObject: unknown) => void;
+    public setCustomStatus(customStatusObject: unknown): void {
+        throw new Error("Not implemented");
+    }
 
     /**
      * Waits asynchronously for an event to be raised with the name `name` and
@@ -149,10 +171,7 @@ export interface IDurableOrchestrationContext {
      * External clients can raise events to a waiting orchestration instance
      * using [[raiseEvent]].
      */
-    waitForExternalEvent: (name: string) => Task;
-
-    /**
-     * 
-     */
-    Task: ITaskMethods;
+    public waitForExternalEvent(name: string): Task {
+        throw new Error("Not implemented");
+    }
 }
