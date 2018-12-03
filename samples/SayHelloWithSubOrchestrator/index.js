@@ -1,4 +1,4 @@
-const df = require("../../lib/src");
+const df = require("durable-functions");
 
 module.exports = df.orchestrator(function*(context){
     const input = context.df.getInput();
