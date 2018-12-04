@@ -10,7 +10,7 @@
   ],
   "dependencies": {
     "azure-storage": "^2.10.2",
-    "durable-functions": "^1.0.0",
+    "durable-functions": "^1.1.0",
     "moment": "^2.22.2",
     "readdirp": "^2.2.1",
     "request": "^2.87.0",
