@@ -50,6 +50,7 @@ export { HttpCreationPayload } from "./httpcreationpayload";
 export { HttpManagementPayload } from "./httpmanagementpayload";
 
 export { IRequest } from "./irequest";
+export { IHttpRequest } from "./ihttprequest";
 export { WebhookClient } from "./webhookclient";
 export { IHttpResponse } from "./ihttpresponse";
 

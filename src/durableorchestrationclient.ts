@@ -1,6 +1,7 @@
 import { isURL } from "validator";
-import { Constants, DurableOrchestrationStatus, HttpManagementPayload, IFunctionContext, IHttpResponse,
-    IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils, WebhookClient } from "./classes";
+import { Constants, DurableOrchestrationStatus, HttpManagementPayload, IFunctionContext, IHttpRequest,
+    IHttpResponse, IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils, WebhookClient,
+} from "./classes";
 
 /**
  * Returns an OrchestrationClient instance.
@@ -76,7 +77,7 @@ export class DurableOrchestrationClient {
      * @returns An HTTP 202 response with a Location header and a payload
      *  containing instance management URLs.
      */
-    public createCheckStatusResponse(request: IRequest, instanceId: string): IHttpResponse {
+    public createCheckStatusResponse(request: IHttpRequest | IRequest, instanceId: string): IHttpResponse {
         const httpManagementPayload = this.getClientResponseLinks(request, instanceId);
 
         return {
@@ -418,12 +419,12 @@ export class DurableOrchestrationClient {
         return matchingInstances[0];
     }
 
-    private getClientResponseLinks(request: IRequest, instanceId: string): HttpManagementPayload {
+    private getClientResponseLinks(request: IHttpRequest | IRequest, instanceId: string): HttpManagementPayload {
         const payload = { ...this.clientData.managementUrls };
 
         (Object.keys(payload) as Array<(keyof HttpManagementPayload)>).forEach((key) => {
             if (this.hasValidRequestUrl(request) && isURL(payload[key], this.urlValidationOptions)) {
-                const requestUrl = new URL(request.url);
+                const requestUrl = new URL((request as IRequest).url || (request as IHttpRequest).http.url);
                 const dataUrl = new URL(payload[key]);
                 payload[key] = payload[key].replace(dataUrl.origin, requestUrl.origin);
             }
@@ -434,7 +435,9 @@ export class DurableOrchestrationClient {
         return payload;
     }
 
-    private hasValidRequestUrl(request: IRequest): boolean {
-        return request !== undefined && request.url !== undefined;
+    private hasValidRequestUrl(request: IHttpRequest | IRequest): boolean {
+        const isIRequest = request !== undefined && (request as IRequest).url !== undefined;
+        const isIHttpRequest = request !== undefined && (request as IHttpRequest).http !== undefined;
+        return isIRequest || isIHttpRequest && (request as IHttpRequest).http.url !== undefined;
     }
 }

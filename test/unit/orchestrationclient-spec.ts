@@ -117,6 +117,34 @@ describe("Orchestration Client", () => {
             expect(response).to.be.deep.equal(expectedResponse);
         });
 
+        it(`returns a proper response object from request.http.url`, async () => {
+            const client = new DurableOrchestrationClient(defaultContext);
+            const requestObj = {
+                http: {
+                    url: defaultRequestUrl,
+                    method: "GET",
+                }
+            };
+
+            const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
+
+            const expectedPayload = createHttpManagementPayload(
+                defaultInstanceId,
+                notificationUrlHost,
+                defaultTaskHub,
+                defaultConnection);
+            const expectedResponse = {
+                status: 202,
+                body: expectedPayload,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Location": expectedPayload.statusQueryGetUri,
+                    "Retry-After": 10,
+                },
+            };
+            expect(response).to.be.deep.equal(expectedResponse);
+        });        
+
         it("returns a proper response object when request is undefined", async () => {
             const client = new DurableOrchestrationClient(defaultContext);
 
