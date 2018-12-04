@@ -1,57 +1,84 @@
 # Durable Functions for Node.js
 
-This library provides a shim to write your [Durable Functions](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-overview) orchestrator functions in [Node.js](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node), using Durable's out-of-proc execution protocol. **JS orchestrators have the same [code constraints](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-checkpointing-and-replay#orchestrator-code-constraints) as C# orchestrators.**
+The `durable-functions` npm package allows you to write [Durable Functions](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview) for [Node.js](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node). Durable Functions is an extension of [Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview) that lets you write stateful functions and workflows in a serverless environment. The extension manages state, checkpoints, and restarts for you. Durable Functions' advantages include:
 
-🚧 This library currently in **public preview** status. 🚧
+* Define workflows in code. No JSON schemas or designers are needed.
+* Call other functions synchronously and asynchronously. Output from called functions can be saved to local variables.
+* Automatically checkpoint progress whenever the function schedules async work. Local state is never lost if the process recycles or the VM reboots.
 
-Not all functionality has been implemented yet and there may be significant changes to both this library and the protocol.
+You can find more information at the following links:
+
+* [Azure Functions overview](https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview)
+* [Azure Functions JavaScript developers guide](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node)
+* [Durable Functions overview](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview)
+
+A durable function, or _orchestration_, is a solution made up of different types of Azure Functions:
+
+* **Activity:** the functions and tasks being orchestrated by your workflow.
+* **Orchestrator:** a function that describes the way and order actions are executed in code.
+* **Client:** the entry point for creating an instance of a durable orchestration.
+
+Durable Functions' function types and features are documented in-depth [here.](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-types-features-overview)
 
 ## Getting Started
 
-1. Install Durable Functions
+You can follow the [Visual Studio Code quickstart](https://docs.microsoft.com/en-us/azure/azure-functions/durable/quickstart-js-vscode) to get started with a function chaining example, or follow the general checklist below:
 
-Run this command from the root folder of your functions app:
-```
-func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.6.2
+1. Install prerequisites:
+    - [Azure Functions Core Tools version 2.x](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools)
+    - [Azure Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator) (Windows) or an actual Azure storage account (Mac or Linux)
+    - Node.js 8.6.0 or later
+
+2. [Create an Azure Functions app.](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-vs-code) [Visual Studio Code's Azure Functions plugin](https://code.visualstudio.com/tutorials/functions-extension/getting-started) is recommended.
+
+3. Install the Durable Functions extension
+
+Run this command from the root folder of your Azure Functions app:
+```bash
+func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.7.0
 ```
 
-2. Install the package
+4. Install the `durable-functions` npm package at the root of your function app:
 
 ```bash
 npm install durable-functions
 ```
 
-3. Add the shim library and generator to your code:
+5. Write an activity function ([see sample](./samples/E1_SayHello)):
+```javascript
+module.exports = async function(context) {
+    // your code here
+};
+```
+
+6. Write an orchestrator function ([see sample](./samples/E1_HelloSequence)):
 
 ```javascript
 const df = require('durable-functions');
 module.exports = df.orchestrator(function*(context){
-    // ... your code here
+    // your code here
 });
 ```
 
-4. Write your orchestration logic :
-```javascript
-yield context.df.callActivity("foo", "bar");
-```
+**Note:** Orchestrator functions must follow certain [code constraints.](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-checkpointing-and-replay#orchestrator-code-constraints)
 
-5. Write your [orchestration starter](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-instance-management#starting-instances):
+7. Write your client function ([see sample]((./samples/HttpStart/))):
 ```javascript
-module.exports = function (context, input) {
-    var id = generateSomeUniqueId();
-    context.bindings.starter = [{
-        FunctionName: "HelloWorld",
-        Input: input,
-        InstanceId: id
-    }];
+module.exports = async function (context, req) {
+    const client = df.getClient(context);
+    const instanceId = await client.startNew(req.params.functionName, undefined, req.body);
 
-    context.done(null);
+    context.log(`Started orchestration with ID = '${instanceId}'.`);
+
+    return client.createCheckStatusResponse(context.bindingData.req, instanceId);
 };
 ```
 
+**Note:** Client functions are started by a trigger binding available in the Azure Functions 2.x major version. [Read more about trigger bindings and 2.x-supported bindings.](https://docs.microsoft.com/en-us/azure/azure-functions/functions-triggers-bindings#overview)
+
 ## Samples
 
-The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-install) demonstrate the documentated Durable Functions patterns. They have been translated into JavaScript and are located in the [samples directory.](./test/sample/) The JavaScript versions will be added to the official documentation as a general release approaches. For now, some docs show C# samples only, but all explain the patterns in greater depth:
+The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-install) demonstrate several common use cases. They are located in the [samples directory.](./samples/) Descriptive documentation is also available:
 
 * [Function Chaining - Hello Sequence](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-sequence)
 * [Fan-out/Fan-in - Cloud Backup](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-cloud-backup)
@@ -74,42 +101,17 @@ module.exports = df.orchestrator(function*(context){
 
 ## How it works
 
-Recall that Durable Functions uses an append-only execution history to rebuild state on each execution. The Durable Functions orchestration trigger sends an object with the history for a given orchestration instance to your function. The shim library takes that state object and lets you express the workflow as a generator, using `yield` where you want to wait for state to come back. `yield` expects a Promise which will resolve a `Task` or `TaskSet` object. The shim will append the action(s) of the `Task` or `TaskSet` object to a list which it passes back to the Functions runtime, plus whether the function is completed and any output. The extension will call the Function again when there is an update.
+### Durable Functions
+One of the key attributes of Durable Functions is reliable execution. Orchestrator functions and activity functions may be running on different VMs within a data center, and those VMs or the underlying networking infrastructure is not 100% reliable.
 
-## API Comparison
+In spite of this, Durable Functions ensures reliable execution of orchestrations. It does so by using storage queues to drive function invocation and by periodically checkpointing execution history into storage tables (using a cloud design pattern known as [Event Sourcing](https://docs.microsoft.com/azure/architecture/patterns/event-sourcing)). That history can then be replayed to automatically rebuild the in-memory state of an orchestrator function.
 
-The shim strives to hew closely to the C# DurableOrchestrationContext API, while feeling natural to Node developers. In general, DurableOrchestrationContext methods and properties are accessed from the `context.df` object, are camel-cased, and take the same arguments as their C# counterparts. Major differences:
+[Read more about Durable Functions' reliable execution.](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-checkpointing-and-replay)
 
-* `yield` awaits an async operation.
-* Non-awaited calls to `context.df` methods return a `Task` object which has `all(Task[] tasks)` and `any(Task[] tasks)` methods, analogous to C#'s Task's WhenAll() and WhenAny() methods.
-* All CreateTimer calls can be cancelled by calling `cancel()` on the returned `TimerTask` object.
+### Durable Functions JS
 
-### API Implementation Checklist
-**Implemented**
-* `CurrentUtcDateTime`
-* `CallActivityAsync(String name, Object input)`
-* `CreateTimer(Date fireAt)`
-* `GetInput()`
-* `WaitForExternalEvent(String name)`
-* `OrchestrationClient` binding to `string`
+The `durable-functions` shim lets you express a workflow in code as a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators) wrapped by a call to the `orchestrator` method. `orchestrator` treats `yield`-ed calls to your function `context`'s `df` object, like `context.df.callActivity`, as points where you want to schedule an asynchronous unit of work and wait for it to complete.
 
-**Not Yet Implemented**
-* `InstanceId`
-* `IsReplaying`
-* `CallActivityWithRetryAsync(String, RetryOptions, Object)`
-* `CallSubOrchestratorAsync(String, Object)`
-* `CallSubOrchestratorAsync(String, String, Object)`
-* `CallSubOrchestratorWithRetryAsync(String, RetryOptions, Object)`
-* `CallSubOrchestratorWithRetryAsync(String, RetryOptions, String, Object)`
-* `ContinueAsNew(Object)`
+These calls return a `Task` or `TaskSet` object signifying the outstanding work. The `orchestrator` method appends the action(s) of the `Task` or `TaskSet` object to a list which it passes back to the Functions runtime, plus whether the function is completed, and any output or errors.
 
-* `DurableOrchestrationClient` API
-
-**Will Not Be Implemented**
-* `CallActivityAsync<TResult>(String, Object)`
-* `CallActivityWithRetryAsync<TResult>(String, RetryOptions, Object)`
-* `CallSubOrchestratorAsync<TResult>(String, Object)`
-* `CallSubOrchestratorAsync<TResult>(String, String, Object)`
-* `CallSubOrchestratorWithRetryAsync<TResult>(String, RetryOptions, Object)`
-* `CallSubOrchestratorWithRetryAsync<TResult>(String, RetryOptions, String, Object)`
-* `CreateTimer<T>(DateTime, T, CancellationToken)`
+The Azure Functions extension schedules the desired actions. When the actions complete, the extension triggers the orchestrator function to replay up to the next incomplete asynchronous unit of work or its end, whichever comes first.

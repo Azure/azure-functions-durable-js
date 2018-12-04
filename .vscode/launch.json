@@ -35,6 +35,26 @@
                 "${workspaceRoot}/lib/**/*.js"
             ],
             "port": 5858
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Mocha Tests",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "args": [
+                "-u",
+                "tdd",
+                "--colors",
+                "${workspaceFolder}/lib/test/**/**-spec.js",
+                "-g",
+                ".*"
+            ],
+            "internalConsoleOptions": "openOnSessionStart",
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/lib/**"
+            ],
+            "preLaunchTask": "build"
         }
     ]
 }

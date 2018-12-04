@@ -1,9 +1,10 @@
-import { Orchestrator } from "./orchestrator";
+import { OrchestrationRuntimeStatus, RetryOptions } from "./classes";
+import { getClient } from "./durableorchestrationclient";
+import { orchestrator } from "./shim";
 
-module.exports = (fn: GeneratorFunction) => {
-    const orchestrator = new Orchestrator(fn);
-    const listener = orchestrator.listen();
-    return (context: any) => {
-        listener(context);
-    };
+export {
+    getClient,
+    orchestrator,
+    OrchestrationRuntimeStatus,
+    RetryOptions,
 };
