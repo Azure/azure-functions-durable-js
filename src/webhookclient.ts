@@ -1,19 +1,20 @@
 import http = require("http");
 import https = require("https");
+import url = require("url");
 import { IHttpResponse } from "./classes";
 
 /** @hidden */
 export class WebhookClient {
-    public get(url: URL, timeoutInMilliseconds?: number): Promise<IHttpResponse> {
-        return this.callWebhook(url, "GET", undefined, timeoutInMilliseconds);
+    public get(requestUrl: url.URL, timeoutInMilliseconds?: number): Promise<IHttpResponse> {
+        return this.callWebhook(requestUrl, "GET", undefined, timeoutInMilliseconds);
     }
 
-    public post(url: URL, input?: unknown, timeoutInMilliseconds?: number): Promise<IHttpResponse> {
-        return this.callWebhook(url, "POST", input, timeoutInMilliseconds);
+    public post(requestUrl: url.URL, input?: unknown, timeoutInMilliseconds?: number): Promise<IHttpResponse> {
+        return this.callWebhook(requestUrl, "POST", input, timeoutInMilliseconds);
     }
 
     private callWebhook(
-        url: URL,
+        requestUrl: url.URL,
         httpMethod: string,
         input?: unknown,
         timeoutInMilliseconds?: number,
@@ -22,8 +23,8 @@ export class WebhookClient {
             const requestData = JSON.stringify(input);
 
             const options: IRequestOptions = {
-                hostname: url.hostname,
-                path: url.pathname + url.search,
+                hostname: requestUrl.hostname,
+                path: requestUrl.pathname + requestUrl.search,
                 method: httpMethod,
                 headers: {
                     "Content-Type": "application/json",
@@ -31,8 +32,8 @@ export class WebhookClient {
                 },
             };
 
-            if (url.port) {
-                options.port = url.port;
+            if (requestUrl.port) {
+                options.port = requestUrl.port;
             }
 
             if (timeoutInMilliseconds) {
@@ -40,7 +41,7 @@ export class WebhookClient {
             }
 
             let requestModule: unknown;
-            switch (url.protocol) {
+            switch (requestUrl.protocol) {
                 case "http:":
                     requestModule = http;
                     break;
@@ -48,7 +49,7 @@ export class WebhookClient {
                     requestModule = https;
                     break;
                 default:
-                    throw new Error(`Unrecognized request protocol: ${url.protocol}. Only http: and https: are accepted.`); // tslint:disable-line max-line-length
+                    throw new Error(`Unrecognized request protocol: ${requestUrl.protocol}. Only http: and https: are accepted.`); // tslint:disable-line max-line-length
             }
 
             const req = (requestModule as IModule).request(options, (res: http.IncomingMessage) => {

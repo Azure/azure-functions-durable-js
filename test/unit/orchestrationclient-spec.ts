@@ -1,8 +1,9 @@
 import chai = require("chai");
 import chaiAsPromised = require("chai-as-promised");
 import "mocha";
-import * as sinon from "sinon";
-import * as uuidv1 from "uuid/v1";
+import sinon = require("sinon");
+import url = require("url");
+import uuidv1 = require("uuid/v1");
 import { Constants, DurableOrchestrationClient, DurableOrchestrationStatus, HttpCreationPayload,
     HttpManagementPayload, OrchestrationClientInputData, OrchestrationRuntimeStatus,
     WebhookClient } from "../../src/classes";
@@ -194,7 +195,7 @@ describe("Orchestration Client", () => {
 
         it("calls expected webhook", async () => {
             const context = defaultContext;
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.statusQueryGetUri
+            const webhookUrl = new url.URL(context.bindings.starter.managementUrls.statusQueryGetUri
                 .replace(idPlaceholder, defaultInstanceId));
 
             const client = new DurableOrchestrationClient(context);
@@ -228,7 +229,7 @@ describe("Orchestration Client", () => {
 
         it("calls expected webhook", async () => {
             const context = defaultContext;
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.statusQueryGetUri
+            const webhookUrl = new url.URL(context.bindings.starter.managementUrls.statusQueryGetUri
                 .replace(idPlaceholder, ""));
 
             const client = new DurableOrchestrationClient(context);
@@ -257,7 +258,7 @@ describe("Orchestration Client", () => {
             const createdTimeTo = new Date();
             const createdTimeFrom = new Date(createdTimeTo.getTime() - 1000 * 60 * 60 * 24 * 3);    // last three days
             const runtimeStatuses = [ OrchestrationRuntimeStatus.Failed, OrchestrationRuntimeStatus.Terminated ];
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.statusQueryGetUri
+            const webhookUrl = new url.URL(context.bindings.starter.managementUrls.statusQueryGetUri
                 .replace(idPlaceholder, "")
                 .concat(`&createdTimeFrom=${createdTimeFrom.toISOString()}`)
                 .concat(`&createdTimeTo=${createdTimeTo.toISOString()}`)
@@ -276,7 +277,7 @@ describe("Orchestration Client", () => {
             const context = defaultContext;
 
             const runtimeStatuses = [ OrchestrationRuntimeStatus.Failed, OrchestrationRuntimeStatus.Terminated ];
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.statusQueryGetUri
+            const webhookUrl = new url.URL(context.bindings.starter.managementUrls.statusQueryGetUri
                 .replace(idPlaceholder, "")
                 .concat("&runtimeStatus=Failed,Terminated"));
 
@@ -305,7 +306,7 @@ describe("Orchestration Client", () => {
 
         it("calls expected webhook and completes when event request accepted", async () => {
             const context = defaultContext;
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.sendEventPostUri
+            const webhookUrl = new url.URL(context.bindings.starter.managementUrls.sendEventPostUri
                 .replace(idPlaceholder, defaultInstanceId)
                 .replace(eventNamePlaceholder, defaultTestEvent));
 
@@ -320,7 +321,7 @@ describe("Orchestration Client", () => {
         it("calls expected webhook when task hub specified", async () => {
             const context = defaultContext;
             const testTaskHub = "SpecialTaskHub";
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.sendEventPostUri
+            const webhookUrl = new url.URL(context.bindings.starter.managementUrls.sendEventPostUri
                 .replace(idPlaceholder, defaultInstanceId)
                 .replace(eventNamePlaceholder, defaultTestEvent)
                 .replace(defaultTaskHub, testTaskHub));
@@ -336,7 +337,7 @@ describe("Orchestration Client", () => {
         it("calls expected webhook when connection specified", async () => {
             const context = defaultContext;
             const testConnection = "RainbowConnection";
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.sendEventPostUri
+            const webhookUrl = new url.URL(context.bindings.starter.managementUrls.sendEventPostUri
                 .replace(idPlaceholder, defaultInstanceId)
                 .replace(eventNamePlaceholder, defaultTestEvent)
                 .replace(defaultConnection, testConnection));
@@ -358,7 +359,7 @@ describe("Orchestration Client", () => {
             const context = defaultContext;
 
             const id = "badId";
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.sendEventPostUri
+            const webhookUrl = new url.URL(context.bindings.starter.managementUrls.sendEventPostUri
                 .replace(idPlaceholder, id)
                 .replace(eventNamePlaceholder, defaultTestEvent));
 
@@ -384,7 +385,7 @@ describe("Orchestration Client", () => {
             const context = defaultContext;
             const testReason = "test";
 
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.rewindPostUri
+            const webhookUrl = new url.URL(context.bindings.starter.managementUrls.rewindPostUri
                 .replace(idPlaceholder, defaultInstanceId)
                 .replace(reasonPlaceholder, testReason));
 
@@ -404,7 +405,7 @@ describe("Orchestration Client", () => {
                 const id = "badId";
                 const testReason = "test";
 
-                const webhookUrl = new URL(context.bindings.starter.managementUrls.rewindPostUri
+                const webhookUrl = new url.URL(context.bindings.starter.managementUrls.rewindPostUri
                     .replace(idPlaceholder, id)
                     .replace(reasonPlaceholder, testReason));
                 const client = new DurableOrchestrationClient(context);
@@ -482,7 +483,7 @@ describe("Orchestration Client", () => {
             const context = defaultContext;
             const testReason = "test";
 
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.terminatePostUri
+            const webhookUrl = new url.URL(context.bindings.starter.managementUrls.terminatePostUri
                 .replace(idPlaceholder, defaultInstanceId)
                 .replace(reasonPlaceholder, testReason));
 
@@ -502,7 +503,7 @@ describe("Orchestration Client", () => {
                 const id = "badId";
                 const testReason = "test";
 
-                const webhookUrl = new URL(context.bindings.starter.managementUrls.terminatePostUri
+                const webhookUrl = new url.URL(context.bindings.starter.managementUrls.terminatePostUri
                     .replace(idPlaceholder, id)
                     .replace(reasonPlaceholder, testReason));
                 const client = new DurableOrchestrationClient(context);
@@ -780,21 +781,21 @@ function createInstanceWebhookUrl(
     instanceId?: string,
     timeoutInSeconds?: number,
     intervalInSeconds?: number) {
-    let url = "";
+    let webhookUrl = "";
     if (timeoutInSeconds && intervalInSeconds) {
-        url = waitOnPostUriTemplate
+        webhookUrl = waitOnPostUriTemplate
             .replace(timeoutPlaceholder, timeoutInSeconds.toString())
             .replace(intervalPlaceholder, intervalInSeconds.toString());
     } else {
-        url = createPostUriTemplate;
+        webhookUrl = createPostUriTemplate;
     }
 
-    url = url
+    webhookUrl = webhookUrl
         .replace(hostPlaceholder, host)
         .replace(functionPlaceholder, functionName)
         .replace(idPlaceholder, (instanceId ? `/${instanceId}` : ""));
 
-    return new URL(url);
+    return new url.URL(webhookUrl);
 }
 
 function createOrchestrationClientInputData(
