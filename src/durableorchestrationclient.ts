@@ -41,7 +41,7 @@ export class DurableOrchestrationClient {
 
     private readonly createdTimeFromQueryKey = "createdTimeFrom";
     private readonly createdTimeToQueryKey = "createdTimeTo";
-    private readonly runtimeStatusQuerykey = "runtimeStats";
+    private readonly runtimeStatusQueryKey = "runtimeStatus";
     private readonly showHistoryQueryKey = "showHistory";
     private readonly showHistoryOutputQueryKey = "showHistoryOutput";
 
@@ -184,7 +184,7 @@ export class DurableOrchestrationClient {
                     return acc + (i > 0 ? "," : "") + curr;
             });
 
-            url += `&${this.runtimeStatusQuerykey}=${statusesString}`;
+            url += `&${this.runtimeStatusQueryKey}=${statusesString}`;
         }
 
         const res = await this.webhookClient.get(new URL(url));

@@ -15,7 +15,7 @@ const functionPlaceholder = "{functionName}";
 const hostPlaceholder = "HOST-PLACEHOLDER";
 const idPlaceholder = "[/{instanceId}]";
 const intervalPlaceholder = "{intervalInSeconds}";
-const reasonPlaceholder = "{reason}";
+const reasonPlaceholder = "{text}";
 const timeoutPlaceholder = "{timeoutInSeconds}";
 const taskHubPlaceholder = "TASK-HUB";
 const connectionPlaceholder = "CONNECTION";
@@ -26,8 +26,8 @@ const uriSuffix = `taskHub=${taskHubPlaceholder}&connection=${connectionPlacehol
 
 const statusQueryGetUriTemplate = `${hostPlaceholder}${webhookPath}instances/${idPlaceholder}?${uriSuffix}`;
 const sendEventPostUriTemplate = `${hostPlaceholder}${webhookPath}instances/${idPlaceholder}/raiseEvent/{eventName}?${uriSuffix}`; // tslint:disable-line max-line-length
-const terminatePostUriTemplate = `${hostPlaceholder}${webhookPath}instances/${idPlaceholder}/terminate?reason={reason}&${uriSuffix}`; // tslint:disable-line max-line-length
-const rewindPostUriTemplate = `${hostPlaceholder}${webhookPath}instances/${idPlaceholder}/rewind?reason={text}&${uriSuffix}`; // tslint:disable-line max-line-length
+const terminatePostUriTemplate = `${hostPlaceholder}${webhookPath}instances/${idPlaceholder}/terminate?reason=${reasonPlaceholder}&${uriSuffix}`; // tslint:disable-line max-line-length
+const rewindPostUriTemplate = `${hostPlaceholder}${webhookPath}instances/${idPlaceholder}/rewind?reason=${reasonPlaceholder}&${uriSuffix}`; // tslint:disable-line max-line-length
 
 const createPostUriTemplate = `${hostPlaceholder}${webhookPath}orchestrators/${functionPlaceholder}${idPlaceholder}?${code}`; // tslint:disable-line max-line-length
 const waitOnPostUriTemplate = `${hostPlaceholder}${webhookPath}orchestrators/${functionPlaceholder}${idPlaceholder}?timeout=${timeoutPlaceholder}&pollingInterval=${intervalPlaceholder}&${code}`; // tslint:disable-line max-line-length
@@ -123,7 +123,7 @@ describe("Orchestration Client", () => {
                 http: {
                     url: defaultRequestUrl,
                     method: "GET",
-                }
+                },
             };
 
             const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
@@ -143,7 +143,7 @@ describe("Orchestration Client", () => {
                 },
             };
             expect(response).to.be.deep.equal(expectedResponse);
-        });        
+        });
 
         it("returns a proper response object when request is undefined", async () => {
             const client = new DurableOrchestrationClient(defaultContext);
@@ -209,7 +209,7 @@ describe("Orchestration Client", () => {
             this.getStub.resolves({ status: 202, body: expectedStatus});
 
             const result = await client.getStatus(defaultInstanceId);
-            sinon.assert.calledWithExactly(this.getStub, webhookUrl);
+            sinon.assert.calledWithExactly(this.getStub, sinon.match.has("href", webhookUrl.href));
             expect(result).to.be.deep.equal(expectedStatus);
         });
 
@@ -236,7 +236,7 @@ describe("Orchestration Client", () => {
             this.getStub.resolves({ status: 202, body: expectedStatuses});
 
             const result = await client.getStatusAll();
-            sinon.assert.calledWithExactly(this.getStub, webhookUrl);
+            sinon.assert.calledWithExactly(this.getStub, sinon.match.has("href", webhookUrl.href));
             expect(result).to.be.deep.equal(expectedStatuses);
         });
     });
@@ -268,7 +268,7 @@ describe("Orchestration Client", () => {
             this.getStub.resolves({ status: 202, body: expectedStatuses});
 
             const result = await client.getStatusBy(createdTimeFrom, createdTimeTo, runtimeStatuses);
-            sinon.assert.calledWithExactly(this.getStub, webhookUrl);
+            sinon.assert.calledWithExactly(this.getStub, sinon.match.has("href", webhookUrl.href));
             expect(result).to.be.deep.equal(expectedStatuses);
         });
 
@@ -285,7 +285,7 @@ describe("Orchestration Client", () => {
             this.getStub.resolves({ status: 202, body: expectedStatuses });
 
             const result = await client.getStatusBy(undefined, undefined, runtimeStatuses);
-            sinon.assert.calledWithExactly(this.getStub, webhookUrl);
+            sinon.assert.calledWithExactly(this.getStub, sinon.match.has("href", webhookUrl.href));
             expect(result).to.be.deep.equal(expectedStatuses);
         });
     });
@@ -313,7 +313,7 @@ describe("Orchestration Client", () => {
             this.postStub.resolves({ status: 202, body: undefined});
 
             const result = await client.raiseEvent(defaultInstanceId, defaultTestEvent, defaultTestData);
-            sinon.assert.calledWithExactly(this.postStub, webhookUrl, defaultTestData);
+            sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", webhookUrl.href), defaultTestData);
             expect(result).to.be.equal(undefined);
         });
 
@@ -329,7 +329,7 @@ describe("Orchestration Client", () => {
             this.postStub.resolves({ status: 202, body: undefined });
 
             const result = await client.raiseEvent(defaultInstanceId, defaultTestEvent, defaultTestData, testTaskHub);
-            sinon.assert.calledWithExactly(this.postStub, webhookUrl, defaultTestData);
+            sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", webhookUrl.href), defaultTestData);
             expect(result).to.be.equal(undefined);
         });
 
@@ -350,7 +350,7 @@ describe("Orchestration Client", () => {
                 defaultTestData,
                 undefined,
                 testConnection);
-            sinon.assert.calledWithExactly(this.postStub, webhookUrl, defaultTestData);
+            sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", webhookUrl.href), defaultTestData);
             expect(result).to.be.equal(undefined);
         });
 
@@ -384,7 +384,7 @@ describe("Orchestration Client", () => {
             const context = defaultContext;
             const testReason = "test";
 
-            const webhookUrl = new URL(context.bindings.starter.managementUrls.terminatePostUri
+            const webhookUrl = new URL(context.bindings.starter.managementUrls.rewindPostUri
                 .replace(idPlaceholder, defaultInstanceId)
                 .replace(reasonPlaceholder, testReason));
 
@@ -392,7 +392,7 @@ describe("Orchestration Client", () => {
             this.postStub.resolves({ status: 202, body: undefined });
 
             const result = await client.rewind(defaultInstanceId, testReason);
-            sinon.assert.calledWithExactly(this.postStub, webhookUrl);
+            sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", webhookUrl.href));
             expect(result).to.be.equal(undefined);
         });
 
@@ -439,7 +439,7 @@ describe("Orchestration Client", () => {
             });
 
             const result = await client.startNew(functionName);
-            sinon.assert.calledWithExactly(this.postStub, webhookUrl, undefined);
+            sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", webhookUrl.href), undefined);
             expect(result).to.equal(defaultInstanceId);
         });
 
@@ -454,7 +454,7 @@ describe("Orchestration Client", () => {
             });
 
             const result = await client.startNew(functionName, defaultInstanceId, { key: "value" });
-            sinon.assert.calledWithExactly(this.postStub, webhookUrl, { key: "value" });
+            sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", webhookUrl.href), { key: "value" });
             expect(result).to.equal(defaultInstanceId);
         });
 
@@ -490,7 +490,7 @@ describe("Orchestration Client", () => {
             this.postStub.resolves({ status: 202, body: undefined });
 
             const result = await client.terminate(defaultInstanceId, testReason);
-            sinon.assert.calledWithExactly(this.postStub, webhookUrl);
+            sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", webhookUrl.href));
             expect(result).to.be.equal(undefined);
         });
 
@@ -792,7 +792,7 @@ function createInstanceWebhookUrl(
     url = url
         .replace(hostPlaceholder, host)
         .replace(functionPlaceholder, functionName)
-        .replace(idPlaceholder, (instanceId ? instanceId : ""));
+        .replace(idPlaceholder, (instanceId ? `/${instanceId}` : ""));
 
     return new URL(url);
 }
