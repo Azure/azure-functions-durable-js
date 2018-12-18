@@ -21,7 +21,24 @@ import { Constants, DurableOrchestrationStatus, HttpManagementPayload, IFunction
  * ```
  */
 export function getClient(context: unknown): DurableOrchestrationClient {
-    return new DurableOrchestrationClient(context);
+    const clientData = getClientData(context as IFunctionContext);
+
+    // scan/fix OrchestrationClientData
+    // feed fixed OrchestrationClientData to constructor
+
+    return new DurableOrchestrationClient(clientData);
+}
+
+function getClientData(context: IFunctionContext): OrchestrationClientInputData {
+    const matchingInstances = Utils.getInstancesOf<OrchestrationClientInputData>(
+        (context as IFunctionContext).bindings,
+        new OrchestrationClientInputData(undefined, undefined, undefined));
+
+    if (!matchingInstances || matchingInstances.length === 0) {
+        throw new Error(Constants.OrchestrationClientNoBindingFoundMessage);
+    }
+
+    return matchingInstances[0];
 }
 
 /**
@@ -46,7 +63,6 @@ export class DurableOrchestrationClient {
     private readonly showHistoryQueryKey = "showHistory";
     private readonly showHistoryOutputQueryKey = "showHistoryOutput";
 
-    private clientData: OrchestrationClientInputData;
     private webhookClient: WebhookClient;
     private urlValidationOptions: ValidatorJS.IsURLOptions = {
         protocols: ["http", "https"],
@@ -56,15 +72,14 @@ export class DurableOrchestrationClient {
     };
 
     /**
-     * @param context The context object of the Azure function whose body
-     * calls this constructor.
+     * @param clientData The object representing the orchestrationClient input
+     *  binding of the Azure function that will use this client.
      */
-    constructor(private context: unknown) {
-        if (!context) {
-            throw new TypeError(`context: Expected context object but got ${typeof context}`);
+    constructor(private clientData: OrchestrationClientInputData) {
+        if (!clientData) {
+            throw new TypeError(`context: Expected OrchestrationClientInputData but got ${typeof clientData}`);
         }
 
-        this.clientData = this.getClientData();
         this.taskHubName = this.clientData.taskHubName;
         this.webhookClient = new WebhookClient();
     }
@@ -406,18 +421,6 @@ export class DurableOrchestrationClient {
                 "Content-Length": bodyAsJson !== undefined ? bodyAsJson.length : 0,
             },
         };
-    }
-
-    private getClientData(): OrchestrationClientInputData {
-        const matchingInstances = Utils.getInstancesOf<OrchestrationClientInputData>(
-            (this.context as IFunctionContext).bindings,
-            new OrchestrationClientInputData(undefined, undefined, undefined));
-
-        if (!matchingInstances || matchingInstances.length === 0) {
-            throw new Error(Constants.OrchestrationClientNoBindingFoundMessage);
-        }
-
-        return matchingInstances[0];
     }
 
     private getClientResponseLinks(request: IHttpRequest | IRequest, instanceId: string): HttpManagementPayload {
