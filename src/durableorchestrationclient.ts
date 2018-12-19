@@ -26,7 +26,8 @@ export function getClient(context: unknown): DurableOrchestrationClient {
     // scan/fix OrchestrationClientData
     // feed fixed OrchestrationClientData to constructor
 
-    return new DurableOrchestrationClient(clientData);
+    const webhookClient = new WebhookClient();
+    return new DurableOrchestrationClient(clientData, webhookClient);
 }
 
 function getClientData(context: IFunctionContext): OrchestrationClientInputData {
@@ -63,7 +64,6 @@ export class DurableOrchestrationClient {
     private readonly showHistoryQueryKey = "showHistory";
     private readonly showHistoryOutputQueryKey = "showHistoryOutput";
 
-    private webhookClient: WebhookClient;
     private urlValidationOptions: ValidatorJS.IsURLOptions = {
         protocols: ["http", "https"],
         require_tld: false,
@@ -75,13 +75,19 @@ export class DurableOrchestrationClient {
      * @param clientData The object representing the orchestrationClient input
      *  binding of the Azure function that will use this client.
      */
-    constructor(private clientData: OrchestrationClientInputData) {
+    constructor(
+        private clientData: OrchestrationClientInputData,
+        private webhookClient: WebhookClient,
+        ) {
         if (!clientData) {
-            throw new TypeError(`context: Expected OrchestrationClientInputData but got ${typeof clientData}`);
+            throw new TypeError(`clientData: Expected OrchestrationClientInputData but got ${typeof clientData}`);
+        }
+
+        if (!webhookClient) {
+            throw new TypeError(`webhookClient: Expected WebhookClient but got ${typeof webhookClient}`);
         }
 
         this.taskHubName = this.clientData.taskHubName;
-        this.webhookClient = new WebhookClient();
     }
 
     /**
