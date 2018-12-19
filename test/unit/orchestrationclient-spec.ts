@@ -52,21 +52,27 @@ describe("Orchestration Client", () => {
     describe("Constructor", () => {
         it("throws if clientData is undefined", async () => {
             expect(() => {
-                const client = new DurableOrchestrationClient(undefined);
-            }).to.throw(`context: Expected OrchestrationClientInputData but got undefined`);
+                new DurableOrchestrationClient(undefined, new WebhookClient());
+            }).to.throw(`clientData: Expected OrchestrationClientInputData but got undefined`);
+        });
+
+        it("throws if webhookClient is undefined", async () => {
+            expect(() => {
+                new DurableOrchestrationClient(defaultClientInputData, undefined);
+            }).to.throw(`webhookClient: Expected WebhookClient but got undefined`);
         });
     });
 
     describe("Properties", () => {
         it("assigns taskHubName", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
             expect(client.taskHubName).to.be.equal(defaultClientInputData.taskHubName);
         });
     });
 
     describe("createCheckStatusResponse()", () => {
         it(`returns a proper response object from request.url`, async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
             const requestObj = {
                 url: defaultRequestUrl,
                 method: "GET",
@@ -92,7 +98,7 @@ describe("Orchestration Client", () => {
         });
 
         it(`returns a proper response object from request.http.url`, async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
             const requestObj = {
                 http: {
                     url: defaultRequestUrl,
@@ -120,7 +126,7 @@ describe("Orchestration Client", () => {
         });
 
         it("returns a proper response object when request is undefined", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const expectedPayload = createHttpManagementPayload(
                 defaultInstanceId,
@@ -144,7 +150,7 @@ describe("Orchestration Client", () => {
 
     describe("createHttpManagementPayload()", () => {
         it("returns a proper payload", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
             const expectedPayload = createHttpManagementPayload(
                 defaultInstanceId,
                 notificationUrlHost,
@@ -167,7 +173,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const expectedStatus = new DurableOrchestrationStatus(
                 defaultOrchestrationName,
@@ -201,7 +207,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const expectedStatuses: DurableOrchestrationStatus[] = [ ];
             this.getStub.resolves({ status: 202, body: expectedStatuses});
@@ -226,7 +232,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook with all filters", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const expectedStatuses: DurableOrchestrationStatus[] = [ ];
             this.getStub.resolves({ status: 202, body: expectedStatuses});
@@ -247,7 +253,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook with some filters", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const expectedStatuses: DurableOrchestrationStatus[] = [ ];
             this.getStub.resolves({ status: 202, body: expectedStatuses });
@@ -278,7 +284,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook and completes when event request accepted", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             this.postStub.resolves({ status: 202, body: undefined});
 
@@ -295,7 +301,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook when task hub specified", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             this.postStub.resolves({ status: 202, body: undefined });
 
@@ -314,7 +320,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook when connection specified", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             this.postStub.resolves({ status: 202, body: undefined});
 
@@ -338,7 +344,7 @@ describe("Orchestration Client", () => {
         });
 
         it("throws when specified instance not found", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             this.postStub.resolves({ status: 404, body: undefined });
 
@@ -367,7 +373,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook and completes for valid instance", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             this.postStub.resolves({ status: 202, body: undefined });
 
@@ -384,7 +390,7 @@ describe("Orchestration Client", () => {
         const invalidCodes = [ 404, 410, 500 ];
         invalidCodes.forEach((statusCode) => {
             it(`throws when webhook returns invalid status code ${statusCode}`, async () => {
-                const client = new DurableOrchestrationClient(defaultClientInputData);
+                const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
                 this.postStub.resolves({ status: statusCode, body: undefined });
 
@@ -414,7 +420,7 @@ describe("Orchestration Client", () => {
         });
 
         it("starts new instance with random id and no input", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             this.postStub.resolves({
                 status: 202,
@@ -430,7 +436,7 @@ describe("Orchestration Client", () => {
         });
 
         it("starts new instance with specific id and input", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             this.postStub.resolves({
                 status: 202,
@@ -447,7 +453,7 @@ describe("Orchestration Client", () => {
         });
 
         it("throws if webhook client returns error", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             this.postStub.resolves({ status: 500, body: undefined });
 
@@ -470,7 +476,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook and completes for valid instance", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             this.postStub.resolves({ status: 202, body: undefined });
 
@@ -487,7 +493,7 @@ describe("Orchestration Client", () => {
         const invalidCodes = [ 404, 500 ];
         invalidCodes.forEach((statusCode) => {
             it(`throws when webhook returns invalid status code ${statusCode}`, async () => {
-                const client = new DurableOrchestrationClient(defaultClientInputData);
+                const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
                 this.postStub.resolves({ status: 404, body: undefined });
 
@@ -521,7 +527,7 @@ describe("Orchestration Client", () => {
         });
 
         it("throws when retryIntervalInMilliseconds > timeoutInMilliseconds", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const badInterval = 1e6;
 
@@ -534,7 +540,7 @@ describe("Orchestration Client", () => {
         });
 
         it("returns expected result for completed instance", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const expectedOutput = 42;
             this.getStub.resolves({
@@ -568,7 +574,7 @@ describe("Orchestration Client", () => {
         });
 
         it("returns expected result for canceled instance", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const expectedStatus = new DurableOrchestrationStatus(
                 defaultOrchestrationName,
@@ -603,7 +609,7 @@ describe("Orchestration Client", () => {
         });
 
         it("returns expected result for terminated instance", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const expectedStatus = new DurableOrchestrationStatus(
                 defaultOrchestrationName,
@@ -638,7 +644,7 @@ describe("Orchestration Client", () => {
         });
 
         it("returns expected result for failed instance", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const expectedStatus = new DurableOrchestrationStatus(
                 defaultOrchestrationName,
@@ -673,7 +679,7 @@ describe("Orchestration Client", () => {
         });
 
         it("continues polling for running instance", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const expectedOutput = 42;
 
@@ -738,7 +744,7 @@ describe("Orchestration Client", () => {
         });
 
         it("returns check status response if timeout expires", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
             const runningStatus = new DurableOrchestrationStatus(
                 defaultOrchestrationName,
