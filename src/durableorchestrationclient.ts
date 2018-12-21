@@ -1,7 +1,10 @@
+import cloneDeep = require("lodash/cloneDeep");
+import process = require("process");
 import url = require("url");
 import { isURL } from "validator";
-import { Constants, DurableOrchestrationStatus, HttpManagementPayload, IFunctionContext, IHttpRequest,
-    IHttpResponse, IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils, WebhookClient,
+import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagementPayload, IFunctionContext,
+    IHttpRequest, IHttpResponse, IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils,
+    WebhookClient,
 } from "./classes";
 
 /**
@@ -21,10 +24,11 @@ import { Constants, DurableOrchestrationStatus, HttpManagementPayload, IFunction
  * ```
  */
 export function getClient(context: unknown): DurableOrchestrationClient {
-    const clientData = getClientData(context as IFunctionContext);
+    let clientData = getClientData(context as IFunctionContext);
 
-    // scan/fix OrchestrationClientData
-    // feed fixed OrchestrationClientData to constructor
+    if (!process.env.WEBSITE_HOSTNAME) {
+        clientData = correctClientData(clientData);
+    }
 
     const webhookClient = new WebhookClient();
     return new DurableOrchestrationClient(clientData, webhookClient);
@@ -42,6 +46,35 @@ function getClientData(context: IFunctionContext): OrchestrationClientInputData 
     return matchingInstances[0];
 }
 
+function correctClientData(clientData: OrchestrationClientInputData): OrchestrationClientInputData {
+    const returnValue = cloneDeep(clientData);
+
+    returnValue.creationUrls = correctUrls(clientData.creationUrls) as HttpCreationPayload;
+    returnValue.managementUrls = correctUrls(clientData.managementUrls) as HttpManagementPayload;
+
+    return returnValue;
+}
+
+function correctUrls(obj: { [key: string]: string }): { [key: string]: string } {
+    const returnValue = cloneDeep(obj);
+
+    const keys = Object.getOwnPropertyNames(obj);
+    keys.forEach((key) => {
+        const value = obj[key];
+
+        if (isURL(value, {
+            protocols: ["http", "https"],
+            require_tld: false,
+            require_protocol: true,
+        })) {
+            const valueAsUrl = new url.URL(value);
+            returnValue[key] = value.replace(valueAsUrl.origin, Constants.DefaultLocalOrigin);
+        }
+    });
+
+    return returnValue;
+}
+
 /**
  * Client for starting, querying, terminating and raising events to
  * orchestration instances.
@@ -51,7 +84,9 @@ export class DurableOrchestrationClient {
      * The name of the task hub configured on this orchestration client
      * instance.
      */
-    public taskHubName: string;
+    public readonly taskHubName: string;
+    /** @hidden */
+    public readonly uniqueWebhookOrigins: string[];
 
     private readonly eventNamePlaceholder = "{eventName}";
     private readonly functionNamePlaceholder = "{functionName}";
@@ -76,8 +111,8 @@ export class DurableOrchestrationClient {
      *  binding of the Azure function that will use this client.
      */
     constructor(
-        private clientData: OrchestrationClientInputData,
-        private webhookClient: WebhookClient,
+        private readonly clientData: OrchestrationClientInputData,
+        private readonly webhookClient: WebhookClient,
         ) {
         if (!clientData) {
             throw new TypeError(`clientData: Expected OrchestrationClientInputData but got ${typeof clientData}`);
@@ -88,6 +123,7 @@ export class DurableOrchestrationClient {
         }
 
         this.taskHubName = this.clientData.taskHubName;
+        this.uniqueWebhookOrigins = this.extractUniqueWebhookOrigins(this.clientData);
     }
 
     /**
@@ -136,9 +172,9 @@ export class DurableOrchestrationClient {
         showHistoryOutput?: boolean,
         ): Promise<DurableOrchestrationStatus> {
         const template = this.clientData.managementUrls.statusQueryGetUri;
-        const idPlacholder = this.clientData.managementUrls.id;
+        const idPlaceholder = this.clientData.managementUrls.id;
 
-        let webhookUrl = template.replace(idPlacholder, instanceId);
+        let webhookUrl = template.replace(idPlaceholder, instanceId);
         if (showHistory) {
             webhookUrl += `&${this.showHistoryQueryKey}=${showHistory}`;
         }
@@ -449,5 +485,36 @@ export class DurableOrchestrationClient {
         const isIRequest = request !== undefined && (request as IRequest).url !== undefined;
         const isIHttpRequest = request !== undefined && (request as IHttpRequest).http !== undefined;
         return isIRequest || isIHttpRequest && (request as IHttpRequest).http.url !== undefined;
+    }
+
+    private extractUniqueWebhookOrigins(clientData: OrchestrationClientInputData): string[] {
+        const origins = this.extractWebhookOrigins(clientData.creationUrls)
+            .concat(this.extractWebhookOrigins(clientData.managementUrls));
+        
+        const uniqueOrigins = origins.reduce<string[]>((acc, curr) => {
+            if (acc.indexOf(curr) === -1) {
+                acc.push(curr);
+            }
+            return acc;
+        }, []);
+
+        return uniqueOrigins;
+    }
+
+    private extractWebhookOrigins(obj: { [key: string]: string }): string[] {
+        const origins: string[] = [];
+
+        const keys = Object.getOwnPropertyNames(obj);
+        keys.forEach((key) => {
+            const value = obj[key];
+
+            if (isURL(value, this.urlValidationOptions)) {
+                const valueAsUrl = new url.URL(value);
+                const origin = valueAsUrl.origin;
+                origins.push(origin);
+            }
+        });
+
+        return origins;
     }
 }

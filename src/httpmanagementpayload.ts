@@ -3,6 +3,9 @@
  */
 export class HttpManagementPayload {
     /** @hidden */
+    [key: string]: string;
+    
+    /** @hidden */
     constructor(
         /** The ID of the orchestration instance. */
         public readonly id: string,
