@@ -4,47 +4,25 @@ import "mocha";
 import sinon = require("sinon");
 import url = require("url");
 import uuidv1 = require("uuid/v1");
-import { DurableOrchestrationClient, DurableOrchestrationStatus, HttpCreationPayload,
+import { Constants, DurableOrchestrationClient, DurableOrchestrationStatus, HttpCreationPayload,
     HttpManagementPayload, OrchestrationClientInputData, OrchestrationRuntimeStatus,
     WebhookClient } from "../../src/classes";
+import { TestConstants } from "../testobjects/testconstants";
+import { TestUtils } from "../testobjects/testutils";
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
 
-const eventNamePlaceholder = "{eventName}";
-const functionPlaceholder = "{functionName}";
-const hostPlaceholder = "HOST-PLACEHOLDER";
-const idPlaceholder = "[/{instanceId}]";
-const intervalPlaceholder = "{intervalInSeconds}";
-const reasonPlaceholder = "{text}";
-const timeoutPlaceholder = "{timeoutInSeconds}";
-const taskHubPlaceholder = "TASK-HUB";
-const connectionPlaceholder = "CONNECTION";
-
-const webhookPath = "/runtime/webhooks/durabletask/";
-const code = "code=6PDWS6KrNPAOv/hw7cTDgiabhQwKTQQEnEZptmIUawunGPpOFvzDRQ==";
-const uriSuffix = `taskHub=${taskHubPlaceholder}&connection=${connectionPlaceholder}&${code}`;
-
-const statusQueryGetUriTemplate = `${hostPlaceholder}${webhookPath}instances/${idPlaceholder}?${uriSuffix}`;
-const sendEventPostUriTemplate = `${hostPlaceholder}${webhookPath}instances/${idPlaceholder}/raiseEvent/{eventName}?${uriSuffix}`; // tslint:disable-line max-line-length
-const terminatePostUriTemplate = `${hostPlaceholder}${webhookPath}instances/${idPlaceholder}/terminate?reason=${reasonPlaceholder}&${uriSuffix}`; // tslint:disable-line max-line-length
-const rewindPostUriTemplate = `${hostPlaceholder}${webhookPath}instances/${idPlaceholder}/rewind?reason=${reasonPlaceholder}&${uriSuffix}`; // tslint:disable-line max-line-length
-
-const createPostUriTemplate = `${hostPlaceholder}${webhookPath}orchestrators/${functionPlaceholder}${idPlaceholder}?${code}`; // tslint:disable-line max-line-length
-const waitOnPostUriTemplate = `${hostPlaceholder}${webhookPath}orchestrators/${functionPlaceholder}${idPlaceholder}?timeout=${timeoutPlaceholder}&pollingInterval=${intervalPlaceholder}&${code}`; // tslint:disable-line max-line-length
-
 describe("Orchestration Client", () => {
-    const notificationUrlHost = "http://localhost:7071";
-
     const defaultOrchestrationName = "TestOrchestration";
-    const defaultRequestUrl = `${notificationUrlHost}/orchestrators/${defaultOrchestrationName}`;
+    const defaultRequestUrl = `${Constants.DefaultLocalOrigin}/orchestrators/${defaultOrchestrationName}`;
     const defaultTaskHub = "TestTaskHub";
     const defaultConnection = "Storage";
     const defaultInstanceId = uuidv1();
 
-    const defaultClientInputData = createOrchestrationClientInputData(
-        idPlaceholder,
-        notificationUrlHost,
+    const defaultClientInputData = TestUtils.createOrchestrationClientInputData(
+        TestConstants.idPlaceholder,
+        Constants.DefaultLocalOrigin,
         defaultTaskHub,
         defaultConnection,
     );
@@ -52,13 +30,13 @@ describe("Orchestration Client", () => {
     describe("Constructor", () => {
         it("throws if clientData is undefined", async () => {
             expect(() => {
-                new DurableOrchestrationClient(undefined, new WebhookClient());
+                const client = new DurableOrchestrationClient(undefined, new WebhookClient());
             }).to.throw(`clientData: Expected OrchestrationClientInputData but got undefined`);
         });
 
         it("throws if webhookClient is undefined", async () => {
             expect(() => {
-                new DurableOrchestrationClient(defaultClientInputData, undefined);
+                const client = new DurableOrchestrationClient(defaultClientInputData, undefined);
             }).to.throw(`webhookClient: Expected WebhookClient but got undefined`);
         });
     });
@@ -80,9 +58,9 @@ describe("Orchestration Client", () => {
 
             const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
 
-            const expectedPayload = createHttpManagementPayload(
+            const expectedPayload = TestUtils.createHttpManagementPayload(
                 defaultInstanceId,
-                notificationUrlHost,
+                Constants.DefaultLocalOrigin,
                 defaultTaskHub,
                 defaultConnection);
             const expectedResponse = {
@@ -108,9 +86,9 @@ describe("Orchestration Client", () => {
 
             const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
 
-            const expectedPayload = createHttpManagementPayload(
+            const expectedPayload = TestUtils.createHttpManagementPayload(
                 defaultInstanceId,
-                notificationUrlHost,
+                Constants.DefaultLocalOrigin,
                 defaultTaskHub,
                 defaultConnection);
             const expectedResponse = {
@@ -128,9 +106,9 @@ describe("Orchestration Client", () => {
         it("returns a proper response object when request is undefined", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
 
-            const expectedPayload = createHttpManagementPayload(
+            const expectedPayload = TestUtils.createHttpManagementPayload(
                 defaultInstanceId,
-                notificationUrlHost,
+                Constants.DefaultLocalOrigin,
                 defaultTaskHub,
                 defaultConnection);
             const expectedResponse = {
@@ -151,9 +129,9 @@ describe("Orchestration Client", () => {
     describe("createHttpManagementPayload()", () => {
         it("returns a proper payload", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData, new WebhookClient());
-            const expectedPayload = createHttpManagementPayload(
+            const expectedPayload = TestUtils.createHttpManagementPayload(
                 defaultInstanceId,
-                notificationUrlHost,
+                Constants.DefaultLocalOrigin,
                 defaultTaskHub,
                 defaultConnection);
 
@@ -186,7 +164,7 @@ describe("Orchestration Client", () => {
             this.getStub.resolves({ status: 202, body: expectedStatus});
 
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
-                .replace(idPlaceholder, defaultInstanceId));
+                .replace(TestConstants.idPlaceholder, defaultInstanceId));
 
             const result = await client.getStatus(defaultInstanceId);
             sinon.assert.calledWithExactly(this.getStub, sinon.match.has("href", expectedWebhookUrl.href));
@@ -213,7 +191,7 @@ describe("Orchestration Client", () => {
             this.getStub.resolves({ status: 202, body: expectedStatuses});
 
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
-                .replace(idPlaceholder, ""));
+                .replace(TestConstants.idPlaceholder, ""));
 
             const result = await client.getStatusAll();
             sinon.assert.calledWithExactly(this.getStub, sinon.match.has("href", expectedWebhookUrl.href));
@@ -242,7 +220,7 @@ describe("Orchestration Client", () => {
             const runtimeStatuses = [ OrchestrationRuntimeStatus.Failed, OrchestrationRuntimeStatus.Terminated ];
 
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
-                .replace(idPlaceholder, "")
+                .replace(TestConstants.idPlaceholder, "")
                 .concat(`&createdTimeFrom=${createdTimeFrom.toISOString()}`)
                 .concat(`&createdTimeTo=${createdTimeTo.toISOString()}`)
                 .concat("&runtimeStatus=Failed,Terminated"));
@@ -261,7 +239,7 @@ describe("Orchestration Client", () => {
             const runtimeStatuses = [ OrchestrationRuntimeStatus.Failed, OrchestrationRuntimeStatus.Terminated ];
 
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
-                .replace(idPlaceholder, "")
+                .replace(TestConstants.idPlaceholder, "")
                 .concat("&runtimeStatus=Failed,Terminated"));
 
             const result = await client.getStatusBy(undefined, undefined, runtimeStatuses);
@@ -289,8 +267,8 @@ describe("Orchestration Client", () => {
             this.postStub.resolves({ status: 202, body: undefined});
 
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.sendEventPostUri
-                .replace(idPlaceholder, defaultInstanceId)
-                .replace(eventNamePlaceholder, defaultTestEvent));
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                .replace(TestConstants.eventNamePlaceholder, defaultTestEvent));
 
             const result = await client.raiseEvent(defaultInstanceId, defaultTestEvent, defaultTestData);
             sinon.assert.calledWithExactly(
@@ -307,8 +285,8 @@ describe("Orchestration Client", () => {
 
             const testTaskHub = "SpecialTaskHub";
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.sendEventPostUri
-                .replace(idPlaceholder, defaultInstanceId)
-                .replace(eventNamePlaceholder, defaultTestEvent)
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                .replace(TestConstants.eventNamePlaceholder, defaultTestEvent)
                 .replace(defaultTaskHub, testTaskHub));
 
             const result = await client.raiseEvent(defaultInstanceId, defaultTestEvent, defaultTestData, testTaskHub);
@@ -326,8 +304,8 @@ describe("Orchestration Client", () => {
 
             const testConnection = "RainbowConnection";
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.sendEventPostUri
-                .replace(idPlaceholder, defaultInstanceId)
-                .replace(eventNamePlaceholder, defaultTestEvent)
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                .replace(TestConstants.eventNamePlaceholder, defaultTestEvent)
                 .replace(defaultConnection, testConnection));
 
             const result = await client.raiseEvent(
@@ -350,8 +328,8 @@ describe("Orchestration Client", () => {
 
             const id = "badId";
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.sendEventPostUri
-                .replace(idPlaceholder, id)
-                .replace(eventNamePlaceholder, defaultTestEvent));
+                .replace(TestConstants.idPlaceholder, id)
+                .replace(TestConstants.eventNamePlaceholder, defaultTestEvent));
 
             await expect (client.raiseEvent(id, defaultTestEvent, defaultTestData))
                 .to.be.rejectedWith(`No instance with ID '${id}' found.`);
@@ -379,8 +357,8 @@ describe("Orchestration Client", () => {
 
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.rewindPostUri
-                .replace(idPlaceholder, defaultInstanceId)
-                .replace(reasonPlaceholder, testReason));
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                .replace(TestConstants.reasonPlaceholder, testReason));
 
             const result = await client.rewind(defaultInstanceId, testReason);
             sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", expectedWebhookUrl.href));
@@ -397,8 +375,8 @@ describe("Orchestration Client", () => {
                 const testId = "badId";
                 const testReason = "test";
                 const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.rewindPostUri
-                    .replace(idPlaceholder, testId)
-                    .replace(reasonPlaceholder, testReason));
+                    .replace(TestConstants.idPlaceholder, testId)
+                    .replace(TestConstants.reasonPlaceholder, testReason));
 
                 await expect(client.rewind(testId, testReason)).to.be.rejectedWith(Error);
                 sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", expectedWebhookUrl.href));
@@ -428,7 +406,7 @@ describe("Orchestration Client", () => {
             });
 
             const functionName = defaultOrchestrationName;
-            const expectedWebhookUrl = createInstanceWebhookUrl(notificationUrlHost, functionName);
+            const expectedWebhookUrl = createInstanceWebhookUrl(Constants.DefaultLocalOrigin, functionName);
 
             const result = await client.startNew(functionName);
             sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", expectedWebhookUrl.href), undefined);
@@ -444,7 +422,7 @@ describe("Orchestration Client", () => {
             });
 
             const functionName = defaultOrchestrationName;
-            const expectedWebhookUrl = createInstanceWebhookUrl(notificationUrlHost, functionName, defaultInstanceId);
+            const expectedWebhookUrl = createInstanceWebhookUrl(Constants.DefaultLocalOrigin, functionName, defaultInstanceId);
 
             const testData = { key: "value" };
             const result = await client.startNew(functionName, defaultInstanceId, testData);
@@ -458,7 +436,7 @@ describe("Orchestration Client", () => {
             this.postStub.resolves({ status: 500, body: undefined });
 
             const functionName = "BadOrchestration";
-            const expectedWebhookUrl = createInstanceWebhookUrl(notificationUrlHost, functionName);
+            const expectedWebhookUrl = createInstanceWebhookUrl(Constants.DefaultLocalOrigin, functionName);
 
             await expect(client.startNew(functionName)).to.be.rejectedWith(Error);
             sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", expectedWebhookUrl.href), undefined);
@@ -482,8 +460,8 @@ describe("Orchestration Client", () => {
 
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.terminatePostUri
-                .replace(idPlaceholder, defaultInstanceId)
-                .replace(reasonPlaceholder, testReason));
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                .replace(TestConstants.reasonPlaceholder, testReason));
 
             const result = await client.terminate(defaultInstanceId, testReason);
             sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", expectedWebhookUrl.href));
@@ -500,8 +478,8 @@ describe("Orchestration Client", () => {
                 const id = "badId";
                 const testReason = "test";
                 const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.terminatePostUri
-                    .replace(idPlaceholder, id)
-                    .replace(reasonPlaceholder, testReason));
+                    .replace(TestConstants.idPlaceholder, id)
+                    .replace(TestConstants.reasonPlaceholder, testReason));
 
                 await expect(client.terminate(id, testReason)).to.be.rejectedWith(Error);
                 sinon.assert.calledWithExactly(this.postStub, sinon.match.has("href", expectedWebhookUrl.href));
@@ -702,9 +680,9 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Completed,
             );
 
-            const httpManagementPayload = createHttpManagementPayload(
+            const httpManagementPayload = TestUtils.createHttpManagementPayload(
                 defaultInstanceId,
-                hostPlaceholder,
+                TestConstants.hostPlaceholder,
                 defaultTaskHub,
                 defaultConnection);
             this.getStub.onFirstCall().resolves({
@@ -756,9 +734,9 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Running,
             );
 
-            const httpManagementPayload = createHttpManagementPayload(
+            const httpManagementPayload = TestUtils.createHttpManagementPayload(
                 defaultInstanceId,
-                hostPlaceholder,
+                TestConstants.hostPlaceholder,
                 defaultTaskHub,
                 defaultConnection);
             this.getStub.resolves({
@@ -791,68 +769,17 @@ function createInstanceWebhookUrl(
     intervalInSeconds?: number) {
     let webhookUrl = "";
     if (timeoutInSeconds && intervalInSeconds) {
-        webhookUrl = waitOnPostUriTemplate
-            .replace(timeoutPlaceholder, timeoutInSeconds.toString())
-            .replace(intervalPlaceholder, intervalInSeconds.toString());
+        webhookUrl = TestConstants.waitOnPostUriTemplate
+            .replace(TestConstants.timeoutPlaceholder, timeoutInSeconds.toString())
+            .replace(TestConstants.intervalPlaceholder, intervalInSeconds.toString());
     } else {
-        webhookUrl = createPostUriTemplate;
+        webhookUrl = TestConstants.createPostUriTemplate;
     }
 
     webhookUrl = webhookUrl
-        .replace(hostPlaceholder, host)
-        .replace(functionPlaceholder, functionName)
-        .replace(idPlaceholder, (instanceId ? `/${instanceId}` : ""));
+        .replace(TestConstants.hostPlaceholder, host)
+        .replace(TestConstants.functionPlaceholder, functionName)
+        .replace(TestConstants.idPlaceholder, (instanceId ? `/${instanceId}` : ""));
 
     return new url.URL(webhookUrl);
-}
-
-function createOrchestrationClientInputData(
-    id: string,
-    host: string,
-    taskHub: string = taskHubPlaceholder,
-    connection: string = connectionPlaceholder) {
-    return new OrchestrationClientInputData(
-        taskHub,
-        createHttpCreationPayload(host, taskHub, connection),
-        createHttpManagementPayload(id, host, taskHub, connection),
-    );
-}
-
-function createHttpCreationPayload(host: string, taskHub: string, connection: string) {
-    return new HttpCreationPayload(
-        createPostUriTemplate
-            .replace(hostPlaceholder, host)
-            .replace(taskHubPlaceholder, taskHub)
-            .replace(connectionPlaceholder, connection),
-        waitOnPostUriTemplate
-            .replace(hostPlaceholder, host)
-            .replace(taskHubPlaceholder, taskHub)
-            .replace(connectionPlaceholder, connection),
-    );
-}
-
-function createHttpManagementPayload(id: string, host: string, taskHub: string, connection: string) {
-    return new HttpManagementPayload(
-        id,
-        statusQueryGetUriTemplate
-            .replace(hostPlaceholder, host)
-            .replace(idPlaceholder, id)
-            .replace(taskHubPlaceholder, taskHub)
-            .replace(connectionPlaceholder, connection),
-        sendEventPostUriTemplate
-            .replace(hostPlaceholder, host)
-            .replace(idPlaceholder, id)
-            .replace(taskHubPlaceholder, taskHub)
-            .replace(connectionPlaceholder, connection),
-        terminatePostUriTemplate
-            .replace(hostPlaceholder, host)
-            .replace(idPlaceholder, id)
-            .replace(taskHubPlaceholder, taskHub)
-            .replace(connectionPlaceholder, connection),
-        rewindPostUriTemplate
-            .replace(hostPlaceholder, host)
-            .replace(idPlaceholder, id)
-            .replace(taskHubPlaceholder, taskHub)
-            .replace(connectionPlaceholder, connection),
-    );
 }

@@ -25,10 +25,12 @@
     "e2etst": "npm run "
   },
   "dependencies": {
+    "@types/lodash": "^4.14.119",
     "@types/validator": "^9.4.3",
     "azure-functions-typescript": "github:christopheranderson/azure-functions-typescript",
     "commander": "~2.9.0",
     "debug": "~2.6.9",
+    "lodash": "^4.17.11",
     "rimraf": "~2.5.4",
     "validator": "~10.8.0"
   },
