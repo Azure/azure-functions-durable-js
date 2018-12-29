@@ -1,3 +1,5 @@
+import { Constants } from "./classes";
+
 /**
  * Defines retry policies that can be passed as parameters to various
  * operations.
@@ -25,7 +27,7 @@ export class RetryOptions {
         public readonly maxNumberOfAttempts: number,
     ) {
         if (firstRetryIntervalInMilliseconds <= 0) {
-            throw new RangeError("firstRetryIntervalInMilliseconds value must be greater than 0.");
+            throw new RangeError(Constants.InvalidFirstRetryIntervalValueMessage);
         }
     }
 }

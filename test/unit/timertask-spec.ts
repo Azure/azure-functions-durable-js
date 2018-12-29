@@ -1,13 +1,13 @@
 import { expect } from "chai";
 import "mocha";
-import { CreateTimerAction, TimerTask } from "../../src/classes";
+import { Constants, CreateTimerAction, TimerTask } from "../../src/classes";
 
 describe("TimerTask", () => {
     it ("throws cannot cancel a completed task", async () => {
         const task = new TimerTask(true, undefined, undefined, undefined, undefined);
         expect(() => {
             task.cancel();
-        }).to.throw("Cannot cancel a completed task.");
+        }).to.throw(Constants.CancelCompletedTaskMessage);
     });
 
     it ("cancels an incomplete task", async () => {

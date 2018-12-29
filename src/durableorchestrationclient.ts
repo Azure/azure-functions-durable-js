@@ -191,7 +191,8 @@ export class DurableOrchestrationClient {
             case 500: // instance failed with unhandled exception
                 return res.body as DurableOrchestrationStatus;
             default:
-                throw new Error(`Webhook returned unrecognized status ${res.status}: ${res.body}`);
+                throw new Error(Constants.BadWebhookStatusMessage
+                    .replace("{0}", res.status.toString()));
         }
     }
 
@@ -280,7 +281,8 @@ export class DurableOrchestrationClient {
         connectionName?: string,
         ): Promise<void> {
         if (!eventName) {
-            throw new Error("eventName must be a valid string.");
+            throw new Error(Constants.InvalidStringMessage
+                .replace("{0}", "eventName"));
         }
 
         const idPlaceholder = this.clientData.managementUrls.id;
@@ -302,11 +304,13 @@ export class DurableOrchestrationClient {
             case 410: // instance completed or failed
                 return;
             case 404:
-                throw new Error(`No instance with ID '${instanceId}' found.`);
+                throw new Error(Constants.InstanceNotFoundMessage
+                    .replace("{0}", instanceId));
             case 400:
-                throw new Error("Only application/json request content is supported");
+                throw new Error(Constants.InvalidRequestContentFormatMessage);
             default:
-                throw new Error(`Webhook returned unrecognized status code ${res.status}: ${res.body}`);
+                throw new Error(Constants.BadWebhookStatusMessage
+                    .replace("{0}", res.status.toString()));
         }
     }
 
@@ -329,11 +333,13 @@ export class DurableOrchestrationClient {
             case 202:
                 return;
             case 404:
-                throw new Error(`No instance with ID '${instanceId}' found.`);
+                throw new Error(Constants.InstanceNotFoundMessage
+                    .replace("{0}", instanceId));
             case 410:
-                throw new Error(`The rewind operation is only supported on failed orchestration instances.`);
+                throw new Error(Constants.RewindNonFailedInstanceMessage);
             default:
-                throw new Error(`Webhook returned unrecognized status code ${res.status}: ${res.body}`);
+                throw new Error(Constants.BadWebhookStatusMessage
+                    .replace("{0}", res.status.toString()));
         }
     }
 
@@ -353,7 +359,8 @@ export class DurableOrchestrationClient {
      */
     public async startNew(orchestratorFunctionName: string, instanceId?: string, input?: unknown): Promise<string> {
         if (!orchestratorFunctionName) {
-            throw new Error("orchestratorFunctionName must be a valid string.");
+            throw new Error(Constants.InvalidStringMessage
+                .replace("{0}", "orchestratorFunctionName"));
         }
 
         let requestUrl = this.clientData.creationUrls.createNewInstancePostUri;
@@ -391,9 +398,11 @@ export class DurableOrchestrationClient {
             case 410: // instance completed or failed
                 return;
             case 404:
-                throw new Error(`No instance with ID '${instanceId}' found.`);
+                throw new Error(Constants.InstanceNotFoundMessage
+                    .replace("{0}", instanceId));
             default:
-                throw new Error(`Webhook returned unrecognized status code ${res.status}: ${res.body}`);
+                throw new Error(Constants.BadWebhookStatusMessage
+                    .replace("{0}", res.status.toString()));
         }
     }
 
@@ -420,7 +429,9 @@ export class DurableOrchestrationClient {
         retryIntervalInMilliseconds: number = 1000,
         ): Promise<IHttpResponse> {
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
-            throw new Error(`Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`); // tslint:disable-line max-line-length
+            throw new Error(Constants.TimeoutLessThanRetryTimeoutMessage
+                .replace("{0}", timeoutInMilliseconds.toString())
+                .replace("{1}", retryIntervalInMilliseconds.toString()));
         }
 
         const hrStart = process.hrtime();
@@ -490,7 +501,7 @@ export class DurableOrchestrationClient {
     private extractUniqueWebhookOrigins(clientData: OrchestrationClientInputData): string[] {
         const origins = this.extractWebhookOrigins(clientData.creationUrls)
             .concat(this.extractWebhookOrigins(clientData.managementUrls));
-        
+
         const uniqueOrigins = origins.reduce<string[]>((acc, curr) => {
             if (acc.indexOf(curr) === -1) {
                 acc.push(curr);

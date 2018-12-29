@@ -1,4 +1,4 @@
-import { CreateTimerAction, Task } from "./classes";
+import { Constants, CreateTimerAction, Task } from "./classes";
 
 /**
  * Returned from [[DurableOrchestrationClient]].[[createTimer]] if the call is
@@ -68,7 +68,7 @@ export class TimerTask extends Task {
         if (!this.isCompleted) {
             this.action.isCanceled = true;
         } else {
-            throw new Error("Cannot cancel a completed task.");
+            throw new Error(Constants.CancelCompletedTaskMessage);
         }
     }
 }

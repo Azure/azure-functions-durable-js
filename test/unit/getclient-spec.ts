@@ -7,8 +7,8 @@ import url = require("url");
 import uuidv1 = require("uuid/v1");
 import { getClient } from "../../src";
 import { Constants, DurableOrchestrationClient, OrchestrationClientInputData, WebhookClient } from "../../src/classes";
-import { TestUtils } from "../testobjects/testutils";
 import { TestConstants } from "../testobjects/testconstants";
+import { TestUtils } from "../testobjects/testutils";
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
@@ -69,14 +69,14 @@ describe("getClient()", () => {
                         TestConstants.idPlaceholder,
                         "http://0.0.0.0:12345",
                         defaultTaskHub,
-                        defaultConnection
+                        defaultConnection,
                     ),
                 },
             };
 
             const client = getClient(badContext);
 
-            const expectedUniqueWebhookOrigins: string[] = [ Constants.DefaultLocalOrigin, ];
+            const expectedUniqueWebhookOrigins: string[] = [ Constants.DefaultLocalOrigin ];
             expect(client.uniqueWebhookOrigins).to.deep.equal(expectedUniqueWebhookOrigins);
         });
     });

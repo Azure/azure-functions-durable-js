@@ -1,7 +1,7 @@
 import * as debug from "debug";
 import { CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, DurableOrchestrationBindingInfo,
-    DurableOrchestrationContext, EventRaisedEvent, HistoryEvent, HistoryEventType, IAction, IFunctionContext,
+    CallSubOrchestratorWithRetryAction, Constants, ContinueAsNewAction, CreateTimerAction,
+    DurableOrchestrationBindingInfo, EventRaisedEvent, HistoryEvent, HistoryEventType, IAction, IFunctionContext,
     OrchestratorState, RetryOptions, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
     SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent, TaskSet,
     TimerCreatedEvent, TimerFiredEvent, TimerTask, Utils, WaitForExternalEventAction } from "./classes";
@@ -24,7 +24,7 @@ export class Orchestrator {
             context.bindings, new DurableOrchestrationBindingInfo())[0];
 
         if (!orchestrationBinding) {
-            throw new Error(`Could not finding an orchestrationClient binding on context.`);
+            throw new Error(Constants.OrchestrationContextNoBindingFoundMessage);
         }
 
         const state: HistoryEvent[] = orchestrationBinding.history;

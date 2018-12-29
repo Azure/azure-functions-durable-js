@@ -1,5 +1,5 @@
 import { isDate } from "util";
-import { ActionType, IAction } from "../classes";
+import { ActionType, Constants, IAction } from "../classes";
 
 /** @hidden */
 export class CreateTimerAction implements IAction {
@@ -10,7 +10,9 @@ export class CreateTimerAction implements IAction {
         public isCanceled: boolean = false,
     ) {
         if (!isDate(fireAt)) {
-            throw new TypeError(`fireAt: Expected valid Date object but got ${fireAt}`);
+            throw new TypeError(Constants.NotDateMessage
+                .replace("{0}", "fireAt")
+                .replace("{1}", fireAt ? fireAt.toString() : typeof fireAt));
         }
     }
 }

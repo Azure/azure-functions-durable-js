@@ -1,4 +1,4 @@
-import { ActionType, IAction, RetryOptions } from "../classes";
+import { ActionType, IAction, RetryOptions, Utils } from "../classes";
 
 /** @hidden */
 export class CallActivityWithRetryAction implements IAction {
@@ -9,12 +9,8 @@ export class CallActivityWithRetryAction implements IAction {
         public readonly retryOptions: RetryOptions,
         public readonly input?: unknown,
     ) {
-        if (!functionName || typeof functionName !== "string") {
-            throw new TypeError(`functionName: Expected non-empty string but got ${typeof functionName}`);
-        }
+        Utils.throwIfNotNonEmptyString(functionName, "functionName");
 
-        if (!retryOptions || typeof retryOptions !== "object") {    // TODO: better type-check
-            throw new TypeError(`retryOptions: expected type RetryOptions but got ${typeof retryOptions}`);
-        }
+        Utils.throwIfNotInstanceOf<RetryOptions>(retryOptions, "retryOptions", new RetryOptions(1, 1), "RetryOptions");
     }
 }

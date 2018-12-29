@@ -1,4 +1,4 @@
-import { ActionType, IAction } from "../classes";
+import { ActionType, IAction, Utils } from "../classes";
 
 /** @hidden */
 export class CallSubOrchestratorAction implements IAction {
@@ -9,12 +9,10 @@ export class CallSubOrchestratorAction implements IAction {
         public readonly instanceId?: string,
         public readonly input?: unknown,
     ) {
-        if (!functionName || typeof functionName !== "string") {
-            throw new TypeError(`functionName: Expected non-empty string but got ${typeof functionName}`);
-        }
+        Utils.throwIfNotNonEmptyString(functionName, "functionName");
 
-        if (instanceId && typeof instanceId !== "string") {
-            throw new TypeError(`isntanceId: Expected non-empty string but got ${typeof instanceId}`);
+        if (instanceId) {
+            Utils.throwIfNotNonEmptyString(instanceId, "instanceId");
         }
     }
 }
