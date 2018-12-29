@@ -514,7 +514,10 @@ describe("Orchestration Client", () => {
                 defaultInstanceId,
                 defaultTimeout,
                 badInterval))
-                .to.be.rejectedWith(`Total timeout ${defaultTimeout} (ms) should be bigger than retry timeout ${badInterval} (ms)`); // tslint:disable-line max-line-length
+                .to.be.rejectedWith(
+                    Constants.TimeoutLessThanRetryTimeoutMessage
+                        .replace("{0}", defaultTimeout.toString())
+                        .replace("{1}", badInterval.toString()));
         });
 
         it("returns expected result for completed instance", async () => {

@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import "mocha";
-import { Utils } from "../../src/classes";
+import { Constants, Utils } from "../../src/classes";
 
 describe("Utils", () => {
     describe("getInstancesOf()", () => {
@@ -52,6 +52,11 @@ describe("Utils", () => {
             return expect(result).to.be.false;
         });
 
+        it("returns false when obj is null", async () => {
+            const result = Utils.hasAllPropertiesOf(null, new TestType());
+            return expect(result).to.be.false;
+        });
+
         it("returns false when obj matches no properties of refInstance", async () => {
             const result = Utils.hasAllPropertiesOf<TestType>(33, new TestType());
             return expect(result).to.be.false;
@@ -77,6 +82,84 @@ describe("Utils", () => {
             const result = Utils.hasAllPropertiesOf<TestType>(obj, new TestType());
             return expect(result).to.be.be.true;
         });
+    });
+
+    describe("throwIfNotInstanceOf", () => {
+        const notObjects = [ undefined, true, 3, "thing", Symbol(), () => 3 ];
+        const defaultName = "name";
+
+        notObjects.forEach((notObject) => { 
+            it(`throws when called with ${typeof notObject}`, async () => {
+                expect(() => {
+                    Utils.throwIfNotInstanceOf<TestType>(notObject, defaultName, new TestType(), "TestType");
+                }).to.throw(
+                    Constants.NotInstanceOfTypeMessage
+                        .replace("{0}", defaultName)
+                        .replace("{1}", "TestType")
+                        .replace("{2}", typeof notObject)
+                );
+            });
+        });
+
+        it("throws when called with null", async () => {
+            expect(() => {
+                Utils.throwIfNotInstanceOf<TestType>(null, defaultName, new TestType(), "TestType");
+            }).to.throw(
+                Constants.NotInstanceOfTypeMessage
+                    .replace("{0}", defaultName)
+                    .replace("{1}", "TestType")
+                    .replace("{2}", typeof null)
+            );
+        });
+
+        it("does not throw when called with instance of type", async () => {
+            expect(() => {
+                Utils.throwIfNotInstanceOf<TestType>(new TestType(), defaultName, new TestType(), "TestType");
+            }).to.not.throw();
+        });
+    });
+
+    describe("throwIfNotNonEmptyString", () => {
+        const notStrings = [ undefined, true, 3, Symbol(), () => 3, { key: "value" } ];
+        const defaultName = "name";
+
+        notStrings.forEach((notString) => {
+            it(`throws when called with ${typeof notString}`, async () => {
+                expect(() => {
+                    Utils.throwIfNotNonEmptyString(notString, defaultName);
+                }).to.throw(
+                    Constants.NotStringMessage
+                        .replace("{0}", defaultName)
+                        .replace("{1}", typeof notString)
+                );
+            });
+        });
+
+        it("throws when called with null", async () => {
+            expect(() => {
+                Utils.throwIfNotNonEmptyString(null, defaultName);
+            }).to.throw(
+                Constants.NotStringMessage
+                    .replace("{0}", defaultName)
+                    .replace("{1}", typeof null)
+            );
+        });
+
+        it("throws when called with whitespace", async () => {
+            expect(() => {
+                Utils.throwIfNotNonEmptyString("  ", defaultName);
+            }).to.throw(
+                Constants.NotStringMessage
+                    .replace("{0}", defaultName)
+                    .replace("{1}", typeof "  ")
+            );
+        });
+
+        it("does not throw when called with non-empty string", async () => {
+            expect(() => {
+                Utils.throwIfNotNonEmptyString("hedgehog", defaultName);
+            }).to.not.throw();
+        });        
     });
 });
 

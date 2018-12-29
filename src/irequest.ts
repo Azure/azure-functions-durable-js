@@ -1,3 +1,6 @@
+/**
+ * Adapted from IRequest in [Azure Functions' node.js worker.](https://github.com/Azure/azure-functions-nodejs-worker)
+ */
 export interface IRequest {
     method: string;
     url: string;

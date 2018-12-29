@@ -1,4 +1,4 @@
-import { ActionType, IAction } from "../classes";
+import { ActionType, IAction, Utils } from "../classes";
 
 /** @hidden */
 export class WaitForExternalEventAction implements IAction {
@@ -7,8 +7,6 @@ export class WaitForExternalEventAction implements IAction {
     constructor(
         public readonly externalEventName: string,
     ) {
-        if (!externalEventName || typeof externalEventName !== "string") {
-            throw new TypeError(`externalEventName: Expected non-empty string but got ${externalEventName}`);
-        }
+        Utils.throwIfNotNonEmptyString(externalEventName, "externalEventName");
     }
 }

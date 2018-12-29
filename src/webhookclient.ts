@@ -1,7 +1,7 @@
 import http = require("http");
 import https = require("https");
 import url = require("url");
-import { IHttpResponse } from "./classes";
+import { Constants, IHttpResponse } from "./classes";
 
 /** @hidden */
 export class WebhookClient {
@@ -49,7 +49,7 @@ export class WebhookClient {
                     requestModule = https;
                     break;
                 default:
-                    throw new Error(`Unrecognized request protocol: ${requestUrl.protocol}. Only http: and https: are accepted.`); // tslint:disable-line max-line-length
+                    throw new Error(Constants.UnrecognizedRequestProtocolMessage.replace("{0}", requestUrl.protocol));
             }
 
             const req = (requestModule as IModule).request(options, (res: http.IncomingMessage) => {

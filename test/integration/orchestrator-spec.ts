@@ -4,7 +4,7 @@ import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
 import {
     CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction,
+    CallSubOrchestratorWithRetryAction, Constants, ContinueAsNewAction, CreateTimerAction,
     DurableOrchestrationBindingInfo, DurableOrchestrationContext, IOrchestratorState,
     OrchestratorState, RetryOptions, WaitForExternalEventAction,
 } from "../../src/classes";
@@ -378,7 +378,10 @@ describe("Orchestrator", () => {
                 }),
             );
             expect(mockContext.doneValue.error).to
-                .include("retryOptions: expected type RetryOptions but got undefined");
+                .include(Constants.NotInstanceOfTypeMessage
+                    .replace("{0}", "retryOptions")
+                    .replace("{1}", "RetryOptions")
+                    .replace("{2}", typeof undefined));
         });
 
         it("schedules an activity function", async () => {
@@ -683,7 +686,10 @@ describe("Orchestrator", () => {
                 actions: [],
             });
             expect(mockContext.doneValue.error).to
-                .include("retryOptions: expected type RetryOptions but got undefined");
+                .include(Constants.NotInstanceOfTypeMessage
+                    .replace("{0}", "retryOptions")
+                    .replace("{1}", "RetryOptions")
+                    .replace("{2}", typeof undefined));
         });
 
         it("schedules a suborchestrator function", async () => {

@@ -1,4 +1,4 @@
-import { ActionType, IAction, RetryOptions } from "../classes";
+import { ActionType, IAction, RetryOptions, Utils } from "../classes";
 
 /** @hidden */
 export class CallSubOrchestratorWithRetryAction implements IAction {
@@ -10,16 +10,12 @@ export class CallSubOrchestratorWithRetryAction implements IAction {
         public readonly input?: unknown,
         public readonly instanceId?: string,
     ) {
-        if (!functionName || typeof functionName !== "string") {
-            throw new TypeError(`functionName: Expected non-empty string but got ${typeof functionName}`);
-        }
+        Utils.throwIfNotNonEmptyString(functionName, "functionName");
 
-        if (!retryOptions) { // TODO: better type-check
-            throw new TypeError(`retryOptions: expected type RetryOptions but got ${typeof retryOptions}`);
-        }
+        Utils.throwIfNotInstanceOf<RetryOptions>(retryOptions, "retryOptions", new RetryOptions(1, 1), "RetryOptions");
 
-        if (instanceId && typeof instanceId !== "string") {
-            throw new TypeError(`isntanceId: Expected non-empty string but got ${typeof instanceId}`);
+        if (instanceId) {
+            Utils.throwIfNotNonEmptyString(instanceId, "instanceId");
         }
     }
 }
