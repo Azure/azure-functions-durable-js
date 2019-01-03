@@ -1,4 +1,4 @@
-const df = require("durable-functions");
+const df = require("../../lib/src");
 
 const timeout = "timeout";
 const retryInterval = "retryInterval";
@@ -12,11 +12,12 @@ module.exports = async function (context, req) {
     const timeoutInMilliseconds = getTimeInSeconds(req, timeout) || 30000;
     const retryIntervalInMilliseconds = getTimeInSeconds(req, retryInterval) || 1000;
 
-    return client.waitForCompletionOrCreateCheckStatusResponse(
+    const response = client.waitForCompletionOrCreateCheckStatusResponse(
         context.bindingData.req,
         instanceId,
         timeoutInMilliseconds,
         retryIntervalInMilliseconds);
+    return response;
 };
 
 function getTimeInSeconds (req, queryParameterName) {
