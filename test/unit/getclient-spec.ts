@@ -55,7 +55,6 @@ describe("getClient()", () => {
     describe("Azure/azure-functions-durable-js#28 patch", () => {
         beforeEach(() => {
             this.WEBSITE_HOSTNAME = process.env.WEBSITE_HOSTNAME;
-            delete process.env.WEBSITE_HOSTNAME;
         });
 
         afterEach(() => {
@@ -63,11 +62,34 @@ describe("getClient()", () => {
         });
 
         it("corrects API endpoints if WEBSITE_HOSTNAME environment variable not found", async () => {
+            delete process.env.WEBSITE_HOSTNAME;
+
             const badContext = {
                 bindings: {
                     starter: TestUtils.createOrchestrationClientInputData(
                         TestConstants.idPlaceholder,
                         "http://0.0.0.0:12345",
+                        defaultTaskHub,
+                        defaultConnection,
+                    ),
+                },
+            };
+
+            const client = getClient(badContext);
+
+            const expectedUniqueWebhookOrigins: string[] = [ Constants.DefaultLocalOrigin ];
+            expect(client.uniqueWebhookOrigins).to.deep.equal(expectedUniqueWebhookOrigins);
+        });
+
+        it("corrects API endpoints if WEBSITE_HOSTNAME environment variable is 0.0.0.0", async () => {
+            // Azure Functions Core Tools sets WEBSITE_HOSTNAME to 0.0.0.0:{port} on startup
+            process.env.WEBSITE_HOSTNAME = "0.0.0.0:12345";
+
+            const badContext = {
+                bindings: {
+                    starter: TestUtils.createOrchestrationClientInputData(
+                        TestConstants.idPlaceholder,
+                        `http://${process.env.WEBSITE_HOSTNAME}`,
                         defaultTaskHub,
                         defaultConnection,
                     ),

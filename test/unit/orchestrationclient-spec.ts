@@ -422,7 +422,10 @@ describe("Orchestration Client", () => {
             });
 
             const functionName = defaultOrchestrationName;
-            const expectedWebhookUrl = createInstanceWebhookUrl(Constants.DefaultLocalOrigin, functionName, defaultInstanceId);
+            const expectedWebhookUrl = createInstanceWebhookUrl(
+                Constants.DefaultLocalOrigin,
+                functionName,
+                defaultInstanceId);
 
             const testData = { key: "value" };
             const result = await client.startNew(functionName, defaultInstanceId, testData);

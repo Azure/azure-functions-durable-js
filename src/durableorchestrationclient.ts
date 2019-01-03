@@ -26,7 +26,7 @@ import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagem
 export function getClient(context: unknown): DurableOrchestrationClient {
     let clientData = getClientData(context as IFunctionContext);
 
-    if (!process.env.WEBSITE_HOSTNAME) {
+    if (!process.env.WEBSITE_HOSTNAME || process.env.WEBSITE_HOSTNAME.includes("0.0.0.0")) {
         clientData = correctClientData(clientData);
     }
 
