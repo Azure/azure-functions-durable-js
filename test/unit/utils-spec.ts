@@ -88,7 +88,7 @@ describe("Utils", () => {
         const notObjects = [ undefined, true, 3, "thing", Symbol(), () => 3 ];
         const defaultName = "name";
 
-        notObjects.forEach((notObject) => { 
+        notObjects.forEach((notObject) => {
             it(`throws when called with ${typeof notObject}`, async () => {
                 expect(() => {
                     Utils.throwIfNotInstanceOf<TestType>(notObject, defaultName, new TestType(), "TestType");
@@ -96,7 +96,7 @@ describe("Utils", () => {
                     Constants.NotInstanceOfTypeMessage
                         .replace("{0}", defaultName)
                         .replace("{1}", "TestType")
-                        .replace("{2}", typeof notObject)
+                        .replace("{2}", typeof notObject),
                 );
             });
         });
@@ -108,7 +108,7 @@ describe("Utils", () => {
                 Constants.NotInstanceOfTypeMessage
                     .replace("{0}", defaultName)
                     .replace("{1}", "TestType")
-                    .replace("{2}", typeof null)
+                    .replace("{2}", typeof null),
             );
         });
 
@@ -130,7 +130,7 @@ describe("Utils", () => {
                 }).to.throw(
                     Constants.NotStringMessage
                         .replace("{0}", defaultName)
-                        .replace("{1}", typeof notString)
+                        .replace("{1}", typeof notString),
                 );
             });
         });
@@ -141,7 +141,7 @@ describe("Utils", () => {
             }).to.throw(
                 Constants.NotStringMessage
                     .replace("{0}", defaultName)
-                    .replace("{1}", typeof null)
+                    .replace("{1}", typeof null),
             );
         });
 
@@ -151,7 +151,7 @@ describe("Utils", () => {
             }).to.throw(
                 Constants.NotStringMessage
                     .replace("{0}", defaultName)
-                    .replace("{1}", typeof "  ")
+                    .replace("{1}", typeof "  "),
             );
         });
 
@@ -159,7 +159,7 @@ describe("Utils", () => {
             expect(() => {
                 Utils.throwIfNotNonEmptyString("hedgehog", defaultName);
             }).to.not.throw();
-        });        
+        });
     });
 });
 

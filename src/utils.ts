@@ -32,7 +32,7 @@ export class Utils {
             throw new TypeError(Constants.NotInstanceOfTypeMessage
                 .replace("{0}", name)
                 .replace("{1}", type)
-                .replace("{2}", typeof value)
+                .replace("{2}", typeof value),
             );
         }
     }
