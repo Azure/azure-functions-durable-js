@@ -14,7 +14,6 @@ export class Constants {
     public static readonly PlaceholderMessage: string = "This is a placeholder.";
     public static readonly RewindNonFailedInstanceMessage: string = "The rewind operation is only supported on failed orchestration instances."; // tslint:disable-line max-line-length
     public static readonly TimeoutLessThanRetryTimeoutMessage: string = "Total timeout {0} (ms) should be bigger than retry timeout {1} (ms)"; // tslint:disable-line max-line-length
-    public static readonly UnrecognizedRequestProtocolMessage: string = "Unrecognized request protocol: {0}. Only http: and https: are accepted."; // tslint:disable-line max-line-length
 
     public static readonly DefaultLocalHost: string = "localhost:7071";
     public static readonly DefaultLocalOrigin: string = `http://${Constants.DefaultLocalHost}`;

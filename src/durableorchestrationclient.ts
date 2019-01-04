@@ -1,11 +1,13 @@
+import axios, { AxiosResponse } from "axios";
 import cloneDeep = require("lodash/cloneDeep");
 import process = require("process");
 import url = require("url");
 import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagementPayload, IFunctionContext,
     IHttpRequest, IHttpResponse, IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils,
-    WebhookClient,
 } from "./classes";
+
+axios.defaults.validateStatus = (status) => status < 600;
 
 /**
  * Returns an OrchestrationClient instance.
@@ -30,8 +32,7 @@ export function getClient(context: unknown): DurableOrchestrationClient {
         clientData = correctClientData(clientData);
     }
 
-    const webhookClient = new WebhookClient();
-    return new DurableOrchestrationClient(clientData, webhookClient);
+    return new DurableOrchestrationClient(clientData);
 }
 
 function getClientData(context: IFunctionContext): OrchestrationClientInputData {
@@ -112,14 +113,9 @@ export class DurableOrchestrationClient {
      */
     constructor(
         private readonly clientData: OrchestrationClientInputData,
-        private readonly webhookClient: WebhookClient,
         ) {
         if (!clientData) {
             throw new TypeError(`clientData: Expected OrchestrationClientInputData but got ${typeof clientData}`);
-        }
-
-        if (!webhookClient) {
-            throw new TypeError(`webhookClient: Expected WebhookClient but got ${typeof webhookClient}`);
         }
 
         this.taskHubName = this.clientData.taskHubName;
@@ -182,17 +178,21 @@ export class DurableOrchestrationClient {
             webhookUrl += `&${this.showHistoryOutputQueryKey}=${showHistoryOutput}`;
         }
 
-        const res = await this.webhookClient.get(new url.URL(webhookUrl));
-        switch (res.status) {
-            case 200: // instance completed
-            case 202: // instance in progress
-            case 400: // instance failed or terminated
-            case 404: // instance not found or pending
-            case 500: // instance failed with unhandled exception
-                return res.body as DurableOrchestrationStatus;
-            default:
-                throw new Error(Constants.BadWebhookStatusMessage
-                    .replace("{0}", res.status.toString()));
+        try {
+            const response = await axios.get(webhookUrl);
+            switch (response.status) {
+                case 200: // instance completed
+                case 202: // instance in progress
+                case 400: // instance failed or terminated
+                case 404: // instance not found or pending
+                case 500: // instance failed with unhandled exception
+                    return response.data as DurableOrchestrationStatus;
+                default:
+                    throw new Error(Constants.BadWebhookStatusMessage
+                        .replace("{0}", response.data.toString()));
+            }
+        } catch (error) {
+            throw error.message;
         }
     }
 
@@ -205,8 +205,12 @@ export class DurableOrchestrationClient {
         const requestUrl = this.clientData.managementUrls.statusQueryGetUri
             .replace(idPlaceholder, "");
 
-        const res = await this.webhookClient.get(new url.URL(requestUrl));
-        return res.body as DurableOrchestrationStatus[];
+        try {
+            const response = await axios.get(requestUrl);
+            return response.data as DurableOrchestrationStatus[];
+        } catch (error) {
+            throw error.message;
+        }
     }
 
     /**
@@ -246,11 +250,16 @@ export class DurableOrchestrationClient {
             requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
         }
 
-        const res = await this.webhookClient.get(new url.URL(requestUrl));
-        if (res.status > 202) {
-            throw new Error(`Webhook returned status code ${res.status}: ${res.body}`);
-        }   // TODO: Make this better.. message and conditional
-        return res.body as DurableOrchestrationStatus[];
+        try {
+            const response = await axios.get(requestUrl);
+            if (response.status > 202) {
+                throw new Error(`Webhook returned status code ${response.status}: ${response.data}`);
+            } else {
+                return response.data as DurableOrchestrationStatus[];
+            }
+        } catch (error) {
+            throw new Error(error.message);
+        }
     }
 
     /**
@@ -298,19 +307,23 @@ export class DurableOrchestrationClient {
             requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + connectionName);
         }
 
-        const res = await this.webhookClient.post(new url.URL(requestUrl), eventData);
-        switch (res.status) {
-            case 202: // event acccepted
-            case 410: // instance completed or failed
-                return;
-            case 404:
-                throw new Error(Constants.InstanceNotFoundMessage
-                    .replace("{0}", instanceId));
-            case 400:
-                throw new Error(Constants.InvalidRequestContentFormatMessage);
-            default:
-                throw new Error(Constants.BadWebhookStatusMessage
-                    .replace("{0}", res.status.toString()));
+        try {
+            const response = await axios.post(requestUrl, JSON.stringify(eventData));
+            switch (response.status) {
+                case 202: // event accepted
+                case 410: // instance completed or failed
+                    return;
+                case 404:
+                    throw new Error(Constants.InstanceNotFoundMessage
+                        .replace("{0}", instanceId));
+                case 400:
+                    throw new Error(Constants.InvalidRequestContentFormatMessage);
+                default:
+                    throw new Error(Constants.BadWebhookStatusMessage
+                        .replace("{0}", response.status.toString()));
+            }
+        } catch (error) {
+            throw new Error(error.message);
         }
     }
 
@@ -328,18 +341,22 @@ export class DurableOrchestrationClient {
             .replace(idPlaceholder, instanceId)
             .replace(this.reasonPlaceholder, reason);
 
-        const res = await this.webhookClient.post(new url.URL(requestUrl));
-        switch (res.status) {
-            case 202:
-                return;
-            case 404:
-                throw new Error(Constants.InstanceNotFoundMessage
-                    .replace("{0}", instanceId));
-            case 410:
-                throw new Error(Constants.RewindNonFailedInstanceMessage);
-            default:
-                throw new Error(Constants.BadWebhookStatusMessage
-                    .replace("{0}", res.status.toString()));
+        try {
+            const response = await axios.post(requestUrl);
+            switch (response.status) {
+                case 202:
+                    return;
+                case 404:
+                    throw new Error(Constants.InstanceNotFoundMessage
+                        .replace("{0}", instanceId));
+                case 410:
+                    throw new Error(Constants.RewindNonFailedInstanceMessage);
+                default:
+                    throw new Error(Constants.BadWebhookStatusMessage
+                        .replace("{0}", response.status.toString()));
+            }
+        } catch (error) {
+            throw new Error(error.message);
         }
     }
 
@@ -368,11 +385,15 @@ export class DurableOrchestrationClient {
             .replace(this.functionNamePlaceholder, orchestratorFunctionName)
             .replace(this.instanceIdPlaceholder, (instanceId ? `/${instanceId}` : ""));
 
-        const res = await this.webhookClient.post(new url.URL(requestUrl), input);
-        if (res.status > 202) {
-            throw new Error(res.body as string);
-        } else if (res.body) {
-            return (res.body as HttpManagementPayload).id;
+        try {
+            const response = await axios.post(requestUrl, JSON.stringify(input));
+            if (response.status > 202) {
+                throw new Error(response.data as string);
+            } else if (response.data) {
+                return (response.data as HttpManagementPayload).id;
+            }
+        } catch (message) {
+            throw new Error(message.error);
         }
     }
 
@@ -392,17 +413,21 @@ export class DurableOrchestrationClient {
             .replace(idPlaceholder, instanceId)
             .replace(this.reasonPlaceholder, reason);
 
-        const res = await this.webhookClient.post(new url.URL(requestUrl));
-        switch (res.status) {
-            case 202: // terminate accepted
-            case 410: // instance completed or failed
-                return;
-            case 404:
-                throw new Error(Constants.InstanceNotFoundMessage
-                    .replace("{0}", instanceId));
-            default:
-                throw new Error(Constants.BadWebhookStatusMessage
-                    .replace("{0}", res.status.toString()));
+        try {
+            const response = await axios.post(requestUrl);
+            switch (response.status) {
+                case 202: // terminate accepted
+                case 410: // instance completed or failed
+                    return;
+                case 404:
+                    throw new Error(Constants.InstanceNotFoundMessage
+                        .replace("{0}", instanceId));
+                default:
+                    throw new Error(Constants.BadWebhookStatusMessage
+                        .replace("{0}", response.status.toString()));
+            }
+        } catch (error) {
+            throw new Error(error.message);
         }
     }
 

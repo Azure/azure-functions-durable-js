@@ -2,11 +2,9 @@ import chai = require("chai");
 import chaiAsPromised = require("chai-as-promised");
 import "mocha";
 import "process";
-import sinon = require("sinon");
-import url = require("url");
 import uuidv1 = require("uuid/v1");
 import { getClient } from "../../src";
-import { Constants, DurableOrchestrationClient, OrchestrationClientInputData, WebhookClient } from "../../src/classes";
+import { Constants, DurableOrchestrationClient } from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 
@@ -16,7 +14,6 @@ chai.use(chaiAsPromised);
 describe("getClient()", () => {
     const defaultTaskHub = "TestTaskHub";
     const defaultConnection = "Storage";
-    const defaultInstanceId = uuidv1();
 
     const defaultClientInputData = TestUtils.createOrchestrationClientInputData(
         TestConstants.idPlaceholder,
