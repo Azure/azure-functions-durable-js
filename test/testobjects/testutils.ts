@@ -1,5 +1,5 @@
 import { HttpCreationPayload, HttpManagementPayload, OrchestrationClientInputData } from "../../src/classes";
-import { TestConstants } from "../testobjects/testconstants";
+import { TestConstants } from "./testconstants";
 
 export class TestUtils {
     public static createOrchestrationClientInputData(
