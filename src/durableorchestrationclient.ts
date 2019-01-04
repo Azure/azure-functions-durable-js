@@ -496,7 +496,6 @@ export class DurableOrchestrationClient {
             body: bodyAsJson,
             headers: {
                 "Content-Type": "application/json",
-                "Content-Length": bodyAsJson !== undefined ? bodyAsJson.length : 0,
             },
         };
     }
