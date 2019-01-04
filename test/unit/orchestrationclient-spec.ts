@@ -612,7 +612,6 @@ describe("Orchestration Client", () => {
                 body: JSON.stringify(expectedOutput),
                 headers: {
                     "Content-Type": "application/json",
-                    "Content-Length": 2,
                 },
             };
 
@@ -646,7 +645,6 @@ describe("Orchestration Client", () => {
                 body: expectedStatusAsJson,
                 headers: {
                     "Content-Type": "application/json",
-                    "Content-Length": expectedStatusAsJson.length,
                 },
             };
 
@@ -680,7 +678,6 @@ describe("Orchestration Client", () => {
                 body: expectedStatusAsJson,
                 headers: {
                     "Content-Type": "application/json",
-                    "Content-Length": expectedStatusAsJson.length,
                 },
             };
 
@@ -714,7 +711,6 @@ describe("Orchestration Client", () => {
                 body: expectedStatusAsJson,
                 headers: {
                     "Content-Type": "application/json",
-                    "Content-Length": expectedStatusAsJson.length,
                 },
             };
 
@@ -765,7 +761,6 @@ describe("Orchestration Client", () => {
                 .get(/.*/)
                 .reply(200, completedStatus, {
                     "Content-Type": "application/json",
-                    "Content-Length": "2",
                 });
 
             const expectedResponse = {
@@ -773,7 +768,6 @@ describe("Orchestration Client", () => {
                 body: JSON.stringify(expectedOutput),
                 headers:                 {
                     "Content-Type": "application/json",
-                    "Content-Length": 2,
                 },
             };
 
