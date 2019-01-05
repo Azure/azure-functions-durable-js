@@ -44,4 +44,12 @@ export class Utils {
                 .replace("{1}", typeof value));
         }
     }
+
+    public static throwIfNotNumber(value: unknown, name: string): void {
+        if (typeof value !== "number") {
+            throw new TypeError(Constants.NotNumberMessage
+                .replace("{0}", name)
+                .replace("{1}", typeof value));
+        }
+    }
 }

@@ -1,4 +1,5 @@
 import { Constants } from "./classes";
+import { Utils } from "./utils";
 
 /**
  * Defines retry policies that can be passed as parameters to various
@@ -26,6 +27,9 @@ export class RetryOptions {
         /** Gets or sets the max number of attempts. */
         public readonly maxNumberOfAttempts: number,
     ) {
+        Utils.throwIfNotNumber(firstRetryIntervalInMilliseconds, "firstRetryIntervalInMilliseconds");
+        Utils.throwIfNotNumber(maxNumberOfAttempts, "maxNumberOfAttempts");
+
         if (firstRetryIntervalInMilliseconds <= 0) {
             throw new RangeError(Constants.InvalidFirstRetryIntervalValueMessage);
         }
