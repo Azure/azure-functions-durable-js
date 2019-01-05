@@ -1,4 +1,4 @@
-const df = require("../../lib/src");
+const df = require("durable-functions");
 
 const timeout = "timeout";
 const retryInterval = "retryInterval";
