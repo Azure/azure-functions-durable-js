@@ -38,6 +38,8 @@ Run this command from the root folder of your Azure Functions app:
 func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.7.0
 ```
 
+**durable-functions requires Microsoft.Azure.WebJobs.Extensions.DurableTask 1.7.0 or greater.**
+
 4. Install the `durable-functions` npm package at the root of your function app:
 
 ```bash
