@@ -24,7 +24,7 @@ export class Orchestrator {
             context.bindings, new DurableOrchestrationBindingInfo())[0];
 
         if (!orchestrationBinding) {
-            throw new Error(Constants.OrchestrationContextNoBindingFoundMessage);
+            throw new Error("Could not finding an orchestrationClient binding on context.");
         }
 
         const state: HistoryEvent[] = orchestrationBinding.history;

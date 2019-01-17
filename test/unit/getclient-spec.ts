@@ -30,7 +30,7 @@ describe("getClient()", () => {
     it("throws if context.bindings is undefined", async () => {
         expect(() => {
             getClient({});
-        }).to.throw(Constants.OrchestrationClientNoBindingFoundMessage);
+        }).to.throw("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
     });
 
     it("throws if context.bindings does not contain valid orchestrationClient input binding", async () => {
@@ -41,7 +41,7 @@ describe("getClient()", () => {
                 },
             };
             getClient(badContext);
-        }).to.throw(Constants.OrchestrationClientNoBindingFoundMessage);
+        }).to.throw("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
     });
 
     it("returns DurableOrchestrationClient if called with valid context", async () => {

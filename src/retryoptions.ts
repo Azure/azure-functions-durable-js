@@ -31,7 +31,7 @@ export class RetryOptions {
         Utils.throwIfNotNumber(maxNumberOfAttempts, "maxNumberOfAttempts");
 
         if (firstRetryIntervalInMilliseconds <= 0) {
-            throw new RangeError(Constants.InvalidFirstRetryIntervalValueMessage);
+            throw new RangeError("firstRetryIntervalInMilliseconds value must be greater than 0.");
         }
     }
 }

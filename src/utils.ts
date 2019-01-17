@@ -29,27 +29,19 @@ export class Utils {
 
     public static throwIfNotInstanceOf<T>(value: unknown, name: string, refInstance: T, type: string): void {
         if (!this.hasAllPropertiesOf<T>(value, refInstance)) {
-            throw new TypeError(Constants.NotInstanceOfTypeMessage
-                .replace("{0}", name)
-                .replace("{1}", type)
-                .replace("{2}", typeof value),
-            );
+            throw new TypeError(`${name}: Expected object of type ${type} but got ${typeof value}; are you missing properties?`);
         }
     }
 
-    public static throwIfNotNonEmptyString(value: unknown, name: string): void {
+    public static throwIfEmpty(value: unknown, name: string): void {
         if (typeof value !== "string" || !(value.trim())) {
-            throw new TypeError(Constants.NotStringMessage
-                .replace("{0}", name)
-                .replace("{1}", typeof value));
+            throw new TypeError(`${name}: Expected non-empty, non-whitespace string but got ${typeof value}`);
         }
     }
 
     public static throwIfNotNumber(value: unknown, name: string): void {
         if (typeof value !== "number") {
-            throw new TypeError(Constants.NotNumberMessage
-                .replace("{0}", name)
-                .replace("{1}", typeof value));
+            throw new TypeError(`${name}: Expected number but got ${typeof value}`);
         }
     }
 }

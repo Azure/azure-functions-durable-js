@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import "mocha";
-import { Constants, Utils } from "../../src/classes";
+import { Utils } from "../../src/classes";
 
 describe("Utils", () => {
     describe("getInstancesOf()", () => {
@@ -93,10 +93,7 @@ describe("Utils", () => {
                 expect(() => {
                     Utils.throwIfNotInstanceOf<TestType>(notObject, defaultName, new TestType(), "TestType");
                 }).to.throw(
-                    Constants.NotInstanceOfTypeMessage
-                        .replace("{0}", defaultName)
-                        .replace("{1}", "TestType")
-                        .replace("{2}", typeof notObject),
+                    `${defaultName}: Expected object of type TestType but got ${typeof notObject}; are you missing properties?`,
                 );
             });
         });
@@ -105,10 +102,7 @@ describe("Utils", () => {
             expect(() => {
                 Utils.throwIfNotInstanceOf<TestType>(null, defaultName, new TestType(), "TestType");
             }).to.throw(
-                Constants.NotInstanceOfTypeMessage
-                    .replace("{0}", defaultName)
-                    .replace("{1}", "TestType")
-                    .replace("{2}", typeof null),
+                `${defaultName}: Expected object of type TestType but got ${typeof null}; are you missing properties?`,
             );
         });
 
@@ -119,45 +113,39 @@ describe("Utils", () => {
         });
     });
 
-    describe("throwIfNotNonEmptyString", () => {
+    describe("throwIfEmpty", () => {
         const notStrings = [ undefined, true, 3, Symbol(), () => 3, { key: "value" } ];
         const defaultName = "name";
 
         notStrings.forEach((notString) => {
             it(`throws when called with ${typeof notString}`, async () => {
                 expect(() => {
-                    Utils.throwIfNotNonEmptyString(notString, defaultName);
+                    Utils.throwIfEmpty(notString, defaultName);
                 }).to.throw(
-                    Constants.NotStringMessage
-                        .replace("{0}", defaultName)
-                        .replace("{1}", typeof notString),
+                    `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof notString}`,
                 );
             });
         });
 
         it("throws when called with null", async () => {
             expect(() => {
-                Utils.throwIfNotNonEmptyString(null, defaultName);
+                Utils.throwIfEmpty(null, defaultName);
             }).to.throw(
-                Constants.NotStringMessage
-                    .replace("{0}", defaultName)
-                    .replace("{1}", typeof null),
+                `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof null}`,
             );
         });
 
         it("throws when called with whitespace", async () => {
             expect(() => {
-                Utils.throwIfNotNonEmptyString("  ", defaultName);
+                Utils.throwIfEmpty("  ", defaultName);
             }).to.throw(
-                Constants.NotStringMessage
-                    .replace("{0}", defaultName)
-                    .replace("{1}", typeof "  "),
+                `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof "  "}`,
             );
         });
 
         it("does not throw when called with non-empty string", async () => {
             expect(() => {
-                Utils.throwIfNotNonEmptyString("hedgehog", defaultName);
+                Utils.throwIfEmpty("hedgehog", defaultName);
             }).to.not.throw();
         });
     });

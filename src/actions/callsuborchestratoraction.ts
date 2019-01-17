@@ -9,10 +9,10 @@ export class CallSubOrchestratorAction implements IAction {
         public readonly instanceId?: string,
         public readonly input?: unknown,
     ) {
-        Utils.throwIfNotNonEmptyString(functionName, "functionName");
+        Utils.throwIfEmpty(functionName, "functionName");
 
         if (instanceId) {
-            Utils.throwIfNotNonEmptyString(instanceId, "instanceId");
+            Utils.throwIfEmpty(instanceId, "instanceId");
         }
     }
 }
