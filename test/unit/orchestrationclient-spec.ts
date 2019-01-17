@@ -201,15 +201,15 @@ describe("Orchestration Client", () => {
 
             const expectedStatuses: DurableOrchestrationStatus[] = [
                 new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                null,
-                null,
-                null,
-                null,
-                OrchestrationRuntimeStatus.Pending,
-                null,
-                null),
+                    defaultOrchestrationName,
+                    defaultInstanceId,
+                    null,
+                    null,
+                    null,
+                    null,
+                    OrchestrationRuntimeStatus.Pending,
+                    null,
+                    null),
             ];
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
@@ -434,7 +434,7 @@ describe("Orchestration Client", () => {
                     })
                     .reply(statusCode);
 
-                await expect(client.rewind(testId, testReason)).to.be.rejectedWith(Error);
+                await expect(client.rewind(testId, testReason)).to.be.rejected;
                 expect(scope.isDone()).to.be.equal(true);
             });
         });
@@ -550,7 +550,7 @@ describe("Orchestration Client", () => {
                     })
                     .reply(404);
 
-                await expect(client.terminate(id, testReason)).to.be.rejectedWith(Error);
+                await expect(client.terminate(id, testReason)).to.be.rejected;
                 expect(scope.isDone()).to.be.equal(true);
             });
         });
@@ -583,9 +583,7 @@ describe("Orchestration Client", () => {
                 defaultTimeout,
                 badInterval))
                 .to.be.rejectedWith(
-                    Constants.TimeoutLessThanRetryTimeoutMessage
-                        .replace("{0}", defaultTimeout.toString())
-                        .replace("{1}", badInterval.toString()));
+                    `Total timeout ${defaultTimeout} (ms) should be bigger than retry timeout ${badInterval} (ms)`);
         });
 
         it("returns expected result for completed instance", async () => {

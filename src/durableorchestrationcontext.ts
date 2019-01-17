@@ -63,7 +63,7 @@ export class DurableOrchestrationContext {
      * function completes or fails.
      */
     public callActivity(name: string, input?: unknown): Task {
-        throw new Error(Constants.PlaceholderMessage);
+        throw new Error("This is a placeholder.");
     }
 
     /**
@@ -76,7 +76,7 @@ export class DurableOrchestrationContext {
      * function.
      */
     public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
-        throw new Error(Constants.PlaceholderMessage);
+        throw new Error("This is a placeholder.");
     }
 
     /**
@@ -90,7 +90,7 @@ export class DurableOrchestrationContext {
      * the format `<calling orchestrator instance ID>:<#>`
      */
     public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
-        throw new Error(Constants.PlaceholderMessage);
+        throw new Error("This is a placeholder.");
     }
 
     /**
@@ -109,7 +109,7 @@ export class DurableOrchestrationContext {
         input?: unknown,
         instanceId?: string)
         : Task {
-            throw new Error(Constants.PlaceholderMessage);
+            throw new Error("This is a placeholder.");
         }
 
     /**
@@ -118,7 +118,7 @@ export class DurableOrchestrationContext {
      * @param The JSON-serializable data to re-initialize the instance with.
      */
     public continueAsNew(input: unknown): Task {
-        throw new Error(Constants.PlaceholderMessage);
+        throw new Error("This is a placeholder.");
     }
 
     /**
@@ -136,7 +136,7 @@ export class DurableOrchestrationContext {
      * @returns A TimerTask that completes when the durable timer expires.
      */
     public createTimer(fireAt: Date): TimerTask {
-        throw new Error(Constants.PlaceholderMessage);
+        throw new Error("This is a placeholder.");
     }
 
     /**
@@ -144,7 +144,7 @@ export class DurableOrchestrationContext {
      * value.
      */
     public getInput(): unknown {
-        throw new Error(Constants.PlaceholderMessage);
+        throw new Error("This is a placeholder.");
     }
 
     /**
@@ -161,7 +161,7 @@ export class DurableOrchestrationContext {
      * orchestrator function's custom status.
      */
     public setCustomStatus(customStatusObject: unknown): void {
-        throw new Error(Constants.PlaceholderMessage);
+        throw new Error("This is a placeholder.");
     }
 
     /**
@@ -172,6 +172,6 @@ export class DurableOrchestrationContext {
      * using [[raiseEvent]].
      */
     public waitForExternalEvent(name: string): Task {
-        throw new Error(Constants.PlaceholderMessage);
+        throw new Error("This is a placeholder.");
     }
 }

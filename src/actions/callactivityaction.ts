@@ -8,6 +8,6 @@ export class CallActivityAction implements IAction {
         public readonly functionName: string,
         public readonly input?: unknown,
     ) {
-        Utils.throwIfNotNonEmptyString(functionName, "functionName");
+        Utils.throwIfEmpty(functionName, "functionName");
     }
 }

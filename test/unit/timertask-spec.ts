@@ -7,7 +7,7 @@ describe("TimerTask", () => {
         const task = new TimerTask(true, undefined, undefined, undefined, undefined);
         expect(() => {
             task.cancel();
-        }).to.throw(Constants.CancelCompletedTaskMessage);
+        }).to.throw("Cannot cancel a completed task.");
     });
 
     it ("cancels an incomplete task", async () => {

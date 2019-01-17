@@ -2,6 +2,7 @@
   "extends": "tslint:latest",
   "exclude": "./node_modules",
   "rules": {
+    "max-line-length": false,
     "no-implicit-dependencies": [true, "dev"],
     "no-submodule-imports": false,
     "object-literal-sort-keys": false

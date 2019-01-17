@@ -7,7 +7,7 @@ import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagem
     IHttpRequest, IHttpResponse, IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils,
 } from "./classes";
 
-axios.defaults.validateStatus = (status) => status < 600;
+axios.defaults.validateStatus = (status) => status < 600;   // don't throw errors for non-2XX HTTP responses
 
 /**
  * Returns an OrchestrationClient instance.
@@ -41,7 +41,7 @@ function getClientData(context: IFunctionContext): OrchestrationClientInputData 
         new OrchestrationClientInputData(undefined, undefined, undefined));
 
     if (!matchingInstances || matchingInstances.length === 0) {
-        throw new Error(Constants.OrchestrationClientNoBindingFoundMessage);
+        throw new Error("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
     }
 
     return matchingInstances[0];
@@ -188,10 +188,9 @@ export class DurableOrchestrationClient {
                 case 500: // instance failed with unhandled exception
                     return response.data as DurableOrchestrationStatus;
                 default:
-                    throw new Error(Constants.BadWebhookStatusMessage
-                        .replace("{0}", response.data.toString()));
+                    throw new Error(`Webhook returned unrecognized status code ${response.status}`);
             }
-        } catch (error) {
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;
         }
     }
@@ -208,7 +207,7 @@ export class DurableOrchestrationClient {
         try {
             const response = await axios.get(requestUrl);
             return response.data as DurableOrchestrationStatus[];
-        } catch (error) {
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;
         }
     }
@@ -257,17 +256,17 @@ export class DurableOrchestrationClient {
             } else {
                 return response.data as DurableOrchestrationStatus[];
             }
-        } catch (error) {
-            throw new Error(error.message);
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
+            throw error.message;
         }
     }
 
     /**
      * Sends an event notification message to a waiting orchestration instance.
-     * @param instanceId The ID of the orchestration instance that will handl
+     * @param instanceId The ID of the orchestration instance that will handle
      *  the event.
      * @param eventName The name of the event.
-     * @param eventData The JSON-serializeable data associated with the event.
+     * @param eventData The JSON-serializable data associated with the event.
      * @param taskHubName The TaskHubName of the orchestration that will handle
      *  the event.
      * @param connectionName The name of the connection string associated with
@@ -290,8 +289,7 @@ export class DurableOrchestrationClient {
         connectionName?: string,
         ): Promise<void> {
         if (!eventName) {
-            throw new Error(Constants.InvalidStringMessage
-                .replace("{0}", "eventName"));
+            throw new Error("eventName must be a valid string.");
         }
 
         const idPlaceholder = this.clientData.managementUrls.id;
@@ -314,16 +312,14 @@ export class DurableOrchestrationClient {
                 case 410: // instance completed or failed
                     return;
                 case 404:
-                    throw new Error(Constants.InstanceNotFoundMessage
-                        .replace("{0}", instanceId));
+                    throw new Error(`No instance with ID '${instanceId}' found.`);
                 case 400:
-                    throw new Error(Constants.InvalidRequestContentFormatMessage);
+                    throw new Error("Only application/json request content is supported");
                 default:
-                    throw new Error(Constants.BadWebhookStatusMessage
-                        .replace("{0}", response.status.toString()));
+                    throw new Error(`Webhook returned unrecognized status code ${response.status}`);
             }
-        } catch (error) {
-            throw new Error(error.message);
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
+            throw error.message;
         }
     }
 
@@ -347,16 +343,14 @@ export class DurableOrchestrationClient {
                 case 202:
                     return;
                 case 404:
-                    throw new Error(Constants.InstanceNotFoundMessage
-                        .replace("{0}", instanceId));
+                    throw new Error(`No instance with ID '${instanceId}' found.`);
                 case 410:
-                    throw new Error(Constants.RewindNonFailedInstanceMessage);
+                    throw new Error("The rewind operation is only supported on failed orchestration instances.");
                 default:
-                    throw new Error(Constants.BadWebhookStatusMessage
-                        .replace("{0}", response.status.toString()));
+                    throw new Error(`Webhook returned unrecognized status code ${response.status}`);
             }
-        } catch (error) {
-            throw new Error(error.message);
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
+            throw error.message;
         }
     }
 
@@ -370,14 +364,13 @@ export class DurableOrchestrationClient {
      * @param instanceId The ID to use for the new orchestration instance. If
      *  no instanceId is specified, the Durable Functions extension will
      *  generate a random GUID (recommended).
-     * @param input JSON-serializeable input value for the orchestrator
+     * @param input JSON-serializable input value for the orchestrator
      *  function.
      * @returns The ID of the new orchestration instance.
      */
     public async startNew(orchestratorFunctionName: string, instanceId?: string, input?: unknown): Promise<string> {
         if (!orchestratorFunctionName) {
-            throw new Error(Constants.InvalidStringMessage
-                .replace("{0}", "orchestratorFunctionName"));
+            throw new Error("orchestratorFunctionName must be a valid string.");
         }
 
         let requestUrl = this.clientData.creationUrls.createNewInstancePostUri;
@@ -420,14 +413,12 @@ export class DurableOrchestrationClient {
                 case 410: // instance completed or failed
                     return;
                 case 404:
-                    throw new Error(Constants.InstanceNotFoundMessage
-                        .replace("{0}", instanceId));
+                    throw new Error(`No instance with ID '${instanceId}' found.`);
                 default:
-                    throw new Error(Constants.BadWebhookStatusMessage
-                        .replace("{0}", response.status.toString()));
+                    throw new Error(`Webhook returned unrecognized status code ${response.status}`);
             }
-        } catch (error) {
-            throw new Error(error.message);
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
+            throw error.message;
         }
     }
 
@@ -454,9 +445,7 @@ export class DurableOrchestrationClient {
         retryIntervalInMilliseconds: number = 1000,
         ): Promise<IHttpResponse> {
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
-            throw new Error(Constants.TimeoutLessThanRetryTimeoutMessage
-                .replace("{0}", timeoutInMilliseconds.toString())
-                .replace("{1}", retryIntervalInMilliseconds.toString()));
+            throw new Error(`Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`);
         }
 
         const hrStart = process.hrtime();

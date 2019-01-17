@@ -68,7 +68,7 @@ export class TimerTask extends Task {
         if (!this.isCompleted) {
             this.action.isCanceled = true;
         } else {
-            throw new Error(Constants.CancelCompletedTaskMessage);
+            throw new Error("Cannot cancel a completed task.");
         }
     }
 }

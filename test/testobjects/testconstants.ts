@@ -3,7 +3,7 @@ export class TestConstants {
     public static readonly taskHubPlaceholder: string = "TASK-HUB";
     public static readonly hostPlaceholder: string = "HOST-PLACEHOLDER";
 
-    public static readonly testCode: string = "code=6PDWS6KrNPAOv/hw7cTDgiabhQwKTQQEnEZptmIUawunGPpOFvzDRQ==";
+    public static readonly testCode: string = "code=base64string";
 
     public static readonly eventNamePlaceholder = "{eventName}";
     public static readonly functionPlaceholder: string = "{functionName}";

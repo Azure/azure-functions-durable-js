@@ -378,10 +378,7 @@ describe("Orchestrator", () => {
                 }),
             );
             expect(mockContext.doneValue.error).to
-                .include(Constants.NotInstanceOfTypeMessage
-                    .replace("{0}", "retryOptions")
-                    .replace("{1}", "RetryOptions")
-                    .replace("{2}", typeof undefined));
+                .include("retryOptions: Expected object of type RetryOptions but got undefined; are you missing properties?");
         });
 
         it("schedules an activity function", async () => {
@@ -686,10 +683,7 @@ describe("Orchestrator", () => {
                 actions: [],
             });
             expect(mockContext.doneValue.error).to
-                .include(Constants.NotInstanceOfTypeMessage
-                    .replace("{0}", "retryOptions")
-                    .replace("{1}", "RetryOptions")
-                    .replace("{2}", typeof undefined));
+                .include("retryOptions: Expected object of type RetryOptions but got undefined; are you missing properties?");
         });
 
         it("schedules a suborchestrator function", async () => {
