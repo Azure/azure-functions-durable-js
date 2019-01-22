@@ -28,7 +28,6 @@ describe("Orchestration Client", () => {
     const defaultTaskHub = "TestTaskHub";
     const defaultConnection = "Storage";
     const defaultInstanceId = uuidv1();
-    const defaultDate = new Date();
 
     const defaultClientInputData = TestUtils.createOrchestrationClientInputData(
         TestConstants.idPlaceholder,
@@ -36,6 +35,8 @@ describe("Orchestration Client", () => {
         defaultTaskHub,
         defaultConnection,
     );
+
+    const requiredPostHeaders = { reqheaders: { "Content-Type": "application/json" } };
 
     describe("Constructor", () => {
         it("throws if clientData is undefined", async () => {
@@ -312,7 +313,7 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.idPlaceholder, defaultInstanceId)
                 .replace(TestConstants.eventNamePlaceholder, defaultTestEvent));
 
-            const scope = nock(expectedWebhookUrl.origin)
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(defaultTestData))
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
@@ -332,7 +333,7 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.idPlaceholder, defaultInstanceId)
                 .replace(TestConstants.eventNamePlaceholder, defaultTestEvent)
                 .replace(defaultTaskHub, testTaskHub));
-            const scope = nock(expectedWebhookUrl.origin)
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(defaultTestData))
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
@@ -352,7 +353,7 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.idPlaceholder, defaultInstanceId)
                 .replace(TestConstants.eventNamePlaceholder, defaultTestEvent)
                 .replace(defaultConnection, testConnection));
-            const scope = nock(expectedWebhookUrl.origin)
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(defaultTestData))
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
@@ -376,7 +377,7 @@ describe("Orchestration Client", () => {
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.sendEventPostUri
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.eventNamePlaceholder, defaultTestEvent));
-            const scope = nock(expectedWebhookUrl.origin)
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(defaultTestData))
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
@@ -405,7 +406,7 @@ describe("Orchestration Client", () => {
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.rewindPostUri
                 .replace(TestConstants.idPlaceholder, defaultInstanceId)
                 .replace(TestConstants.reasonPlaceholder, testReason));
-            const scope = nock(expectedWebhookUrl.origin)
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
@@ -417,26 +418,64 @@ describe("Orchestration Client", () => {
             expect(result).to.be.equal(undefined);
         });
 
-        const invalidCodes = [ 404, 410, 500 ];
-        invalidCodes.forEach((statusCode) => {
-            it(`throws when webhook returns invalid status code ${statusCode}`, async () => {
-                const client = new DurableOrchestrationClient(defaultClientInputData);
+        it(`throws when webhook returns invalid status code 404`, async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
 
-                const testId = "badId";
-                const testReason = "test";
-                const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.rewindPostUri
-                    .replace(TestConstants.idPlaceholder, testId)
-                    .replace(TestConstants.reasonPlaceholder, testReason));
-                const scope = nock(expectedWebhookUrl.origin)
-                    .post(expectedWebhookUrl.pathname)
-                    .query(() => {
-                        return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                    })
-                    .reply(statusCode);
+            const testId = "badId";
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.rewindPostUri
+                .replace(TestConstants.idPlaceholder, testId)
+                .replace(TestConstants.reasonPlaceholder, testReason));
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(404);
 
-                await expect(client.rewind(testId, testReason)).to.be.rejected;
-                expect(scope.isDone()).to.be.equal(true);
-            });
+            await expect(client.rewind(testId, testReason)).to.be
+                .rejectedWith(`No instance with ID '${testId}' found.`);
+            expect(scope.isDone()).to.be.equal(true);
+        });
+
+        it(`throws when webhook returns invalid status code 410`, async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const testId = "badId";
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.rewindPostUri
+                .replace(TestConstants.idPlaceholder, testId)
+                .replace(TestConstants.reasonPlaceholder, testReason));
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(410);
+
+            await expect(client.rewind(testId, testReason)).to.be
+                .rejectedWith("The rewind operation is only supported on failed orchestration instances.");
+            expect(scope.isDone()).to.be.equal(true);
+        });
+
+        it(`throws when webhook returns invalid status code 500`, async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const testId = "badId";
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.rewindPostUri
+                .replace(TestConstants.idPlaceholder, testId)
+                .replace(TestConstants.reasonPlaceholder, testReason));
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(500);
+
+            await expect(client.rewind(testId, testReason)).to.be
+                .rejectedWith(`Webhook returned unrecognized status code 500`);
+            expect(scope.isDone()).to.be.equal(true);
         });
     });
 
@@ -454,7 +493,7 @@ describe("Orchestration Client", () => {
 
             const functionName = defaultOrchestrationName;
             const expectedWebhookUrl = createInstanceWebhookUrl(Constants.DefaultLocalOrigin, functionName);
-            const scope = nock(expectedWebhookUrl.origin)
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
@@ -476,7 +515,7 @@ describe("Orchestration Client", () => {
                 Constants.DefaultLocalOrigin,
                 functionName,
                 defaultInstanceId);
-            const scope = nock(expectedWebhookUrl.origin)
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(testData))
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
@@ -492,15 +531,16 @@ describe("Orchestration Client", () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
             const functionName = "BadOrchestration";
+            const functionBody = "Something went wrong!";
             const expectedWebhookUrl = createInstanceWebhookUrl(Constants.DefaultLocalOrigin, functionName);
-            const scope = nock(expectedWebhookUrl.origin)
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
                 })
-                .reply(500);
+                .reply(500, functionBody);
 
-            await expect(client.startNew(functionName)).to.be.rejectedWith(Error);
+            await expect(client.startNew(functionName)).to.be.rejectedWith(functionBody);
             expect(scope.isDone()).to.be.equal(true);
         });
     });
@@ -521,7 +561,7 @@ describe("Orchestration Client", () => {
             const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.terminatePostUri
                 .replace(TestConstants.idPlaceholder, defaultInstanceId)
                 .replace(TestConstants.reasonPlaceholder, testReason));
-            const scope = nock(expectedWebhookUrl.origin)
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
@@ -533,26 +573,44 @@ describe("Orchestration Client", () => {
             expect(result).to.be.equal(undefined);
         });
 
-        const invalidCodes = [ 404, 500 ];
-        invalidCodes.forEach((statusCode) => {
-            it(`throws when webhook returns invalid status code ${statusCode}`, async () => {
-                const client = new DurableOrchestrationClient(defaultClientInputData);
+        it(`throws when webhook returns invalid status code 404`, async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
 
-                const id = "badId";
-                const testReason = "test";
-                const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.terminatePostUri
-                    .replace(TestConstants.idPlaceholder, id)
-                    .replace(TestConstants.reasonPlaceholder, testReason));
-                const scope = nock(expectedWebhookUrl.origin)
-                    .post(expectedWebhookUrl.pathname)
-                    .query(() => {
-                        return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                    })
-                    .reply(404);
+            const id = "badId";
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.terminatePostUri
+                .replace(TestConstants.idPlaceholder, id)
+                .replace(TestConstants.reasonPlaceholder, testReason));
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(404);
 
-                await expect(client.terminate(id, testReason)).to.be.rejected;
-                expect(scope.isDone()).to.be.equal(true);
-            });
+            await expect(client.terminate(id, testReason)).to.be
+                .rejectedWith(`No instance with ID '${id}' found.`);
+            expect(scope.isDone()).to.be.equal(true);
+        });
+
+        it(`throws when webhook returns invalid status code 500`, async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const id = "badId";
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.terminatePostUri
+                .replace(TestConstants.idPlaceholder, id)
+                .replace(TestConstants.reasonPlaceholder, testReason));
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(500);
+
+            await expect(client.terminate(id, testReason)).to.be
+                .rejectedWith(`Webhook returned unrecognized status code 500`);
+            expect(scope.isDone()).to.be.equal(true);
         });
     });
 
