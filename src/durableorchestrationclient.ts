@@ -8,6 +8,7 @@ import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagem
 } from "./classes";
 
 axios.defaults.validateStatus = (status) => status < 600;   // don't throw errors for non-2XX HTTP responses
+axios.defaults.headers.post["Content-Type"] = "application/json";   // post data as JSON
 
 /**
  * Returns an OrchestrationClient instance.
@@ -188,7 +189,7 @@ export class DurableOrchestrationClient {
                 case 500: // instance failed with unhandled exception
                     return response.data as DurableOrchestrationStatus;
                 default:
-                    throw new Error(`Webhook returned unrecognized status code ${response.status}`);
+                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
             }
         } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;
@@ -252,7 +253,7 @@ export class DurableOrchestrationClient {
         try {
             const response = await axios.get(requestUrl);
             if (response.status > 202) {
-                throw new Error(`Webhook returned status code ${response.status}: ${response.data}`);
+                return Promise.reject(new Error(`Webhook returned status code ${response.status}: ${response.data}`));
             } else {
                 return response.data as DurableOrchestrationStatus[];
             }
@@ -312,11 +313,11 @@ export class DurableOrchestrationClient {
                 case 410: // instance completed or failed
                     return;
                 case 404:
-                    throw new Error(`No instance with ID '${instanceId}' found.`);
+                    return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
                 case 400:
-                    throw new Error("Only application/json request content is supported");
+                    return Promise.reject(new Error("Only application/json request content is supported"));
                 default:
-                    throw new Error(`Webhook returned unrecognized status code ${response.status}`);
+                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
             }
         } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;
@@ -343,11 +344,11 @@ export class DurableOrchestrationClient {
                 case 202:
                     return;
                 case 404:
-                    throw new Error(`No instance with ID '${instanceId}' found.`);
+                    return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
                 case 410:
-                    throw new Error("The rewind operation is only supported on failed orchestration instances.");
+                    return Promise.reject(new Error("The rewind operation is only supported on failed orchestration instances."));
                 default:
-                    throw new Error(`Webhook returned unrecognized status code ${response.status}`);
+                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
             }
         } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;
@@ -381,7 +382,7 @@ export class DurableOrchestrationClient {
         try {
             const response = await axios.post(requestUrl, JSON.stringify(input));
             if (response.status > 202) {
-                throw new Error(response.data as string);
+                return Promise.reject(new Error(response.data as string));
             } else if (response.data) {
                 return (response.data as HttpManagementPayload).id;
             }
@@ -413,9 +414,9 @@ export class DurableOrchestrationClient {
                 case 410: // instance completed or failed
                     return;
                 case 404:
-                    throw new Error(`No instance with ID '${instanceId}' found.`);
+                    return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
                 default:
-                    throw new Error(`Webhook returned unrecognized status code ${response.status}`);
+                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
             }
         } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;
