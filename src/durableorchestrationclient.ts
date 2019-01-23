@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosInstance } from "axios";
 import cloneDeep = require("lodash/cloneDeep");
 import process = require("process");
 import url = require("url");
@@ -6,9 +6,6 @@ import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagementPayload, IFunctionContext,
     IHttpRequest, IHttpResponse, IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils,
 } from "./classes";
-
-axios.defaults.validateStatus = (status) => status < 600;   // don't throw errors for non-2XX HTTP responses
-axios.defaults.headers.post["Content-Type"] = "application/json";   // post data as JSON
 
 /**
  * Returns an OrchestrationClient instance.
@@ -90,6 +87,8 @@ export class DurableOrchestrationClient {
     /** @hidden */
     public readonly uniqueWebhookOrigins: string[];
 
+    private readonly axiosInstance: AxiosInstance;
+
     private readonly eventNamePlaceholder = "{eventName}";
     private readonly functionNamePlaceholder = "{functionName}";
     private readonly instanceIdPlaceholder = "[/{instanceId}]";
@@ -119,6 +118,14 @@ export class DurableOrchestrationClient {
             throw new TypeError(`clientData: Expected OrchestrationClientInputData but got ${typeof clientData}`);
         }
 
+        this.axiosInstance = axios.create({
+            validateStatus: (status: number) => status < 600,
+            headers: {
+                post: {
+                    "Content-Type": "application/json",
+                },
+            },
+        });
         this.taskHubName = this.clientData.taskHubName;
         this.uniqueWebhookOrigins = this.extractUniqueWebhookOrigins(this.clientData);
     }
@@ -180,7 +187,7 @@ export class DurableOrchestrationClient {
         }
 
         try {
-            const response = await axios.get(webhookUrl);
+            const response = await this.axiosInstance.get(webhookUrl);
             switch (response.status) {
                 case 200: // instance completed
                 case 202: // instance in progress
@@ -206,7 +213,7 @@ export class DurableOrchestrationClient {
             .replace(idPlaceholder, "");
 
         try {
-            const response = await axios.get(requestUrl);
+            const response = await this.axiosInstance.get(requestUrl);
             return response.data as DurableOrchestrationStatus[];
         } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;
@@ -251,7 +258,7 @@ export class DurableOrchestrationClient {
         }
 
         try {
-            const response = await axios.get(requestUrl);
+            const response = await this.axiosInstance.get(requestUrl);
             if (response.status > 202) {
                 return Promise.reject(new Error(`Webhook returned status code ${response.status}: ${response.data}`));
             } else {
@@ -307,7 +314,7 @@ export class DurableOrchestrationClient {
         }
 
         try {
-            const response = await axios.post(requestUrl, JSON.stringify(eventData));
+            const response = await this.axiosInstance.post(requestUrl, JSON.stringify(eventData));
             switch (response.status) {
                 case 202: // event accepted
                 case 410: // instance completed or failed
@@ -339,7 +346,7 @@ export class DurableOrchestrationClient {
             .replace(this.reasonPlaceholder, reason);
 
         try {
-            const response = await axios.post(requestUrl);
+            const response = await this.axiosInstance.post(requestUrl);
             switch (response.status) {
                 case 202:
                     return;
@@ -380,7 +387,7 @@ export class DurableOrchestrationClient {
             .replace(this.instanceIdPlaceholder, (instanceId ? `/${instanceId}` : ""));
 
         try {
-            const response = await axios.post(requestUrl, JSON.stringify(input));
+            const response = await this.axiosInstance.post(requestUrl, JSON.stringify(input));
             if (response.status > 202) {
                 return Promise.reject(new Error(response.data as string));
             } else if (response.data) {
@@ -408,7 +415,7 @@ export class DurableOrchestrationClient {
             .replace(this.reasonPlaceholder, reason);
 
         try {
-            const response = await axios.post(requestUrl);
+            const response = await this.axiosInstance.post(requestUrl);
             switch (response.status) {
                 case 202: // terminate accepted
                 case 410: // instance completed or failed
