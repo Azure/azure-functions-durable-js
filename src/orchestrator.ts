@@ -109,7 +109,7 @@ export class Orchestrator {
         } catch (error) {
             log(`Error: ${error}`);
             context.done(
-                null,
+                error,
                 new OrchestratorState({
                     isDone: false,
                     actions,
