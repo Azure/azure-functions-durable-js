@@ -102,7 +102,9 @@ export class Orchestrator {
                 decisionStartedEvent = state.find((e) =>
                     e.EventType === HistoryEventType.OrchestratorStarted &&
                     e.Timestamp > decisionStartedEvent.Timestamp);
-                context.df.currentUtcDateTime = decisionStartedEvent.Timestamp;
+                context.df.currentUtcDateTime = decisionStartedEvent ? decisionStartedEvent.Timestamp : undefined;
+
+                
 
                 g = gen.next(partialResult ? partialResult.result : undefined);
             }
