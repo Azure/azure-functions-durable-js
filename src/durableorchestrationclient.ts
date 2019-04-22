@@ -1,10 +1,11 @@
+import { HttpRequest } from "@azure/functions";
 import axios, { AxiosInstance } from "axios";
 import cloneDeep = require("lodash/cloneDeep");
 import process = require("process");
 import url = require("url");
 import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagementPayload, IFunctionContext,
-    IHttpRequest, IHttpResponse, IRequest, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils,
+    IHttpRequest, IHttpResponse, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils,
 } from "./classes";
 
 /**
@@ -139,7 +140,7 @@ export class DurableOrchestrationClient {
      * @returns An HTTP 202 response with a Location header and a payload
      *  containing instance management URLs.
      */
-    public createCheckStatusResponse(request: IHttpRequest | IRequest, instanceId: string): IHttpResponse {
+    public createCheckStatusResponse(request: IHttpRequest | HttpRequest, instanceId: string): IHttpResponse {
         const httpManagementPayload = this.getClientResponseLinks(request, instanceId);
 
         return {
@@ -447,7 +448,7 @@ export class DurableOrchestrationClient {
      *  from the durable function. The default value is 1 second.
      */
     public async waitForCompletionOrCreateCheckStatusResponse(
-        request: IRequest,
+        request: HttpRequest,
         instanceId: string,
         timeoutInMilliseconds: number = 10000,
         retryIntervalInMilliseconds: number = 1000,
@@ -497,12 +498,12 @@ export class DurableOrchestrationClient {
         };
     }
 
-    private getClientResponseLinks(request: IHttpRequest | IRequest, instanceId: string): HttpManagementPayload {
+    private getClientResponseLinks(request: IHttpRequest | HttpRequest, instanceId: string): HttpManagementPayload {
         const payload = { ...this.clientData.managementUrls };
 
         (Object.keys(payload) as Array<(keyof HttpManagementPayload)>).forEach((key) => {
             if (this.hasValidRequestUrl(request) && isURL(payload[key], this.urlValidationOptions)) {
-                const requestUrl = new url.URL((request as IRequest).url || (request as IHttpRequest).http.url);
+                const requestUrl = new url.URL((request as HttpRequest).url || (request as IHttpRequest).http.url);
                 const dataUrl = new url.URL(payload[key]);
                 payload[key] = payload[key].replace(dataUrl.origin, requestUrl.origin);
             }
@@ -513,10 +514,10 @@ export class DurableOrchestrationClient {
         return payload;
     }
 
-    private hasValidRequestUrl(request: IHttpRequest | IRequest): boolean {
-        const isIRequest = request !== undefined && (request as IRequest).url !== undefined;
+    private hasValidRequestUrl(request: IHttpRequest | HttpRequest): boolean {
+        const isHttpRequest = request !== undefined && (request as HttpRequest).url !== undefined;
         const isIHttpRequest = request !== undefined && (request as IHttpRequest).http !== undefined;
-        return isIRequest || isIHttpRequest && (request as IHttpRequest).http.url !== undefined;
+        return isHttpRequest || isIHttpRequest && (request as IHttpRequest).http.url !== undefined;
     }
 
     private extractUniqueWebhookOrigins(clientData: OrchestrationClientInputData): string[] {

@@ -25,10 +25,10 @@
     "e2etst": "npm run "
   },
   "dependencies": {
+    "@azure/functions": "^1.0.2-beta2",
     "@types/lodash": "^4.14.119",
     "@types/validator": "^9.4.3",
     "axios": "~0.18.0",
-    "azure-functions-typescript": "github:christopheranderson/azure-functions-typescript",
     "commander": "~2.9.0",
     "debug": "~2.6.9",
     "lodash": "^4.17.11",
