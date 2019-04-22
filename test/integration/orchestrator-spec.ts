@@ -133,6 +133,7 @@ describe("Orchestrator", () => {
                     ),
                 ),
             });
+            const expectedErr = "Exception from Orchestrator";
 
             orchestrator(mockContext);
 
@@ -140,7 +141,9 @@ describe("Orchestrator", () => {
                 isDone: false,
                 actions: [],
             });
-            expect(mockContext.doneValue.error).to.include("Exception from Orchestrator");
+            expect(mockContext.doneValue.error).to.include(expectedErr);
+
+            expect(mockContext.err.toString()).to.include(expectedErr);
         });
 
         it("reports an unhandled exception from activity passed through orchestrator", async () => {
@@ -152,6 +155,7 @@ describe("Orchestrator", () => {
                     ),
                 ),
             });
+            const expectedErr = "Activity function 'ThrowsErrorActivity' failed.";
 
             orchestrator(mockContext);
 
@@ -162,7 +166,9 @@ describe("Orchestrator", () => {
                     [ new CallActivityAction("ThrowsErrorActivity") ],
                 ],
             });
-            expect(mockContext.doneValue.error).to.include("Activity function 'ThrowsErrorActivity' failed.");
+            expect(mockContext.doneValue.error).to.include(expectedErr);
+
+            expect(mockContext.err.toString()).to.include(expectedErr);
         });
 
         it("schedules an activity function after orchestrator catches an exception", async () => {
@@ -368,6 +374,7 @@ describe("Orchestrator", () => {
                         moment.utc().toDate()),
                 ),
             });
+            const expectedErr = "retryOptions: Expected object of type RetryOptions but got undefined; are you missing properties?";
 
             orchestrator(mockContext);
 
@@ -378,7 +385,9 @@ describe("Orchestrator", () => {
                 }),
             );
             expect(mockContext.doneValue.error).to
-                .include("retryOptions: Expected object of type RetryOptions but got undefined; are you missing properties?");
+                .include(expectedErr);
+
+            expect(mockContext.err.toString()).to.include(expectedErr);
         });
 
         it("schedules an activity function", async () => {
@@ -486,6 +495,7 @@ describe("Orchestrator", () => {
                     name,
                 ),
             });
+            const expectedErr = "Activity function 'Hello' failed: Result: Failure";
 
             orchestrator(mockContext);
 
@@ -502,7 +512,9 @@ describe("Orchestrator", () => {
                 ],
             });
             expect(mockContext.doneValue.error).to
-                .include("Activity function 'Hello' failed: Result: Failure");
+                .include(expectedErr);
+
+            expect(mockContext.err.toString()).to.include(expectedErr);
         });
 
         it("handles a completed activity function", async () => {
@@ -647,6 +659,7 @@ describe("Orchestrator", () => {
                     id,
                 ),
             });
+            const expectedErr = "Sub orchestrator function 'SayHelloInline' failed: Result: Failure";
 
             orchestrator(mockContext);
 
@@ -658,7 +671,9 @@ describe("Orchestrator", () => {
                 ],
             });
             expect(mockContext.doneValue.error).to
-                .include("Sub orchestrator function 'SayHelloInline' failed: Result: Failure");
+                .include(expectedErr);
+
+            expect(mockContext.err.toString()).to.include(expectedErr);
         });
     });
 
@@ -675,6 +690,7 @@ describe("Orchestrator", () => {
                     id,
                 ),
             });
+            const expectedErr = "retryOptions: Expected object of type RetryOptions but got undefined; are you missing properties?";
 
             orchestrator(mockContext);
 
@@ -683,7 +699,9 @@ describe("Orchestrator", () => {
                 actions: [],
             });
             expect(mockContext.doneValue.error).to
-                .include("retryOptions: Expected object of type RetryOptions but got undefined; are you missing properties?");
+                .include(expectedErr);
+
+            expect(mockContext.err.toString()).to.include(expectedErr);
         });
 
         it("schedules a suborchestrator function", async () => {
@@ -814,6 +832,7 @@ describe("Orchestrator", () => {
                     id,
                 ),
             });
+            const expectedErr = "Sub orchestrator function 'SayHelloInline' failed: Result: Failure";
 
             orchestrator(mockContext);
 
@@ -832,7 +851,9 @@ describe("Orchestrator", () => {
                 ],
             });
             expect(mockContext.doneValue.error).to
-                .include("Sub orchestrator function 'SayHelloInline' failed: Result: Failure");
+                .include(expectedErr);
+
+            expect(mockContext.err.toString()).to.include(expectedErr);
         });
 
         it("handles a completed suborchestrator function", async () => {
@@ -1224,14 +1245,12 @@ class MockContext {
         public bindings: IBindings,
         public df?: DurableOrchestrationContext,
         public doneValue?: IOrchestratorState,
+        public err?: Error | string | null,
     ) { }
 
-    public done(err?: string, result?: IOrchestratorState) {
-        if (err) {
-            throw new Error(err);
-        } else {
-            this.doneValue = result;
-        }
+    public done(err?: Error | string | null, result?: IOrchestratorState) {
+        this.doneValue = result;
+        this.err = err;
     }
 }
 

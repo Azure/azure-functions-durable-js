@@ -104,8 +104,6 @@ export class Orchestrator {
                     e.Timestamp > decisionStartedEvent.Timestamp);
                 context.df.currentUtcDateTime = decisionStartedEvent ? decisionStartedEvent.Timestamp : undefined;
 
-                
-
                 g = gen.next(partialResult ? partialResult.result : undefined);
             }
         } catch (error) {
