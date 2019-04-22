@@ -17,8 +17,9 @@ export enum HistoryEventType {
     TimerFired = 11,
     OrchestratorStarted = 12,
     OrchestratorCompleted = 13,
-    EventRaised = 14,
-    ContinueAsNew = 15,
-    GenericEvent = 16,
-    HistoryState = 17,
+    EventSent = 14,
+    EventRaised = 15,
+    ContinueAsNew = 16,
+    GenericEvent = 17,
+    HistoryState = 18,
 }
