@@ -5,7 +5,7 @@ import "mocha";
 import nock = require("nock");
 import url = require("url");
 import uuidv1 = require("uuid/v1");
-import { Constants, DurableOrchestrationClient, DurableOrchestrationStatus,
+import { ActorId, Constants, DurableOrchestrationClient, DurableOrchestrationStatus,
     HttpManagementPayload, OrchestrationRuntimeStatus, PurgeHistoryResult } from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
@@ -686,6 +686,94 @@ describe("Orchestration Client", () => {
             await expect(client.rewind(testId, testReason)).to.be
                 .rejectedWith(`Webhook returned unrecognized status code 500`);
             expect(scope.isDone()).to.be.equal(true);
+        });
+    });
+
+    describe("signalActor()", () => {
+        const defaultActorClass = "actor";
+        const defaultActorKey = "123";
+        const defaultActorId = new ActorId(defaultActorClass, defaultActorKey);
+        const defaultOp = "get";
+
+        beforeEach(async () => {
+            nock.cleanAll();
+        });
+
+        afterEach(async () => {
+            nock.cleanAll();
+        });
+
+        const badOps = [ undefined, null, "" ];
+        badOps.forEach((badOp) => {
+
+            it(`throws if operationName is ${badOp !== "" ? badOp : "empty string"}`, async () => {
+                const client = new DurableOrchestrationClient(defaultClientInputData);
+
+                await expect(client.signalActor(defaultActorId, badOp, undefined, defaultTaskHub, defaultConnection))
+                    .to.be.rejectedWith(`operationName: Expected non-empty, non-whitespace string but got ${typeof badOp}`);
+            });
+        });
+
+        it("signals an actor", async () => {
+            const testSignalData = { data: "foo" };
+
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedInstanceId = ActorId.getSchedulerIdFromActorId(defaultActorId);
+            const expectEventDataMatcher = {
+                id: /.+/i,
+                op: defaultOp,
+                signal: true,
+                arg: testSignalData,
+            };
+
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.sendEventPostUri
+                .replace(TestConstants.idPlaceholder, expectedInstanceId)
+                .replace(TestConstants.eventNamePlaceholder, "op"));
+
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname, expectEventDataMatcher)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(202);
+
+            const result = await client.signalActor(defaultActorId, defaultOp, testSignalData);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal(undefined);
+        });
+
+        it("signals an actor with specific taskHubName and connection", async () => {
+            const testTaskHub = "ActorHub";
+            const testConn = "ActorConnStr";
+            const testSignalData = { data: "foo" };
+
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedInstanceId = ActorId.getSchedulerIdFromActorId(defaultActorId);
+            const expectEventDataMatcher = {
+                id: /.+/i,
+                op: defaultOp,
+                signal: true,
+                arg: testSignalData,
+            };
+
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.sendEventPostUri
+                .replace(TestConstants.idPlaceholder, expectedInstanceId)
+                .replace(TestConstants.eventNamePlaceholder, "op")
+                .replace(defaultTaskHub, testTaskHub)
+                .replace(defaultConnection, testConn));
+
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname, expectEventDataMatcher)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(202);
+
+            const result = await client.signalActor(defaultActorId, defaultOp, testSignalData, testTaskHub, testConn);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal(undefined);
         });
     });
 

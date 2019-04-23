@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import "mocha";
-import { Utils } from "../../src/classes";
+import { ActorId, Utils } from "../../src/classes";
 
 describe("Utils", () => {
     describe("getInstancesOf()", () => {

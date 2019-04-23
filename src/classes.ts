@@ -61,3 +61,5 @@ export { GuidManager } from "./guidmanager";
 
 export { DurableHttpRequest } from "./durablehttprequest";
 export { DurableHttpResponse } from "./durablehttpresponse";
+export { ActorId } from "./entities/actorid";
+export { RequestMessage } from "./entities/requestmessage";

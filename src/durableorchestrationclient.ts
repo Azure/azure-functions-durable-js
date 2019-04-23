@@ -3,11 +3,15 @@ import axios, { AxiosInstance } from "axios";
 import cloneDeep = require("lodash/cloneDeep");
 import process = require("process");
 import url = require("url");
+import uuid = require("uuid/v1");
 import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagementPayload, IFunctionContext,
     IHttpRequest, IHttpResponse, OrchestrationClientInputData, OrchestrationRuntimeStatus,
     PurgeHistoryResult, Utils,
 } from "./classes";
+import { ActorId } from "./entities/actorid";
+import { RequestMessage } from "./entities/requestmessage";
+
 /**
  * Returns an OrchestrationClient instance.
  * @param context The context object of the Azure function whose body
@@ -447,6 +451,36 @@ export class DurableOrchestrationClient {
         } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;
         }
+    }
+
+    /**
+     * Signals an actor to perform an operation.
+     * @param actorId The target actor.
+     * @param operationName The name of the operation.
+     * @param operationContent The content for the operation.
+     * @param taskHubName The TaskHubName of the target actor.
+     * @param connectionName The name of the connection string associated with [taskHubName].
+     */
+    public async signalActor(
+        actorId: ActorId,
+        operationName: string,
+        operationContent?: unknown,
+        taskHubName?: string,
+        connectionName?: string,
+        ): Promise<void> {
+        Utils.throwIfEmpty(operationName, "operationName");
+
+        const instanceId = ActorId.getSchedulerIdFromActorId(actorId);
+        const request = new RequestMessage(
+            uuid(),
+            operationName,
+            true,
+            operationContent,
+        );
+
+        await this.raiseEvent(instanceId, "op", request, taskHubName, connectionName);
+
+        // TODO: end to end tracehelper equivalent?
     }
 
     /**

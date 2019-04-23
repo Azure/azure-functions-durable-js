@@ -16,7 +16,7 @@ export class TestConstants {
     public static readonly webhookPath: string = "/runtime/webhooks/durabletask/";
 
     public static readonly statusQueryGetUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}instances/${TestConstants.idPlaceholder}?${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length
-    public static readonly sendEventPostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}instances/${TestConstants.idPlaceholder}/raiseEvent/{eventName}?${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length
+    public static readonly sendEventPostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}instances/${TestConstants.idPlaceholder}/raiseEvent/${TestConstants.eventNamePlaceholder}?${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length
     public static readonly terminatePostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}instances/${TestConstants.idPlaceholder}/terminate?reason=${TestConstants.reasonPlaceholder}&${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length
     public static readonly rewindPostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}instances/${TestConstants.idPlaceholder}/rewind?reason=${TestConstants.reasonPlaceholder}&${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length
     public static readonly purgeDeleteUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}instances/${TestConstants.idPlaceholder}?${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length
