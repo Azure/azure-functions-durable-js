@@ -1,16 +1,17 @@
+// tslint:disable:member-access
+
 import { HttpRequest } from "@azure/functions";
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
 import cloneDeep = require("lodash/cloneDeep");
 import process = require("process");
 import url = require("url");
 import uuid = require("uuid/v1");
 import { isURL } from "validator";
-import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagementPayload, IFunctionContext,
-    IHttpRequest, IHttpResponse, OrchestrationClientInputData, OrchestrationRuntimeStatus,
-    PurgeHistoryResult, Utils,
+import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
+    GetStatusOptions, HttpCreationPayload, HttpManagementPayload,
+    IFunctionContext, IHttpRequest, IHttpResponse, OrchestrationClientInputData,
+    OrchestrationRuntimeStatus, PurgeHistoryResult, RequestMessage, SchedulerState, Utils,
 } from "./classes";
-import { ActorId } from "./entities/actorid";
-import { RequestMessage } from "./entities/requestmessage";
 
 /**
  * Returns an OrchestrationClient instance.
@@ -183,22 +184,16 @@ export class DurableOrchestrationClient {
         showHistoryOutput?: boolean,
         showInput?: boolean,
         ): Promise<DurableOrchestrationStatus> {
-        const template = this.clientData.managementUrls.statusQueryGetUri;
-        const idPlaceholder = this.clientData.managementUrls.id;
-
-        let webhookUrl = template.replace(idPlaceholder, instanceId);
-        if (showHistory) {
-            webhookUrl += `&${this.showHistoryQueryKey}=${showHistory}`;
-        }
-        if (showHistoryOutput) {
-            webhookUrl += `&${this.showHistoryOutputQueryKey}=${showHistoryOutput}`;
-        }
-        if (showInput === false) {
-            webhookUrl += `&${this.showInputQueryKey}=${showInput}`;
-        }
 
         try {
-            const response = await this.axiosInstance.get(webhookUrl);
+            const options: GetStatusOptions = {
+                instanceId,
+                showHistory,
+                showHistoryOutput,
+                showInput,
+            };
+            const response = await this.getStatusInternal(options);
+
             switch (response.status) {
                 case 200: // instance completed
                 case 202: // instance in progress
@@ -218,13 +213,8 @@ export class DurableOrchestrationClient {
      * Gets the status of all orchestration instances.
      */
     public async getStatusAll(): Promise<DurableOrchestrationStatus[]> {
-        // omit instanceId to get status for all instances
-        const idPlaceholder = this.clientData.managementUrls.id;
-        const requestUrl = this.clientData.managementUrls.statusQueryGetUri
-            .replace(idPlaceholder, "");
-
         try {
-            const response = await this.axiosInstance.get(requestUrl);
+            const response = await this.getStatusInternal({});
             return response.data as DurableOrchestrationStatus[];
         } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;
@@ -246,30 +236,14 @@ export class DurableOrchestrationClient {
         createdTimeTo: Date,
         runtimeStatus: OrchestrationRuntimeStatus[],
         ): Promise<DurableOrchestrationStatus[]> {
-        const idPlaceholder = this.clientData.managementUrls.id;
-        let requestUrl = this.clientData.managementUrls.statusQueryGetUri
-            .replace(idPlaceholder, "");
-
-        if (createdTimeFrom) {
-            requestUrl += `&${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`;
-        }
-
-        if (createdTimeTo) {
-            requestUrl += `&${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`;
-        }
-
-        if (runtimeStatus && runtimeStatus.length > 0) {
-            const statusesString = runtimeStatus
-                .map((value) => value.toString())
-                .reduce((acc, curr, i, arr) => {
-                    return acc + (i > 0 ? "," : "") + curr;
-            });
-
-            requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
-        }
-
         try {
-            const response = await this.axiosInstance.get(requestUrl);
+            const options: GetStatusOptions = {
+                createdTimeFrom,
+                createdTimeTo,
+                runtimeStatus,
+            };
+            const response = await this.getStatusInternal(options);
+
             if (response.status > 202) {
                 return Promise.reject(new Error(`Webhook returned status code ${response.status}: ${response.data}`));
             } else {
@@ -422,6 +396,33 @@ export class DurableOrchestrationClient {
         }
     }
 
+    public async readEntityState<T>(entityId: EntityId, taskHubName?: string, connectionName?: string): Promise<EntityStateResponse<T>> {
+        const instanceId = EntityId.getSchedulerIdFromEntityId(entityId);
+
+        const options: GetStatusOptions = {
+            instanceId,
+            taskHubName,
+            connectionName,
+        };
+
+        let status: DurableOrchestrationStatus;
+        try {
+            const response = await this.getStatusInternal(options);
+            status = response.data as DurableOrchestrationStatus;
+        } catch (err) {
+            throw err.message;
+        }
+        if (status && status.input) {
+            const schedulerState = status.input as SchedulerState;
+
+            if (schedulerState.exists) {
+                return new EntityStateResponse(true, JSON.parse(schedulerState.state));
+            }
+        }
+
+        return new EntityStateResponse(false, undefined);
+    }
+
     /**
      * Rewinds the specified failed orchestration instance with a reason.
      * @param instanceId The ID of the orchestration instance to rewind.
@@ -454,15 +455,15 @@ export class DurableOrchestrationClient {
     }
 
     /**
-     * Signals an actor to perform an operation.
-     * @param actorId The target actor.
+     * Signals an entity to perform an operation.
+     * @param entityId The target entity.
      * @param operationName The name of the operation.
      * @param operationContent The content for the operation.
-     * @param taskHubName The TaskHubName of the target actor.
+     * @param taskHubName The TaskHubName of the target entity.
      * @param connectionName The name of the connection string associated with [taskHubName].
      */
-    public async signalActor(
-        actorId: ActorId,
+    public async signalEntity(
+        entityId: EntityId,
         operationName: string,
         operationContent?: unknown,
         taskHubName?: string,
@@ -470,13 +471,13 @@ export class DurableOrchestrationClient {
         ): Promise<void> {
         Utils.throwIfEmpty(operationName, "operationName");
 
-        const instanceId = ActorId.getSchedulerIdFromActorId(actorId);
-        const request = new RequestMessage(
-            uuid(),
-            operationName,
-            true,
-            operationContent,
-        );
+        const instanceId = EntityId.getSchedulerIdFromEntityId(entityId);
+        const request: RequestMessage = {
+            id: uuid(),
+            op: operationName,
+            signal: true,
+            arg: operationContent,
+        };
 
         await this.raiseEvent(instanceId, "op", request, taskHubName, connectionName);
 
@@ -669,5 +670,45 @@ export class DurableOrchestrationClient {
         });
 
         return origins;
+    }
+
+    private async getStatusInternal(options: GetStatusOptions): Promise<AxiosResponse> {
+        const template = this.clientData.managementUrls.statusQueryGetUri;
+        const idPlaceholder = this.clientData.managementUrls.id;
+
+        let requestUrl = template.replace(idPlaceholder, typeof(options.instanceId) === "string" ? options.instanceId : "");
+        if (options.taskHubName) {
+            requestUrl = requestUrl.replace(this.clientData.taskHubName, options.taskHubName);
+        }
+        if (options.connectionName) {
+            requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + options.connectionName);
+        }
+        if (options.showHistory) {
+            requestUrl += `&${this.showHistoryQueryKey}=${options.showHistory}`;
+        }
+        if (options.showHistoryOutput) {
+            requestUrl += `&${this.showHistoryOutputQueryKey}=${options.showHistoryOutput}`;
+        }
+        if (options.createdTimeFrom) {
+            requestUrl += `&${this.createdTimeFromQueryKey}=${options.createdTimeFrom.toISOString()}`;
+        }
+        if (options.createdTimeTo) {
+            requestUrl += `&${this.createdTimeToQueryKey}=${options.createdTimeTo.toISOString()}`;
+        }
+        if (options.runtimeStatus && options.runtimeStatus.length > 0) {
+            const statusesString = options.runtimeStatus
+                .map((value) => value.toString())
+                .reduce((acc, curr, i, arr) => {
+                    return acc + (i > 0 ? "," : "") + curr;
+            });
+
+            requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+        }
+
+        if (typeof options.showInput === "boolean") {
+            requestUrl += `&${this.showInputQueryKey}=${options.showInput}`;
+        }
+
+        return this.axiosInstance.get(requestUrl);
     }
 }
