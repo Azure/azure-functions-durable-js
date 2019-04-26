@@ -396,6 +396,17 @@ export class DurableOrchestrationClient {
         }
     }
 
+    /**
+     * Tries to read the current state of an entity. Returnes undefined if the
+     * entity does not exist, or if the JSON-serialized state of the entity is
+     * larger than 16KB.
+     * @param T The JSON-serializable type of the entity.
+     * @param entityId The target entity.
+     * @param taskHubName The TaskHubName of the target entity.
+     * @param connectionName The name of the connection string associated with
+     * [taskHubName].
+     * @returns A response containing the current state of the entity.
+     */
     public async readEntityState<T>(entityId: EntityId, taskHubName?: string, connectionName?: string): Promise<EntityStateResponse<T>> {
         const instanceId = EntityId.getSchedulerIdFromEntityId(entityId);
 
