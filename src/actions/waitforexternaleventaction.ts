@@ -1,4 +1,4 @@
-import { ActionType, IAction, Utils } from "../classes";
+import { ActionType, ExternalEventType, IAction, Utils } from "../classes";
 
 /** @hidden */
 export class WaitForExternalEventAction implements IAction {
@@ -6,7 +6,9 @@ export class WaitForExternalEventAction implements IAction {
 
     constructor(
         public readonly externalEventName: string,
+        public readonly reason: ExternalEventType,
     ) {
         Utils.throwIfEmpty(externalEventName, "externalEventName");
+        Utils.throwIfEmpty(reason, "reason");
     }
 }

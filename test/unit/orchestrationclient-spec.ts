@@ -35,9 +35,9 @@ describe("Orchestration Client", () => {
     const defaultConnection = "Storage";
     const defaultInstanceId = uuidv1();
 
-    const defaultEntityClass = "entity";
+    const defaultEntityName = "entity";
     const defaultEntityKey = "123";
-    const defaultEntityId = new EntityId(defaultEntityClass, defaultEntityKey);
+    const defaultEntityId = new EntityId(defaultEntityName, defaultEntityKey);
     const defaultEntityOp = "get";
 
     const defaultClientInputData = TestUtils.createOrchestrationClientInputData(

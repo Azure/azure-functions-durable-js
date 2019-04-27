@@ -9,14 +9,14 @@ export class EntityId {
     /** @hidden */
     static getEntityIdFromSchedulerId(schedulerId: string): EntityId {
         const pos = schedulerId.indexOf("@", 1);
-        const entityClass = schedulerId.substring(1, pos);
+        const entityName = schedulerId.substring(1, pos);
         const entityKey = schedulerId.substring(pos + 1);
-        return new EntityId(entityClass, entityKey);
+        return new EntityId(entityName, entityKey);
     }
 
     /** @hidden */
     static getSchedulerIdFromEntityId(entityId: EntityId): string {
-        return `@${entityId.entityClass}@${entityId.entityKey}`;
+        return `@${entityId.entityName}@${entityId.entityKey}`;
     }
 
     /**
@@ -25,11 +25,11 @@ export class EntityId {
     constructor(
         // TODO: consider how JSON deserialization affects these fields
         /** The name of the entity class. */
-        public readonly entityClass: string,
+        public readonly entityName: string,
         /** The entity key. Uniquely identifies an entity among all instances of the same class. */
         public readonly entityKey: string,
     ) {
-        Utils.throwIfEmpty(entityClass, "entityClass");
+        Utils.throwIfEmpty(entityName, "entityName");
         Utils.throwIfEmpty(entityKey, "entityKey");
     }
 

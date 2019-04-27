@@ -2,12 +2,14 @@ import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
+import { isUUID } from "validator";
 import { ManagedIdentityTokenSource } from "../../src";
 import {
     CallActivityAction, CallActivityWithRetryAction, CallHttpAction, CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction, Constants, ContinueAsNewAction, CreateTimerAction,
-    DurableHttpRequest, DurableHttpResponse, DurableOrchestrationBindingInfo, DurableOrchestrationContext,
-    IOrchestratorState, OrchestratorState, RetryOptions, WaitForExternalEventAction,
+    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, DurableHttpRequest,
+    DurableHttpResponse, DurableOrchestrationBindingInfo, DurableOrchestrationContext, EntityId,
+    ExternalEventType, IOrchestratorState, LockState, OrchestratorState,
+    RetryOptions, SendEntityMessageAction, WaitForExternalEventAction,
 } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
@@ -705,6 +707,12 @@ describe("Orchestrator", () => {
         });
     });
 
+    describe("callEntity()", () => {
+        it.skip("schedules an entity", async () => {
+            const orchestrator = TestOrchestrations.CallEntityGet; // TODO: finish
+        });
+    });
+
     describe("callSubOrchestrator()", () => {
         it("schedules a suborchestrator function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
@@ -1179,6 +1187,166 @@ describe("Orchestrator", () => {
         });
     });
 
+    describe("isLocked()", () => {
+        it("returns correct state when no locks are owned", () => {
+            const orchestrator = TestOrchestrations.CheckForLocksNone;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart("CheckForLocksNone", moment.utc().toDate()),
+                ),
+            });
+
+            const expectedLockState = new LockState(false, undefined);
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions: [],
+                    output: expectedLockState,
+                }),
+            );
+        });
+
+        it.skip("returns correct state when locks are owned", () => {
+            // TODO: fill in
+        });
+    });
+
+    describe("lock()", () => {
+        it("reports an error if already holding locks", async () => {
+            const orchestrator = TestOrchestrations.GetAndReleaseLock;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart("GetAndReleaseLock", moment.utc().toDate()),
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    [ new EntityId("TestActor", "111") ],
+                ),
+            });
+            const expectedErr = "Cannot acquire more locks when already holding some locks.";
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.an("object").that.deep.include(
+                new OrchestratorState({
+                    isDone: false,
+                    actions: [],
+                    output: undefined,
+                }),
+            );
+            expect(mockContext.doneValue.error).to.include(expectedErr);
+            expect(mockContext.err.toString()).to.include(expectedErr);
+        });
+
+        const badInputs: Array<unknown> = [ undefined, [] ];
+        badInputs.forEach((badInput) => {
+            it(`reports an error if called with ${badInput ? "empty array" : "undefined"}`, async () => {
+                const orchestrator = TestOrchestrations.GetLockBadly;
+                const mockContext = new MockContext({
+                    context: new DurableOrchestrationBindingInfo(
+                        TestHistories.GetOrchestratorStart("GetLockBadly", moment.utc().toDate()),
+                        badInput,
+                    ),
+                });
+                const expectedErr = "The list of entities to lock must not be null or empty.";
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.an("object").that.deep.include(
+                    new OrchestratorState({
+                        isDone: false,
+                        actions: [],
+                        output: undefined,
+                    }),
+                );
+                expect(mockContext.doneValue.error).to.include(expectedErr);
+                expect(mockContext.err.toString()).to.include(expectedErr);
+            });
+        });
+
+        it.skip("schedules a lock request", () => {
+            const orchestrator = TestOrchestrations.GetAndReleaseLock;
+            const instanceId = uuidv1();
+            const locks = [
+                new EntityId("TestActor", "123"),
+                new EntityId("TestActor", "ABC"),
+            ];
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart("GetAndReleaseLock", moment.utc().toDate()),
+                    locks,
+                    instanceId,
+                ),
+            });
+            const expectedRequestMessage = {
+                id: "sigh",
+                // ID is a GUID, can be whatever; omitted for matching here
+                parent: instanceId,
+                lockset: locks,
+                pos: 0,
+            };
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.an("object").that.deep.include(
+                new OrchestratorState({
+                    isDone: false,
+                    actions: [
+                        [
+                            new SendEntityMessageAction(EntityId.getSchedulerIdFromEntityId(locks[0]), "op", expectedRequestMessage),
+                        ],
+                    ],
+                    output: undefined,
+                }),
+            );
+            expect(mockContext.doneValue.actions[0]).to.have.lengthOf(2);
+            expect(mockContext.doneValue.actions[0][1]).to.satisfy((obj: unknown) => {
+                return obj instanceof WaitForExternalEventAction
+                    && isUUID((obj as WaitForExternalEventAction).externalEventName)
+                    && (obj as WaitForExternalEventAction).reason === ExternalEventType.LockAcquisitionCompleted;
+            });
+        });
+    });
+
+    describe("newGuid()", () => {
+        it("generates consistent GUIDs", () => {
+            const orchestrator = TestOrchestrations.GuidGenerator;
+            const currentUtcDateTime = moment.utc().toDate();
+            const instanceId = uuidv1();
+
+            const mockContext1 = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "GuidGenerator",
+                        currentUtcDateTime,
+                    ),
+                    undefined,
+                    instanceId,
+                ),
+            });
+            const mockContext2 = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "GuidGenerator",
+                        currentUtcDateTime,
+                    ),
+                    undefined,
+                    instanceId,
+                ),
+            });
+
+            orchestrator(mockContext1);
+            orchestrator(mockContext2);
+
+            expect(mockContext1.doneValue.isDone).to.equal(true);
+            expect(mockContext1.doneValue).to.deep.equal(mockContext2.doneValue);
+        });
+    });
+
     describe("setCustomStatus()", () => {
         it("sets a custom status", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithCustomStatus;
@@ -1232,7 +1400,7 @@ describe("Orchestrator", () => {
                     output: undefined,
                     actions:
                     [
-                        [ new WaitForExternalEventAction("start") ],
+                        [ new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent) ],
                     ],
                 }),
             );
@@ -1260,7 +1428,7 @@ describe("Orchestrator", () => {
                     output: undefined,
                     actions:
                     [
-                        [ new WaitForExternalEventAction("start") ],
+                        [ new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent) ],
                         [ new CallActivityAction("Hello", name) ],
                     ],
                 }),
@@ -1289,7 +1457,7 @@ describe("Orchestrator", () => {
                     output: undefined,
                     actions:
                     [
-                        [ new WaitForExternalEventAction("start") ],
+                        [ new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent) ],
                     ],
                 }),
             );

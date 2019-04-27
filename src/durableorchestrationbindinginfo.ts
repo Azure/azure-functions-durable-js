@@ -1,4 +1,4 @@
-import { HistoryEvent } from "./classes";
+import { EntityId, HistoryEvent } from "./classes";
 
 /** @hidden */
 export class DurableOrchestrationBindingInfo {
@@ -8,5 +8,6 @@ export class DurableOrchestrationBindingInfo {
         public readonly instanceId?: string,
         public readonly isReplaying?: boolean,
         public readonly parentInstanceId?: string,
+        public readonly contextLocks?: EntityId[],
     ) { }
 }

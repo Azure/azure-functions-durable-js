@@ -10,7 +10,8 @@ import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
     GetStatusOptions, HttpCreationPayload, HttpManagementPayload,
     IFunctionContext, IHttpRequest, IHttpResponse, OrchestrationClientInputData,
-    OrchestrationRuntimeStatus, PurgeHistoryResult, RequestMessage, SchedulerState, Utils,
+    OrchestrationRuntimeStatus, PurgeHistoryResult, RequestMessage, SchedulerState,
+    Utils,
 } from "./classes";
 
 /**
@@ -184,7 +185,6 @@ export class DurableOrchestrationClient {
         showHistoryOutput?: boolean,
         showInput?: boolean,
         ): Promise<DurableOrchestrationStatus> {
-
         try {
             const options: GetStatusOptions = {
                 instanceId,
@@ -715,7 +715,6 @@ export class DurableOrchestrationClient {
 
             requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
         }
-
         if (typeof options.showInput === "boolean") {
             requestUrl += `&${this.showInputQueryKey}=${options.showInput}`;
         }

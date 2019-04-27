@@ -1,8 +1,9 @@
 import * as debug from "debug";
-import { CallActivityAction, CallActivityWithRetryAction, CallHttpAction, CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, DurableHttpRequest,
-    DurableOrchestrationBindingInfo, EventRaisedEvent, GuidManager, HistoryEvent,
-    HistoryEventType, IAction, IFunctionContext, OrchestratorState, RetryOptions,
+import { CallActivityAction, CallActivityWithRetryAction, CallHttpAction,
+    CallSubOrchestratorAction, CallSubOrchestratorWithRetryAction, ContinueAsNewAction,
+    CreateTimerAction, DurableHttpRequest, DurableLock, DurableOrchestrationBindingInfo, EntityId,
+    EventRaisedEvent, ExternalEventType, GuidManager, HistoryEvent, HistoryEventType,
+    IAction, IFunctionContext, LockState, OrchestratorState, RetryOptions,
     SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
     SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFailedEvent,
     TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask,
@@ -36,6 +37,7 @@ export class Orchestrator {
         const state: HistoryEvent[] = orchestrationBinding.history;
         const input: unknown = orchestrationBinding.input;
         const instanceId: string = orchestrationBinding.instanceId;
+        const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
 
         // Initialize currentUtcDateTime
         let decisionStartedEvent: HistoryEvent = state.find((e) =>
@@ -60,6 +62,8 @@ export class Orchestrator {
             continueAsNew: this.continueAsNew.bind(this, state),
             createTimer: this.createTimer.bind(this, state),
             getInput: this.getInput.bind(this, input),
+            isLocked: this.isLocked.bind(this, contextLocks),
+            lock: this.lock.bind(this, state, instanceId, contextLocks),
             newGuid: this.newGuid.bind(this, instanceId),
             setCustomStatus: this.setCustomStatus.bind(this),
             waitForExternalEvent: this.waitForExternalEvent.bind(this, state),
@@ -380,6 +384,60 @@ export class Orchestrator {
         return input;
     }
 
+    private isLocked(contextLocks: EntityId[]): LockState {
+        return new LockState(
+            contextLocks !== undefined && contextLocks !== null,
+            contextLocks,
+        );
+    }
+
+    private lock(state: HistoryEvent[], instanceId: string, contextLocks: EntityId[], entities: EntityId[]): DurableLock {
+        if (contextLocks) {
+            throw new Error("Cannot acquire more locks when already holding some locks.");
+        }
+
+        if (!entities || entities.length === 0) {
+            throw new Error("The list of entities to lock must not be null or empty.");
+        }
+
+        entities = this.cleanEntities(entities);
+
+        const lockRequestId = this.newGuid(instanceId);
+
+        // All the entities in entities[] need to be locked, but to avoid
+        // deadlock, the locks have to be acquired sequentially, in order. So,
+        // we send the lock request to the first entity; when the first lock is
+        // granted by the first entity, the first entity will forward the lock
+        // request to the second entity, and so on; after the last entity
+        // grants the last lock, a response is sent back here.
+
+        // send lock request to first entity in the lock set
+
+
+        return undefined;
+    }
+
+    private cleanEntities(entities: EntityId[]): EntityId[] {
+        // sort entities
+        return entities.sort((a, b) => {
+            if (a.entityKey === b.entityKey) {
+                if (a.entityName === b.entityName) {
+                    return 0;
+                } else if (a.entityName < b.entityName) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            } else if (a.entityKey < b.entityKey) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+
+        // TODO: remove duplicates if necessary
+    }
+
     private newGuid(instanceId: string): string {
         const guidNameValue = `${instanceId}_${this.currentUtcDateTime.valueOf()}_${this.newGuidCounter}`;
         this.newGuidCounter++;
@@ -391,7 +449,7 @@ export class Orchestrator {
     }
 
     private waitForExternalEvent(state: HistoryEvent[], name: string): Task {
-        const newAction = new WaitForExternalEventAction(name);
+        const newAction = new WaitForExternalEventAction(name, ExternalEventType.ExternalEvent);
 
         const eventRaised = this.findEventRaised(state, name);
         this.setProcessed([ eventRaised ]);

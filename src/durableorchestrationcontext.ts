@@ -1,4 +1,5 @@
-import { DurableHttpRequest, ITaskMethods, RetryOptions, Task, TimerTask } from "./classes";
+import { DurableHttpRequest, DurableLock, EntityId, ITaskMethods, LockState,
+     RetryOptions, Task, TimerTask } from "./classes";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -153,6 +154,32 @@ export class DurableOrchestrationContext {
      * value.
      */
     public getInput(): unknown {
+        throw new Error("This is a placeholder.");
+    }
+
+    /**
+     * Determines whether the current context is locked, and if so, what locks
+     * are currently owned.
+     *
+     * Note that the collection of owned locks can be empty even if the context
+     * is locked. This happens if an orchestration calls a suborchestration
+     * without lending any locks.
+     *
+     * @returns [[LockState]]
+     */
+    public isLocked(): LockState {
+        throw new Error("This is a placeholder.");
+    }
+
+    /**
+     * Acquires one or more locks, for the specified entities.
+     *
+     * Locks can only be acquired if the current context does not hold any
+     * locks already.
+     *
+     * @param entities The entities whose locks should be acquired.
+     */
+    public lock(...entities: EntityId[]): DurableLock {
         throw new Error("This is a placeholder.");
     }
 
