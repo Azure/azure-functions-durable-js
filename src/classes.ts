@@ -54,3 +54,5 @@ export { IHttpResponse } from "./ihttpresponse";
 
 export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
 export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
+
+export { GuidManager } from "./guidmanager";
