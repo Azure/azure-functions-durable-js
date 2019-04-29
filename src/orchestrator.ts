@@ -1,17 +1,22 @@
 import * as debug from "debug";
 import { CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction, Constants, ContinueAsNewAction, CreateTimerAction,
-    DurableOrchestrationBindingInfo, EventRaisedEvent, HistoryEvent, HistoryEventType, IAction, IFunctionContext,
-    OrchestratorState, RetryOptions, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
-    SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent, TaskSet,
-    TimerCreatedEvent, TimerFiredEvent, TimerTask, Utils, WaitForExternalEventAction } from "./classes";
+    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction,
+    DurableOrchestrationBindingInfo, EventRaisedEvent, GuidManager, HistoryEvent,
+    HistoryEventType, IAction, IFunctionContext, OrchestratorState, RetryOptions,
+    SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
+    SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFailedEvent,
+    TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask,
+    Utils, WaitForExternalEventAction
+} from "./classes";
 
 /** @hidden */
 const log = debug("orchestrator");
 
 /** @hidden */
 export class Orchestrator {
+    private currentUtcDateTime: Date;
     private customStatus: unknown;
+    private newGuidCounter: number;
 
     constructor(public fn: (context: IFunctionContext) => IterableIterator<unknown>) { }
 
@@ -29,14 +34,21 @@ export class Orchestrator {
 
         const state: HistoryEvent[] = orchestrationBinding.history;
         const input: unknown = orchestrationBinding.input;
+        const instanceId: string = orchestrationBinding.instanceId;
 
         // Initialize currentUtcDateTime
         let decisionStartedEvent: HistoryEvent = state.find((e) =>
             (e.EventType === HistoryEventType.OrchestratorStarted));
+        this.currentUtcDateTime = decisionStartedEvent
+            ? decisionStartedEvent.Timestamp
+            : undefined;
+        
+        // Reset newGuidCounter
+        this.newGuidCounter = 0;
 
         // Create durable orchestration context
         context.df = {
-            instanceId: orchestrationBinding.instanceId,
+            instanceId,
             isReplaying: orchestrationBinding.isReplaying,
             parentInstanceId: orchestrationBinding.parentInstanceId,
             callActivity: this.callActivity.bind(this, state),
@@ -46,15 +58,14 @@ export class Orchestrator {
             continueAsNew: this.continueAsNew.bind(this, state),
             createTimer: this.createTimer.bind(this, state),
             getInput: this.getInput.bind(this, input),
+            newGuid: this.newGuid.bind(this, instanceId),
             setCustomStatus: this.setCustomStatus.bind(this),
             waitForExternalEvent: this.waitForExternalEvent.bind(this, state),
             Task: {
                 all: this.all.bind(this, state),
                 any: this.any.bind(this, state),
             },
-            currentUtcDateTime: decisionStartedEvent
-                ? decisionStartedEvent.Timestamp
-                : undefined,
+            currentUtcDateTime: this.currentUtcDateTime,
         };
 
         // Setup
@@ -102,7 +113,9 @@ export class Orchestrator {
                 decisionStartedEvent = state.find((e) =>
                     e.EventType === HistoryEventType.OrchestratorStarted &&
                     e.Timestamp > decisionStartedEvent.Timestamp);
-                context.df.currentUtcDateTime = decisionStartedEvent ? decisionStartedEvent.Timestamp : undefined;
+                context.df.currentUtcDateTime = this.currentUtcDateTime = decisionStartedEvent
+                    ? decisionStartedEvent.Timestamp
+                    : undefined;
 
                 g = gen.next(partialResult ? partialResult.result : undefined);
             }
@@ -314,6 +327,12 @@ export class Orchestrator {
 
     private getInput(input: unknown): unknown {
         return input;
+    }
+
+    private newGuid(instanceId: string): string {
+        const guidNameValue = `${instanceId}_${this.currentUtcDateTime.valueOf()}_${this.newGuidCounter}`;
+        this.newGuidCounter++;
+        return GuidManager.createDeterministicGuid(GuidManager.UrlNamespaceValue, guidNameValue);
     }
 
     private setCustomStatus(customStatusObject: unknown): void {

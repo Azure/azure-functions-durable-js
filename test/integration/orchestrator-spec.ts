@@ -982,6 +982,41 @@ describe("Orchestrator", () => {
         });
     });
 
+    describe("newGuid()", () => {
+        it("generates consistent GUIDs", () => {
+            const orchestrator = TestOrchestrations.GuidGenerator;
+            const currentUtcDateTime = moment.utc().toDate();
+            const instanceId = uuidv1();
+
+            const mockContext1 = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "GuidGenerator",
+                        currentUtcDateTime,
+                    ),
+                    undefined,
+                    instanceId,
+                ),
+            });
+            const mockContext2 = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "GuidGenerator",
+                        currentUtcDateTime,
+                    ),
+                    undefined,
+                    instanceId,
+                ),
+            });            
+
+            orchestrator(mockContext1);
+            orchestrator(mockContext2);
+
+            expect(mockContext1.doneValue.isDone).to.equal(true);
+            expect(mockContext1.doneValue).to.deep.equal(mockContext2.doneValue);
+        });
+    });
+
     describe("setCustomStatus()", () => {
         it("sets a custom status", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithCustomStatus;
