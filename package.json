@@ -1,6 +1,6 @@
 {
   "name": "durable-functions",
-  "version": "1.1.5",
+  "version": "1.2.0",
   "description": "Durable Functions library for Node.js Azure Functions",
   "license": "MIT",
   "repository": "github:Azure/azure-functions-durable-js",
