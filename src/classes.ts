@@ -49,9 +49,10 @@ export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
 export { HttpCreationPayload } from "./httpcreationpayload";
 export { HttpManagementPayload } from "./httpmanagementpayload";
 
-export { IRequest } from "./irequest";
 export { IHttpRequest } from "./ihttprequest";
 export { IHttpResponse } from "./ihttpresponse";
 
 export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
 export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
+
+export { GuidManager } from "./guidmanager";
