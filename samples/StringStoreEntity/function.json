@@ -1,0 +1,11 @@
+{
+    "bindings": [
+      {
+        "name": "context",
+        "type": "entityTrigger",
+        "entityName": "StringStore",
+        "direction": "in"
+      }
+    ],
+    "disabled": false
+  }

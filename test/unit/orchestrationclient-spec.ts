@@ -1,3 +1,4 @@
+import { HttpRequest } from "@azure/functions";
 import chai = require("chai");
 import chaiAsPromised = require("chai-as-promised");
 import "mocha";
@@ -56,9 +57,12 @@ describe("Orchestration Client", () => {
     describe("createCheckStatusResponse()", () => {
         it(`returns a proper response object from request.url`, async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
-            const requestObj = {
-                url: defaultRequestUrl,
+            const requestObj: HttpRequest = {
                 method: "GET",
+                url: defaultRequestUrl,
+                headers: { },
+                query: { },
+                params: { },
             };
 
             const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
@@ -471,10 +475,10 @@ describe("Orchestration Client", () => {
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
                 })
-                .reply(500);
+                .reply(404);
 
             await expect(client.rewind(testId, testReason)).to.be
-                .rejectedWith(`Webhook returned unrecognized status code 500`);
+                .rejectedWith(`No instance with ID '${testId}' found.`);
             expect(scope.isDone()).to.be.equal(true);
         });
     });
@@ -615,9 +619,12 @@ describe("Orchestration Client", () => {
     });
 
     describe("waitForCompletionOrCreateCheckStatusResponse()", () => {
-        const defaultRequest = {
+        const defaultRequest: HttpRequest = {
             url: defaultRequestUrl,
             method: "GET",
+            headers: { },
+            query: { },
+            params: { },
         };
         const defaultTimeout = 50;
         const defaultInterval = 10;

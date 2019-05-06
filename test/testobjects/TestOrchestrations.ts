@@ -46,6 +46,16 @@ export class TestOrchestrations {
         return totalBytes;
     });
 
+    public static GuidGenerator: any = df.orchestrator(function*(context: any) {
+        const outputs: string[] = [];
+
+        for (let i = 0; i < 3; i++) {
+            outputs.push(context.df.newGuid());
+        }
+
+        return outputs;
+    });
+
     public static SayHelloInline: any = df.orchestrator(function*(context: any) {
         const input = context.df.getInput();
         return `Hello, ${input}!`;

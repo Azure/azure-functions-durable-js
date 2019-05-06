@@ -1,12 +1,6 @@
+import { Context } from "@azure/functions";
 import { DurableOrchestrationContext } from "./classes";
 
-/**
- * Adapted from IContext in [Azure Functions' node.js worker.](https://github.com/Azure/azure-functions-nodejs-worker)
- */
-export interface IFunctionContext {
-    bindings: {
-        [key: string]: object;
-    };
+export interface IFunctionContext extends Context {
     df: DurableOrchestrationContext;
-    done: (err?: unknown, result?: unknown) => void;
 }
