@@ -6,7 +6,7 @@ import { CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAct
     SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
     SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFailedEvent,
     TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask,
-    Utils, WaitForExternalEventAction
+    Utils, WaitForExternalEventAction,
 } from "./classes";
 
 /** @hidden */
@@ -42,7 +42,7 @@ export class Orchestrator {
         this.currentUtcDateTime = decisionStartedEvent
             ? decisionStartedEvent.Timestamp
             : undefined;
-        
+
         // Reset newGuidCounter
         this.newGuidCounter = 0;
 
