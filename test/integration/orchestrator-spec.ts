@@ -9,7 +9,7 @@ import {
     OrchestratorState, RetryOptions, WaitForExternalEventAction,
 } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
-import { TestOrchestrations } from "../testobjects/testorchestrations";
+import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 
 describe("Orchestrator", () => {
     it("handles a simple orchestration function (no activity functions)", async () => {
@@ -1007,7 +1007,7 @@ describe("Orchestrator", () => {
                     undefined,
                     instanceId,
                 ),
-            });            
+            });
 
             orchestrator(mockContext1);
             orchestrator(mockContext2);
