@@ -186,6 +186,96 @@ describe("Orchestration Client", () => {
             expect(result).to.be.deep.equal(expectedStatus);
         });
 
+        it("calls expected webhook when showHistory = true", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedStatus = new DurableOrchestrationStatus(
+                defaultOrchestrationName,
+                defaultInstanceId,
+                null,
+                null,
+                null,
+                null,
+                OrchestrationRuntimeStatus.Pending,
+                null,
+                null);
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                + "&showHistory=true");
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObj: { [ key: string]: string }) => {
+                    const queryObj = getQueryObjectFromSearchParams(expectedWebhookUrl);
+                    return haveSameQuery(queryObj, actualQueryObj);
+                })
+                .reply(202, expectedStatus);
+
+            const result = await client.getStatus(defaultInstanceId, true);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedStatus);
+        });
+
+        it("calls expected webhook when showHistoryOutput = true", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedStatus = new DurableOrchestrationStatus(
+                defaultOrchestrationName,
+                defaultInstanceId,
+                null,
+                null,
+                null,
+                null,
+                OrchestrationRuntimeStatus.Pending,
+                null,
+                null);
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                + "&showHistoryOutput=true");
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObj: { [ key: string]: string }) => {
+                    const queryObj = getQueryObjectFromSearchParams(expectedWebhookUrl);
+                    return haveSameQuery(queryObj, actualQueryObj);
+                })
+                .reply(202, expectedStatus);
+
+            const result = await client.getStatus(defaultInstanceId, false, true);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedStatus);
+        });
+
+        it("calls expected webhook when showInput = false", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedStatus = new DurableOrchestrationStatus(
+                defaultOrchestrationName,
+                defaultInstanceId,
+                null,
+                null,
+                null,
+                null,
+                OrchestrationRuntimeStatus.Pending,
+                null,
+                null);
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                + "&showInput=false");
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObj: { [ key: string]: string }) => {
+                    const queryObj = getQueryObjectFromSearchParams(expectedWebhookUrl);
+                    return haveSameQuery(queryObj, actualQueryObj);
+                })
+                .reply(202, expectedStatus);
+
+            const result = await client.getStatus(defaultInstanceId, false, false, false);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedStatus);
+        });
+
         // TODO: test status codes individually
     });
 
@@ -913,4 +1003,15 @@ function getQueryObjectFromSearchParams(requestUrl: url.URL) {
         queryObject[name] = value;
     });
     return queryObject;
+}
+
+function haveSameQuery(
+    expectedQueryObj: { [key: string]: string },
+    actualQueryObj: { [key: string]: string }): boolean {
+    for (const prop in expectedQueryObj) {
+        if (actualQueryObj[prop] !== expectedQueryObj[prop]) {
+            return false;
+        }
+    }
+    return true;
 }
