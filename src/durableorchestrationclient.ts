@@ -100,6 +100,7 @@ export class DurableOrchestrationClient {
     private readonly runtimeStatusQueryKey = "runtimeStatus";
     private readonly showHistoryQueryKey = "showHistory";
     private readonly showHistoryOutputQueryKey = "showHistoryOutput";
+    private readonly showInputQueryKey = "showInput";
 
     private urlValidationOptions: ValidatorJS.IsURLOptions = {
         protocols: ["http", "https"],
@@ -175,6 +176,7 @@ export class DurableOrchestrationClient {
         instanceId: string,
         showHistory?: boolean,
         showHistoryOutput?: boolean,
+        showInput?: boolean,
         ): Promise<DurableOrchestrationStatus> {
         const template = this.clientData.managementUrls.statusQueryGetUri;
         const idPlaceholder = this.clientData.managementUrls.id;
@@ -185,6 +187,9 @@ export class DurableOrchestrationClient {
         }
         if (showHistoryOutput) {
             webhookUrl += `&${this.showHistoryOutputQueryKey}=${showHistoryOutput}`;
+        }
+        if (showInput === false) {
+            webhookUrl += `&${this.showInputQueryKey}=${showInput}`;
         }
 
         try {
