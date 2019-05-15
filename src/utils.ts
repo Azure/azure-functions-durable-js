@@ -1,5 +1,3 @@
-import { Constants } from "./classes";
-
 /** @hidden */
 export class Utils {
     public static getInstancesOf<T>(collection: { [index: string]: unknown }, typeInstance: T): T[] {

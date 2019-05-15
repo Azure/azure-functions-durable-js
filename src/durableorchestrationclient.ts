@@ -5,9 +5,9 @@ import process = require("process");
 import url = require("url");
 import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagementPayload, IFunctionContext,
-    IHttpRequest, IHttpResponse, OrchestrationClientInputData, OrchestrationRuntimeStatus, Utils,
+    IHttpRequest, IHttpResponse, OrchestrationClientInputData, OrchestrationRuntimeStatus,
+    PurgeHistoryResult, Utils,
 } from "./classes";
-
 /**
  * Returns an OrchestrationClient instance.
  * @param context The context object of the Azure function whose body
@@ -269,6 +269,86 @@ export class DurableOrchestrationClient {
                 return Promise.reject(new Error(`Webhook returned status code ${response.status}: ${response.data}`));
             } else {
                 return response.data as DurableOrchestrationStatus[];
+            }
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
+            throw error.message;
+        }
+    }
+
+    /**
+     * Purge the history for a concerete instance.
+     * @param instanceId The ID of the orchestration instance to purge.
+     */
+    public async purgeInstanceHistory(instanceId: string): Promise<PurgeHistoryResult> {
+        const template = this.clientData.managementUrls.purgeHistoryDeleteUri;
+        const idPlaceholder = this.clientData.managementUrls.id;
+
+        const webhookUrl = template.replace(idPlaceholder, instanceId);
+
+        try {
+            const response = await this.axiosInstance.delete(webhookUrl);
+            switch (response.status) {
+                case 200: // instance found
+                    return response.data as PurgeHistoryResult;
+                case 404: // instance not found
+                    return new PurgeHistoryResult(0);
+                default:
+                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+            }
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
+            throw error.message;
+        }
+    }
+
+    /**
+     * Purge the orchestration history for isntances that match the conditions.
+     * @param createdTimeFrom Start creation time for querying instances for
+     *  purging.
+     * @param createdTimeTo End creation time fo rquerying instanes for
+     *  purging.
+     * @param runtimeStatus List of runtime statuses for querying instances for
+     *  purging. Only Completed, Terminated or Failed will be processed.
+     */
+    public async purgeInstanceHistoryBy(
+        createdTimeFrom: Date,
+        createdTimeTo?: Date,
+        runtimeStatus?: OrchestrationRuntimeStatus[],
+        ): Promise<PurgeHistoryResult> {
+        const idPlaceholder = this.clientData.managementUrls.id;
+        let requestUrl = this.clientData.managementUrls.statusQueryGetUri
+        .replace(idPlaceholder, "");
+
+        if (!(createdTimeFrom instanceof Date)) {
+            throw new Error("createdTimeFrom must be a valid Date");
+        }
+
+        if (createdTimeFrom) {
+            requestUrl += `&${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`;
+        }
+
+        if (createdTimeTo) {
+            requestUrl += `&${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`;
+        }
+
+        if (runtimeStatus && runtimeStatus.length > 0) {
+            const statusesString = runtimeStatus
+                .map((value) => value.toString())
+                .reduce((acc, curr, i, arr) => {
+                    return acc + (i > 0 ? "," : "") + curr;
+            });
+
+            requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+        }
+
+        try {
+            const response = await this.axiosInstance.delete(requestUrl);
+            switch (response.status) {
+                case 200: // instance found
+                    return response.data as PurgeHistoryResult;
+                case 404: // instance not found
+                    return new PurgeHistoryResult(0);
+                default:
+                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
             }
         } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;

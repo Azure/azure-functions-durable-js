@@ -17,5 +17,7 @@ export class HttpManagementPayload {
         public readonly terminatePostUri: string,
         /** The HTTP POST instance rewind endpoint. */
         public readonly rewindPostUri: string,
+        /** The HTTP DELETE purge endpoint. */
+        public readonly purgeHistoryDeleteUri: string,
     ) { }
 }
