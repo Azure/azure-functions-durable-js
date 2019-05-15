@@ -6,7 +6,7 @@ import nock = require("nock");
 import url = require("url");
 import uuidv1 = require("uuid/v1");
 import { Constants, DurableOrchestrationClient, DurableOrchestrationStatus,
-    HttpManagementPayload, OrchestrationRuntimeStatus } from "../../src/classes";
+    HttpManagementPayload, OrchestrationRuntimeStatus, PurgeHistoryResult } from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 
@@ -388,6 +388,122 @@ describe("Orchestration Client", () => {
         });
     });
 
+    describe("purgeInstanceHistory()", () => {
+        beforeEach(async () => {
+            nock.cleanAll();
+        });
+
+        afterEach(async () => {
+            nock.cleanAll();
+        });
+
+        it("calls expected webhook and returns expected result when instance exists", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedResult = new PurgeHistoryResult(1);
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, defaultInstanceId));
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .delete(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(200, expectedResult);
+
+            const result = await client.purgeInstanceHistory(defaultInstanceId);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedResult);
+        });
+
+        it("calls expected webhook and returns expected result when instance does not exist", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedResult = new PurgeHistoryResult(0);
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, defaultInstanceId));
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .delete(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(404);
+
+            const result = await client.purgeInstanceHistory(defaultInstanceId);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedResult);
+        });
+    });
+
+    describe("purgeInstanceHistoryBy()", () => {
+        beforeEach(async () => {
+            nock.cleanAll();
+        });
+
+        afterEach(async () => {
+            nock.cleanAll();
+        });
+
+        it("throws if createdTimeFrom is not a valid date", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            await expect(client.purgeInstanceHistoryBy(undefined, undefined, undefined))
+                .to.be.rejectedWith("createdTimeFrom must be a valid Date");
+        });
+
+        it("calls expected webhook with all filters and returns expected result when instance(s) found", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const createdTimeTo = new Date();
+            const createdTimeFrom = new Date(createdTimeTo.getTime() - 1000 * 60 * 60 * 24 * 3);    // last three days
+            const runtimeStatuses = [ OrchestrationRuntimeStatus.Failed, OrchestrationRuntimeStatus.Terminated ];
+
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.purgeHistoryDeleteUri
+                .replace(TestConstants.idPlaceholder, "")
+                .concat(`&createdTimeFrom=${createdTimeFrom.toISOString()}`)
+                .concat(`&createdTimeTo=${createdTimeTo.toISOString()}`)
+                .concat("&runtimeStatus=Failed,Terminated"));
+
+            const expectedResult = new PurgeHistoryResult(3);
+            const scope = nock(expectedWebhookUrl.origin)
+                .delete(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(200, expectedResult);
+
+            const result = await client.purgeInstanceHistoryBy(createdTimeFrom, createdTimeTo, runtimeStatuses);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedResult);
+        });
+
+        it("calls expected webhook with some filters and returns expected result when no instance(s) found", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const createdTimeTo = new Date();
+            const createdTimeFrom = new Date(createdTimeTo.getTime() - 1000 * 60 * 60 * 24 * 3);    // last three days
+            const runtimeStatuses = [ OrchestrationRuntimeStatus.Failed, OrchestrationRuntimeStatus.Terminated ];
+
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, "")
+                .concat(`&createdTimeFrom=${createdTimeFrom.toISOString()}`)
+                .concat("&runtimeStatus=Failed,Terminated"));
+
+            const expectedResult = new PurgeHistoryResult(0);
+            const scope = nock(expectedWebhookUrl.origin)
+                .delete(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(404);
+
+            const result = await client.purgeInstanceHistoryBy(createdTimeFrom, undefined, runtimeStatuses);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedResult);
+        });
+    });
+
     describe("raiseEvent()", () => {
         const defaultTestEvent = "test";
         const defaultTestData = 42;
@@ -592,7 +708,7 @@ describe("Orchestration Client", () => {
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
                 })
-                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", ""));
+                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "", ""));
 
             const result = await client.startNew(functionName);
             expect(scope.isDone()).to.be.equal(true);
@@ -614,7 +730,7 @@ describe("Orchestration Client", () => {
                 .query(() => {
                     return getQueryObjectFromSearchParams(expectedWebhookUrl);
                 })
-                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", ""));
+                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "", ""));
 
             const result = await client.startNew(functionName, defaultInstanceId, testData);
             expect(scope.isDone()).to.be.equal(true);

@@ -54,5 +54,6 @@ export { IHttpResponse } from "./ihttpresponse";
 
 export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
 export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
+export { PurgeHistoryResult } from "./purgehistoryresult";
 
 export { GuidManager } from "./guidmanager";
