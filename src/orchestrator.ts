@@ -40,7 +40,7 @@ export class Orchestrator {
         let decisionStartedEvent: HistoryEvent = state.find((e) =>
             (e.EventType === HistoryEventType.OrchestratorStarted));
         this.currentUtcDateTime = decisionStartedEvent
-            ? decisionStartedEvent.Timestamp
+            ? new Date(decisionStartedEvent.Timestamp)
             : undefined;
 
         // Reset newGuidCounter
@@ -114,7 +114,7 @@ export class Orchestrator {
                     e.EventType === HistoryEventType.OrchestratorStarted &&
                     e.Timestamp > decisionStartedEvent.Timestamp);
                 context.df.currentUtcDateTime = this.currentUtcDateTime = decisionStartedEvent
-                    ? decisionStartedEvent.Timestamp
+                    ? new Date(decisionStartedEvent.Timestamp)
                     : undefined;
 
                 g = gen.next(partialResult ? partialResult.result : undefined);
