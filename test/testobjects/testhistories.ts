@@ -177,13 +177,162 @@ export class TestHistories {
                     taskScheduledId: 2,
                 },
             ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(4, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(4, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(3),
+                    taskScheduledId: 3,
+                },
+            ),
+        ]);
+    }
+
+    public static GetFanOutFanInDiskUsageFaulted(firstTimestamp: Date, files: string[]): HistoryEvent[] {
+        const firstMoment = moment(firstTimestamp);
+
+        return [
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: "FanOutFanInDiskUsage",
+                    input: undefined,
+                },
+            ),
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "GetFileList",
+                    input: "C:\\Dev",
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(files),
+                    taskScheduledId: 0,
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+        ].concat(files.map((file, index) => new TaskScheduledEvent(
+            {
+                eventId: index + 1,
+                timestamp: firstMoment.add(2, "s").toDate(),
+                isPlayed: false,
+                name: "GetFileSize",
+                input: file,
+            },
+        ))).concat(
+        [
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
             new TaskCompletedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(3, "s").toDate(),
                     isPlayed: false,
-                    result: JSON.stringify(3),
+                    result: JSON.stringify(1),
+                    taskScheduledId: 1,
+                },
+            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(3, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(2),
+                    taskScheduledId: 2,
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(4, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new TaskFailedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(4, "s").toDate(),
+                    isPlayed: false,
                     taskScheduledId: 3,
+                    reason: "Activity function 'GetFileSize' failed: Could not find file.",
+                    details: "Serialized System.Exception here",
                 },
             ),
         ]);

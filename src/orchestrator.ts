@@ -94,10 +94,14 @@ export class Orchestrator {
                         }),
                     );
                     return;
-                } else if (partialResult instanceof Task && partialResult.isFaulted) {
+                }
+
+                if ((partialResult instanceof Task || partialResult instanceof TaskSet) && partialResult.isFaulted) {
                     g = gen.throw(partialResult.exception);
                     continue;
-                } else if (g.done) {
+                }
+
+                if (g.done) {
                     log("Iterator is done");
                     context.done(null,
                         new OrchestratorState({
@@ -359,15 +363,20 @@ export class Orchestrator {
             return [...accumulator, currentValue.action];
         }, []);
 
+        const faulted = tasks.filter((r) => r.isFaulted);
+        if (faulted.length > 0) {
+            return new TaskSet(true, true, allActions, undefined, faulted[0].exception);
+        }
+
         const isCompleted = tasks.every((r) => r.isCompleted);
         if (isCompleted) {
             const results = tasks.reduce((acc, t) => {
                 return [...acc, t.result];
             }, []);
 
-            return new TaskSet(isCompleted, allActions, results);
+            return new TaskSet(isCompleted, false, allActions, results);
         } else {
-            return new TaskSet(isCompleted, allActions);
+            return new TaskSet(isCompleted, false, allActions);
         }
     }
 
@@ -386,9 +395,9 @@ export class Orchestrator {
 
         const firstCompleted = completedTasks[0];
         if (firstCompleted) {
-            return new TaskSet(true, allActions, firstCompleted);
+            return new TaskSet(true, false, allActions, firstCompleted);
         } else {
-            return new TaskSet(false, allActions);
+            return new TaskSet(false, false, allActions);
         }
     }
 

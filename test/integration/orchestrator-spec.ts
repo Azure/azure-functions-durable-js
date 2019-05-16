@@ -1213,6 +1213,37 @@ describe("Orchestrator", () => {
             );
         });
 
+        it("Task.all throws if a parallel task has faulted", async () => {
+            const orchestrator = TestOrchestrations.FanOutFanInDiskUsage;
+            const filePaths = ["file1.txt", "file2.png", "file3.csx"];
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo (
+                    TestHistories.GetFanOutFanInDiskUsageFaulted(
+                        moment.utc().toDate(),
+                        filePaths,
+                    ),
+                    "C:\\Dev",
+                ),
+            });
+
+            const expectedErr = "Activity function 'GetFileSize' failed: Could not find file.";
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.include(
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
+                    [
+                        [ new CallActivityAction("GetFileList", "C:\\Dev")],
+                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
+                    ],
+                }),
+            );
+            expect(mockContext.doneValue.error).to.include(expectedErr);
+            expect(mockContext.err.toString()).to.include(expectedErr);
+        });
+
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
             const orchestrator = TestOrchestrations.AnyAOrB;
             const completeInOrder = true;
