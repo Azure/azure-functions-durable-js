@@ -12,6 +12,8 @@ import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 
 describe("Orchestrator", () => {
+    const falsyValues = [ false, 0, "", null, undefined, NaN ];  
+  
     it("handles a simple orchestration function (no activity functions)", async () => {
         const orchestrator = TestOrchestrations.SayHelloInline;
         const name = "World";
@@ -33,6 +35,37 @@ describe("Orchestrator", () => {
                 output: `Hello, ${name}!`,
             }),
         );
+    });
+
+    falsyValues.forEach((falsyValue) => {
+        it(`handles an orchestration function that returns ${falsyValue === "" ? "empty string" : falsyValue}`, async () => {
+            const orchestrator = TestOrchestrations.PassThrough;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "PassThrough",
+                        moment.utc().toDate(),
+                        falsyValue
+                    ),
+                    falsyValue,
+                ),
+            });
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions: [],
+                    output: falsyValue,
+                })
+            );
+            if (isNaN(falsyValue as number)) {
+                expect(isNaN(mockContext.doneValue.output as number)).to.equal(true);
+            } else {
+                expect(mockContext.doneValue.output).to.equal(falsyValue);
+            }
+            expect(mockContext.err).to.equal(null);
+        });
     });
 
     describe("Properties", () => {
@@ -188,6 +221,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("ThrowsErrorActivity")],
@@ -217,6 +251,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("Hello", name) ],
@@ -240,6 +275,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("ReturnsFour") ],
@@ -249,9 +285,8 @@ describe("Orchestrator", () => {
         });
 
         describe("Falsy Input", () => {
-            const falsyValues = [ false, 0, "", null, undefined, NaN ];
             falsyValues.forEach((falsyValue) => {
-                it(`schedules an activity function with falsy input ${falsyValue}`, async () => {
+                it(`schedules an activity function with input ${falsyValue}`, async () => {
                     const orchestrator = TestOrchestrations.SayHelloWithActivity;
                     const mockContext = new MockContext({
                         context: new DurableOrchestrationBindingInfo(
@@ -268,6 +303,7 @@ describe("Orchestrator", () => {
                     expect(mockContext.doneValue).to.be.deep.equal(
                         new OrchestratorState({
                             isDone: false,
+                            output: undefined,
                             actions:
                             [
                                 [ new CallActivityAction("Hello", falsyValue) ],
@@ -381,6 +417,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.an("object").that.deep.include(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions: [],
                 }),
             );
@@ -408,6 +445,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [
@@ -440,6 +478,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [
@@ -470,6 +509,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions: [
                         [
                             new CallActivityWithRetryAction(
@@ -572,6 +612,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallSubOrchestratorAction("SayHelloWithActivity", childId, name) ],
@@ -600,6 +641,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallSubOrchestratorAction("SayHelloWithActivity", undefined, name) ],
@@ -725,6 +767,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [
@@ -763,6 +806,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [
@@ -800,6 +844,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [
@@ -914,6 +959,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new ContinueAsNewAction({ value: 6 }) ],
@@ -944,6 +990,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CreateTimerAction(fireAt) ],
@@ -1037,6 +1084,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.deep.eq(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("Hello", "Tokyo") ],
@@ -1066,6 +1114,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new WaitForExternalEventAction("start") ],
@@ -1093,6 +1142,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new WaitForExternalEventAction("start") ],
@@ -1121,6 +1171,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new WaitForExternalEventAction("start") ],
@@ -1149,6 +1200,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("GetFileList", "C:\\Dev")],
@@ -1176,6 +1228,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("GetFileList", "C:\\Dev")],
@@ -1233,6 +1286,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.include(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("GetFileList", "C:\\Dev")],
