@@ -89,6 +89,7 @@ export class Orchestrator {
                         null,
                         new OrchestratorState({
                             isDone: false,
+                            output: undefined,
                             actions,
                             customStatus: this.customStatus,
                         }),
@@ -129,6 +130,7 @@ export class Orchestrator {
                 error,
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions,
                     error: error.stack,
                     customStatus: this.customStatus,
@@ -553,7 +555,7 @@ export class Orchestrator {
     }
 
     private shouldFinish(result: unknown): boolean {
-        return Object.prototype.hasOwnProperty.call(result, "isCompleted") && !(result as Task).isCompleted
+        return result && Object.prototype.hasOwnProperty.call(result, "isCompleted") && !(result as Task).isCompleted
             || result instanceof Task && result.action instanceof ContinueAsNewAction;
     }
 }

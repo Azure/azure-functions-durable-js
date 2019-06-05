@@ -56,6 +56,11 @@ export class TestOrchestrations {
         return outputs;
     });
 
+    public static PassThrough: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput();
+        return input;
+    });
+
     public static SayHelloInline: any = df.orchestrator(function*(context: any) {
         const input = context.df.getInput();
         return `Hello, ${input}!`;
