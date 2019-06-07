@@ -13,10 +13,9 @@ A clear and concise description of what the bug is. Please make an effort to fil
 **Investigative information**
 
 - Durable Functions extension version:
-- Function App version (1.0 or 2.0):
+- durable-functions npm module version:
 - Language (JavaScript/TypeScript) and version:
 - Node.js version:
-- durable-functions npm module version:
 
 ***If deployed to Azure App Service***
 
