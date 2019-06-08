@@ -26,7 +26,7 @@ jobs:
     inputs:
       versionSpec: $(NODE_VERSION)
     displayName: 'Install Node.js'
-  - script: npm Install
+  - script: npm install
     displayName: 'npm install'
-  - script: npm build and test
-    displayName: 'npm run test'
+  - script: npm run test
+    displayName: 'npm build and test'
