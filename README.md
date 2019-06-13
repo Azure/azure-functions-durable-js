@@ -69,7 +69,7 @@ module.exports = df.orchestrator(function*(context){
 
 **Note:** Orchestrator functions must follow certain [code constraints.](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-checkpointing-and-replay#orchestrator-code-constraints)
 
-7. Write your client function ([see sample]((./samples/HttpStart/))):
+7. Write your client function ([see sample](./samples/HttpStart/)):
 ```javascript
 module.exports = async function (context, req) {
     const client = df.getClient(context);
