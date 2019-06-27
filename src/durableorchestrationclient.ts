@@ -127,6 +127,7 @@ export class DurableOrchestrationClient {
                     "Content-Type": "application/json",
                 },
             },
+            maxContentLength: Infinity,
         });
         this.taskHubName = this.clientData.taskHubName;
         this.uniqueWebhookOrigins = this.extractUniqueWebhookOrigins(this.clientData);
