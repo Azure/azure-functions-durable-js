@@ -1,4 +1,5 @@
-import { HttpCreationPayload, HttpManagementPayload, OrchestrationClientInputData } from "../../src/classes";
+import { HttpCreationPayload, HttpEntityPayload, HttpManagementPayload,
+    OrchestrationClientInputData } from "../../src/classes";
 import { TestConstants } from "./testconstants";
 
 export class TestUtils {
@@ -11,6 +12,7 @@ export class TestUtils {
             taskHub,
             TestUtils.createHttpCreationPayload(host, taskHub, connection),
             TestUtils.createHttpManagementPayload(id, host, taskHub, connection),
+            TestUtils.createEntityManagementUrl(host, taskHub, connection),
         );
     }
 
@@ -53,6 +55,19 @@ export class TestUtils {
             TestConstants.purgeDeleteUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
+                .replace(TestConstants.taskHubPlaceholder, taskHub)
+                .replace(TestConstants.connectionPlaceholder, connection),
+        );
+    }
+
+    public static createEntityManagementUrl(host: string, taskHub: string, connection: string) {
+        return new HttpEntityPayload(
+            TestConstants.entityGetUriTemplate
+                .replace(TestConstants.hostPlaceholder, host)
+                .replace(TestConstants.taskHubPlaceholder, taskHub)
+                .replace(TestConstants.connectionPlaceholder, connection),
+            TestConstants.entityPostUriTemplate
+                .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
         );

@@ -43,7 +43,7 @@ export function getClient(context: unknown): DurableOrchestrationClient {
 function getClientData(context: IFunctionContext): OrchestrationClientInputData {
     const matchingInstances = Utils.getInstancesOf<OrchestrationClientInputData>(
         (context as IFunctionContext).bindings,
-        new OrchestrationClientInputData(undefined, undefined, undefined));
+        new OrchestrationClientInputData(undefined, undefined, undefined, undefined));
 
     if (!matchingInstances || matchingInstances.length === 0) {
         throw new Error("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
@@ -96,9 +96,12 @@ export class DurableOrchestrationClient {
 
     private readonly axiosInstance: AxiosInstance;
 
+    private readonly entityNamePlaceholder = "{entityName}";
+    private readonly entityKeyPlaceholder = "{entityKey?}";
     private readonly eventNamePlaceholder = "{eventName}";
     private readonly functionNamePlaceholder = "{functionName}";
     private readonly instanceIdPlaceholder = "[/{instanceId}]";
+    private readonly operationPlaceholder = "{operation}";
     private readonly reasonPlaceholder = "{text}";
 
     private readonly createdTimeFromQueryKey = "createdTimeFrom";
@@ -408,30 +411,31 @@ export class DurableOrchestrationClient {
      * @returns A response containing the current state of the entity.
      */
     public async readEntityState<T>(entityId: EntityId, taskHubName?: string, connectionName?: string): Promise<EntityStateResponse<T>> {
-        const instanceId = EntityId.getSchedulerIdFromEntityId(entityId);
+        let requestUrl = this.clientData.entityUrls.readEntityStateGetUri
+            .replace(this.entityNamePlaceholder, entityId.entityName)
+            .replace(this.entityKeyPlaceholder, entityId.entityKey);
 
-        const options: GetStatusOptions = {
-            instanceId,
-            taskHubName,
-            connectionName,
-        };
+        if (taskHubName) {
+            requestUrl = requestUrl.replace(this.clientData.taskHubName, taskHubName);
+        }
 
-        let status: DurableOrchestrationStatus;
+        if (connectionName) {
+            requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + connectionName);
+        }
+
         try {
-            const response = await this.getStatusInternal(options);
-            status = response.data as DurableOrchestrationStatus;
-        } catch (err) {
-            throw err.message;
-        }
-        if (status && status.input) {
-            const schedulerState = status.input as SchedulerState;
-
-            if (schedulerState.exists) {
-                return new EntityStateResponse(true, JSON.parse(schedulerState.state));
+            const response = await this.axiosInstance.get(requestUrl);
+            switch (response.status) {
+                case 200:   // entity exists
+                    return new EntityStateResponse(true, response.data as T);
+                case 404:   // entity does not exist
+                    return new EntityStateResponse(false, undefined);
+                default:
+                        return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
             }
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
+            throw error.message;
         }
-
-        return new EntityStateResponse(false, undefined);
     }
 
     /**
@@ -475,24 +479,35 @@ export class DurableOrchestrationClient {
      */
     public async signalEntity(
         entityId: EntityId,
-        operationName: string,
+        operationName?: string,
         operationContent?: unknown,
         taskHubName?: string,
         connectionName?: string,
         ): Promise<void> {
-        Utils.throwIfEmpty(operationName, "operationName");
+        let requestUrl = this.clientData.entityUrls.signalEntityPostUri
+            .replace(this.entityNamePlaceholder, entityId.entityName)
+            .replace(this.entityKeyPlaceholder, entityId.entityKey)
+            .replace(this.operationPlaceholder, typeof(operationName) === "undefined" ? "" : operationName);
 
-        const instanceId = EntityId.getSchedulerIdFromEntityId(entityId);
-        const request: RequestMessage = {
-            id: uuid(),
-            op: operationName,
-            signal: true,
-            arg: operationContent,
-        };
+        if (taskHubName) {
+            requestUrl = requestUrl.replace(this.clientData.taskHubName, taskHubName);
+        }
 
-        await this.raiseEvent(instanceId, "op", request, taskHubName, connectionName);
+        if (connectionName) {
+            requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + connectionName);
+        }
 
-        // TODO: end to end tracehelper equivalent?
+        try {
+            const response = await this.axiosInstance.post(requestUrl, JSON.stringify(operationContent));
+            switch (response.status) {
+                case 202: // signal accepted
+                    return;
+                default:
+                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+            }
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
+            throw error.message;
+        }
     }
 
     /**

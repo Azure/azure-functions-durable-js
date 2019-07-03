@@ -50,6 +50,7 @@ export { RetryOptions } from "./retryoptions";
 export { DurableOrchestrationClient } from "./durableorchestrationclient";
 export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
 export { HttpCreationPayload } from "./httpcreationpayload";
+export { HttpEntityPayload } from "./httpentitypayload";
 export { HttpManagementPayload } from "./httpmanagementpayload";
 export { GetStatusOptions } from "./getstatusoptions";
 

@@ -37,7 +37,7 @@ export class Orchestrator {
         const state: HistoryEvent[] = orchestrationBinding.history;
         const input: unknown = orchestrationBinding.input;
         const instanceId: string = orchestrationBinding.instanceId;
-        const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
+        // const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
 
         // Initialize currentUtcDateTime
         let decisionStartedEvent: HistoryEvent = state.find((e) =>
@@ -62,8 +62,8 @@ export class Orchestrator {
             continueAsNew: this.continueAsNew.bind(this, state),
             createTimer: this.createTimer.bind(this, state),
             getInput: this.getInput.bind(this, input),
-            isLocked: this.isLocked.bind(this, contextLocks),
-            lock: this.lock.bind(this, state, instanceId, contextLocks),
+            // isLocked: this.isLocked.bind(this, contextLocks),
+            // lock: this.lock.bind(this, state, instanceId, contextLocks),
             newGuid: this.newGuid.bind(this, instanceId),
             setCustomStatus: this.setCustomStatus.bind(this),
             waitForExternalEvent: this.waitForExternalEvent.bind(this, state),

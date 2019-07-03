@@ -166,7 +166,7 @@ export class DurableOrchestrationContext {
      * without lending any locks.
      *
      * @returns [[LockState]]
-     */
+    
     public isLocked(): LockState {
         throw new Error("This is a placeholder.");
     }
@@ -178,7 +178,7 @@ export class DurableOrchestrationContext {
      * locks already.
      *
      * @param entities The entities whose locks should be acquired.
-     */
+    
     public lock(...entities: EntityId[]): DurableLock {
         throw new Error("This is a placeholder.");
     }
