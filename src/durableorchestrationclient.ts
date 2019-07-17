@@ -9,7 +9,7 @@ import uuid = require("uuid/v1");
 import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
     GetStatusOptions, HttpCreationPayload, HttpManagementPayload,
-    IFunctionContext, IHttpRequest, IHttpResponse, OrchestrationClientInputData,
+    IOrchestrationFunctionContext, IHttpRequest, IHttpResponse, OrchestrationClientInputData,
     OrchestrationRuntimeStatus, PurgeHistoryResult, RequestMessage, SchedulerState,
     Utils,
 } from "./classes";
@@ -31,7 +31,7 @@ import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
  * ```
  */
 export function getClient(context: unknown): DurableOrchestrationClient {
-    let clientData = getClientData(context as IFunctionContext);
+    let clientData = getClientData(context as IOrchestrationFunctionContext);
 
     if (!process.env.WEBSITE_HOSTNAME || process.env.WEBSITE_HOSTNAME.includes("0.0.0.0")) {
         clientData = correctClientData(clientData);
@@ -40,9 +40,9 @@ export function getClient(context: unknown): DurableOrchestrationClient {
     return new DurableOrchestrationClient(clientData);
 }
 
-function getClientData(context: IFunctionContext): OrchestrationClientInputData {
+function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
     const matchingInstances = Utils.getInstancesOf<OrchestrationClientInputData>(
-        (context as IFunctionContext).bindings,
+        (context as IOrchestrationFunctionContext).bindings,
         new OrchestrationClientInputData(undefined, undefined, undefined, undefined));
 
     if (!matchingInstances || matchingInstances.length === 0) {

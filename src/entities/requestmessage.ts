@@ -14,6 +14,9 @@ export class RequestMessage {
     /** Whether or not this is a one-way message. */
     public signal?: boolean;    // IsSignal
 
+    /** The operation input. */
+    public input?: string;      // Input
+
     /** The content the operation was called with. */
     public arg?: unknown;       // Content
 

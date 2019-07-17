@@ -17,9 +17,9 @@ export class TestOrchestrations {
        return returnValue;
     });
 
-    public static CallEntityGet: any = df.orchestrator(function*(context: any) {
-        const entity = new df.EntityId("StringStore2", "12345");
-        yield context.df.callEntity(entity, "get");
+    public static CallEntitySet: any = df.orchestrator(function*(context: any) {
+        const entity = context.df.getInput() as df.EntityId;
+        yield context.df.callEntity(entity, "set", "testString");
 
         return "OK";
     });

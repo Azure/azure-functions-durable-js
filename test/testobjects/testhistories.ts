@@ -1,6 +1,8 @@
 import * as moment from "moment";
-import { DurableHttpRequest, DurableHttpResponse, EventRaisedEvent, ExecutionStartedEvent, HistoryEvent, OrchestratorCompletedEvent,
-    OrchestratorStartedEvent, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
+import * as uuidv1 from "uuid/v1";
+import { DurableHttpRequest, DurableHttpResponse, EntityId, EventRaisedEvent, EventSentEvent,
+    ExecutionStartedEvent, HistoryEvent, OrchestratorCompletedEvent, OrchestratorStartedEvent, 
+    SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
     SubOrchestrationInstanceFailedEvent, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent,
     TimerCreatedEvent, TimerFiredEvent } from "../../src/classes";
 
@@ -64,6 +66,71 @@ export class TestHistories {
                     isPlayed: false,
                     result: JSON.stringify(completeInOrder ? "A" : "B"),
                     taskScheduledId: completeInOrder ? 0 : 1,
+                },
+            ),
+        ];
+    }
+
+    public static GetCallEntitySet(firstTimestamp: Date, entityId: EntityId) {
+        const firstMoment = moment(firstTimestamp);
+        const orchestratorId = uuidv1();
+        const messageId = uuidv1();
+
+        return [
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: true,
+                    name: orchestratorId,
+                    input: JSON.stringify(entityId),
+                },
+            ),
+            new EventSentEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: true,
+                    name: "op",
+                    input: JSON.stringify({
+                        id: messageId,
+                        op: "set",
+                        parent: orchestratorId,
+                        timestamp: firstMoment.add(1, "s").toDate(),
+                    }),
+                    instanceId: EntityId.getSchedulerIdFromEntityId(entityId),
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: true,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new EventRaisedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(2, "s").toDate(),
+                    isPlayed: false,
+                    name: messageId,
+                    input: JSON.stringify({
+                        result: null,
+                    }),
                 },
             ),
         ];
