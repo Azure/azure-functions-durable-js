@@ -17,6 +17,6 @@ export class DurableHttpRequest {
         /** The HTTP request URL. */
         public readonly uri: string,
         /** The HTTP request content. */
-        public readonly content: string,
+        public readonly content?: string,
     ) { }
 }
