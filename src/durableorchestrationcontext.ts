@@ -1,4 +1,4 @@
-import { Constants, ITaskMethods, RetryOptions, Task, TimerTask } from "./classes";
+import { DurableHttpRequest, ITaskMethods, RetryOptions, Task, TimerTask } from "./classes";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -111,6 +111,15 @@ export class DurableOrchestrationContext {
         : Task {
             throw new Error("This is a placeholder.");
         }
+
+    /**
+     * Schedules a durable HTTP call to the specified endpoint.
+     *
+     * @param req The durable HTTP request to schedule.
+     */
+    public callHttp(req: DurableHttpRequest): Task {
+        throw new Error("This is a placeholder");
+    }
 
     /**
      * Restarts the orchestration by clearing its history.

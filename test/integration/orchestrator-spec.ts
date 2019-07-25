@@ -12,8 +12,8 @@ import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 
 describe("Orchestrator", () => {
-    const falsyValues = [ false, 0, "", null, undefined, NaN ];  
-  
+    const falsyValues = [ false, 0, "", null, undefined, NaN ];
+
     it("handles a simple orchestration function (no activity functions)", async () => {
         const orchestrator = TestOrchestrations.SayHelloInline;
         const name = "World";
@@ -45,7 +45,7 @@ describe("Orchestrator", () => {
                     TestHistories.GetOrchestratorStart(
                         "PassThrough",
                         moment.utc().toDate(),
-                        falsyValue
+                        falsyValue,
                     ),
                     falsyValue,
                 ),
@@ -57,7 +57,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [],
                     output: falsyValue,
-                })
+                }),
             );
             if (isNaN(falsyValue as number)) {
                 expect(isNaN(mockContext.doneValue.output as number)).to.equal(true);

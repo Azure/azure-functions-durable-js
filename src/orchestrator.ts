@@ -1,6 +1,6 @@
 import * as debug from "debug";
-import { CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction,
+import { CallActivityAction, CallActivityWithRetryAction, CallHttpAction, CallSubOrchestratorAction,
+    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, DurableHttpRequest,
     DurableOrchestrationBindingInfo, EventRaisedEvent, GuidManager, HistoryEvent,
     HistoryEventType, IAction, IFunctionContext, OrchestratorState, RetryOptions,
     SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
@@ -55,6 +55,7 @@ export class Orchestrator {
             callActivityWithRetry: this.callActivityWithRetry.bind(this, state),
             callSubOrchestrator: this.callSubOrchestrator.bind(this, state),
             callSubOrchestratorWithRetry: this.callSubOrchestratorWithRetry.bind(this, state),
+            callHttp: this.callHttp.bind(this, state),
             continueAsNew: this.continueAsNew.bind(this, state),
             createTimer: this.createTimer.bind(this, state),
             getInput: this.getInput.bind(this, input),
@@ -305,6 +306,38 @@ export class Orchestrator {
             false,
             newAction,
         );
+    }
+
+    private callHttp(state: HistoryEvent[], req: DurableHttpRequest): Task {
+        const newAction = new CallHttpAction(req);
+
+        // callHttp is internally implemented as a well-known activity function
+        const httpScheduled = this.findTaskScheduled(state, "Durable:Http:Async:Activity:Function");
+        const httpCompleted = this.findTaskCompleted(state, httpScheduled);
+        const httpFailed = this.findTaskFailed(state, httpScheduled);
+        this.setProcessed([httpScheduled, httpCompleted, httpFailed]);
+
+        if (httpCompleted) {
+            const result = this.parseHistoryEvent(httpCompleted);
+
+            return new Task(true, false, newAction, result, httpCompleted.Timestamp, httpCompleted.TaskScheduledId);
+        } else if (httpFailed) {
+            return new Task(
+                true,
+                true,
+                newAction,
+                httpFailed.Reason,
+                httpFailed.Timestamp,
+                httpFailed.TaskScheduledId,
+                new Error(httpFailed.Reason),
+            );
+        } else {
+            return new Task(
+                false,
+                false,
+                newAction,
+            );
+        }
     }
 
     private continueAsNew(state: HistoryEvent[], input: unknown): Task {
