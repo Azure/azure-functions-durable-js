@@ -134,6 +134,37 @@ export class TestOrchestrations {
         return output;
     });
 
+    /**
+     * This orchestrator and its corresponding history replicate conditions under
+     * which there are not sufficient OrchestratorStartedEvents in the history
+     * array to satisfy the currentUtcDateTime advancement logic.
+     */
+    public static TimestampExhaustion: any = df.orchestrator(function*(context: any) {
+        const payload = context.df.getInput();
+
+        yield context.df.callActivity("Merge");
+
+        if (payload.delayMergeUntilSecs) {
+            const now = new Date(context.df.currentUtcDateTime).getTime();
+            const fireAt = new Date(now + payload.delayMergeUntilSecs * 1000);
+            yield context.df.createTimer(fireAt);
+        }
+
+        let x = 0;
+        do {
+            const result = yield context.df.callActivity("CheckIfMerged");
+            const hasMerged = result.output;
+
+            if (hasMerged) {
+                return "Merge successful";
+            } else {
+                yield context.df.waitForExternalEvent("CheckPrForMerge");
+            }
+
+            x++;
+        } while (x < 10);
+    });
+
     public static WaitForExternalEvent: any = df.orchestrator(function*(context: any) {
         const name = yield context.df.waitForExternalEvent("start");
 

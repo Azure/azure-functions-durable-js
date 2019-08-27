@@ -635,6 +635,306 @@ export class TestHistories {
         ];
     }
 
+    /**
+     * This history and its corresponding orchestrator replicate conditions under
+     * which there are not sufficient OrchestratorStartedEvents in the history
+     * array to satisfy the currentUtcDateTime advancement logic.
+     */
+    public static GetTimestampExhaustion(firstTimestamp: Date): HistoryEvent[] {
+        const firstTime = firstTimestamp.getTime();
+        const timestamps: Date[] = [];
+        for (let i = 0; i < 9; i++) {
+            timestamps[i] = new Date(firstTime + 1000 * i);
+        }
+
+        return [
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[0],
+                    isPlayed: false,
+                },
+            ),
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[0],
+                    isPlayed: true,
+                    name: "TimestampExhaustion",
+                    input: JSON.stringify({ delayMergeUntilSecs: 1 }),
+                },
+            ),
+            new EventRaisedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[0],
+                    isPlayed: true,
+                    name: "CheckPrForMerge",
+                    input: JSON.stringify({ value: 0 }),
+                },
+            ),
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: timestamps[0],
+                    isPlayed: false,
+                    name: "Merge",
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[0],
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[1],
+                    isPlayed: false,
+                },
+            ),
+            new EventRaisedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[1],
+                    isPlayed: true,
+                    name: "CheckPrForMerge",
+                    input: JSON.stringify({ value: 1 }),
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[1],
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[2],
+                    isPlayed: false,
+                },
+            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[2],
+                    isPlayed: true,
+                    taskScheduledId: 0,
+                    result: JSON.stringify(""),
+                },
+            ),
+            new TimerCreatedEvent(
+                {
+                    eventId: 1,
+                    timestamp: timestamps[2],
+                    isPlayed: false,
+                    fireAt: timestamps[2],
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[2],
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[3],
+                    isPlayed: false,
+                },
+            ),
+            new TimerFiredEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[3],
+                    isPlayed: true,
+                    fireAt: timestamps[2],
+                    timerId: 1,
+                },
+            ),
+            new TimerFiredEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[3],
+                    isPlayed: true,
+                    fireAt: timestamps[2],
+                    timerId: 1,
+                },
+            ),
+            new TaskScheduledEvent(
+                {
+                    eventId: 2,
+                    timestamp: timestamps[3],
+                    isPlayed: false,
+                    name: "CheckIfMerged",
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[3],
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[4],
+                    isPlayed: false,
+                },
+            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[4],
+                    isPlayed: true,
+                    taskScheduledId: 2,
+                    result: JSON.stringify({ output: false }),
+                },
+            ),
+            new TaskScheduledEvent(
+                {
+                    eventId: 3,
+                    timestamp: timestamps[4],
+                    isPlayed: false,
+                    name: "CheckIfMerged",
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[4],
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[5],
+                    isPlayed: false,
+                },
+            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[5],
+                    isPlayed: true,
+                    taskScheduledId: 3,
+                    result: JSON.stringify({ output: false }),
+                },
+            ),
+            new TaskScheduledEvent(
+                {
+                    eventId: 4,
+                    timestamp: timestamps[5],
+                    isPlayed: false,
+                    name: "CheckIfMerged",
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[5],
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[6],
+                    isPlayed: false,
+                },
+            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[6],
+                    isPlayed: true,
+                    taskScheduledId: 4,
+                    result: JSON.stringify({ output: false }),
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[6],
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[7],
+                    isPlayed: false,
+                },
+            ),
+            new EventRaisedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[7],
+                    isPlayed: true,
+                    name: "CheckPrForMerge",
+                    input: JSON.stringify({ value: 2 }),
+                },
+            ),
+            new EventRaisedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[7],
+                    isPlayed: true,
+                    name: "CheckPrForMerge",
+                    input: JSON.stringify({ value: 3 }),
+                },
+            ),
+            new EventRaisedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[7],
+                    isPlayed: true,
+                    name: "CheckPrForMerge",
+                    input: JSON.stringify({ value: 4 }),
+                },
+            ),
+            new TaskScheduledEvent(
+                {
+                    eventId: 5,
+                    timestamp: timestamps[7],
+                    isPlayed: false,
+                    name: "CheckIfMerged",
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[7],
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[8],
+                    isPlayed: false,
+                },
+            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: timestamps[8],
+                    isPlayed: false,
+                    taskScheduledId: 5,
+                    result: JSON.stringify({ output: false }),
+                },
+            ),
+        ];
+    }
+
     public static GetSayHelloWithActivityReplayOne(
         name: string,
         firstTimestamp: Date,
