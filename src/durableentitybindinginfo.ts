@@ -6,6 +6,6 @@ export class DurableEntityBindingInfo {
         public readonly self: EntityId,
         public readonly exists: boolean,
         public readonly state: unknown,
-        public readonly batch: RequestMessage[],
-    ) { }   // TODO: add isNewlyConstructed
+        public readonly batch: RequestMessage[]
+    ) { } 
 }

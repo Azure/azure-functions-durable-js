@@ -1,6 +1,8 @@
 import { expect } from "chai";
 import "mocha";
 import { EntityId } from "../../src/classes";
+import { TestEntities } from "../testobjects/testentities";
+import { TestEntityBatches,  } from "../testobjects/testentitybatches";
 
 describe("EntityId", () => {
     const defaultEntityName = "entity";
