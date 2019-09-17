@@ -607,9 +607,7 @@ describe("Orchestration Client", () => {
                 expectedEntityStateResponse,
             );
 
-            const expectedWebhookUrl = new url.URL(defaultClientInputData.entityUrls.readEntityStateGetUri
-                .replace(TestConstants.entityNamePlaceholder, defaultEntityName)
-                .replace(TestConstants.entityKeyPlaceholder, defaultEntityKey));
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?${TestConstants.testCode}`);
 
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
@@ -637,11 +635,7 @@ describe("Orchestration Client", () => {
                 expectedEntityStateResponse,
             );
 
-            const expectedWebhookUrl = new url.URL(defaultClientInputData.entityUrls.readEntityStateGetUri
-                .replace(TestConstants.entityNamePlaceholder, defaultEntityName)
-                .replace(TestConstants.entityKeyPlaceholder, defaultEntityKey)
-                .replace(defaultTaskHub, testTaskHub)
-                .replace(defaultConnection, testConn));
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?taskHub=${testTaskHub}&connection=${testConn}&${TestConstants.testCode}`);
 
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
@@ -661,9 +655,7 @@ describe("Orchestration Client", () => {
                 entityState: undefined,
             };
 
-            const expectedWebhookUrl = new url.URL(defaultClientInputData.entityUrls.readEntityStateGetUri
-                .replace(TestConstants.entityNamePlaceholder, defaultEntityName)
-                .replace(TestConstants.entityKeyPlaceholder, defaultEntityKey));
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?${TestConstants.testCode}`);
 
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
@@ -771,10 +763,7 @@ describe("Orchestration Client", () => {
 
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedWebhookUrl = new url.URL(defaultClientInputData.entityUrls.signalEntityPostUri
-                .replace(TestConstants.entityNamePlaceholder, defaultEntityName)
-                .replace(TestConstants.entityKeyPlaceholder, defaultEntityKey)
-                .replace(TestConstants.operationPlaceholder, defaultEntityOp));
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?op=${defaultEntityOp}&${TestConstants.testCode}`);
 
             const scope = nock(expectedWebhookUrl.origin)
                 .post(expectedWebhookUrl.pathname, testSignalData)
@@ -793,12 +782,7 @@ describe("Orchestration Client", () => {
 
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedWebhookUrl = new url.URL(defaultClientInputData.entityUrls.signalEntityPostUri
-                .replace(TestConstants.entityNamePlaceholder, defaultEntityName)
-                .replace(TestConstants.entityKeyPlaceholder, defaultEntityKey)
-                .replace(TestConstants.operationPlaceholder, defaultEntityOp)
-                .replace(defaultTaskHub, testTaskHub)
-                .replace(defaultConnection, testConn));
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?op=${defaultEntityOp}&taskHub=${testTaskHub}&connection=${testConn}&${TestConstants.testCode}`);
 
             const scope = nock(expectedWebhookUrl.origin)
                 .post(expectedWebhookUrl.pathname, testSignalData)
@@ -815,10 +799,7 @@ describe("Orchestration Client", () => {
 
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedWebhookUrl = new url.URL(defaultClientInputData.entityUrls.signalEntityPostUri
-                .replace(TestConstants.entityNamePlaceholder, defaultEntityName)
-                .replace(TestConstants.entityKeyPlaceholder, defaultEntityKey)
-                .replace(TestConstants.operationPlaceholder, ""));
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?${TestConstants.testCode}`);
 
             const scope = nock(expectedWebhookUrl.origin)
                 .post(expectedWebhookUrl.pathname, testSignalData)

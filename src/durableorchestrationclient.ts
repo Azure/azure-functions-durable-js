@@ -9,10 +9,11 @@ import uuid = require("uuid/v1");
 import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
     GetStatusOptions, HttpCreationPayload, HttpManagementPayload,
-    IOrchestrationFunctionContext, IHttpRequest, IHttpResponse, OrchestrationClientInputData,
+    IHttpRequest, IHttpResponse, IOrchestrationFunctionContext, OrchestrationClientInputData,
     OrchestrationRuntimeStatus, PurgeHistoryResult, RequestMessage, SchedulerState,
     Utils,
 } from "./classes";
+import { WebhookUtils } from "./webhookutils";
 
 /**
  * Returns an OrchestrationClient instance.
@@ -43,7 +44,7 @@ export function getClient(context: unknown): DurableOrchestrationClient {
 function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
     const matchingInstances = Utils.getInstancesOf<OrchestrationClientInputData>(
         (context as IOrchestrationFunctionContext).bindings,
-        new OrchestrationClientInputData(undefined, undefined, undefined, undefined));
+        new OrchestrationClientInputData(undefined, undefined, undefined, undefined, undefined));
 
     if (!matchingInstances || matchingInstances.length === 0) {
         throw new Error("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
@@ -411,17 +412,12 @@ export class DurableOrchestrationClient {
      * @returns A response containing the current state of the entity.
      */
     public async readEntityState<T>(entityId: EntityId, taskHubName?: string, connectionName?: string): Promise<EntityStateResponse<T>> {
-        let requestUrl = this.clientData.entityUrls.readEntityStateGetUri
-            .replace(this.entityNamePlaceholder, entityId.entityName)
-            .replace(this.entityKeyPlaceholder, entityId.entityKey);
-
-        if (taskHubName) {
-            requestUrl = requestUrl.replace(this.clientData.taskHubName, taskHubName);
-        }
-
-        if (connectionName) {
-            requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + connectionName);
-        }
+        let requestUrl = WebhookUtils.getReadEntityUrl(this.clientData.baseUrl,
+            this.clientData.requiredQueryStringParameters,
+            entityId.name,
+            entityId.key,
+            taskHubName,
+            connectionName);
 
         try {
             const response = await this.axiosInstance.get(requestUrl);
@@ -484,18 +480,13 @@ export class DurableOrchestrationClient {
         taskHubName?: string,
         connectionName?: string,
         ): Promise<void> {
-        let requestUrl = this.clientData.entityUrls.signalEntityPostUri
-            .replace(this.entityNamePlaceholder, entityId.entityName)
-            .replace(this.entityKeyPlaceholder, entityId.entityKey)
-            .replace(this.operationPlaceholder, typeof(operationName) === "undefined" ? "" : operationName);
-
-        if (taskHubName) {
-            requestUrl = requestUrl.replace(this.clientData.taskHubName, taskHubName);
-        }
-
-        if (connectionName) {
-            requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + connectionName);
-        }
+        let requestUrl = WebhookUtils.getSignalEntityUrl(this.clientData.baseUrl,
+            this.clientData.requiredQueryStringParameters,
+            entityId.name,
+            entityId.key,
+            operationName,
+            taskHubName,
+            connectionName);
 
         try {
             const response = await this.axiosInstance.post(requestUrl, JSON.stringify(operationContent));

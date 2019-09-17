@@ -1,9 +1,6 @@
 import * as debug from "debug";
-import { DurableEntityBindingInfo, EntityState, IEntityFunctionContext, DurableEntityContext, RequestMessage, Utils } from "./classes";
-import { EntityId } from ".";
-import { OperationResult } from "./entities/operationresult";
-import { Signal } from "./entities/signal";
-import { entity } from "./shim";
+import { DurableEntityBindingInfo, DurableEntityContext, EntityId, EntityState, IEntityFunctionContext,
+    OperationResult, RequestMessage, Signal, Utils } from "./classes";
 
 /** @hidden */
 const log = debug("orchestrator");
@@ -27,11 +24,11 @@ export class Entity {
         // Setup
         const returnState: EntityState = new EntityState([], []);
         returnState.entityExists = entityBinding.exists;
-        
+        returnState.entityState = entityBinding.state;
 
-        for(var i = 0; i < entityBinding.batch.length; i++) {
+        for (let i = 0; i < entityBinding.batch.length; i++) {
             context.df = this.getCurrentDurableEntityContext(entityBinding, returnState, i);
-    
+
             try {
                 const gen = this.fn(context);
                 gen.next();
@@ -44,17 +41,15 @@ export class Entity {
         }
 
         context.done(null, returnState);
-        this.return;
     }
 
-    private getCurrentDurableEntityContext(bindingInfo : DurableEntityBindingInfo, batchState: EntityState, requestIndex : number) : DurableEntityContext  {
-
+    private getCurrentDurableEntityContext(bindingInfo: DurableEntityBindingInfo, batchState: EntityState, requestIndex: number): DurableEntityContext  {
         const currentRequest = bindingInfo.batch[requestIndex];
         return {
-            entityName: bindingInfo.self.entityName,
-            entityKey: bindingInfo.self.entityKey,
+            entityName: bindingInfo.self.name,
+            entityKey: bindingInfo.self.key,
             entityId: bindingInfo.self,
-            operationName: currentRequest.op,
+            operationName: currentRequest.name,
             isNewlyConstructed: !batchState.entityExists,
             getState: this.getState.bind(this, batchState),
             setState: this.setState.bind(this, batchState),
@@ -70,16 +65,15 @@ export class Entity {
         batchState.entityState = undefined;
     }
 
-    private parseObject(objectString : string) : unknown {
-        return JSON.parse(objectString)
+    private parseObject(objectString: string): unknown {
+        return JSON.parse(objectString);
     }
 
     private getInput<TInput>(currentRequest: RequestMessage): TInput {
         if (currentRequest.input) {
             try {
                 return this.parseObject(currentRequest.input) as TInput;
-            }
-            catch {
+            } catch {
                 throw Error("Cannot parse " + currentRequest.input + "as the required type.");
             }
         }
@@ -90,17 +84,16 @@ export class Entity {
         if (returnState.entityState) {
             try {
                 return this.parseObject(returnState.entityState) as TState;
-            }
-            catch {
+            } catch {
                 throw Error("Cannot parse " + returnState.entityState + "as the required type.");
             }
         }
-        return undefined;
+        return initializer();
     }
 
     private return(returnState: EntityState, result: unknown): void {
         returnState.entityExists = true;
-        returnState.results.push(new OperationResult(JSON.stringify(result), false, -1)); //TODO: put actual duration in place.
+        returnState.results.push(new OperationResult(JSON.stringify(result), false, -1)); // TODO: put actual duration in place.
     }
 
     private setState(returnState: EntityState, state: unknown): void {

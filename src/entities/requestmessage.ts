@@ -9,7 +9,7 @@ export class RequestMessage {
      * The name of the operation being called (if this is an operation message)
      * or undefined (if this is a lock request).
      */
-    public op?: string;          // Operation
+    public name?: string;          // Operation
 
     /** Whether or not this is a one-way message. */
     public signal?: boolean;    // IsSignal

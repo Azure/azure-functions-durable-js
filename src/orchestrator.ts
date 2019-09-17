@@ -441,22 +441,21 @@ export class Orchestrator {
 
         // send lock request to first entity in the lock set
 
-
         return undefined;
     }
 
     private cleanEntities(entities: EntityId[]): EntityId[] {
         // sort entities
         return entities.sort((a, b) => {
-            if (a.entityKey === b.entityKey) {
-                if (a.entityName === b.entityName) {
+            if (a.key === b.key) {
+                if (a.name === b.name) {
                     return 0;
-                } else if (a.entityName < b.entityName) {
+                } else if (a.name < b.name) {
                     return -1;
                 } else {
                     return 1;
                 }
-            } else if (a.entityKey < b.entityKey) {
+            } else if (a.key < b.key) {
                 return -1;
             } else {
                 return 1;

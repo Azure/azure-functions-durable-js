@@ -5,7 +5,7 @@ export class DurableEntityBindingInfo {
     constructor(
         public readonly self: EntityId,
         public readonly exists: boolean,
-        public readonly state: unknown,
-        public readonly batch: RequestMessage[]
-    ) { } 
+        public readonly state: string,
+        public readonly batch: RequestMessage[],
+    ) { }
 }

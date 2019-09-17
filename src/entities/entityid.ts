@@ -16,21 +16,21 @@ export class EntityId {
 
     /** @hidden */
     static getSchedulerIdFromEntityId(entityId: EntityId): string {
-        return `@${entityId.entityName}@${entityId.entityKey}`;
+        return `@${entityId.name}@${entityId.key}`;
     }
 
     /**
      * Create an entity id for an entity.
      */
     constructor(
-        // TODO: consider how JSON deserialization affects these fields
+        // TODO: consider how to name these fields more accurately without interfering with JSON serialization
         /** The name of the entity class. */
-        public readonly entityName: string,
+        public readonly name: string,
         /** The entity key. Uniquely identifies an entity among all instances of the same class. */
-        public readonly entityKey: string,
+        public readonly key: string,
     ) {
-        Utils.throwIfEmpty(entityName, "entityName");
-        Utils.throwIfEmpty(entityKey, "entityKey");
+        Utils.throwIfEmpty(name, "name");
+        Utils.throwIfEmpty(key, "key");
     }
 
     public toString(): string {

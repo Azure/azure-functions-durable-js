@@ -17,7 +17,7 @@ export class TestEntityBatches {
                 case "get":
                     //Handle inputs
                     batch[operationCount].id = JSON.stringify(operationCount);
-                    batch[operationCount].op = "get";
+                    batch[operationCount].name = "get";
                     batch[operationCount].signal = false;
 
                     //Handle outputs
@@ -27,7 +27,7 @@ export class TestEntityBatches {
                     //Handle inputs
                     let value = operation.value;
                     batch[operationCount].id = JSON.stringify(operationCount);
-                    batch[operationCount].op = "set";
+                    batch[operationCount].name = "set";
                     batch[operationCount].signal = false;
                     batch[operationCount].input = JSON.stringify(value);
 

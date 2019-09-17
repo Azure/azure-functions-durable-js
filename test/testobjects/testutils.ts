@@ -1,4 +1,4 @@
-import { HttpCreationPayload, HttpEntityPayload, HttpManagementPayload,
+import { HttpCreationPayload, HttpManagementPayload,
     OrchestrationClientInputData } from "../../src/classes";
 import { TestConstants } from "./testconstants";
 
@@ -12,7 +12,8 @@ export class TestUtils {
             taskHub,
             TestUtils.createHttpCreationPayload(host, taskHub, connection),
             TestUtils.createHttpManagementPayload(id, host, taskHub, connection),
-            TestUtils.createEntityManagementUrl(host, taskHub, connection),
+            `${host}${TestConstants.webhookPath.replace(/\/$/, "")}`, // Returns baseURL with remaining whitespace trimmed.
+            TestConstants.testCode
         );
     }
 
@@ -55,19 +56,6 @@ export class TestUtils {
             TestConstants.purgeDeleteUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
-                .replace(TestConstants.taskHubPlaceholder, taskHub)
-                .replace(TestConstants.connectionPlaceholder, connection),
-        );
-    }
-
-    public static createEntityManagementUrl(host: string, taskHub: string, connection: string) {
-        return new HttpEntityPayload(
-            TestConstants.entityGetUriTemplate
-                .replace(TestConstants.hostPlaceholder, host)
-                .replace(TestConstants.taskHubPlaceholder, taskHub)
-                .replace(TestConstants.connectionPlaceholder, connection),
-            TestConstants.entityPostUriTemplate
-                .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
         );
