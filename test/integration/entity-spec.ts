@@ -1,13 +1,13 @@
 import { expect } from "chai";
 import "mocha";
-import { EntityId, DurableEntityBindingInfo, DurableEntityContext, EntityState, Entity } from "../../src/classes";
+import { DurableEntityContext, EntityState, OperationResult } from "../../src/classes";
 import { TestEntities } from "../testobjects/testentities";
-import { TestEntityBatches, StringStoreOperation,  } from "../testobjects/testentitybatches";
+import { TestEntityBatches  } from "../testobjects/testentitybatches";
+import { StringStoreOperation  } from "../testobjects/testentityoperations";
 
 describe("Entity", () => {
-    it("handles a simple entity function (no initial state)", async () => {
+    it("StringStore entity with no initial state.", async () => {
         const entity = TestEntities.StringStore;
-        const name = "World";
         let operations : StringStoreOperation[] = [];
         operations.push({ kind: "set", value: "hello"});
         operations.push({ kind: "get"});
@@ -20,8 +20,24 @@ describe("Entity", () => {
         });
         entity(mockContext);
 
-        expect(mockContext.doneValue).to.be.deep.equal(
-            testData.output,
+        expect(testData.output).to.be.deep.equal(
+            mockContext.doneValue,
+        );
+    });
+
+    it("StringStore entity with initial state.", async () => { 
+        const entity = TestEntities.StringStore;
+        let operations : StringStoreOperation[] = [];
+        operations.push({ kind: "get"});
+
+        const testData = TestEntityBatches.GetStringStoreBatch(operations, "Hello world");
+        const mockContext = new MockContext({
+            context: testData.input,
+        });
+        entity(mockContext);
+
+        expect(testData.output).to.be.deep.equal(
+            mockContext.doneValue,
         );
     });
 });

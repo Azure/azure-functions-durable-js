@@ -97,12 +97,9 @@ export class DurableOrchestrationClient {
 
     private readonly axiosInstance: AxiosInstance;
 
-    private readonly entityNamePlaceholder = "{entityName}";
-    private readonly entityKeyPlaceholder = "{entityKey?}";
     private readonly eventNamePlaceholder = "{eventName}";
     private readonly functionNamePlaceholder = "{functionName}";
     private readonly instanceIdPlaceholder = "[/{instanceId}]";
-    private readonly operationPlaceholder = "{operation}";
     private readonly reasonPlaceholder = "{text}";
 
     private readonly createdTimeFromQueryKey = "createdTimeFrom";

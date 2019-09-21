@@ -69,7 +69,7 @@ export class Entity {
         return JSON.parse(objectString);
     }
 
-    private getInput<TInput>(currentRequest: RequestMessage): TInput {
+    private getInput<TInput>(currentRequest: RequestMessage): TInput | undefined {
         if (currentRequest.input) {
             try {
                 return this.parseObject(currentRequest.input) as TInput;
@@ -80,23 +80,25 @@ export class Entity {
         return undefined;
     }
 
-    private getState<TState>(returnState: EntityState, initializer: () => TState): TState {
+    private getState<TState>(returnState: EntityState, initializer?: () => TState): TState | undefined {
         if (returnState.entityState) {
             try {
                 return this.parseObject(returnState.entityState) as TState;
             } catch {
                 throw Error("Cannot parse " + returnState.entityState + "as the required type.");
             }
+        } else if (initializer != null) {
+            return initializer();
         }
-        return initializer();
+        throw Error("Entity has no state, and no initializer passed into getState() method.");
     }
 
-    private return(returnState: EntityState, result: unknown): void {
+    private return<TResult>(returnState: EntityState, result: TResult): void {
         returnState.entityExists = true;
         returnState.results.push(new OperationResult(JSON.stringify(result), false, -1)); // TODO: put actual duration in place.
     }
 
-    private setState(returnState: EntityState, state: unknown): void {
+    private setState<TState>(returnState: EntityState, state: TState): void {
         returnState.entityExists = true;
         returnState.entityState = JSON.stringify(state);
     }
