@@ -10,8 +10,7 @@ import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
     GetStatusOptions, HttpCreationPayload, HttpManagementPayload,
     IHttpRequest, IHttpResponse, IOrchestrationFunctionContext, OrchestrationClientInputData,
-    OrchestrationRuntimeStatus, PurgeHistoryResult, RequestMessage, SchedulerState,
-    Utils,
+    OrchestrationRuntimeStatus, PurgeHistoryResult, Utils,
 } from "./classes";
 import { WebhookUtils } from "./webhookutils";
 
@@ -424,7 +423,7 @@ export class DurableOrchestrationClient {
                 case 404:   // entity does not exist
                     return new EntityStateResponse(false, undefined);
                 default:
-                        return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
             }
         } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;

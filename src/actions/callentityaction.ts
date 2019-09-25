@@ -1,14 +1,16 @@
-import { ActionType, IAction, Utils } from "../classes";
+import { ActionType, EntityId, IAction, Utils } from "../classes";
 
 /** @hidden */
 export class CallEntityAction implements IAction {
     public readonly actionType: ActionType = ActionType.CallEntity;
+    public readonly entity: string;
 
     constructor(
-        public readonly entity: string,
+        entityId: EntityId,
         public readonly operation: string,
         public readonly input?: unknown,
     ) {
-        Utils.throwIfEmpty(entity, "entity");
+        this.entity = EntityId.getSchedulerIdFromEntityId(entityId);
+        Utils.throwIfEmpty(this.entity, "entity");
     }
 }

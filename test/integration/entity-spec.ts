@@ -20,8 +20,8 @@ describe("Entity", () => {
         });
         entity(mockContext);
 
-        expect(testData.output).to.be.deep.equal(
-            mockContext.doneValue,
+        expect(mockContext.doneValue).to.be.deep.equal(
+            testData.output,
         );
     });
 
@@ -36,8 +36,8 @@ describe("Entity", () => {
         });
         entity(mockContext);
 
-        expect(testData.output).to.be.deep.equal(
-            mockContext.doneValue,
+        expect(mockContext.doneValue).to.be.deep.equal(
+            testData.output,
         );
     });
 });

@@ -39,7 +39,7 @@ export class DurableEntityContext {
      *
      * @param initializer Provides an initial value to use for the state,
      * instead of TState's default.
-     * @returns The current state of this entity.
+     * @returns The current state of this entity, or undefined if none has been set yet.
      */
     public getState<TState>(initializer?: () => TState): TState | undefined {
         throw new Error("This is a placeholder.");
@@ -48,19 +48,19 @@ export class DurableEntityContext {
     /**
      * Sets the current state of this entity.
      *
-     * @param state The JSON-serializable state of the entity.
+     * @param state The state of the entity.
      */
     public setState<TState>(state: TState): void {
         throw new Error("This is a placeholder.");
     }
 
     /**
-     * Gets the input for this operation, as a deserialized value.
+     * Gets the input for this operation.
      *
      * An operation invocation on an entity includes an operation name, which
      * states what operation to perform, and optionally an operation input.
      *
-     * @returns The operation input, or TInput's default if none.
+     * @returns The operation input, or undefined if none.
      */
     public getInput<TInput>(): TInput | undefined {
         throw new Error("This is a placeholder.");

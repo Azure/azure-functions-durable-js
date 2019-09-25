@@ -735,7 +735,7 @@ describe("Orchestrator", () => {
                     [
                         [ 
                             new CallEntityAction(
-                                EntityId.getSchedulerIdFromEntityId(expectedEntity),
+                                expectedEntity,
                                 "set",
                                 "testString")
                         ],
@@ -769,7 +769,7 @@ describe("Orchestrator", () => {
                     [
                         [ 
                             new CallEntityAction(
-                                EntityId.getSchedulerIdFromEntityId(expectedEntity),
+                                expectedEntity,
                                 "set",
                                 "testString")
                         ],

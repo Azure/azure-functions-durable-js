@@ -7,7 +7,7 @@ const log = debug("orchestrator");
 
 /** @hidden */
 export class Entity {
-    constructor(public fn: (context: IEntityFunctionContext) => IterableIterator<unknown>) { }
+    constructor(public fn: (context: IEntityFunctionContext) => unknown) { }
 
     public listen() {
         return this.handle.bind(this);
@@ -30,8 +30,7 @@ export class Entity {
             context.df = this.getCurrentDurableEntityContext(entityBinding, returnState, i);
 
             try {
-                const gen = this.fn(context);
-                gen.next();
+                this.fn(context);
                 if (!returnState.results[i]) {
                     returnState.results[i] = new OperationResult(null, false, -1); // TODO handle duration later.
                 }
@@ -71,26 +70,26 @@ export class Entity {
 
     private getInput<TInput>(currentRequest: RequestMessage): TInput | undefined {
         if (currentRequest.input) {
-            try {
-                return this.parseObject(currentRequest.input) as TInput;
-            } catch {
-                throw Error("Cannot parse " + currentRequest.input + "as the required type.");
+            let typedInput = JSON.parse(currentRequest.input) as TInput;
+            if (!typedInput) {
+                throw Error("Cannot parse " + currentRequest.input + " as the required type.");
             }
+            return typedInput;
         }
         return undefined;
     }
 
     private getState<TState>(returnState: EntityState, initializer?: () => TState): TState | undefined {
         if (returnState.entityState) {
-            try {
-                return this.parseObject(returnState.entityState) as TState;
-            } catch {
-                throw Error("Cannot parse " + returnState.entityState + "as the required type.");
+            let typedState = JSON.parse(returnState.entityState) as TState;
+            if (!typedState) {
+                throw Error("Cannot parse " + returnState.entityState + " as the required type.");
             }
+            return typedState;
         } else if (initializer != null) {
             return initializer();
         }
-        throw Error("Entity has no state, and no initializer passed into getState() method.");
+        return undefined;
     }
 
     private return<TResult>(returnState: EntityState, result: TResult): void {

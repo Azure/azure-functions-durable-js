@@ -77,5 +77,4 @@ export { LockState } from "./entities/lockstate";
 export { OperationResult } from "./entities/operationresult";
 export { RequestMessage } from "./entities/requestmessage";
 export { ResponseMessage } from "./entities/responsemessage";
-export { SchedulerState } from "./entities/schedulerstate";
 export { Signal } from "./entities/signal";

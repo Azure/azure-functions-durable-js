@@ -36,8 +36,4 @@ export class EntityId {
     public toString(): string {
         return EntityId.getSchedulerIdFromEntityId(this);
     }
-
-    // TODO: equals
-
-    // TODO: comparer
 }

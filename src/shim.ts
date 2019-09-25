@@ -22,7 +22,7 @@ export function orchestrator(fn: (context: IOrchestrationFunctionContext) => Ite
     };
 }
 
-export function entity(fn: (context: IEntityFunctionContext) => IterableIterator<unknown>)
+export function entity(fn: (context: IEntityFunctionContext) => unknown)
     : (context: IEntityFunctionContext) => void {
     const listener = new Entity(fn).listen();
     return (context: IEntityFunctionContext) => {

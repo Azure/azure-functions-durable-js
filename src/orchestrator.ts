@@ -221,9 +221,9 @@ export class Orchestrator {
     }
 
     private callEntity(state: HistoryEvent[], entityId: EntityId, operationName: string, operationInput: unknown): Task {
-        const schedulerId = EntityId.getSchedulerIdFromEntityId(entityId);
-        const newAction = new CallEntityAction(schedulerId, operationName, operationInput);
+        const newAction = new CallEntityAction(entityId, operationName, operationInput);
 
+        const schedulerId = EntityId.getSchedulerIdFromEntityId(entityId);
         const eventSent = this.findEventSent(state, schedulerId, "op");
         let eventRaised;
         if (eventSent) {

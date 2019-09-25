@@ -2,7 +2,7 @@ import * as df from "../../src";
 import { IEntityFunctionContext, Entity } from "../../src/classes";
 
 export class TestEntities {
-    public static StringStore : any = df.entity(function*(context : IEntityFunctionContext) : any  {
+    public static StringStore : any = df.entity(function(context : IEntityFunctionContext) : void  {
         switch(context.df.operationName) {
             case "set":
                 context.df.setState(context.df.getInput<string>());
@@ -16,7 +16,7 @@ export class TestEntities {
         }
     });
 
-    public static Counter : any = df.entity(function*(context: IEntityFunctionContext) : any {
+    public static Counter : any = df.entity(function(context: IEntityFunctionContext) : void {
         switch(context.df.operationName) {
             case "increment":
                     

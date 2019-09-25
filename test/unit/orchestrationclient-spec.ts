@@ -10,7 +10,7 @@ import url = require("url");
 import uuidv1 = require("uuid/v1");
 import { Constants, DurableOrchestrationClient, DurableOrchestrationStatus,
     EntityId, EntityStateResponse, HttpManagementPayload,
-    OrchestrationRuntimeStatus, PurgeHistoryResult, SchedulerState,
+    OrchestrationRuntimeStatus, PurgeHistoryResult,
 } from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";

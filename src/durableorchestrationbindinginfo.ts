@@ -8,6 +8,7 @@ export class DurableOrchestrationBindingInfo {
         public readonly instanceId?: string,
         public readonly isReplaying?: boolean,
         public readonly parentInstanceId?: string,
+        // TODO: Implement entity locking
         // public readonly contextLocks?: EntityId[],
     ) { }
 }
