@@ -733,7 +733,7 @@ describe("Orchestrator", () => {
                     output: undefined,
                     actions:
                     [
-                        [ 
+                        [
                             new CallEntityAction(
                                 expectedEntity,
                                 "set",

@@ -408,7 +408,7 @@ export class DurableOrchestrationClient {
      * @returns A response containing the current state of the entity.
      */
     public async readEntityState<T>(entityId: EntityId, taskHubName?: string, connectionName?: string): Promise<EntityStateResponse<T>> {
-        let requestUrl = WebhookUtils.getReadEntityUrl(this.clientData.baseUrl,
+        const requestUrl = WebhookUtils.getReadEntityUrl(this.clientData.baseUrl,
             this.clientData.requiredQueryStringParameters,
             entityId.name,
             entityId.key,
@@ -476,7 +476,7 @@ export class DurableOrchestrationClient {
         taskHubName?: string,
         connectionName?: string,
         ): Promise<void> {
-        let requestUrl = WebhookUtils.getSignalEntityUrl(this.clientData.baseUrl,
+        const requestUrl = WebhookUtils.getSignalEntityUrl(this.clientData.baseUrl,
             this.clientData.requiredQueryStringParameters,
             entityId.name,
             entityId.key,

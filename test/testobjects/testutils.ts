@@ -13,7 +13,7 @@ export class TestUtils {
             TestUtils.createHttpCreationPayload(host, taskHub, connection),
             TestUtils.createHttpManagementPayload(id, host, taskHub, connection),
             `${host}${TestConstants.webhookPath.replace(/\/$/, "")}`, // Returns baseURL with remaining whitespace trimmed.
-            TestConstants.testCode
+            TestConstants.testCode,
         );
     }
 

@@ -8,13 +8,13 @@ import { StringStoreOperation  } from "../testobjects/testentityoperations";
 describe("Entity", () => {
     it("StringStore entity with no initial state.", async () => {
         const entity = TestEntities.StringStore;
-        let operations : StringStoreOperation[] = [];
+        const operations: StringStoreOperation[] = [];
         operations.push({ kind: "set", value: "hello"});
         operations.push({ kind: "get"});
         operations.push({ kind: "set", value: "hello world"});
         operations.push({ kind: "get"});
 
-        const testData = TestEntityBatches.GetStringStoreBatch( operations, null);
+        const testData = TestEntityBatches.GetStringStoreBatch(operations, null);
         const mockContext = new MockContext({
             context: testData.input,
         });
@@ -25,9 +25,9 @@ describe("Entity", () => {
         );
     });
 
-    it("StringStore entity with initial state.", async () => { 
+    it("StringStore entity with initial state.", async () => {
         const entity = TestEntities.StringStore;
-        let operations : StringStoreOperation[] = [];
+        const operations: StringStoreOperation[] = [];
         operations.push({ kind: "get"});
 
         const testData = TestEntityBatches.GetStringStoreBatch(operations, "Hello world");

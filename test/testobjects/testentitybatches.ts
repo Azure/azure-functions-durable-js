@@ -1,43 +1,42 @@
 import * as df from "../../src";
-import { EntityState, DurableEntityBindingInfo, RequestMessage, OperationResult } from "../../src/classes";
+import { DurableEntityBindingInfo, EntityState, OperationResult, RequestMessage } from "../../src/classes";
 import { CounterOperation, EntityInputsAndOutputs, StringStoreOperation  } from "../testobjects/testentityoperations";
-
 
 export class TestEntityBatches {
 
     public static GetStringStoreBatch(operations: StringStoreOperation[], existingState: string): EntityInputsAndOutputs {
-        let id = new df.EntityId("stringstore", "stringstorekey");
+        const id = new df.EntityId("stringstore", "stringstorekey");
 
-        let entityExists = existingState != null;
-        const output = new EntityState([],[]);
+        const entityExists = existingState != null;
+        const output = new EntityState([], []);
         if (entityExists)  {
             output.entityState = JSON.stringify(existingState);
             output.entityExists = entityExists;
         }
 
-        let batch : RequestMessage[] = [];
+        const batch: RequestMessage[] = [];
         let operationCount = 0;
-        for(let operation of operations) {
+        for (const operation of operations) {
             batch[operationCount] = new RequestMessage();
             switch (operation.kind) {
                 case "get":
-                    //Handle inputs
+                    // Handle inputs
                     batch[operationCount].id = JSON.stringify(operationCount);
                     batch[operationCount].name = "get";
                     batch[operationCount].signal = false;
 
-                    //Handle outputs
+                    // Handle outputs
                     output.results[operationCount] = new OperationResult(output.entityState, false, -1);
                     break;
                 case "set":
-                    //Handle inputs
-                    let value = JSON.stringify(operation.value);
+                    // Handle inputs
+                    const value = JSON.stringify(operation.value);
                     batch[operationCount].id = JSON.stringify(operationCount);
                     batch[operationCount].name = "set";
                     batch[operationCount].signal = false;
                     batch[operationCount].input = value;
 
-                    //Handle outputs
+                    // Handle outputs
                     output.results[operationCount] = new OperationResult(null, false, -1);
                     output.entityExists = true;
                     output.entityState = value;
@@ -47,42 +46,42 @@ export class TestEntityBatches {
         }
         return  {
             input: new DurableEntityBindingInfo(id, entityExists, JSON.stringify(existingState), batch),
-            output: output
-        }
+            output,
+        };
     }
 
     public static GetCounterBatch(operations: CounterOperation[], existingState: number | undefined): EntityInputsAndOutputs {
-        let id = new df.EntityId("stringstore", "stringstorekey");
-        let currentState : number;
+        const id = new df.EntityId("stringstore", "stringstorekey");
+        let currentState: number;
         if (existingState) {
             currentState = Number(existingState);
-        };
+        }
 
-        let entityExists : boolean = (existingState != null || existingState != undefined);;
-        var output = new EntityState([],[]);
+        const entityExists: boolean = !existingState;
+        const output = new EntityState([], []);
         output.entityExists = entityExists;
-        let batch : RequestMessage[] = [];
+        const batch: RequestMessage[] = [];
         let operationCount = 0;
-        for(let operation of operations) {
+        for (const operation of operations) {
             batch[operationCount] = new RequestMessage();
             switch (operation.kind) {
                 case "get":
-                    //Handle inputs
+                    // Handle inputs
                     batch[operationCount].id = operationCount.toString();
                     batch[operationCount].name = "get";
                     batch[operationCount].signal = false;
 
-                    //Handle outputs
+                    // Handle outputs
                     output.results[operationCount] = new OperationResult(JSON.stringify(currentState), false, -1);
                     break;
                 case "set":
-                    //Handle inputs
+                    // Handle inputs
                     batch[operationCount].id = operationCount.toString();
                     batch[operationCount].name = "set";
                     batch[operationCount].signal = false;
                     batch[operationCount].input = operation.value.toString();
 
-                    //Handle outputs
+                    // Handle outputs
                     currentState = operation.value;
                     output.results[operationCount] = new OperationResult(null, false, -1);
                     output.entityExists = true;
@@ -92,8 +91,8 @@ export class TestEntityBatches {
                     batch[operationCount].id = operationCount.toString();
                     batch[operationCount].name = "increment";
                     batch[operationCount].signal = false;
-                    
-                    if (currentState != null) { 
+
+                    if (currentState != null) {
                         currentState = currentState + 1;
                         output.results[operationCount] = new OperationResult(null, false, -1);
                         output.entityExists = true;
@@ -107,7 +106,7 @@ export class TestEntityBatches {
                     batch[operationCount].name = "add";
                     batch[operationCount].signal = false;
                     batch[operationCount].input = operation.value.toString();
-                    
+
                     if (currentState != null) {
                         currentState = currentState + operation.value;
                         output.results[operationCount] = new OperationResult(null, false, -1);
@@ -130,7 +129,7 @@ export class TestEntityBatches {
         }
         return  {
             input: new DurableEntityBindingInfo(id, entityExists, existingState != null ? existingState.toString() : undefined, batch),
-            output: output
-        }
+            output,
+        };
     }
 }

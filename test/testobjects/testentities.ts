@@ -1,25 +1,23 @@
 import * as df from "../../src";
-import { IEntityFunctionContext, Entity } from "../../src/classes";
+import { IEntityFunctionContext } from "../../src/classes";
 
 export class TestEntities {
-    public static StringStore : any = df.entity(function(context : IEntityFunctionContext) : void  {
-        switch(context.df.operationName) {
+    public static StringStore: any = df.entity((context: IEntityFunctionContext): void => {
+        switch (context.df.operationName) {
             case "set":
                 context.df.setState(context.df.getInput<string>());
                 break;
             case "get":
-                let state = context.df.getState<string>();
-                context.df.return(state);
+                context.df.return(context.df.getState<string>());
                 break;
-            default: 
+            default:
                 throw new Error("No such operation exists");
         }
     });
 
-    public static Counter : any = df.entity(function(context: IEntityFunctionContext) : void {
-        switch(context.df.operationName) {
+    public static Counter: any = df.entity((context: IEntityFunctionContext): void => {
+        switch (context.df.operationName) {
             case "increment":
-                    
                 context.df.setState(context.df.getInput<number>() + 1);
                 break;
             case "add":
@@ -29,7 +27,7 @@ export class TestEntities {
                 context.df.return(context.df.getState<number>());
                 break;
             case "set":
-                context.df.setState(context.df.getInput<number>())
+                context.df.setState(context.df.getInput<number>());
                 break;
             case "delete":
                 context.df.destructOnExit();
@@ -37,6 +35,5 @@ export class TestEntities {
             default:
                 throw Error("Invalid operation");
         }
-
     });
 }

@@ -70,7 +70,7 @@ export class Entity {
 
     private getInput<TInput>(currentRequest: RequestMessage): TInput | undefined {
         if (currentRequest.input) {
-            let typedInput = JSON.parse(currentRequest.input) as TInput;
+            const typedInput = JSON.parse(currentRequest.input) as TInput;
             if (!typedInput) {
                 throw Error("Cannot parse " + currentRequest.input + " as the required type.");
             }
@@ -81,7 +81,7 @@ export class Entity {
 
     private getState<TState>(returnState: EntityState, initializer?: () => TState): TState | undefined {
         if (returnState.entityState) {
-            let typedState = JSON.parse(returnState.entityState) as TState;
+            const typedState = JSON.parse(returnState.entityState) as TState;
             if (!typedState) {
                 throw Error("Cannot parse " + returnState.entityState + " as the required type.");
             }
