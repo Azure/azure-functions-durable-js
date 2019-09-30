@@ -153,6 +153,24 @@ describe("Orchestrator", () => {
 
             expect(mockContext.df.currentUtcDateTime).to.be.deep.equal(nextTimestamp);
         });
+
+        it("uses existing currentUtcDateTime if OrchestratorStarted events are exhausted", async () => {
+            const orchestrator = TestOrchestrations.TimestampExhaustion;
+            const startTimestamp = moment.utc().toDate();
+
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetTimestampExhaustion(startTimestamp),
+                    { delayMergeUntilSecs: 1 },
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue.error).to.equal(undefined);
+
+            expect(mockContext.err).to.equal(null);
+        });
     });
 
     describe("Error Handling", () => {
