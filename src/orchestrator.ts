@@ -8,6 +8,7 @@ import { CallActivityAction, CallActivityWithRetryAction, CallHttpAction, CallSu
     TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask,
     Utils, WaitForExternalEventAction,
 } from "./classes";
+import { TokenSource } from "./tokensource";
 
 /** @hidden */
 const log = debug("orchestrator");
@@ -308,16 +309,22 @@ export class Orchestrator {
         );
     }
 
-    private callHttp(state: HistoryEvent[], method: string, uri: string, content?: string | object) {
+    private callHttp(
+        state: HistoryEvent[],
+        method: string,
+        uri: string,
+        content?: string | object,
+        headers? : { [key: string]: string },
+        tokenSource?: TokenSource) {
         if (content && typeof content !== "string") {
             content = JSON.stringify(content);
         }
 
-        const req = new DurableHttpRequest(method, uri, content as string);
+        const req = new DurableHttpRequest(method, uri, content as string, headers, tokenSource);
         const newAction = new CallHttpAction(req);
 
         // callHttp is internally implemented as a well-known activity function
-        const httpScheduled = this.findTaskScheduled(state, "Durable:Http:Async:Activity:Function");
+        const httpScheduled = this.findTaskScheduled(state, "BuiltIn::HttpActivity");
         const httpCompleted = this.findTaskCompleted(state, httpScheduled);
         const httpFailed = this.findTaskFailed(state, httpScheduled);
         this.setProcessed([httpScheduled, httpCompleted, httpFailed]);

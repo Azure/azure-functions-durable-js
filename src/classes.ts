@@ -60,3 +60,4 @@ export { PurgeHistoryResult } from "./purgehistoryresult";
 export { GuidManager } from "./guidmanager";
 
 export { DurableHttpRequest } from "./durablehttprequest";
+export { DurableHttpResponse } from "./durablehttpresponse";

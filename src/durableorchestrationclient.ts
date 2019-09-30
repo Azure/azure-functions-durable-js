@@ -16,12 +16,12 @@ import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagem
  * ```javascript
  * const df = require("durable-functions");
  *
- * module.exports = df.orchestrator(function*(context) {
+ * module.exports = async function (context, req) {
  *     const client = df.getClient(context);
  *     const instanceId = await client.startNew(req.params.functionName, undefined, req.body);
  *
- *     return client.createCheckStatusResponse(instanceId);
- * });
+ *     return client.createCheckStatusResponse(req, instanceId);
+ * };
  * ```
  */
 export function getClient(context: unknown): DurableOrchestrationClient {
