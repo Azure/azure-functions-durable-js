@@ -314,7 +314,7 @@ export class Orchestrator {
         method: string,
         uri: string,
         content?: string | object,
-        headers? : { [key: string]: string },
+        headers?: { [key: string]: string },
         tokenSource?: TokenSource) {
         if (content && typeof content !== "string") {
             content = JSON.stringify(content);

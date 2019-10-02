@@ -2,11 +2,12 @@ import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
+import { ManagedIdentityTokenSource } from "../../src";
 import {
-    CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
+    CallActivityAction, CallActivityWithRetryAction, CallHttpAction, CallSubOrchestratorAction,
     CallSubOrchestratorWithRetryAction, Constants, ContinueAsNewAction, CreateTimerAction,
-    DurableOrchestrationBindingInfo, DurableOrchestrationContext, IOrchestratorState,
-    OrchestratorState, RetryOptions, WaitForExternalEventAction,
+    DurableHttpRequest, DurableHttpResponse, DurableOrchestrationBindingInfo, DurableOrchestrationContext,
+    IOrchestratorState, OrchestratorState, RetryOptions, WaitForExternalEventAction,
 } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
@@ -477,7 +478,7 @@ describe("Orchestrator", () => {
             );
         });
 
-        it("schedules an activity funtion if < max attempts", async () => {
+        it("schedules an activity function if < max attempts", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
             const name = "World";
             const retryOptions = new RetryOptions(10000, 2);
@@ -603,6 +604,102 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: `Hello, ${name}!`,
+                }),
+            );
+        });
+    });
+
+    describe("callHttp()", () => {
+        it("schedules simple HTTP GET calls", async () => {
+            const orchestrator = TestOrchestrations.SendHttpRequest;
+            const req = new DurableHttpRequest("GET", "https://bing.com");
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req),
+                    req,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    output: undefined,
+                    actions:
+                    [
+                        [ new CallHttpAction(req) ],
+                    ],
+                }),
+            );
+        });
+
+        it("schedules authenticated HTTP POST calls with headers", async () => {
+            const orchestrator = TestOrchestrations.SendHttpRequest;
+            const req = new DurableHttpRequest(
+                "POST",
+                "https://example.com/api",
+                JSON.stringify({ foo: "bar" }),
+                { "Content-Type": "application/json", "Accept": "application/json"},
+                new ManagedIdentityTokenSource("https://management.core.windows.net"));
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req),
+                    req,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    output: undefined,
+                    actions:
+                    [
+                        [ new CallHttpAction(req) ],
+                    ],
+                }),
+            );
+        });
+
+        it("handles a completed HTTP request", async () => {
+            const orchestrator = TestOrchestrations.SendHttpRequest;
+            const req = new DurableHttpRequest("GET", "https://bing.com");
+            const res = new DurableHttpResponse(
+                200,
+                "<!DOCTYPE html><html lang=\"en\">...</html>",
+                {
+                    "Content-Type": "text/html; charset=utf-8",
+                    "Cache-control": "private, max-age=8",
+                });
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSendHttpRequestReplayOne(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req,
+                        res),
+                    req,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
+                    [
+                        [ new CallHttpAction(req) ],
+                    ],
+                    output: res,
                 }),
             );
         });

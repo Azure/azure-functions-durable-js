@@ -1,5 +1,5 @@
 import * as moment from "moment";
-import { EventRaisedEvent, ExecutionStartedEvent, HistoryEvent, OrchestratorCompletedEvent,
+import { DurableHttpRequest, DurableHttpResponse, EventRaisedEvent, ExecutionStartedEvent, HistoryEvent, OrchestratorCompletedEvent,
     OrchestratorStartedEvent, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
     SubOrchestrationInstanceFailedEvent, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent,
     TimerCreatedEvent, TimerFiredEvent } from "../../src/classes";
@@ -1289,6 +1289,66 @@ export class TestHistories {
                     isPlayed: false,
                     fireAt: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
                     timerId: 3,
+                },
+            ),
+        ];
+    }
+
+    public static GetSendHttpRequestReplayOne(
+        name: string,
+        firstTimestamp: Date,
+        request: DurableHttpRequest,
+        response: DurableHttpResponse)
+        : HistoryEvent[] {
+        const firstMoment = moment(firstTimestamp);
+
+        return [
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name,
+                    input: JSON.stringify(request),
+                },
+            ),
+            new TaskScheduledEvent(
+                {
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: "BuiltIn::HttpActivity",
+                    input: JSON.stringify(request),
+                },
+            ),
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                },
+            ),
+            new TaskCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(response),
+                    taskScheduledId: 0,
                 },
             ),
         ];

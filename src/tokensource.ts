@@ -1,24 +1,7 @@
 /**
  * Token Source implementation for [Azure Managed Identities](https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/overview).
- */
-export interface ManagedIdentityTokenSource {
-    /** @hidden */
-    kind: "AzureManagedIdentity";
-
-    /**
-     * The Azure Active Directory resource identifier of the web API being invoked.
-     * For example, `https://management.core.windows.net/` or `https://graph.microsoft.com/`.
-     */
-    resource: string;
-}
-
-// Over time we will likely add more implementations
-export type TokenSource = ManagedIdentityTokenSource;
-
-/**
- * Returns a `ManagedIdentityTokenSource` object.
- * @param resource The Azure Active Directory resource identifier of the web API being invoked.
- * @example Gets a `ManagedIdentityTokenSource` object.
+ *
+ * @example Get a list of Azure Subscriptions by calling the Azure Resource Manager HTTP API.
  * ```javascript
  * const df = require("durable-functions");
  *
@@ -26,11 +9,28 @@ export type TokenSource = ManagedIdentityTokenSource;
  *     return yield context.df.callHttp(
  *         "GET",
  *         "https://management.azure.com/subscriptions?api-version=2019-06-01",
- *         null,
+ *         undefined,
+ *         undefined,
  *         df.ManagedIdentityTokenSource("https://management.core.windows.net"));
  * });
  * ```
  */
-export function ManagedIdentityTokenSource(resource: string): ManagedIdentityTokenSource {
-    return { resource: resource, kind: "AzureManagedIdentity" };
+export class ManagedIdentityTokenSource {
+    /** @hidden */
+    public kind: "AzureManagedIdentity";
+
+    /**
+     * Returns a `ManagedIdentityTokenSource` object.
+     * @param resource The Azure Active Directory resource identifier of the web API being invoked.
+     */
+    constructor(
+        /**
+         * The Azure Active Directory resource identifier of the web API being invoked.
+         * For example, `https://management.core.windows.net/` or `https://graph.microsoft.com/`.
+         */
+        public readonly resource: string,
+    ) { }
 }
+
+// Over time we will likely add more implementations
+export type TokenSource = ManagedIdentityTokenSource;
