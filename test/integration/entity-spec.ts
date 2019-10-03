@@ -20,9 +20,7 @@ describe("Entity", () => {
         });
         entity(mockContext);
 
-        expect(mockContext.doneValue).to.be.deep.equal(
-            testData.output,
-        );
+        entityStateMatchesExpected(mockContext.doneValue, testData.output)
     });
 
     it("StringStore entity with initial state.", async () => {
@@ -36,11 +34,20 @@ describe("Entity", () => {
         });
         entity(mockContext);
 
-        expect(mockContext.doneValue).to.be.deep.equal(
-            testData.output,
-        );
+        entityStateMatchesExpected(mockContext.doneValue, testData.output)
     });
 });
+
+// Have to compare on an element by element basis as elapsed time is not deterministic.
+function entityStateMatchesExpected(actual: EntityState, expected: EntityState) {
+    expect(actual.entityExists).to.be.equal(expected.entityExists);
+    expect(actual.entityState).to.be.deep.equal(expected.entityState);
+    expect(actual.signals).to.be.deep.equal(expected.signals);
+    for (var i = 0; i < actual.results.length; i++) {
+        expect(actual.results[i].isError).to.be.equal(expected.results[i].isError);
+        expect(actual.results[i].result).to.be.deep.equal(expected.results[i].result);
+    }
+}
 
 class MockContext {
     constructor(

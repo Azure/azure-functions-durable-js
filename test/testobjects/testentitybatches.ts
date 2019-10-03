@@ -26,7 +26,7 @@ export class TestEntityBatches {
                     batch[operationCount].signal = false;
 
                     // Handle outputs
-                    output.results[operationCount] = new OperationResult(output.entityState, false, -1);
+                    output.results[operationCount] = new OperationResult(false, -1, output.entityState);
                     break;
                 case "set":
                     // Handle inputs
@@ -37,7 +37,7 @@ export class TestEntityBatches {
                     batch[operationCount].input = value;
 
                     // Handle outputs
-                    output.results[operationCount] = new OperationResult(null, false, -1);
+                    output.results[operationCount] = new OperationResult(false, -1);
                     output.entityExists = true;
                     output.entityState = value;
                     break;
@@ -72,7 +72,7 @@ export class TestEntityBatches {
                     batch[operationCount].signal = false;
 
                     // Handle outputs
-                    output.results[operationCount] = new OperationResult(JSON.stringify(currentState), false, -1);
+                    output.results[operationCount] = new OperationResult(false, -1, JSON.stringify(currentState));
                     break;
                 case "set":
                     // Handle inputs
@@ -83,7 +83,7 @@ export class TestEntityBatches {
 
                     // Handle outputs
                     currentState = operation.value;
-                    output.results[operationCount] = new OperationResult(null, false, -1);
+                    output.results[operationCount] = new OperationResult(false, -1);
                     output.entityExists = true;
                     output.entityState = currentState.toString();
                     break;
@@ -94,11 +94,11 @@ export class TestEntityBatches {
 
                     if (currentState != null) {
                         currentState = currentState + 1;
-                        output.results[operationCount] = new OperationResult(null, false, -1);
+                        output.results[operationCount] = new OperationResult(false, -1);
                         output.entityExists = true;
                         output.entityState = currentState.toString();
                     } else {
-                        output.results[operationCount] = new OperationResult("dummy error message", true, -1);
+                        output.results[operationCount] = new OperationResult(true, -1, "dummy error message");
                     }
                     break;
                 case "add":
@@ -109,11 +109,11 @@ export class TestEntityBatches {
 
                     if (currentState != null) {
                         currentState = currentState + operation.value;
-                        output.results[operationCount] = new OperationResult(null, false, -1);
+                        output.results[operationCount] = new OperationResult(false, -1);
                         output.entityExists = true;
                         output.entityState = currentState.toString();
                     } else {
-                        output.results[operationCount] = new OperationResult("dummy error message", true, -1);
+                        output.results[operationCount] = new OperationResult(true, -1, "dummy error message");
                     }
                     break;
                 case "delete":
@@ -122,7 +122,7 @@ export class TestEntityBatches {
                     batch[operationCount].signal = false;
 
                     output.entityExists = false;
-                    output.results[operationCount] = new OperationResult(null, false, -1);
+                    output.results[operationCount] = new OperationResult(false, -1);
                     break;
             }
             operationCount++;

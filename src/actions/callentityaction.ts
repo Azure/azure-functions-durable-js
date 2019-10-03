@@ -10,7 +10,9 @@ export class CallEntityAction implements IAction {
         public readonly operation: string,
         public readonly input?: unknown,
     ) {
-        Utils.throwIfEmpty(entityId, "entityId");
+        if (!entityId) {
+            throw new Error("Must provide EntityId to CallEntityAction constructor");
+        }
         Utils.throwIfEmpty(operation, "operation");
         this.instanceId = EntityId.getSchedulerIdFromEntityId(entityId);
     }

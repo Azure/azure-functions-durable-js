@@ -25,24 +25,26 @@ export class Entity {
         const returnState: EntityState = new EntityState([], []);
         returnState.entityExists = entityBinding.exists;
         returnState.entityState = entityBinding.state;
-
         for (let i = 0; i < entityBinding.batch.length; i++) {
-            context.df = this.getCurrentDurableEntityContext(entityBinding, returnState, i);
+            const startTime = new Date();
+            context.df = this.getCurrentDurableEntityContext(entityBinding, returnState, i, startTime);
 
             try {
                 this.fn(context);
                 if (!returnState.results[i]) {
-                    returnState.results[i] = new OperationResult(null, false, -1); // TODO handle duration later.
+                    const elapsedMs = this.computeElapsedMilliseconds(startTime);
+                    returnState.results[i] = new OperationResult(false, elapsedMs);
                 }
             } catch (error) {
-                returnState.results[i] = new OperationResult(JSON.stringify(error), true, -1); // TODO handle duration later.
+                const elapsedMs = this.computeElapsedMilliseconds(startTime);
+                returnState.results[i] = new OperationResult(true, elapsedMs, JSON.stringify(error));
             }
         }
 
         context.done(null, returnState);
     }
 
-    private getCurrentDurableEntityContext(bindingInfo: DurableEntityBindingInfo, batchState: EntityState, requestIndex: number): DurableEntityContext  {
+    private getCurrentDurableEntityContext(bindingInfo: DurableEntityBindingInfo, batchState: EntityState, requestIndex: number, startTime: Date): DurableEntityContext  {
         const currentRequest = bindingInfo.batch[requestIndex];
         return {
             entityName: bindingInfo.self.name,
@@ -53,7 +55,7 @@ export class Entity {
             getState: this.getState.bind(this, batchState),
             setState: this.setState.bind(this, batchState),
             getInput: this.getInput.bind(this, currentRequest),
-            return: this.return.bind(this, batchState),
+            return: this.return.bind(this, batchState, startTime),
             destructOnExit: this.destructOnExit.bind(this, batchState),
             signalEntity: this.signalEntity.bind(this, batchState),
         };
@@ -92,9 +94,9 @@ export class Entity {
         return undefined;
     }
 
-    private return<TResult>(returnState: EntityState, result: TResult): void {
+    private return<TResult>(returnState: EntityState, startTime: Date, result: TResult): void {
         returnState.entityExists = true;
-        returnState.results.push(new OperationResult(JSON.stringify(result), false, -1)); // TODO: put actual duration in place.
+        returnState.results.push(new OperationResult(false, this.computeElapsedMilliseconds(startTime), JSON.stringify(result)));
     }
 
     private setState<TState>(returnState: EntityState, state: TState): void {
@@ -104,5 +106,10 @@ export class Entity {
 
     private signalEntity(returnState: EntityState, entity: EntityId, operationName: string, operationInput?: unknown): void {
         returnState.signals.push(new Signal(entity, operationName, operationInput ? JSON.stringify(operationInput) : ""));
+    }
+
+    private computeElapsedMilliseconds(startTime: Date) : number {
+        const endTime = new Date();
+        return endTime.getTime() - startTime.getTime();
     }
 }
