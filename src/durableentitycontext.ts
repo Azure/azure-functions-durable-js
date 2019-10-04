@@ -41,7 +41,7 @@ export class DurableEntityContext {
      * instead of TState's default.
      * @returns The current state of this entity, or undefined if none has been set yet.
      */
-    public getState<TState>(initializer?: () => TState): TState | undefined {
+    public getState(initializer?: () => unknown): unknown | undefined {
         throw new Error("This is a placeholder.");
     }
 
@@ -50,7 +50,7 @@ export class DurableEntityContext {
      *
      * @param state The state of the entity.
      */
-    public setState<TState>(state: TState): void {
+    public setState(state: unknown): void {
         throw new Error("This is a placeholder.");
     }
 
@@ -62,7 +62,7 @@ export class DurableEntityContext {
      *
      * @returns The operation input, or undefined if none.
      */
-    public getInput<TInput>(): TInput | undefined {
+    public getInput(): unknown | undefined {
         throw new Error("This is a placeholder.");
     }
 
@@ -71,7 +71,7 @@ export class DurableEntityContext {
      *
      * @param result The result to return.
      */
-    public return<TResult>(result: TResult): void {
+    public return(result: unknown): void {
         throw new Error("This is a placeholder.");
     }
 

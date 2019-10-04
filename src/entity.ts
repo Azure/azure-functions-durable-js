@@ -66,36 +66,28 @@ export class Entity {
         batchState.entityState = undefined;
     }
 
-    private getInput<TInput>(currentRequest: RequestMessage): TInput | undefined {
+    private getInput(currentRequest: RequestMessage): unknown | undefined {
         if (currentRequest.input) {
-            const typedInput = JSON.parse(currentRequest.input) as TInput;
-            if (!typedInput) {
-                throw Error("Cannot parse " + currentRequest.input + " as the required type.");
-            }
-            return typedInput;
+            return JSON.parse(currentRequest.input);
         }
         return undefined;
     }
 
-    private getState<TState>(returnState: EntityState, initializer?: () => TState): TState | undefined {
+    private getState(returnState: EntityState, initializer?: () => unknown): unknown | undefined {
         if (returnState.entityState) {
-            const typedState = JSON.parse(returnState.entityState) as TState;
-            if (!typedState) {
-                throw Error("Cannot parse " + returnState.entityState + " as the required type.");
-            }
-            return typedState;
+            return JSON.parse(returnState.entityState);
         } else if (initializer != null) {
             return initializer();
         }
         return undefined;
     }
 
-    private return<TResult>(returnState: EntityState, startTime: Date, result: TResult): void {
+    private return(returnState: EntityState, startTime: Date, result: unknown): void {
         returnState.entityExists = true;
         returnState.results.push(new OperationResult(false, this.computeElapsedMilliseconds(startTime), JSON.stringify(result)));
     }
 
-    private setState<TState>(returnState: EntityState, state: TState): void {
+    private setState(returnState: EntityState, state: unknown): void {
         returnState.entityExists = true;
         returnState.entityState = JSON.stringify(state);
     }
