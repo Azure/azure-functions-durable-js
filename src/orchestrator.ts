@@ -235,7 +235,7 @@ export class Orchestrator {
         if (eventRaised) {
             const parsedResult = this.parseHistoryEvent(eventRaised) as ResponseMessage;
 
-            return new Task(true, false, newAction, parsedResult.result, eventRaised.Timestamp, eventSent.EventId);
+            return new Task(true, false, newAction, JSON.parse(parsedResult.result), eventRaised.Timestamp, eventSent.EventId);
         }
 
         // TODO: error handling

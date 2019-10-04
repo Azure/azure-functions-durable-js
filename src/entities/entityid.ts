@@ -16,7 +16,7 @@ export class EntityId {
 
     /** @hidden */
     static getSchedulerIdFromEntityId(entityId: EntityId): string {
-        return `@${entityId.name}@${entityId.key}`;
+        return `@${entityId.name.toLowerCase()}@${entityId.key}`;
     }
 
     /**
