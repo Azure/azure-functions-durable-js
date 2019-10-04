@@ -5,6 +5,7 @@
     "max-line-length": false,
     "no-implicit-dependencies": [true, "dev"],
     "no-submodule-imports": false,
-    "object-literal-sort-keys": false
+    "object-literal-sort-keys": false,
+    "interface-name": false
   }
 }
