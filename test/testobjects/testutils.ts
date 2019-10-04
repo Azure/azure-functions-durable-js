@@ -17,6 +17,18 @@ export class TestUtils {
         );
     }
 
+    public static createV1OrchestrationClientInputData(
+        id: string,
+        host: string,
+        taskHub: string = TestConstants.taskHubPlaceholder,
+        connection: string = TestConstants.connectionPlaceholder) {
+        return new OrchestrationClientInputData(
+            taskHub,
+            TestUtils.createHttpCreationPayload(host, taskHub, connection),
+            TestUtils.createHttpManagementPayload(id, host, taskHub, connection),
+        );
+    }
+
     public static createHttpCreationPayload(host: string, taskHub: string, connection: string) {
         return new HttpCreationPayload(
             TestConstants.createPostUriTemplate

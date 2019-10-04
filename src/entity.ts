@@ -66,10 +66,6 @@ export class Entity {
         batchState.entityState = undefined;
     }
 
-    private parseObject(objectString: string): unknown {
-        return JSON.parse(objectString);
-    }
-
     private getInput<TInput>(currentRequest: RequestMessage): TInput | undefined {
         if (currentRequest.input) {
             const typedInput = JSON.parse(currentRequest.input) as TInput;
@@ -108,7 +104,7 @@ export class Entity {
         returnState.signals.push(new Signal(entity, operationName, operationInput ? JSON.stringify(operationInput) : ""));
     }
 
-    private computeElapsedMilliseconds(startTime: Date) : number {
+    private computeElapsedMilliseconds(startTime: Date): number {
         const endTime = new Date();
         return endTime.getTime() - startTime.getTime();
     }

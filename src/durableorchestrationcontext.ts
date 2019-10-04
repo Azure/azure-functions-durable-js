@@ -170,31 +170,6 @@ export class DurableOrchestrationContext {
     }
 
     /**
-     * Determines whether the current context is locked, and if so, what locks
-     * are currently owned.
-     *
-     * Note that the collection of owned locks can be empty even if the context
-     * is locked. This happens if an orchestration calls a suborchestration
-     * without lending any locks.
-     *
-     * @returns [[LockState]]
-    
-    public isLocked(): LockState {
-        throw new Error("This is a placeholder.");
-    }
-
-    /**
-     * Acquires one or more locks, for the specified entities.
-     *
-     * Locks can only be acquired if the current context does not hold any
-     * locks already.
-     *
-     * @param entities The entities whose locks should be acquired.
-    public lock(...entities: EntityId[]): DurableLock {
-        throw new Error("This is a placeholder.");
-    }
-
-    /**
      * Creates a new GUID that is safe for replay within an orchestration or
      * operation.
      *

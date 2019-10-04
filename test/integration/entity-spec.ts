@@ -20,7 +20,7 @@ describe("Entity", () => {
         });
         entity(mockContext);
 
-        entityStateMatchesExpected(mockContext.doneValue, testData.output)
+        entityStateMatchesExpected(mockContext.doneValue, testData.output);
     });
 
     it("StringStore entity with initial state.", async () => {
@@ -34,7 +34,7 @@ describe("Entity", () => {
         });
         entity(mockContext);
 
-        entityStateMatchesExpected(mockContext.doneValue, testData.output)
+        entityStateMatchesExpected(mockContext.doneValue, testData.output);
     });
 });
 
@@ -43,7 +43,7 @@ function entityStateMatchesExpected(actual: EntityState, expected: EntityState) 
     expect(actual.entityExists).to.be.equal(expected.entityExists);
     expect(actual.entityState).to.be.deep.equal(expected.entityState);
     expect(actual.signals).to.be.deep.equal(expected.signals);
-    for (var i = 0; i < actual.results.length; i++) {
+    for (let i = 0; i < actual.results.length; i++) {
         expect(actual.results[i].isError).to.be.equal(expected.results[i].isError);
         expect(actual.results[i].result).to.be.deep.equal(expected.results[i].result);
     }

@@ -41,15 +41,17 @@ export function getClient(context: unknown): DurableOrchestrationClient {
 }
 
 function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
-    const matchingInstances = Utils.getInstancesOf<OrchestrationClientInputData>(
-        (context as IOrchestrationFunctionContext).bindings,
-        new OrchestrationClientInputData(undefined, undefined, undefined, undefined, undefined));
+    if (context.bindings) {
+        const matchingInstances = Object.keys(context.bindings)
+        .map((key) => context.bindings[key])
+        .filter((val) => OrchestrationClientInputData.isOrchestrationClientInputData(val));
 
-    if (!matchingInstances || matchingInstances.length === 0) {
-        throw new Error("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
+        if (matchingInstances && matchingInstances.length > 0) {
+            return matchingInstances[0] as OrchestrationClientInputData;
+        }
     }
 
-    return matchingInstances[0];
+    throw new Error("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
 }
 
 function correctClientData(clientData: OrchestrationClientInputData): OrchestrationClientInputData {

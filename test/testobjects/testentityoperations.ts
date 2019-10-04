@@ -1,31 +1,31 @@
 import { DurableEntityBindingInfo, EntityState } from "../../src/classes";
 
-export type EntityInputsAndOutputs = {
+export interface EntityInputsAndOutputs {
     input: DurableEntityBindingInfo;
     output: EntityState;
-};
+}
 
-export type Get  = {
+export interface Get {
     kind: "get";
-};
+}
 
-export type Set<T> = {
+export interface Set<T> {
     kind: "set";
     value: T;
-};
+}
 
-export type Increment = {
+export interface Increment {
     kind: "increment";
-};
+}
 
-export type Add<T> = {
+export interface Add<T> {
     kind: "add";
     value: T;
-};
+}
 
-export type Delete = {
+export interface Delete {
     kind: "delete";
-};
+}
 
 export type StringStoreOperation = Get | Set<string>;
 

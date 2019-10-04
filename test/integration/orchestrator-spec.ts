@@ -737,7 +737,7 @@ describe("Orchestrator", () => {
                             new CallEntityAction(
                                 expectedEntity,
                                 "set",
-                                "testString")
+                                "testString"),
                         ],
                     ],
                 }),
@@ -767,11 +767,11 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions:
                     [
-                        [ 
+                        [
                             new CallEntityAction(
                                 expectedEntity,
                                 "set",
-                                "testString")
+                                "testString"),
                         ],
                     ],
                     output: "OK",
@@ -1280,106 +1280,6 @@ describe("Orchestrator", () => {
             // TODO: fill in
         });
     });
-
-    /**
-    describe.skip("lock()", () => {
-        it("reports an error if already holding locks", async () => {
-            const orchestrator = TestOrchestrations.GetAndReleaseLock;
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart("GetAndReleaseLock", moment.utc().toDate()),
-                    undefined,
-                    undefined,
-                    undefined,
-                    undefined,
-                    // [ new EntityId("TestActor", "111") ],
-                ),
-            });
-            const expectedErr = "Cannot acquire more locks when already holding some locks.";
-
-            orchestrator(mockContext);
-
-            expect(mockContext.doneValue).to.be.an("object").that.deep.include(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [],
-                    output: undefined,
-                }),
-            );
-            expect(mockContext.doneValue.error).to.include(expectedErr);
-            expect(mockContext.err.toString()).to.include(expectedErr);
-        });
-
-        const badInputs: Array<unknown> = [ undefined, [] ];
-        badInputs.forEach((badInput) => {
-            it(`reports an error if called with ${badInput ? "empty array" : "undefined"}`, async () => {
-                const orchestrator = TestOrchestrations.GetLockBadly;
-                const mockContext = new MockContext({
-                    context: new DurableOrchestrationBindingInfo(
-                        TestHistories.GetOrchestratorStart("GetLockBadly", moment.utc().toDate()),
-                        badInput,
-                    ),
-                });
-                const expectedErr = "The list of entities to lock must not be null or empty.";
-
-                orchestrator(mockContext);
-
-                expect(mockContext.doneValue).to.be.an("object").that.deep.include(
-                    new OrchestratorState({
-                        isDone: false,
-                        actions: [],
-                        output: undefined,
-                    }),
-                );
-                expect(mockContext.doneValue.error).to.include(expectedErr);
-                expect(mockContext.err.toString()).to.include(expectedErr);
-            });
-        });
-
-        it.skip("schedules a lock request", () => {
-            const orchestrator = TestOrchestrations.GetAndReleaseLock;
-            const instanceId = uuidv1();
-            const locks = [
-                new EntityId("TestActor", "123"),
-                new EntityId("TestActor", "ABC"),
-            ];
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart("GetAndReleaseLock", moment.utc().toDate()),
-                    locks,
-                    instanceId,
-                ),
-            });
-            const expectedRequestMessage = {
-                id: "sigh",
-                // ID is a GUID, can be whatever; omitted for matching here
-                parent: instanceId,
-                lockset: locks,
-                pos: 0,
-            };
-
-            orchestrator(mockContext);
-
-            expect(mockContext.doneValue).to.be.an("object").that.deep.include(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new SendEntityMessageAction(EntityId.getSchedulerIdFromEntityId(locks[0]), "op", expectedRequestMessage),
-                        ],
-                    ],
-                    output: undefined,
-                }),
-            );
-            expect(mockContext.doneValue.actions[0]).to.have.lengthOf(2);
-            expect(mockContext.doneValue.actions[0][1]).to.satisfy((obj: unknown) => {
-                return obj instanceof WaitForExternalEventAction
-                    && isUUID((obj as WaitForExternalEventAction).externalEventName)
-                    && (obj as WaitForExternalEventAction).reason === ExternalEventType.LockAcquisitionCompleted;
-            });
-        });
-    });
-    */
 
     describe("newGuid()", () => {
         it("generates consistent GUIDs", () => {
