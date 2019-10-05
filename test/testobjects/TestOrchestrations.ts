@@ -134,6 +134,17 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static SendHttpRequest: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput() as df.DurableHttpRequest;
+        const output = yield context.df.callHttp(
+            input.method,
+            input.uri,
+            input.content,
+            input.headers,
+            input.tokenSource);
+        return output;
+    });
+
     /**
      * This orchestrator and its corresponding history replicate conditions under
      * which there are not sufficient OrchestratorStartedEvents in the history

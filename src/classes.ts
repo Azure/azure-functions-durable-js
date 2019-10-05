@@ -14,6 +14,7 @@ export { CallActivityAction } from "./actions/callactivityaction";
 export { CallActivityWithRetryAction } from "./actions/callactivitywithretryaction";
 export { CallSubOrchestratorAction } from "./actions/callsuborchestratoraction";
 export { CallSubOrchestratorWithRetryAction } from "./actions/callsuborchestratorwithretryaction";
+export { CallHttpAction } from "./actions/callhttpaction";
 export { ContinueAsNewAction } from "./actions/continueasnewaction";
 export { CreateTimerAction } from "./actions/createtimeraction";
 export { WaitForExternalEventAction } from "./actions/waitforexternaleventaction";
@@ -57,3 +58,6 @@ export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
 export { PurgeHistoryResult } from "./purgehistoryresult";
 
 export { GuidManager } from "./guidmanager";
+
+export { DurableHttpRequest } from "./durablehttprequest";
+export { DurableHttpResponse } from "./durablehttpresponse";

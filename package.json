@@ -4,7 +4,7 @@
   "description": "Durable Functions library for Node.js Azure Functions",
   "license": "MIT",
   "repository": "github:Azure/azure-functions-durable-js",
-  "author": "kashimiz",
+  "author": "Microsoft Corporation",
   "keywords": [
     "azure-functions"
   ],
