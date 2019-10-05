@@ -21,9 +21,21 @@ describe("getClient()", () => {
         defaultTaskHub,
         defaultConnection);
 
+    const v1ClientInputData = TestUtils.createV1OrchestrationClientInputData(
+        TestConstants.idPlaceholder,
+        Constants.DefaultLocalOrigin,
+        defaultTaskHub,
+        defaultConnection);
+
     const defaultContext = {
         bindings: {
             starter: defaultClientInputData,
+        },
+    };
+
+    const v1Context = {
+        bindings: {
+            starter: v1ClientInputData,
         },
     };
 
@@ -46,6 +58,11 @@ describe("getClient()", () => {
 
     it("returns DurableOrchestrationClient if called with valid context", async () => {
         const client = getClient(defaultContext);
+        expect(client).to.be.instanceOf(DurableOrchestrationClient);
+    });
+
+    it("returns DurableOrchestrationClient if called with V1 context", async () => {
+        const client = getClient(v1Context);
         expect(client).to.be.instanceOf(DurableOrchestrationClient);
     });
 

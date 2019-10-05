@@ -1,8 +1,23 @@
-import { HttpCreationPayload, HttpManagementPayload, OrchestrationClientInputData } from "../../src/classes";
+import { HttpCreationPayload, HttpManagementPayload,
+    OrchestrationClientInputData } from "../../src/classes";
 import { TestConstants } from "./testconstants";
 
 export class TestUtils {
     public static createOrchestrationClientInputData(
+        id: string,
+        host: string,
+        taskHub: string = TestConstants.taskHubPlaceholder,
+        connection: string = TestConstants.connectionPlaceholder) {
+        return new OrchestrationClientInputData(
+            taskHub,
+            TestUtils.createHttpCreationPayload(host, taskHub, connection),
+            TestUtils.createHttpManagementPayload(id, host, taskHub, connection),
+            `${host}${TestConstants.webhookPath.replace(/\/$/, "")}`, // Returns baseURL with remaining whitespace trimmed.
+            TestConstants.testCode,
+        );
+    }
+
+    public static createV1OrchestrationClientInputData(
         id: string,
         host: string,
         taskHub: string = TestConstants.taskHubPlaceholder,

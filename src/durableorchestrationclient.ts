@@ -1,13 +1,19 @@
+// tslint:disable:member-access
+
 import { HttpRequest } from "@azure/functions";
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
 import cloneDeep = require("lodash/cloneDeep");
 import process = require("process");
 import url = require("url");
+import uuid = require("uuid/v1");
 import { isURL } from "validator";
-import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagementPayload, IFunctionContext,
-    IHttpRequest, IHttpResponse, OrchestrationClientInputData, OrchestrationRuntimeStatus,
-    PurgeHistoryResult, Utils,
+import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
+    GetStatusOptions, HttpCreationPayload, HttpManagementPayload,
+    IHttpRequest, IHttpResponse, IOrchestrationFunctionContext, OrchestrationClientInputData,
+    OrchestrationRuntimeStatus, PurgeHistoryResult, Utils,
 } from "./classes";
+import { WebhookUtils } from "./webhookutils";
+
 /**
  * Returns an OrchestrationClient instance.
  * @param context The context object of the Azure function whose body
@@ -25,7 +31,7 @@ import { Constants, DurableOrchestrationStatus, HttpCreationPayload, HttpManagem
  * ```
  */
 export function getClient(context: unknown): DurableOrchestrationClient {
-    let clientData = getClientData(context as IFunctionContext);
+    let clientData = getClientData(context as IOrchestrationFunctionContext);
 
     if (!process.env.WEBSITE_HOSTNAME || process.env.WEBSITE_HOSTNAME.includes("0.0.0.0")) {
         clientData = correctClientData(clientData);
@@ -34,16 +40,18 @@ export function getClient(context: unknown): DurableOrchestrationClient {
     return new DurableOrchestrationClient(clientData);
 }
 
-function getClientData(context: IFunctionContext): OrchestrationClientInputData {
-    const matchingInstances = Utils.getInstancesOf<OrchestrationClientInputData>(
-        (context as IFunctionContext).bindings,
-        new OrchestrationClientInputData(undefined, undefined, undefined));
+function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
+    if (context.bindings) {
+        const matchingInstances = Object.keys(context.bindings)
+        .map((key) => context.bindings[key])
+        .filter((val) => OrchestrationClientInputData.isOrchestrationClientInputData(val));
 
-    if (!matchingInstances || matchingInstances.length === 0) {
-        throw new Error("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
+        if (matchingInstances && matchingInstances.length > 0) {
+            return matchingInstances[0] as OrchestrationClientInputData;
+        }
     }
 
-    return matchingInstances[0];
+    throw new Error("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
 }
 
 function correctClientData(clientData: OrchestrationClientInputData): OrchestrationClientInputData {
@@ -179,22 +187,15 @@ export class DurableOrchestrationClient {
         showHistoryOutput?: boolean,
         showInput?: boolean,
         ): Promise<DurableOrchestrationStatus> {
-        const template = this.clientData.managementUrls.statusQueryGetUri;
-        const idPlaceholder = this.clientData.managementUrls.id;
-
-        let webhookUrl = template.replace(idPlaceholder, instanceId);
-        if (showHistory) {
-            webhookUrl += `&${this.showHistoryQueryKey}=${showHistory}`;
-        }
-        if (showHistoryOutput) {
-            webhookUrl += `&${this.showHistoryOutputQueryKey}=${showHistoryOutput}`;
-        }
-        if (showInput === false) {
-            webhookUrl += `&${this.showInputQueryKey}=${showInput}`;
-        }
-
         try {
-            const response = await this.axiosInstance.get(webhookUrl);
+            const options: GetStatusOptions = {
+                instanceId,
+                showHistory,
+                showHistoryOutput,
+                showInput,
+            };
+            const response = await this.getStatusInternal(options);
+
             switch (response.status) {
                 case 200: // instance completed
                 case 202: // instance in progress
@@ -214,13 +215,8 @@ export class DurableOrchestrationClient {
      * Gets the status of all orchestration instances.
      */
     public async getStatusAll(): Promise<DurableOrchestrationStatus[]> {
-        // omit instanceId to get status for all instances
-        const idPlaceholder = this.clientData.managementUrls.id;
-        const requestUrl = this.clientData.managementUrls.statusQueryGetUri
-            .replace(idPlaceholder, "");
-
         try {
-            const response = await this.axiosInstance.get(requestUrl);
+            const response = await this.getStatusInternal({});
             return response.data as DurableOrchestrationStatus[];
         } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
             throw error.message;
@@ -242,30 +238,14 @@ export class DurableOrchestrationClient {
         createdTimeTo: Date,
         runtimeStatus: OrchestrationRuntimeStatus[],
         ): Promise<DurableOrchestrationStatus[]> {
-        const idPlaceholder = this.clientData.managementUrls.id;
-        let requestUrl = this.clientData.managementUrls.statusQueryGetUri
-            .replace(idPlaceholder, "");
-
-        if (createdTimeFrom) {
-            requestUrl += `&${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`;
-        }
-
-        if (createdTimeTo) {
-            requestUrl += `&${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`;
-        }
-
-        if (runtimeStatus && runtimeStatus.length > 0) {
-            const statusesString = runtimeStatus
-                .map((value) => value.toString())
-                .reduce((acc, curr, i, arr) => {
-                    return acc + (i > 0 ? "," : "") + curr;
-            });
-
-            requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
-        }
-
         try {
-            const response = await this.axiosInstance.get(requestUrl);
+            const options: GetStatusOptions = {
+                createdTimeFrom,
+                createdTimeTo,
+                runtimeStatus,
+            };
+            const response = await this.getStatusInternal(options);
+
             if (response.status > 202) {
                 return Promise.reject(new Error(`Webhook returned status code ${response.status}: ${response.data}`));
             } else {
@@ -419,6 +399,40 @@ export class DurableOrchestrationClient {
     }
 
     /**
+     * Tries to read the current state of an entity. Returnes undefined if the
+     * entity does not exist, or if the JSON-serialized state of the entity is
+     * larger than 16KB.
+     * @param T The JSON-serializable type of the entity.
+     * @param entityId The target entity.
+     * @param taskHubName The TaskHubName of the target entity.
+     * @param connectionName The name of the connection string associated with
+     * [taskHubName].
+     * @returns A response containing the current state of the entity.
+     */
+    public async readEntityState<T>(entityId: EntityId, taskHubName?: string, connectionName?: string): Promise<EntityStateResponse<T>> {
+        const requestUrl = WebhookUtils.getReadEntityUrl(this.clientData.baseUrl,
+            this.clientData.requiredQueryStringParameters,
+            entityId.name,
+            entityId.key,
+            taskHubName,
+            connectionName);
+
+        try {
+            const response = await this.axiosInstance.get(requestUrl);
+            switch (response.status) {
+                case 200:   // entity exists
+                    return new EntityStateResponse(true, response.data as T);
+                case 404:   // entity does not exist
+                    return new EntityStateResponse(false, undefined);
+                default:
+                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+            }
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
+            throw error.message;
+        }
+    }
+
+    /**
      * Rewinds the specified failed orchestration instance with a reason.
      * @param instanceId The ID of the orchestration instance to rewind.
      * @param reason The reason for rewinding the orchestration instance.
@@ -441,6 +455,42 @@ export class DurableOrchestrationClient {
                     return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
                 case 410:
                     return Promise.reject(new Error("The rewind operation is only supported on failed orchestration instances."));
+                default:
+                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+            }
+        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
+            throw error.message;
+        }
+    }
+
+    /**
+     * Signals an entity to perform an operation.
+     * @param entityId The target entity.
+     * @param operationName The name of the operation.
+     * @param operationContent The content for the operation.
+     * @param taskHubName The TaskHubName of the target entity.
+     * @param connectionName The name of the connection string associated with [taskHubName].
+     */
+    public async signalEntity(
+        entityId: EntityId,
+        operationName?: string,
+        operationContent?: unknown,
+        taskHubName?: string,
+        connectionName?: string,
+        ): Promise<void> {
+        const requestUrl = WebhookUtils.getSignalEntityUrl(this.clientData.baseUrl,
+            this.clientData.requiredQueryStringParameters,
+            entityId.name,
+            entityId.key,
+            operationName,
+            taskHubName,
+            connectionName);
+
+        try {
+            const response = await this.axiosInstance.post(requestUrl, JSON.stringify(operationContent));
+            switch (response.status) {
+                case 202: // signal accepted
+                    return;
                 default:
                     return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
             }
@@ -635,5 +685,44 @@ export class DurableOrchestrationClient {
         });
 
         return origins;
+    }
+
+    private async getStatusInternal(options: GetStatusOptions): Promise<AxiosResponse> {
+        const template = this.clientData.managementUrls.statusQueryGetUri;
+        const idPlaceholder = this.clientData.managementUrls.id;
+
+        let requestUrl = template.replace(idPlaceholder, typeof(options.instanceId) === "string" ? options.instanceId : "");
+        if (options.taskHubName) {
+            requestUrl = requestUrl.replace(this.clientData.taskHubName, options.taskHubName);
+        }
+        if (options.connectionName) {
+            requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + options.connectionName);
+        }
+        if (options.showHistory) {
+            requestUrl += `&${this.showHistoryQueryKey}=${options.showHistory}`;
+        }
+        if (options.showHistoryOutput) {
+            requestUrl += `&${this.showHistoryOutputQueryKey}=${options.showHistoryOutput}`;
+        }
+        if (options.createdTimeFrom) {
+            requestUrl += `&${this.createdTimeFromQueryKey}=${options.createdTimeFrom.toISOString()}`;
+        }
+        if (options.createdTimeTo) {
+            requestUrl += `&${this.createdTimeToQueryKey}=${options.createdTimeTo.toISOString()}`;
+        }
+        if (options.runtimeStatus && options.runtimeStatus.length > 0) {
+            const statusesString = options.runtimeStatus
+                .map((value) => value.toString())
+                .reduce((acc, curr, i, arr) => {
+                    return acc + (i > 0 ? "," : "") + curr;
+            });
+
+            requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+        }
+        if (typeof options.showInput === "boolean") {
+            requestUrl += `&${this.showInputQueryKey}=${options.showInput}`;
+        }
+
+        return this.axiosInstance.get(requestUrl);
     }
 }

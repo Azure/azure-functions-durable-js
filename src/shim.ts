@@ -1,4 +1,4 @@
-import { IFunctionContext, Orchestrator } from "./classes";
+import { Entity, IEntityFunctionContext, IOrchestrationFunctionContext, Orchestrator } from "./classes";
 
 /**
  * Enables a generator function to act as an orchestrator function.
@@ -14,10 +14,18 @@ import { IFunctionContext, Orchestrator } from "./classes";
  * });
  * ```
  */
-export function orchestrator(fn: (context: IFunctionContext) => IterableIterator<unknown>)
-    : (context: IFunctionContext) => void {
+export function orchestrator(fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>)
+    : (context: IOrchestrationFunctionContext) => void {
     const listener = new Orchestrator(fn).listen();
-    return (context: IFunctionContext) => {
+    return (context: IOrchestrationFunctionContext) => {
+        listener(context);
+    };
+}
+
+export function entity(fn: (context: IEntityFunctionContext) => unknown)
+    : (context: IEntityFunctionContext) => void {
+    const listener = new Entity(fn).listen();
+    return (context: IEntityFunctionContext) => {
         listener(context);
     };
 }

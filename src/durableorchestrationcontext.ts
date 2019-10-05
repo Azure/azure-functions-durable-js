@@ -1,4 +1,5 @@
-import { DurableHttpRequest, ITaskMethods, RetryOptions, Task, TimerTask } from "./classes";
+import { DurableHttpRequest, DurableLock, EntityId, ITaskMethods, LockState,
+     RetryOptions, Task, TimerTask } from "./classes";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -76,6 +77,18 @@ export class DurableOrchestrationContext {
      * function.
      */
     public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
+        throw new Error("This is a placeholder.");
+    }
+
+    /**
+     * Calls an operation on an entity, passing an argument, and waits for it
+     * to complete.
+     *
+     * @param entityId The target entity.
+     * @param operationName The name of the operation.
+     * @param operationInput The input for the operation.
+     */
+    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
         throw new Error("This is a placeholder.");
     }
 

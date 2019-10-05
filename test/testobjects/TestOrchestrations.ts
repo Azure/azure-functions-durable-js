@@ -17,6 +17,17 @@ export class TestOrchestrations {
        return returnValue;
     });
 
+    public static CallEntitySet: any = df.orchestrator(function*(context: any) {
+        const entity = context.df.getInput() as df.EntityId;
+        yield context.df.callEntity(entity, "set", "testString");
+
+        return "OK";
+    });
+
+    public static CheckForLocksNone: any = df.orchestrator(function*(context: any) {
+        return context.df.isLocked();
+    });
+
     public static ContinueAsNewCounter: any = df.orchestrator(function*(context: any) {
         const currentValueObject = context.df.getInput();
         let currentValue = currentValueObject
@@ -44,6 +55,22 @@ export class TestOrchestrations {
         const totalBytes = results.reduce((prev: any, curr: any) => prev + curr, 0);
 
         return totalBytes;
+    });
+
+    public static GetAndReleaseLock: any = df.orchestrator(function*(context: any) {
+        const entities = context.df.getInput();
+
+        const lock = yield context.df.lock(entities);
+
+        return "ok";
+    });
+
+    public static GetLockBadly: any = df.orchestrator(function*(context: any) {
+        const locksToGet = context.df.getInput();
+
+        const lock = yield context.df.lock(locksToGet);
+
+        return "ok";
     });
 
     public static GuidGenerator: any = df.orchestrator(function*(context: any) {
