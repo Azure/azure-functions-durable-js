@@ -1,3 +1,8 @@
+|Branch|Status|
+|---|---|
+|master|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=master)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=master)|
+|dev|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=dev)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=dev)|
+
 # Durable Functions for Node.js
 
 The `durable-functions` npm package allows you to write [Durable Functions](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview) for [Node.js](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node). Durable Functions is an extension of [Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview) that lets you write stateful functions and workflows in a serverless environment. The extension manages state, checkpoints, and restarts for you. Durable Functions' advantages include:
@@ -64,7 +69,7 @@ module.exports = df.orchestrator(function*(context){
 
 **Note:** Orchestrator functions must follow certain [code constraints.](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-checkpointing-and-replay#orchestrator-code-constraints)
 
-7. Write your client function ([see sample]((./samples/HttpStart/))):
+7. Write your client function ([see sample](./samples/HttpStart/)):
 ```javascript
 module.exports = async function (context, req) {
     const client = df.getClient(context);

@@ -1,12 +1,17 @@
+// tslint:disable:member-access
+
 import { HttpRequest } from "@azure/functions";
 import chai = require("chai");
 import chaiAsPromised = require("chai-as-promised");
+import { isEqual } from "lodash";
 import "mocha";
 import nock = require("nock");
 import url = require("url");
 import uuidv1 = require("uuid/v1");
 import { Constants, DurableOrchestrationClient, DurableOrchestrationStatus,
-    HttpManagementPayload, OrchestrationRuntimeStatus } from "../../src/classes";
+    EntityId, EntityStateResponse, HttpManagementPayload,
+    OrchestrationRuntimeStatus, PurgeHistoryResult,
+} from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 
@@ -29,6 +34,11 @@ describe("Orchestration Client", () => {
     const defaultTaskHub = "TestTaskHub";
     const defaultConnection = "Storage";
     const defaultInstanceId = uuidv1();
+
+    const defaultEntityName = "testEntity";
+    const defaultEntityKey = "123";
+    const defaultEntityId = new EntityId(defaultEntityName, defaultEntityKey);
+    const defaultEntityOp = "get";
 
     const defaultClientInputData = TestUtils.createOrchestrationClientInputData(
         TestConstants.idPlaceholder,
@@ -176,12 +186,91 @@ describe("Orchestration Client", () => {
 
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(202, expectedStatus);
 
             const result = await client.getStatus(defaultInstanceId);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedStatus);
+        });
+
+        it("calls expected webhook when showHistory = true", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedStatus = new DurableOrchestrationStatus(
+                defaultOrchestrationName,
+                defaultInstanceId,
+                null,
+                null,
+                null,
+                null,
+                OrchestrationRuntimeStatus.Pending,
+                null,
+                null);
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                + "&showHistory=true");
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(202, expectedStatus);
+
+            const result = await client.getStatus(defaultInstanceId, true);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedStatus);
+        });
+
+        it("calls expected webhook when showHistoryOutput = true", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedStatus = new DurableOrchestrationStatus(
+                defaultOrchestrationName,
+                defaultInstanceId,
+                null,
+                null,
+                null,
+                null,
+                OrchestrationRuntimeStatus.Pending,
+                null,
+                null);
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                + "&showHistoryOutput=true");
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(202, expectedStatus);
+
+            const result = await client.getStatus(defaultInstanceId, false, true);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedStatus);
+        });
+
+        it("calls expected webhook when showInput = false", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedStatus = new DurableOrchestrationStatus(
+                defaultOrchestrationName,
+                defaultInstanceId,
+                null,
+                null,
+                null,
+                null,
+                OrchestrationRuntimeStatus.Pending,
+                null,
+                null);
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                + "&showInput=false");
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(202, expectedStatus);
+
+            const result = await client.getStatus(defaultInstanceId, false, false, false);
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.deep.equal(expectedStatus);
         });
@@ -218,9 +307,7 @@ describe("Orchestration Client", () => {
             ];
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(202, expectedStatuses);
 
             const result = await client.getStatusAll();
@@ -265,9 +352,7 @@ describe("Orchestration Client", () => {
             ];
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(202, expectedStatuses);
 
             const result = await client.getStatusBy(createdTimeFrom, createdTimeTo, runtimeStatuses);
@@ -287,14 +372,128 @@ describe("Orchestration Client", () => {
             const expectedStatuses: DurableOrchestrationStatus[] = [ ];
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(202, expectedStatuses);
 
             const result = await client.getStatusBy(undefined, undefined, runtimeStatuses);
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.deep.equal(expectedStatuses);
+        });
+    });
+
+    describe("purgeInstanceHistory()", () => {
+        beforeEach(async () => {
+            nock.cleanAll();
+        });
+
+        afterEach(async () => {
+            nock.cleanAll();
+        });
+
+        it("calls expected webhook and returns expected result when instance exists", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedResult = new PurgeHistoryResult(1);
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, defaultInstanceId));
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .delete(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(200, expectedResult);
+
+            const result = await client.purgeInstanceHistory(defaultInstanceId);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedResult);
+        });
+
+        it("calls expected webhook and returns expected result when instance does not exist", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedResult = new PurgeHistoryResult(0);
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, defaultInstanceId));
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .delete(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(404);
+
+            const result = await client.purgeInstanceHistory(defaultInstanceId);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedResult);
+        });
+    });
+
+    describe("purgeInstanceHistoryBy()", () => {
+        beforeEach(async () => {
+            nock.cleanAll();
+        });
+
+        afterEach(async () => {
+            nock.cleanAll();
+        });
+
+        it("throws if createdTimeFrom is not a valid date", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            await expect(client.purgeInstanceHistoryBy(undefined, undefined, undefined))
+                .to.be.rejectedWith("createdTimeFrom must be a valid Date");
+        });
+
+        it("calls expected webhook with all filters and returns expected result when instance(s) found", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const createdTimeTo = new Date();
+            const createdTimeFrom = new Date(createdTimeTo.getTime() - 1000 * 60 * 60 * 24 * 3);    // last three days
+            const runtimeStatuses = [ OrchestrationRuntimeStatus.Failed, OrchestrationRuntimeStatus.Terminated ];
+
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.purgeHistoryDeleteUri
+                .replace(TestConstants.idPlaceholder, "")
+                .concat(`&createdTimeFrom=${createdTimeFrom.toISOString()}`)
+                .concat(`&createdTimeTo=${createdTimeTo.toISOString()}`)
+                .concat("&runtimeStatus=Failed,Terminated"));
+
+            const expectedResult = new PurgeHistoryResult(3);
+            const scope = nock(expectedWebhookUrl.origin)
+                .delete(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(200, expectedResult);
+
+            const result = await client.purgeInstanceHistoryBy(createdTimeFrom, createdTimeTo, runtimeStatuses);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedResult);
+        });
+
+        it("calls expected webhook with some filters and returns expected result when no instance(s) found", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const createdTimeTo = new Date();
+            const createdTimeFrom = new Date(createdTimeTo.getTime() - 1000 * 60 * 60 * 24 * 3);    // last three days
+            const runtimeStatuses = [ OrchestrationRuntimeStatus.Failed, OrchestrationRuntimeStatus.Terminated ];
+
+            const expectedWebhookUrl = new url.URL(defaultClientInputData.managementUrls.statusQueryGetUri
+                .replace(TestConstants.idPlaceholder, "")
+                .concat(`&createdTimeFrom=${createdTimeFrom.toISOString()}`)
+                .concat("&runtimeStatus=Failed,Terminated"));
+
+            const expectedResult = new PurgeHistoryResult(0);
+            const scope = nock(expectedWebhookUrl.origin)
+                .delete(expectedWebhookUrl.pathname)
+                .query(() => {
+                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
+                })
+                .reply(404);
+
+            const result = await client.purgeInstanceHistoryBy(createdTimeFrom, undefined, runtimeStatuses);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedResult);
         });
     });
 
@@ -319,9 +518,7 @@ describe("Orchestration Client", () => {
 
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(defaultTestData))
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(202);
 
             const result = await client.raiseEvent(defaultInstanceId, defaultTestEvent, defaultTestData);
@@ -339,9 +536,7 @@ describe("Orchestration Client", () => {
                 .replace(defaultTaskHub, testTaskHub));
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(defaultTestData))
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(202);
 
             const result = await client.raiseEvent(defaultInstanceId, defaultTestEvent, defaultTestData, testTaskHub);
@@ -359,9 +554,7 @@ describe("Orchestration Client", () => {
                 .replace(defaultConnection, testConnection));
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(defaultTestData))
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(202);
 
             const result = await client.raiseEvent(
@@ -383,14 +576,95 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.eventNamePlaceholder, defaultTestEvent));
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(defaultTestData))
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(404, undefined);
 
             await expect (client.raiseEvent(id, defaultTestEvent, defaultTestData))
                 .to.be.rejectedWith(`No instance with ID '${id}' found.`);
             expect(scope.isDone()).to.be.equal(true);
+        });
+    });
+
+    describe("readEntityState", () => {
+        beforeEach(async () => {    // TODO: move these to the top-level
+            nock.cleanAll();
+        });
+
+        afterEach(async () => {
+            nock.cleanAll();
+        });
+
+        it("calls expected webhook", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedEntityStateResponse: TestEntityState = {
+                count: 30,
+                isTrue: true,
+                names: [ "Bob", "Nancy", "Geraldine" ],
+            };
+            const expectedStateResponse = new EntityStateResponse<TestEntityState>(
+                true,
+                expectedEntityStateResponse,
+            );
+
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?${TestConstants.testCode}`);
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(200, expectedEntityStateResponse);
+
+            const result = await client.readEntityState<TestEntityState>(defaultEntityId);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedStateResponse);
+        });
+
+        it("calls expected webhook with specific task hub and connection", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const testTaskHub = "EntityHub";
+            const testConn = "EntityConnStr";
+
+            const expectedEntityStateResponse: TestEntityState = {
+                count: 30,
+                isTrue: true,
+                names: [ "Bob", "Nancy", "Geraldine" ],
+            };
+            const expectedStateResponse = new EntityStateResponse<TestEntityState>(
+                true,
+                expectedEntityStateResponse,
+            );
+
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?taskHub=${testTaskHub}&connection=${testConn}&${TestConstants.testCode}`);
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(200, expectedEntityStateResponse);
+
+            const result = await client.readEntityState<TestEntityState>(defaultEntityId, testTaskHub, testConn);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.deep.equal(expectedStateResponse);
+        });
+
+        it("returns default EntityStateResponse when if entity does not exist", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedResponse: EntityStateResponse<unknown> = {
+                entityExists: false,
+                entityState: undefined,
+            };
+
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?${TestConstants.testCode}`);
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(404);
+
+            const result = await client.readEntityState<TestEntityState>(defaultEntityId);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.be.deep.equal(expectedResponse);
         });
     });
 
@@ -412,9 +686,7 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.reasonPlaceholder, testReason));
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(202);
 
             const result = await client.rewind(defaultInstanceId, testReason);
@@ -432,9 +704,7 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.reasonPlaceholder, testReason));
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(404);
 
             await expect(client.rewind(testId, testReason)).to.be
@@ -452,9 +722,7 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.reasonPlaceholder, testReason));
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(410);
 
             await expect(client.rewind(testId, testReason)).to.be
@@ -472,15 +740,78 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.reasonPlaceholder, testReason));
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
-                .reply(404);
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(500);
 
             await expect(client.rewind(testId, testReason)).to.be
-                .rejectedWith(`No instance with ID '${testId}' found.`);
+                .rejectedWith(`Webhook returned unrecognized status code 500`);
             expect(scope.isDone()).to.be.equal(true);
         });
+    });
+
+    describe("signalEntity()", () => {
+        beforeEach(async () => {
+            nock.cleanAll();
+        });
+
+        afterEach(async () => {
+            nock.cleanAll();
+        });
+
+        it("calls expected webhook", async () => {
+            const testSignalData = { data: "foo" };
+
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?op=${defaultEntityOp}&${TestConstants.testCode}`);
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .post(expectedWebhookUrl.pathname, testSignalData)
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(202);
+
+            const result = await client.signalEntity(defaultEntityId, defaultEntityOp, testSignalData);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal(undefined);
+        });
+
+        it("calls expected webhook with specific task hub and connection", async () => {
+            const testTaskHub = "EntityHub";
+            const testConn = "EntityConnStr";
+            const testSignalData = { data: "foo" };
+
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?op=${defaultEntityOp}&taskHub=${testTaskHub}&connection=${testConn}&${TestConstants.testCode}`);
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .post(expectedWebhookUrl.pathname, testSignalData)
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(202);
+
+            const result = await client.signalEntity(defaultEntityId, defaultEntityOp, testSignalData, testTaskHub, testConn);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal(undefined);
+        });
+
+        it("calls expected webhook with empty operation", async () => {
+            const testSignalData = { data: "foo" };
+
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedWebhookUrl = new url.URL(`${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?${TestConstants.testCode}`);
+
+            const scope = nock(expectedWebhookUrl.origin)
+                .post(expectedWebhookUrl.pathname, testSignalData)
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(202);
+
+            const result = await client.signalEntity(defaultEntityId, undefined, testSignalData);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal(undefined);
+        });
+
+        // TODO: JS guards - throw if not string or undefined
     });
 
     describe("startNew()", () => {
@@ -499,10 +830,8 @@ describe("Orchestration Client", () => {
             const expectedWebhookUrl = createInstanceWebhookUrl(Constants.DefaultLocalOrigin, functionName);
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
-                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", ""));
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "", ""));
 
             const result = await client.startNew(functionName);
             expect(scope.isDone()).to.be.equal(true);
@@ -521,10 +850,8 @@ describe("Orchestration Client", () => {
                 defaultInstanceId);
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(testData))
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
-                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", ""));
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
+                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "", ""));
 
             const result = await client.startNew(functionName, defaultInstanceId, testData);
             expect(scope.isDone()).to.be.equal(true);
@@ -539,9 +866,7 @@ describe("Orchestration Client", () => {
             const expectedWebhookUrl = createInstanceWebhookUrl(Constants.DefaultLocalOrigin, functionName);
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(500, functionBody);
 
             await expect(client.startNew(functionName)).to.be.rejectedWith(functionBody);
@@ -567,9 +892,7 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.reasonPlaceholder, testReason));
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(202);
 
             const result = await client.terminate(defaultInstanceId, testReason);
@@ -587,9 +910,7 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.reasonPlaceholder, testReason));
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(404);
 
             await expect(client.terminate(id, testReason)).to.be
@@ -607,9 +928,7 @@ describe("Orchestration Client", () => {
                 .replace(TestConstants.reasonPlaceholder, testReason));
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
-                .query(() => {
-                    return getQueryObjectFromSearchParams(expectedWebhookUrl);
-                })
+                .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
                 .reply(500);
 
             await expect(client.terminate(id, testReason)).to.be
@@ -907,10 +1226,33 @@ function createInstanceWebhookUrl(
     return new url.URL(webhookUrl);
 }
 
-function getQueryObjectFromSearchParams(requestUrl: url.URL) {
+function getQueryObjectFromSearchParams(requestUrl: url.URL): { [key: string]: string } {
     const queryObject: { [key: string]: string } = { };
     requestUrl.searchParams.forEach((value, name) => {
         queryObject[name] = value;
     });
     return queryObject;
+}
+
+function haveSameQuery(
+    expectedQueryObj: { [key: string]: string },
+    actualQueryObj: { [key: string]: string }): boolean {
+    for (const prop in expectedQueryObj) {
+        if (actualQueryObj[prop] !== expectedQueryObj[prop]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function urlQueryEqualsQueryObject(requestUrl: url.URL, queryObj: object): boolean {
+    const expectedQueryObject = getQueryObjectFromSearchParams(requestUrl);
+    const retVal = isEqual(expectedQueryObject, queryObj);
+    return retVal;
+}
+
+class TestEntityState {
+    count: number;
+    isTrue: boolean;
+    names: string[];
 }

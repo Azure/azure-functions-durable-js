@@ -17,6 +17,17 @@ export class TestOrchestrations {
        return returnValue;
     });
 
+    public static CallEntitySet: any = df.orchestrator(function*(context: any) {
+        const entity = context.df.getInput() as df.EntityId;
+        yield context.df.callEntity(entity, "set", "testString");
+
+        return "OK";
+    });
+
+    public static CheckForLocksNone: any = df.orchestrator(function*(context: any) {
+        return context.df.isLocked();
+    });
+
     public static ContinueAsNewCounter: any = df.orchestrator(function*(context: any) {
         const currentValueObject = context.df.getInput();
         let currentValue = currentValueObject
@@ -46,6 +57,22 @@ export class TestOrchestrations {
         return totalBytes;
     });
 
+    public static GetAndReleaseLock: any = df.orchestrator(function*(context: any) {
+        const entities = context.df.getInput();
+
+        const lock = yield context.df.lock(entities);
+
+        return "ok";
+    });
+
+    public static GetLockBadly: any = df.orchestrator(function*(context: any) {
+        const locksToGet = context.df.getInput();
+
+        const lock = yield context.df.lock(locksToGet);
+
+        return "ok";
+    });
+
     public static GuidGenerator: any = df.orchestrator(function*(context: any) {
         const outputs: string[] = [];
 
@@ -54,6 +81,11 @@ export class TestOrchestrations {
         }
 
         return outputs;
+    });
+
+    public static PassThrough: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput();
+        return input;
     });
 
     public static SayHelloInline: any = df.orchestrator(function*(context: any) {
@@ -127,6 +159,48 @@ export class TestOrchestrations {
         output.push(yield context.df.callActivity("Hello", "London"));
 
         return output;
+    });
+
+    public static SendHttpRequest: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput() as df.DurableHttpRequest;
+        const output = yield context.df.callHttp(
+            input.method,
+            input.uri,
+            input.content,
+            input.headers,
+            input.tokenSource);
+        return output;
+    });
+
+    /**
+     * This orchestrator and its corresponding history replicate conditions under
+     * which there are not sufficient OrchestratorStartedEvents in the history
+     * array to satisfy the currentUtcDateTime advancement logic.
+     */
+    public static TimestampExhaustion: any = df.orchestrator(function*(context: any) {
+        const payload = context.df.getInput();
+
+        yield context.df.callActivity("Merge");
+
+        if (payload.delayMergeUntilSecs) {
+            const now = new Date(context.df.currentUtcDateTime).getTime();
+            const fireAt = new Date(now + payload.delayMergeUntilSecs * 1000);
+            yield context.df.createTimer(fireAt);
+        }
+
+        let x = 0;
+        do {
+            const result = yield context.df.callActivity("CheckIfMerged");
+            const hasMerged = result.output;
+
+            if (hasMerged) {
+                return "Merge successful";
+            } else {
+                yield context.df.waitForExternalEvent("CheckPrForMerge");
+            }
+
+            x++;
+        } while (x < 10);
     });
 
     public static WaitForExternalEvent: any = df.orchestrator(function*(context: any) {

@@ -1,0 +1,32 @@
+variables: {
+  MODULE_VERSION: '1.2.2',
+  NODE_LOWER_LTS: '8.x',
+  NODE_HIGHER_LTS: '10.x'
+}
+name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+- master
+- dev
+
+jobs:
+- job: UnitTests
+  strategy:
+    matrix:
+      WINDOWS_NODE8:
+        IMAGE_TYPE: 'vs2017-win2016'
+        NODE_VERSION: $(NODE_LOWER_LTS)
+      WINDOWS_NODE10:
+        IMAGE_TYPE: 'vs2017-win2016'
+        NODE_VERSION: $(NODE_HIGHER_LTS)
+  pool:
+    vmImage: $(IMAGE_TYPE)
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: $(NODE_VERSION)
+    displayName: 'Install Node.js'
+  - script: npm install
+    displayName: 'npm install'
+  - script: npm run test
+    displayName: 'npm build and test'

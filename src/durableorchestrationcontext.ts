@@ -1,4 +1,5 @@
-import { Constants, ITaskMethods, RetryOptions, Task, TimerTask } from "./classes";
+import { DurableHttpRequest, DurableLock, EntityId, ITaskMethods, LockState,
+     RetryOptions, Task, TimerTask } from "./classes";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -80,6 +81,18 @@ export class DurableOrchestrationContext {
     }
 
     /**
+     * Calls an operation on an entity, passing an argument, and waits for it
+     * to complete.
+     *
+     * @param entityId The target entity.
+     * @param operationName The name of the operation.
+     * @param operationInput The input for the operation.
+     */
+    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
+        throw new Error("This is a placeholder.");
+    }
+
+    /**
      * Schedules an orchestration function named `name` for execution.
      *
      * @param name The name of the orchestrator function to call.
@@ -111,6 +124,15 @@ export class DurableOrchestrationContext {
         : Task {
             throw new Error("This is a placeholder.");
         }
+
+    /**
+     * Schedules a durable HTTP call to the specified endpoint.
+     *
+     * @param req The durable HTTP request to schedule.
+     */
+    public callHttp(req: DurableHttpRequest): Task {
+        throw new Error("This is a placeholder");
+    }
 
     /**
      * Restarts the orchestration by clearing its history.

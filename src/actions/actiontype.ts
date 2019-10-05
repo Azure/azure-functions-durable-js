@@ -15,4 +15,6 @@ export enum ActionType {
     ContinueAsNew = 4,
     CreateTimer = 5,
     WaitForExternalEvent = 6,
+    CallEntity = 7,
+    CallHttp = 8,
 }

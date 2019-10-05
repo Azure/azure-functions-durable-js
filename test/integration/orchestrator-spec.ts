@@ -2,16 +2,21 @@ import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
+import { isUUID } from "validator";
+import { ManagedIdentityTokenSource } from "../../src";
 import {
-    CallActivityAction, CallActivityWithRetryAction, CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction, Constants, ContinueAsNewAction, CreateTimerAction,
-    DurableOrchestrationBindingInfo, DurableOrchestrationContext, IOrchestratorState,
-    OrchestratorState, RetryOptions, WaitForExternalEventAction,
+    CallActivityAction, CallActivityWithRetryAction, CallEntityAction, CallHttpAction, CallSubOrchestratorAction,
+    CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, DurableHttpRequest,
+    DurableHttpResponse, DurableOrchestrationBindingInfo, DurableOrchestrationContext, EntityId,
+    ExternalEventType, IOrchestratorState, LockState, OrchestratorState,
+    RetryOptions, WaitForExternalEventAction,
 } from "../../src/classes";
 import { TestHistories } from "../testobjects/testhistories";
-import { TestOrchestrations } from "../testobjects/testorchestrations";
+import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 
 describe("Orchestrator", () => {
+    const falsyValues = [ false, 0, "", null, undefined, NaN ];
+
     it("handles a simple orchestration function (no activity functions)", async () => {
         const orchestrator = TestOrchestrations.SayHelloInline;
         const name = "World";
@@ -33,6 +38,37 @@ describe("Orchestrator", () => {
                 output: `Hello, ${name}!`,
             }),
         );
+    });
+
+    falsyValues.forEach((falsyValue) => {
+        it(`handles an orchestration function that returns ${falsyValue === "" ? "empty string" : falsyValue}`, async () => {
+            const orchestrator = TestOrchestrations.PassThrough;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "PassThrough",
+                        moment.utc().toDate(),
+                        falsyValue,
+                    ),
+                    falsyValue,
+                ),
+            });
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions: [],
+                    output: falsyValue,
+                }),
+            );
+            if (isNaN(falsyValue as number)) {
+                expect(isNaN(mockContext.doneValue.output as number)).to.equal(true);
+            } else {
+                expect(mockContext.doneValue.output).to.equal(falsyValue);
+            }
+            expect(mockContext.err).to.equal(null);
+        });
     });
 
     describe("Properties", () => {
@@ -120,6 +156,24 @@ describe("Orchestrator", () => {
 
             expect(mockContext.df.currentUtcDateTime).to.be.deep.equal(nextTimestamp);
         });
+
+        it("uses existing currentUtcDateTime if OrchestratorStarted events are exhausted", async () => {
+            const orchestrator = TestOrchestrations.TimestampExhaustion;
+            const startTimestamp = moment.utc().toDate();
+
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetTimestampExhaustion(startTimestamp),
+                    { delayMergeUntilSecs: 1 },
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue.error).to.equal(undefined);
+
+            expect(mockContext.err).to.equal(null);
+        });
     });
 
     describe("Error Handling", () => {
@@ -188,6 +242,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("ThrowsErrorActivity")],
@@ -217,6 +272,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("Hello", name) ],
@@ -240,6 +296,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("ReturnsFour") ],
@@ -249,9 +306,8 @@ describe("Orchestrator", () => {
         });
 
         describe("Falsy Input", () => {
-            const falsyValues = [ false, 0, "", null, undefined, NaN ];
             falsyValues.forEach((falsyValue) => {
-                it(`schedules an activity function with falsy input ${falsyValue}`, async () => {
+                it(`schedules an activity function with input ${falsyValue}`, async () => {
                     const orchestrator = TestOrchestrations.SayHelloWithActivity;
                     const mockContext = new MockContext({
                         context: new DurableOrchestrationBindingInfo(
@@ -268,6 +324,7 @@ describe("Orchestrator", () => {
                     expect(mockContext.doneValue).to.be.deep.equal(
                         new OrchestratorState({
                             isDone: false,
+                            output: undefined,
                             actions:
                             [
                                 [ new CallActivityAction("Hello", falsyValue) ],
@@ -381,6 +438,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.an("object").that.deep.include(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions: [],
                 }),
             );
@@ -408,6 +466,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [
@@ -421,7 +480,7 @@ describe("Orchestrator", () => {
             );
         });
 
-        it("schedules an activity funtion if < max attempts", async () => {
+        it("schedules an activity function if < max attempts", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityRetry;
             const name = "World";
             const retryOptions = new RetryOptions(10000, 2);
@@ -440,6 +499,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [
@@ -470,6 +530,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions: [
                         [
                             new CallActivityWithRetryAction(
@@ -550,6 +611,175 @@ describe("Orchestrator", () => {
         });
     });
 
+    describe("callHttp()", () => {
+        it("schedules simple HTTP GET calls", async () => {
+            const orchestrator = TestOrchestrations.SendHttpRequest;
+            const req = new DurableHttpRequest("GET", "https://bing.com");
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req),
+                    req,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    output: undefined,
+                    actions:
+                    [
+                        [ new CallHttpAction(req) ],
+                    ],
+                }),
+            );
+        });
+
+        it("schedules authenticated HTTP POST calls with headers", async () => {
+            const orchestrator = TestOrchestrations.SendHttpRequest;
+            const req = new DurableHttpRequest(
+                "POST",
+                "https://example.com/api",
+                JSON.stringify({ foo: "bar" }),
+                { "Content-Type": "application/json", "Accept": "application/json"},
+                new ManagedIdentityTokenSource("https://management.core.windows.net"));
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req),
+                    req,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    output: undefined,
+                    actions:
+                    [
+                        [ new CallHttpAction(req) ],
+                    ],
+                }),
+            );
+        });
+
+        it("handles a completed HTTP request", async () => {
+            const orchestrator = TestOrchestrations.SendHttpRequest;
+            const req = new DurableHttpRequest("GET", "https://bing.com");
+            const res = new DurableHttpResponse(
+                200,
+                "<!DOCTYPE html><html lang=\"en\">...</html>",
+                {
+                    "Content-Type": "text/html; charset=utf-8",
+                    "Cache-control": "private, max-age=8",
+                });
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSendHttpRequestReplayOne(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req,
+                        res),
+                    req,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
+                    [
+                        [ new CallHttpAction(req) ],
+                    ],
+                    output: res,
+                }),
+            );
+        });
+    });
+
+    describe("callEntity()", () => {
+        const testEntityId = new EntityId("StringStore2", "12345");
+
+        it("schedules an entity request", async () => {
+            const orchestrator = TestOrchestrations.CallEntitySet; // TODO: finish
+            const instanceId = uuidv1();
+            const expectedEntity = new EntityId("StringStore2", "12345");
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "CallEntityGet",
+                        moment.utc().toDate(),
+                    ),
+                    expectedEntity,
+                    instanceId,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    output: undefined,
+                    actions:
+                    [
+                        [
+                            new CallEntityAction(
+                                expectedEntity,
+                                "set",
+                                "testString"),
+                        ],
+                    ],
+                }),
+            );
+        });
+
+        it("handles a completed entity request", async () => {
+            const orchestrator = TestOrchestrations.CallEntitySet;
+            const instanceId = uuidv1();
+            const expectedEntity = new EntityId("StringStore2", "12345");
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetCallEntitySet(
+                        moment.utc().toDate(),
+                        expectedEntity,
+                        ),
+                    expectedEntity,
+                    instanceId,
+                    true,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
+                    [
+                        [
+                            new CallEntityAction(
+                                expectedEntity,
+                                "set",
+                                "testString"),
+                        ],
+                    ],
+                    output: "OK",
+                }),
+            );
+        });
+    });
+
     describe("callSubOrchestrator()", () => {
         it("schedules a suborchestrator function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
@@ -572,6 +802,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallSubOrchestratorAction("SayHelloWithActivity", childId, name) ],
@@ -600,6 +831,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallSubOrchestratorAction("SayHelloWithActivity", undefined, name) ],
@@ -725,6 +957,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [
@@ -763,6 +996,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [
@@ -800,6 +1034,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [
@@ -914,6 +1149,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new ContinueAsNewAction({ value: 6 }) ],
@@ -944,6 +1180,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CreateTimerAction(fireAt) ],
@@ -1007,7 +1244,69 @@ describe("Orchestrator", () => {
                     undefined,
                     instanceId,
                 ),
-            });            
+            });
+
+            orchestrator(mockContext1);
+            orchestrator(mockContext2);
+
+            expect(mockContext1.doneValue.isDone).to.equal(true);
+            expect(mockContext1.doneValue).to.deep.equal(mockContext2.doneValue);
+        });
+    });
+
+    describe.skip("isLocked()", () => {
+        it("returns correct state when no locks are owned", () => {
+            const orchestrator = TestOrchestrations.CheckForLocksNone;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart("CheckForLocksNone", moment.utc().toDate()),
+                ),
+            });
+
+            const expectedLockState = new LockState(false, undefined);
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions: [],
+                    output: expectedLockState,
+                }),
+            );
+        });
+
+        it.skip("returns correct state when locks are owned", () => {
+            // TODO: fill in
+        });
+    });
+
+    describe("newGuid()", () => {
+        it("generates consistent GUIDs", () => {
+            const orchestrator = TestOrchestrations.GuidGenerator;
+            const currentUtcDateTime = moment.utc().toDate();
+            const instanceId = uuidv1();
+
+            const mockContext1 = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "GuidGenerator",
+                        currentUtcDateTime,
+                    ),
+                    undefined,
+                    instanceId,
+                ),
+            });
+            const mockContext2 = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "GuidGenerator",
+                        currentUtcDateTime,
+                    ),
+                    undefined,
+                    instanceId,
+                ),
+            });
 
             orchestrator(mockContext1);
             orchestrator(mockContext2);
@@ -1037,6 +1336,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.deep.eq(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("Hello", "Tokyo") ],
@@ -1066,9 +1366,10 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
-                        [ new WaitForExternalEventAction("start") ],
+                        [ new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent) ],
                     ],
                 }),
             );
@@ -1093,9 +1394,10 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
-                        [ new WaitForExternalEventAction("start") ],
+                        [ new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent) ],
                         [ new CallActivityAction("Hello", name) ],
                     ],
                 }),
@@ -1121,9 +1423,10 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
-                        [ new WaitForExternalEventAction("start") ],
+                        [ new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent) ],
                     ],
                 }),
             );
@@ -1149,6 +1452,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("GetFileList", "C:\\Dev")],
@@ -1176,6 +1480,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
                     isDone: false,
+                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("GetFileList", "C:\\Dev")],
@@ -1211,6 +1516,38 @@ describe("Orchestrator", () => {
                     output: 6,
                 }),
             );
+        });
+
+        it("Task.all throws if a parallel task has faulted", async () => {
+            const orchestrator = TestOrchestrations.FanOutFanInDiskUsage;
+            const filePaths = ["file1.txt", "file2.png", "file3.csx"];
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo (
+                    TestHistories.GetFanOutFanInDiskUsageFaulted(
+                        moment.utc().toDate(),
+                        filePaths,
+                    ),
+                    "C:\\Dev",
+                ),
+            });
+
+            const expectedErr = "Activity function 'GetFileSize' failed: Could not find file.";
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.include(
+                new OrchestratorState({
+                    isDone: false,
+                    output: undefined,
+                    actions:
+                    [
+                        [ new CallActivityAction("GetFileList", "C:\\Dev")],
+                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
+                    ],
+                }),
+            );
+            expect(mockContext.doneValue.error).to.include(expectedErr);
+            expect(mockContext.err.toString()).to.include(expectedErr);
         });
 
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
