@@ -1,4 +1,4 @@
-import { DurableHttpRequest, DurableHttpResponse, EntityId, EntityStateResponse, 
+import { DurableHttpRequest, DurableHttpResponse, EntityId, EntityStateResponse,
     OrchestrationRuntimeStatus, RetryOptions } from "./classes";
 import { getClient } from "./durableorchestrationclient";
 import { entity, orchestrator } from "./shim";

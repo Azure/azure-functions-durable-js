@@ -3,7 +3,7 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
     CallSubOrchestratorAction, CallSubOrchestratorWithRetryAction, ContinueAsNewAction,
     CreateTimerAction, DurableHttpRequest, DurableLock, DurableOrchestrationBindingInfo, EntityId,
     EventRaisedEvent, EventSentEvent, ExternalEventType, GuidManager, HistoryEvent, HistoryEventType,
-    IAction, IOrchestrationFunctionContext, LockState, OrchestratorState, RequestMessage, ResponseMessage, 
+    IAction, IOrchestrationFunctionContext, LockState, OrchestratorState, RequestMessage, ResponseMessage,
     RetryOptions, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
     SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFailedEvent,
     TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask,

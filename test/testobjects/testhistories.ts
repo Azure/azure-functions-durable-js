@@ -1,7 +1,7 @@
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
 import { DurableHttpRequest, DurableHttpResponse, EntityId, EventRaisedEvent, EventSentEvent,
-    ExecutionStartedEvent, HistoryEvent, OrchestratorCompletedEvent, OrchestratorStartedEvent, 
+    ExecutionStartedEvent, HistoryEvent, OrchestratorCompletedEvent, OrchestratorStartedEvent,
     SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
     SubOrchestrationInstanceFailedEvent, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent,
     TimerCreatedEvent, TimerFiredEvent } from "../../src/classes";
