@@ -2,7 +2,7 @@
     "bindings": [
       {
         "name": "context",
-        "type": "orchestrationTrigger",
+        "type": "entityTrigger",
         "direction": "in"
       }
     ],
