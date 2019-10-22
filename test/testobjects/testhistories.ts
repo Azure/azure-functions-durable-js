@@ -4,7 +4,7 @@ import { DurableHttpRequest, DurableHttpResponse, EntityId, EventRaisedEvent, Ev
     ExecutionStartedEvent, HistoryEvent, OrchestratorCompletedEvent, OrchestratorStartedEvent,
     SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
     SubOrchestrationInstanceFailedEvent, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent,
-    TimerCreatedEvent, TimerFiredEvent } from "../../src/classes";
+    TimerCreatedEvent, TimerFiredEvent, GuidManager } from "../../src/classes";
 
 export class TestHistories {
     public static GetAnyAOrB(firstTimestamp: Date, completeInOrder: boolean): HistoryEvent[] {
@@ -1481,6 +1481,75 @@ export class TestHistories {
                 },
             ),
         ];
+    }
+
+    public static GetMultipleSubOrchestratorNoIdsSubOrchestrationsFinished(
+        firstTimestamp: Date,
+        orchestratorName: string,
+        subOrchestratorNames: string[],
+        input: string)
+        : HistoryEvent[] {
+        const firstMoment = moment(firstTimestamp);
+
+        const baseSubInstanceId = "dummy-unique-id";
+        let historyEvents =  [
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new ExecutionStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: true,
+                    name: orchestratorName,
+                    input,
+                },
+            )];
+        for (let i = 0; i < subOrchestratorNames.length; i++) {
+            historyEvents.push(new SubOrchestrationInstanceCreatedEvent(
+                {
+                    eventId: i,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                    name: subOrchestratorNames[i],
+                    input: `${input}_${subOrchestratorNames[i]}_${i}`,
+                    instanceId: `${baseSubInstanceId}_${i}`,
+                },
+            ));
+        }
+        historyEvents.push(
+            new OrchestratorCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: false,
+                },
+            ),
+            new OrchestratorStartedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                },
+            ));
+
+        for (let i = 0; i < subOrchestratorNames.length; i++) {
+            historyEvents.push(new SubOrchestrationInstanceCompletedEvent(
+                {
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(`Hello, ${input}_${subOrchestratorNames[i]}_${i}!`),
+                    taskScheduledId: i,
+                },
+            ))
+        }
+
+        return historyEvents;
     }
 
     public static GetSayHelloWithSubOrchestratorFail(

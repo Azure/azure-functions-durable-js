@@ -14,11 +14,16 @@ import { TokenSource } from "./tokensource";
 /** @hidden */
 const log = debug("orchestrator");
 
+interface SubOrchestrationCounter {
+    [key: string]: number | undefined;
+}
+
 /** @hidden */
 export class Orchestrator {
     private currentUtcDateTime: Date;
     private customStatus: unknown;
     private newGuidCounter: number;
+    private subOrchestrationCounters: SubOrchestrationCounter;
 
     constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) { }
 
@@ -46,8 +51,9 @@ export class Orchestrator {
             ? new Date(decisionStartedEvent.Timestamp)
             : undefined;
 
-        // Reset newGuidCounter
+        // Reset counters
         this.newGuidCounter = 0;
+        this.subOrchestrationCounters = {};
 
         // Create durable orchestration context
         context.df = {
@@ -249,10 +255,10 @@ export class Orchestrator {
 
     private callSubOrchestrator(state: HistoryEvent[], name: string, input?: unknown, instanceId?: string): Task {
         const newAction = new CallSubOrchestratorAction(name, instanceId, input);
-
         const subOrchestratorCreated = this.findSubOrchestrationInstanceCreated(state, name, instanceId);
         const subOrchestratorCompleted = this.findSubOrchestrationInstanceCompleted(state, subOrchestratorCreated);
         const subOrchestratorFailed = this.findSubOrchestrationInstanceFailed(state, subOrchestratorCreated);
+
         this.setProcessed([subOrchestratorCreated, subOrchestratorCompleted]);
 
         if (subOrchestratorCompleted) {
@@ -596,14 +602,26 @@ export class Orchestrator {
         name: string,
         instanceId: string)
         : SubOrchestrationInstanceCreatedEvent {
-        const returnValue = name
-            ? state.filter((val: HistoryEvent) => {
+        let returnValue: HistoryEvent | undefined = undefined;
+        if (name) {
+            const matches = state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.SubOrchestrationInstanceCreated
                     && (val as SubOrchestrationInstanceCreatedEvent).Name === name
-                    && (val as SubOrchestrationInstanceCreatedEvent).InstanceId === instanceId
                     && !val.IsProcessed;
-            })[0]
-            : undefined;
+            });
+            
+            if (matches.length > 0) {
+                // Grab the first unprocessed sub orchestration with the same name.
+                returnValue = matches[0];
+                const actualInstanceId = (returnValue as SubOrchestrationInstanceCreatedEvent).InstanceId;
+                if (instanceId && actualInstanceId != instanceId) {
+                    throw new Error(`The suborchestration ${name} replayed with an instance id of ${actualInstanceId} instead of the provided instance id of ${instanceId}`);
+                }
+            }
+        } else {
+            throw new Error("A suborchestration function name must be provided when attempting to create a suborchestration");
+        }
+
         return returnValue as SubOrchestrationInstanceCreatedEvent;
     }
 

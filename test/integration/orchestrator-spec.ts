@@ -840,6 +840,34 @@ describe("Orchestrator", () => {
             );
         });
 
+        it("Succesfully runs multiple suborchestrator function with no instanceId", async () => {
+            const orchestrator = TestOrchestrations.MultipleSubOrchestratorNoSubId;
+            const name = "World";
+            const id = uuidv1();
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetMultipleSubOrchestratorNoIdsSubOrchestrationsFinished(
+                        moment.utc().toDate(),
+                        orchestrator,
+                        ["SayHelloWithActivity", "SayHelloInline", "SayHelloWithActivity", "SayHelloInline"],
+                        name,
+                    ),
+                    name,
+                    id
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    output: [`Hello, ${name}_SayHelloWithActivity_0!`, `Hello, ${name}_SayHelloInline_1!`, `Hello, ${name}_SayHelloWithActivity_2!`, `Hello, ${name}_SayHelloInline_3!`],
+                    actions: [],
+                }),
+            );
+        });
+
         it("handles a completed suborchestrator function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
             const name = "World";
