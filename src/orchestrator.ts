@@ -23,7 +23,6 @@ export class Orchestrator {
     private currentUtcDateTime: Date;
     private customStatus: unknown;
     private newGuidCounter: number;
-    private subOrchestrationCounters: SubOrchestrationCounter;
 
     constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) { }
 
@@ -53,7 +52,6 @@ export class Orchestrator {
 
         // Reset counters
         this.newGuidCounter = 0;
-        this.subOrchestrationCounters = {};
 
         // Create durable orchestration context
         context.df = {
@@ -602,27 +600,26 @@ export class Orchestrator {
         name: string,
         instanceId: string)
         : SubOrchestrationInstanceCreatedEvent {
-        let returnValue: HistoryEvent | undefined = undefined;
+
         if (name) {
             const matches = state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.SubOrchestrationInstanceCreated
                     && (val as SubOrchestrationInstanceCreatedEvent).Name === name
                     && !val.IsProcessed;
             });
-            
+
             if (matches.length > 0) {
                 // Grab the first unprocessed sub orchestration with the same name.
-                returnValue = matches[0];
+                const returnValue = matches[0];
                 const actualInstanceId = (returnValue as SubOrchestrationInstanceCreatedEvent).InstanceId;
-                if (instanceId && actualInstanceId != instanceId) {
+                if (instanceId && actualInstanceId !== instanceId) {
                     throw new Error(`The suborchestration ${name} replayed with an instance id of ${actualInstanceId} instead of the provided instance id of ${instanceId}`);
                 }
+                return returnValue as SubOrchestrationInstanceCreatedEvent;
             }
         } else {
             throw new Error("A suborchestration function name must be provided when attempting to create a suborchestration");
         }
-
-        return returnValue as SubOrchestrationInstanceCreatedEvent;
     }
 
     /* Returns undefined if not found. */

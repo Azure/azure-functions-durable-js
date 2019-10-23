@@ -853,7 +853,7 @@ describe("Orchestrator", () => {
                         name,
                     ),
                     name,
-                    id
+                    id,
                 ),
             });
 
@@ -863,7 +863,14 @@ describe("Orchestrator", () => {
                 new OrchestratorState({
                     isDone: true,
                     output: [`Hello, ${name}_SayHelloWithActivity_0!`, `Hello, ${name}_SayHelloInline_1!`, `Hello, ${name}_SayHelloWithActivity_2!`, `Hello, ${name}_SayHelloInline_3!`],
-                    actions: [],
+                    actions: [
+                                [
+                                    new CallSubOrchestratorAction("SayHelloWithActivity", undefined, `${name}_SayHelloWithActivity_0`),
+                                    new CallSubOrchestratorAction("SayHelloInline", undefined, `${name}_SayHelloInline_1`),
+                                    new CallSubOrchestratorAction("SayHelloWithActivity", undefined, `${name}_SayHelloWithActivity_2`),
+                                    new CallSubOrchestratorAction("SayHelloInline", undefined, `${name}_SayHelloInline_3`),
+                                ],
+                            ],
                 }),
             );
         });

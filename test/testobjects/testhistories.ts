@@ -4,7 +4,7 @@ import { DurableHttpRequest, DurableHttpResponse, EntityId, EventRaisedEvent, Ev
     ExecutionStartedEvent, HistoryEvent, OrchestratorCompletedEvent, OrchestratorStartedEvent,
     SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
     SubOrchestrationInstanceFailedEvent, TaskCompletedEvent, TaskFailedEvent, TaskScheduledEvent,
-    TimerCreatedEvent, TimerFiredEvent, GuidManager } from "../../src/classes";
+    TimerCreatedEvent, TimerFiredEvent } from "../../src/classes";
 
 export class TestHistories {
     public static GetAnyAOrB(firstTimestamp: Date, completeInOrder: boolean): HistoryEvent[] {
@@ -1492,7 +1492,7 @@ export class TestHistories {
         const firstMoment = moment(firstTimestamp);
 
         const baseSubInstanceId = "dummy-unique-id";
-        let historyEvents =  [
+        const historyEvents =  [
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
@@ -1546,7 +1546,7 @@ export class TestHistories {
                     result: JSON.stringify(`Hello, ${input}_${subOrchestratorNames[i]}_${i}!`),
                     taskScheduledId: i,
                 },
-            ))
+            ));
         }
 
         return historyEvents;
