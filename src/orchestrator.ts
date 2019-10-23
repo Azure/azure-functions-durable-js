@@ -14,10 +14,6 @@ import { TokenSource } from "./tokensource";
 /** @hidden */
 const log = debug("orchestrator");
 
-interface SubOrchestrationCounter {
-    [key: string]: number | undefined;
-}
-
 /** @hidden */
 export class Orchestrator {
     private currentUtcDateTime: Date;
@@ -50,7 +46,7 @@ export class Orchestrator {
             ? new Date(decisionStartedEvent.Timestamp)
             : undefined;
 
-        // Reset counters
+        // Reset newGuidCounter
         this.newGuidCounter = 0;
 
         // Create durable orchestration context
@@ -599,7 +595,7 @@ export class Orchestrator {
         state: HistoryEvent[],
         name: string,
         instanceId: string)
-        : SubOrchestrationInstanceCreatedEvent {
+        : SubOrchestrationInstanceCreatedEvent | undefined {
 
         if (name) {
             const matches = state.filter((val: HistoryEvent) => {
@@ -616,6 +612,8 @@ export class Orchestrator {
                     throw new Error(`The suborchestration ${name} replayed with an instance id of ${actualInstanceId} instead of the provided instance id of ${instanceId}`);
                 }
                 return returnValue as SubOrchestrationInstanceCreatedEvent;
+            } else {
+                return undefined;
             }
         } else {
             throw new Error("A suborchestration function name must be provided when attempting to create a suborchestration");

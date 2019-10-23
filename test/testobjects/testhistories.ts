@@ -1483,6 +1483,9 @@ export class TestHistories {
         ];
     }
 
+    // Covers the scenario for TestOrchestrations.MultipleSubOrchestratorNoSubId in which
+    // all of the scheduled sub orchestrations are completed around the same time and processed
+    // in the same orchestration replay.
     public static GetMultipleSubOrchestratorNoIdsSubOrchestrationsFinished(
         firstTimestamp: Date,
         orchestratorName: string,
