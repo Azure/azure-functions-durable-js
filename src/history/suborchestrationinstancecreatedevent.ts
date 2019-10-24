@@ -4,7 +4,7 @@ import { HistoryEvent, HistoryEventOptions, HistoryEventType } from "../classes"
 export class SubOrchestrationInstanceCreatedEvent extends HistoryEvent {
     public Name: string;
     public InstanceId: string;
-    public Input: string;
+    public Input: string | undefined;
 
     constructor(
         options: HistoryEventOptions,
@@ -16,8 +16,16 @@ export class SubOrchestrationInstanceCreatedEvent extends HistoryEvent {
             options.timestamp,
         );
 
+        if (options.name === undefined) {
+            throw new Error("SubOrchestrationInstanceCreatedEvent needs a name provided.");
+        }
+
+        if (options.instanceId === undefined) {
+            throw new Error("SubOrchestrationInstanceCreatedEvent needs an instance id provided.");
+        }
+
+        this.Input = options.input;
         this.Name = options.name;
         this.InstanceId = options.instanceId;
-        this.Input = options.input;
     }
 }

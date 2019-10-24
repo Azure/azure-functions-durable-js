@@ -150,7 +150,7 @@ export class DurableOrchestrationClient {
      * @returns An HTTP 202 response with a Location header and a payload
      *  containing instance management URLs.
      */
-    public createCheckStatusResponse(request: IHttpRequest | HttpRequest, instanceId: string): IHttpResponse {
+    public createCheckStatusResponse(request: IHttpRequest | HttpRequest | undefined, instanceId: string): IHttpResponse {
         const httpManagementPayload = this.getClientResponseLinks(request, instanceId);
 
         return {
@@ -234,8 +234,8 @@ export class DurableOrchestrationClient {
      *  the runtimeStatus values in this array.
      */
     public async getStatusBy(
-        createdTimeFrom: Date,
-        createdTimeTo: Date,
+        createdTimeFrom: Date | undefined,
+        createdTimeTo: Date | undefined,
         runtimeStatus: OrchestrationRuntimeStatus[],
         ): Promise<DurableOrchestrationStatus[]> {
         try {
@@ -410,6 +410,10 @@ export class DurableOrchestrationClient {
      * @returns A response containing the current state of the entity.
      */
     public async readEntityState<T>(entityId: EntityId, taskHubName?: string, connectionName?: string): Promise<EntityStateResponse<T>> {
+        if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
+            throw new Error("Cannot use the readEntityState API with this version of the Durable Task Extension.");
+        }
+
         const requestUrl = WebhookUtils.getReadEntityUrl(this.clientData.baseUrl,
             this.clientData.requiredQueryStringParameters,
             entityId.name,
@@ -478,6 +482,10 @@ export class DurableOrchestrationClient {
         taskHubName?: string,
         connectionName?: string,
         ): Promise<void> {
+        if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
+            throw new Error("Cannot use the signalEntity API with this version of the Durable Task Extension.");
+        }
+
         const requestUrl = WebhookUtils.getSignalEntityUrl(this.clientData.baseUrl,
             this.clientData.requiredQueryStringParameters,
             entityId.name,
@@ -524,11 +532,11 @@ export class DurableOrchestrationClient {
             .replace(this.instanceIdPlaceholder, (instanceId ? `/${instanceId}` : ""));
 
         try {
-            const response = await this.axiosInstance.post(requestUrl, JSON.stringify(input));
-            if (response.status > 202) {
-                return Promise.reject(new Error(response.data as string));
-            } else if (response.data) {
+            const response = await this.axiosInstance.post(requestUrl, input !== undefined ? JSON.stringify(input) : "");
+            if (response.data && response.status <= 202) {
                 return (response.data as HttpManagementPayload).id;
+            } else  {
+                return Promise.reject(new Error(response.data as string));
             }
         } catch (message) {
             throw new Error(message.error);
@@ -634,7 +642,7 @@ export class DurableOrchestrationClient {
         };
     }
 
-    private getClientResponseLinks(request: IHttpRequest | HttpRequest, instanceId: string): HttpManagementPayload {
+    private getClientResponseLinks(request: IHttpRequest | HttpRequest | undefined, instanceId: string): HttpManagementPayload {
         const payload = { ...this.clientData.managementUrls };
 
         (Object.keys(payload) as Array<(keyof HttpManagementPayload)>).forEach((key) => {
@@ -650,7 +658,7 @@ export class DurableOrchestrationClient {
         return payload;
     }
 
-    private hasValidRequestUrl(request: IHttpRequest | HttpRequest): boolean {
+    private hasValidRequestUrl(request: IHttpRequest | HttpRequest | undefined): boolean {
         const isHttpRequest = request !== undefined && (request as HttpRequest).url !== undefined;
         const isIHttpRequest = request !== undefined && (request as IHttpRequest).http !== undefined;
         return isHttpRequest || isIHttpRequest && (request as IHttpRequest).http.url !== undefined;

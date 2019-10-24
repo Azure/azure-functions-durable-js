@@ -4,10 +4,10 @@ import { CounterOperation, EntityInputsAndOutputs, StringStoreOperation  } from 
 
 export class TestEntityBatches {
 
-    public static GetStringStoreBatch(operations: StringStoreOperation[], existingState: string): EntityInputsAndOutputs {
+    public static GetStringStoreBatch(operations: StringStoreOperation[], existingState: string | undefined): EntityInputsAndOutputs {
         const id = new df.EntityId("stringstore", "stringstorekey");
 
-        const entityExists = existingState != null;
+        const entityExists = existingState !== undefined;
         const output = new EntityState([], []);
         if (entityExists)  {
             output.entityState = JSON.stringify(existingState);
@@ -52,7 +52,7 @@ export class TestEntityBatches {
 
     public static GetCounterBatch(operations: CounterOperation[], existingState: number | undefined): EntityInputsAndOutputs {
         const id = new df.EntityId("stringstore", "stringstorekey");
-        let currentState: number;
+        let currentState: number | undefined;
         if (existingState) {
             currentState = Number(existingState);
         }
@@ -128,7 +128,7 @@ export class TestEntityBatches {
             operationCount++;
         }
         return  {
-            input: new DurableEntityBindingInfo(id, entityExists, existingState != null ? existingState.toString() : undefined, batch),
+            input: new DurableEntityBindingInfo(id, entityExists, existingState !== undefined ? existingState.toString() : undefined, batch),
             output,
         };
     }

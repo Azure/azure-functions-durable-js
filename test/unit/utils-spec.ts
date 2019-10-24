@@ -9,11 +9,6 @@ describe("Utils", () => {
             return expect(result).to.be.an("array").that.is.empty;
         });
 
-        it("returns empty array when collection is undefined", async () => {
-            const result = Utils.getInstancesOf<TestType>(undefined, new TestType());
-            return expect(result).to.be.an("array").that.is.empty;
-        });
-
         it("returns empty array when typeInstance is undefined", async () => {
             const result = Utils.getInstancesOf([], undefined);
             return expect(result).to.be.an("array").that.is.empty;
@@ -139,7 +134,7 @@ describe("Utils", () => {
             expect(() => {
                 Utils.throwIfEmpty("  ", defaultName);
             }).to.throw(
-                `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof "  "}`,
+                `${defaultName}: Expected non-empty, non-whitespace string but got empty string`,
             );
         });
 

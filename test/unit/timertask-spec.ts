@@ -4,7 +4,7 @@ import { Constants, CreateTimerAction, TimerTask } from "../../src/classes";
 
 describe("TimerTask", () => {
     it ("throws cannot cancel a completed task", async () => {
-        const task = new TimerTask(true, undefined, undefined, undefined, undefined);
+        const task = new TimerTask(true, false, new CreateTimerAction(new Date(), false));
         expect(() => {
             task.cancel();
         }).to.throw("Cannot cancel a completed task.");
