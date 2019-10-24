@@ -895,7 +895,7 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            const expectedErr = "The suborchestration call (n = 1) should be executed with a function name of SayHelloInline instead of the provided function name of SayHelloWithActivity. Check your code for non-deterministic behavior.";
+            const expectedErr = "The sub-orchestration call (n = 1) should be executed with a function name of SayHelloInline instead of the provided function name of SayHelloWithActivity. Check your code for non-deterministic behavior.";
 
             expect(mockContext.doneValue!.error).to
                 .include(expectedErr);
@@ -924,7 +924,7 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            const expectedErr = `The suborchestration call (n = 1) should be executed with an instance id of ${subId} instead of the provided instance id of ${id}:0. Check your code for non-deterministic behavior.`;
+            const expectedErr = `The sub-orchestration call (n = 1) should be executed with an instance id of ${subId} instead of the provided instance id of ${id}:0. Check your code for non-deterministic behavior.`;
 
             expect(mockContext.doneValue!.error).to
                 .include(expectedErr);

@@ -630,11 +630,11 @@ export class Orchestrator {
         // called in the same order this replay that they were scheduled in.
         const returnValue = matches[0] as SubOrchestrationInstanceCreatedEvent;
         if (returnValue.Name !== name) {
-            throw new Error(`The suborchestration call (n = ${this.subOrchestratorCounter}) should be executed with a function name of ${returnValue.Name} instead of the provided function name of ${name}. Check your code for non-deterministic behavior.`);
+            throw new Error(`The sub-orchestration call (n = ${this.subOrchestratorCounter}) should be executed with a function name of ${returnValue.Name} instead of the provided function name of ${name}. Check your code for non-deterministic behavior.`);
         }
 
         if (instanceId && returnValue.InstanceId !== instanceId) {
-            throw new Error(`The suborchestration call (n = ${this.subOrchestratorCounter}) should be executed with an instance id of ${returnValue.InstanceId} instead of the provided instance id of ${instanceId}. Check your code for non-deterministic behavior.`);
+            throw new Error(`The sub-orchestration call (n = ${this.subOrchestratorCounter}) should be executed with an instance id of ${returnValue.InstanceId} instead of the provided instance id of ${instanceId}. Check your code for non-deterministic behavior.`);
         }
         return returnValue;
     }
