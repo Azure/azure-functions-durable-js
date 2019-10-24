@@ -2,7 +2,7 @@
 export class HistoryEventOptions {
     public details?: string;
     public fireAt?: Date;
-    public input?: string | null;
+    public input?: string;
     public instanceId?: string;
     public name?: string;
     public reason?: string;

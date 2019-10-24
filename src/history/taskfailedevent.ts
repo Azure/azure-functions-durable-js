@@ -3,8 +3,8 @@ import { HistoryEvent, HistoryEventOptions, HistoryEventType } from "../classes"
 /** @hidden */
 export class TaskFailedEvent extends HistoryEvent {
     public TaskScheduledId: number;
-    public Reason: string;
-    public Details: string;
+    public Reason: string | undefined;
+    public Details: string | undefined;
 
     constructor(
         options: HistoryEventOptions,
@@ -18,14 +18,6 @@ export class TaskFailedEvent extends HistoryEvent {
 
         if (options.taskScheduledId === undefined) {
             throw new Error("TaskFailedEvent needs a task scheduled id provided.");
-        }
-
-        if (options.reason === undefined) {
-            throw new Error("TaskFailedEvent needs a reason provided.");
-        }
-
-        if (options.details === undefined) {
-            throw new Error("TaskFailedEvent needs details provided.");
         }
 
         this.TaskScheduledId = options.taskScheduledId;

@@ -21,6 +21,6 @@ export class ExecutionStartedEvent extends HistoryEvent {
             this.Name = options.name;
         }
 
-        this.Input = options.input !== null ? options.input : undefined;
+        this.Input = options.input;
     }
 }

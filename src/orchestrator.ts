@@ -36,7 +36,7 @@ export class Orchestrator {
 
         const state: HistoryEvent[] = orchestrationBinding.history;
         const input: unknown = orchestrationBinding.input;
-        const instanceId: string | undefined = orchestrationBinding.instanceId;
+        const instanceId: string = orchestrationBinding.instanceId;
         // const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
 
         // Initialize currentUtcDateTime
@@ -77,10 +77,11 @@ export class Orchestrator {
         // Setup
         const gen = this.fn(context);
         const actions: IAction[][] = [];
-        let partialResult: Task | TaskSet | undefined;
+        let partialResult: Task | TaskSet;
 
         try {
-            let g = gen.next(partialResult ? partialResult.result : undefined);
+            // First execution, we have not yet "yielded" any of the tasks.
+            let g = gen.next(undefined);
 
             while (true) {
                 partialResult = g.value as Task | TaskSet;
@@ -131,7 +132,7 @@ export class Orchestrator {
                 decisionStartedEvent = newDecisionStartedEvent || decisionStartedEvent;
                 context.df.currentUtcDateTime = this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
 
-                g = gen.next(partialResult ? partialResult.result : undefined);
+                g = gen.next(partialResult.result);
             }
         } catch (error) {
             log(`Error: ${error}`);

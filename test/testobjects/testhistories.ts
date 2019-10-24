@@ -588,7 +588,6 @@ export class TestHistories {
                     timestamp: firstTimestamp,
                     isPlayed: false,
                     name: "Hello",
-                    input: null,
                 },
             ),
             new OrchestratorCompletedEvent(
@@ -620,7 +619,6 @@ export class TestHistories {
                     timestamp: firstMoment.add(1, "s").toDate(),
                     isPlayed: false,
                     name: "Hello",
-                    input: null,
                 },
             ),
             new OrchestratorCompletedEvent(
@@ -652,7 +650,6 @@ export class TestHistories {
                     timestamp: firstMoment.add(2, "s").toDate(),
                     isPlayed: false,
                     name: "Hello",
-                    input: null,
                 },
             ),
             new OrchestratorCompletedEvent(

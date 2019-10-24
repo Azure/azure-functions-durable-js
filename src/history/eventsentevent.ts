@@ -24,7 +24,7 @@ export class EventSentEvent extends HistoryEvent {
             throw new Error("EventSentEvent needs an instance id provided.");
         }
 
-        this.Input = options.input !== null ? options.input : undefined;
+        this.Input = options.input;
         this.Name = options.name;
         this.InstanceId = options.instanceId;
     }

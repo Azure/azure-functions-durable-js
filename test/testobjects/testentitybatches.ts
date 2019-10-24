@@ -52,7 +52,7 @@ export class TestEntityBatches {
 
     public static GetCounterBatch(operations: CounterOperation[], existingState: number | undefined): EntityInputsAndOutputs {
         const id = new df.EntityId("stringstore", "stringstorekey");
-        let currentState: number | null = null;
+        let currentState: number | undefined;
         if (existingState) {
             currentState = Number(existingState);
         }

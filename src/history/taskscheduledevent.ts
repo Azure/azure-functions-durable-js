@@ -19,7 +19,7 @@ export class TaskScheduledEvent extends HistoryEvent {
             throw new Error("TaskScheduledEvent needs a name provided.");
         }
 
-        this.Input = options.input !== null ? options.input : undefined;
+        this.Input = options.input;
         this.Name = options.name;
     }
 }
