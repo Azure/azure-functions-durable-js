@@ -21,6 +21,14 @@ export class Utils {
             });
     }
 
+    public static ensureNonNull<T>(argument: T | undefined, message: string) {
+        if (argument === undefined) {
+            throw new TypeError(message);
+        }
+
+        return argument;
+    }
+
     public static sleep(delayInMilliseconds: number): Promise<NodeJS.Timer> {
         return new Promise((resolve) => setTimeout(resolve, delayInMilliseconds));
     }
@@ -32,8 +40,10 @@ export class Utils {
     }
 
     public static throwIfEmpty(value: unknown, name: string): void {
-        if (typeof value !== "string" || value.trim().length < 1) {
+        if (typeof value !== "string") {
             throw new TypeError(`${name}: Expected non-empty, non-whitespace string but got ${typeof value}`);
+        } else if (value.trim().length < 1) {
+            throw new Error(`${name}: Expected non-empty, non-whitespace string but got empty string`);
         }
     }
 

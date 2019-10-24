@@ -36,15 +36,14 @@ export class Orchestrator {
 
         const state: HistoryEvent[] = orchestrationBinding.history;
         const input: unknown = orchestrationBinding.input;
-        const instanceId: string = orchestrationBinding.instanceId;
+        const instanceId: string | undefined = orchestrationBinding.instanceId;
         // const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
 
         // Initialize currentUtcDateTime
-        let decisionStartedEvent: HistoryEvent = state.find((e) =>
-            (e.EventType === HistoryEventType.OrchestratorStarted));
-        this.currentUtcDateTime = decisionStartedEvent
-            ? new Date(decisionStartedEvent.Timestamp)
-            : undefined;
+        let decisionStartedEvent: HistoryEvent = Utils.ensureNonNull(
+            state.find((e) => e.EventType === HistoryEventType.OrchestratorStarted),
+            "The orchestrator can not execute without an OrchestratorStarted event.");
+        this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
 
         // Reset newGuidCounter
         this.newGuidCounter = 0;
@@ -78,7 +77,7 @@ export class Orchestrator {
         // Setup
         const gen = this.fn(context);
         const actions: IAction[][] = [];
-        let partialResult: Task | TaskSet;
+        let partialResult: Task | TaskSet | undefined;
 
         try {
             let g = gen.next(partialResult ? partialResult.result : undefined);
@@ -105,7 +104,10 @@ export class Orchestrator {
                 }
 
                 if ((partialResult instanceof Task || partialResult instanceof TaskSet) && partialResult.isFaulted) {
-                    g = gen.throw(partialResult.exception);
+                    if (!gen.throw) {
+                        throw new Error("Cannot properly throw the execption returned by customer code");
+                    }
+                    g = gen.throw!(partialResult.exception);
                     continue;
                 }
 
@@ -227,7 +229,7 @@ export class Orchestrator {
         const eventSent = this.findEventSent(state, schedulerId, "op");
         let eventRaised;
         if (eventSent) {
-            const eventSentInput = eventSent ? JSON.parse(eventSent.Input) as RequestMessage : undefined;
+            const eventSentInput = eventSent && eventSent.Input !== undefined ? JSON.parse(eventSent.Input) as RequestMessage : undefined;
             eventRaised = eventSentInput ? this.findEventRaised(state, eventSentInput.id) : undefined;
         }
         this.setProcessed([ eventSent, eventRaised ]);
@@ -419,7 +421,7 @@ export class Orchestrator {
         );
     }
 
-    private lock(state: HistoryEvent[], instanceId: string, contextLocks: EntityId[], entities: EntityId[]): DurableLock {
+    private lock(state: HistoryEvent[], instanceId: string, contextLocks: EntityId[], entities: EntityId[]): DurableLock | undefined {
         if (contextLocks) {
             throw new Error("Cannot acquire more locks when already holding some locks.");
         }
@@ -518,10 +520,13 @@ export class Orchestrator {
         }, []);
 
         const completedTasks = tasks
-            .filter((t) => t.isCompleted)
+            .filter((t) => t && t.isCompleted)
             .sort((a, b) => {
-                if (a.timestamp > b.timestamp) { return 1; }
-                if (a.timestamp < b.timestamp) { return -1; }
+                // Because we have filtered by completed tasks, all of them should have timestamps
+                if (a.timestamp && b.timestamp) {
+                    if (a.timestamp > b.timestamp) { return 1; }
+                    if (a.timestamp < b.timestamp) { return -1; }
+                }
                 return 0;
             });
 
@@ -538,7 +543,8 @@ export class Orchestrator {
 
         switch (directiveResult.EventType) {
             case (HistoryEventType.EventRaised):
-                parsedDirectiveResult = JSON.parse((directiveResult as EventRaisedEvent).Input);
+                const eventRaised = directiveResult as EventRaisedEvent;
+                parsedDirectiveResult = (eventRaised && eventRaised.Input !== undefined) ? JSON.parse(eventRaised.Input) : undefined;
                 break;
             case (HistoryEventType.SubOrchestrationInstanceCompleted):
                 parsedDirectiveResult = JSON.parse((directiveResult as SubOrchestrationInstanceCompletedEvent).Result);
@@ -594,7 +600,7 @@ export class Orchestrator {
     private findSubOrchestrationInstanceCreated(
         state: HistoryEvent[],
         name: string,
-        instanceId: string)
+        instanceId: string | undefined)
         : SubOrchestrationInstanceCreatedEvent {
         const returnValue = name
             ? state.filter((val: HistoryEvent) => {
@@ -691,8 +697,8 @@ export class Orchestrator {
         return returnValue as TimerFiredEvent;
     }
 
-    private setProcessed(events: HistoryEvent[]): void {
-        events.map((val: HistoryEvent) => {
+    private setProcessed(events: Array<HistoryEvent | undefined>): void {
+        events.map((val: HistoryEvent | undefined) => {
             if (val) { val.IsProcessed = true; }
         });
     }

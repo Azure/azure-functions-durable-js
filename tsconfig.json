@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "strictNullChecks": false,
+    "strictNullChecks": true,
     "declaration": true,
     "module": "commonjs",
     "moduleResolution": "node",

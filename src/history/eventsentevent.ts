@@ -3,7 +3,7 @@ import { HistoryEvent, HistoryEventOptions, HistoryEventType } from "../classes"
 /** @hidden */
 export class EventSentEvent extends HistoryEvent {
     public Name: string;
-    public Input: string;
+    public Input: string | undefined;
     public InstanceId: string;
 
     constructor(
@@ -16,8 +16,16 @@ export class EventSentEvent extends HistoryEvent {
             options.timestamp,
         );
 
+        if (options.name === undefined) {
+            throw new Error("EventSentEvent needs a name provided.");
+        }
+
+        if (options.instanceId === undefined) {
+            throw new Error("EventSentEvent needs an instance id provided.");
+        }
+
+        this.Input = options.input !== null ? options.input : undefined;
         this.Name = options.name;
-        this.Input = options.input;
         this.InstanceId = options.instanceId;
     }
 }

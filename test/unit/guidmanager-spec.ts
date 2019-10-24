@@ -10,13 +10,13 @@ import { GuidManager } from "../../src/classes";
 describe("GuidManager", () => {
     describe("createDeterministicGuid()", async () => {
         it("throws if namespaceValue is empty", () => {
-            expect(() => GuidManager.createDeterministicGuid(undefined, "name"))
-                .to.throw("namespaceValue: Expected non-empty, non-whitespace string but got undefined");
+            expect(() => GuidManager.createDeterministicGuid("", "name"))
+                .to.throw("namespaceValue: Expected non-empty, non-whitespace string but got empty string");
         });
 
         it("throws if name is empty", () => {
-            expect(() => GuidManager.createDeterministicGuid("namespaceValue", undefined))
-                .to.throw("name: Expected non-empty, non-whitespace string but got undefined");
+            expect(() => GuidManager.createDeterministicGuid("namespaceValue", ""))
+                .to.throw("name: Expected non-empty, non-whitespace string but got empty string");
         });
 
         it("returns consistent GUID for namespace and name", () => {

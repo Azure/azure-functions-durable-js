@@ -16,6 +16,18 @@ export class TaskFailedEvent extends HistoryEvent {
             options.timestamp,
         );
 
+        if (options.taskScheduledId === undefined) {
+            throw new Error("TaskFailedEvent needs a task scheduled id provided.");
+        }
+
+        if (options.reason === undefined) {
+            throw new Error("TaskFailedEvent needs a reason provided.");
+        }
+
+        if (options.details === undefined) {
+            throw new Error("TaskFailedEvent needs details provided.");
+        }
+
         this.TaskScheduledId = options.taskScheduledId;
         this.Reason = options.reason;
         this.Details = options.details;

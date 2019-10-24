@@ -37,7 +37,7 @@ export class DurableOrchestrationContext {
      * which case it is formatted as a GUID, or it can be user-specified with
      * any format.
      */
-    public readonly parentInstanceId: string;
+    public readonly parentInstanceId: string | undefined;
 
     /**
      * Gets the current date/time in a way that is safe for use by orchestrator

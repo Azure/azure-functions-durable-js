@@ -14,6 +14,10 @@ export class TimerCreatedEvent extends HistoryEvent {
             options.timestamp,
         );
 
+        if (options.fireAt === undefined) {
+            throw new Error("TimerCreatedEvent needs a fireAt time provided.");
+        }
+
         this.FireAt = options.fireAt;
     }
 }
