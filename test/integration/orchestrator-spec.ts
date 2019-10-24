@@ -63,9 +63,9 @@ describe("Orchestrator", () => {
                 }),
             );
             if (isNaN(falsyValue as number)) {
-                expect(isNaN(mockContext.doneValue.output as number)).to.equal(true);
+                expect(isNaN(mockContext.doneValue!.output as number)).to.equal(true);
             } else {
-                expect(mockContext.doneValue.output).to.equal(falsyValue);
+                expect(mockContext.doneValue!.output).to.equal(falsyValue);
             }
             expect(mockContext.err).to.equal(null);
         });
@@ -88,7 +88,7 @@ describe("Orchestrator", () => {
             });
             orchestrator(mockContext);
 
-            expect(mockContext.df.instanceId).to.be.equal(id);
+            expect(mockContext.df!.instanceId).to.be.equal(id);
         });
 
         it("assigns isReplaying", async () => {
@@ -110,7 +110,7 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.df.isReplaying).to.be.equal(replaying);
+            expect(mockContext.df!.isReplaying).to.be.equal(replaying);
         });
 
         it("assigns parentInstanceId", async () => {
@@ -133,7 +133,7 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.df.parentInstanceId).to.be.equal(id);
+            expect(mockContext.df!.parentInstanceId).to.be.equal(id);
         });
 
         it("updates currentUtcDateTime to the most recent OrchestratorStarted timestamp", async () => {
@@ -154,7 +154,7 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.df.currentUtcDateTime).to.be.deep.equal(nextTimestamp);
+            expect(mockContext.df!.currentUtcDateTime).to.be.deep.equal(nextTimestamp);
         });
 
         it("uses existing currentUtcDateTime if OrchestratorStarted events are exhausted", async () => {
@@ -170,7 +170,7 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.doneValue.error).to.equal(undefined);
+            expect(mockContext.doneValue!.error).to.equal(undefined);
 
             expect(mockContext.err).to.equal(null);
         });
@@ -195,9 +195,9 @@ describe("Orchestrator", () => {
                 isDone: false,
                 actions: [],
             });
-            expect(mockContext.doneValue.error).to.include(expectedErr);
+            expect(mockContext.doneValue!.error).to.include(expectedErr);
 
-            expect(mockContext.err.toString()).to.include(expectedErr);
+            expect(mockContext.err!.toString()).to.include(expectedErr);
         });
 
         it("reports an unhandled exception from activity passed through orchestrator", async () => {
@@ -220,9 +220,9 @@ describe("Orchestrator", () => {
                     [ new CallActivityAction("ThrowsErrorActivity") ],
                 ],
             });
-            expect(mockContext.doneValue.error).to.include(expectedErr);
+            expect(mockContext.doneValue!.error).to.include(expectedErr);
 
-            expect(mockContext.err.toString()).to.include(expectedErr);
+            expect(mockContext.err!.toString()).to.include(expectedErr);
         });
 
         it("schedules an activity function after orchestrator catches an exception", async () => {
@@ -442,10 +442,10 @@ describe("Orchestrator", () => {
                     actions: [],
                 }),
             );
-            expect(mockContext.doneValue.error).to
+            expect(mockContext.doneValue!.error).to
                 .include(expectedErr);
 
-            expect(mockContext.err.toString()).to.include(expectedErr);
+            expect(mockContext.err!.toString()).to.include(expectedErr);
         });
 
         it("schedules an activity function", async () => {
@@ -572,10 +572,10 @@ describe("Orchestrator", () => {
                     ],
                 ],
             });
-            expect(mockContext.doneValue.error).to
+            expect(mockContext.doneValue!.error).to
                 .include(expectedErr);
 
-            expect(mockContext.err.toString()).to.include(expectedErr);
+            expect(mockContext.err!.toString()).to.include(expectedErr);
         });
 
         it("handles a completed activity function", async () => {
@@ -875,6 +875,63 @@ describe("Orchestrator", () => {
             );
         });
 
+        it("replay does not match history (mismatched suborchestration name) and throws error.", async () => {
+            const orchestrator = TestOrchestrations.MultipleSubOrchestratorNoSubId;
+            const name = "World";
+            const id = uuidv1();
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetMultipleSubOrchestratorNoIdsSubOrchestrationsFinished(
+                        moment.utc().toDate(),
+                        orchestrator,
+                        // The order in the sample suborchestrator is ["SayHelloWithActivity", "SayHelloInline", "SayHelloWithActivity", "SayHelloInline"]
+                        ["SayHelloInline", "SayHelloWithActivity", "SayHelloWithActivity", "SayHelloInline"],
+                        name,
+                    ),
+                    name,
+                    id,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            const expectedErr = "The suborchestration call (n = 1) should be executed with a function name of SayHelloInline instead of the provided function name of SayHelloWithActivity. Check your code for non-deterministic behavior.";
+
+            expect(mockContext.doneValue!.error).to
+                .include(expectedErr);
+
+            expect(mockContext.err!.toString()).to.include(expectedErr);
+        });
+
+        it("replay does not match history (mismatched suborchestration instance id) and throws error.", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
+            const name = "World";
+            const id = uuidv1();
+            const subId = id + ":1";
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
+                        moment.utc().toDate(),
+                        orchestrator,
+                        "SayHelloWithActivity",
+                        subId,
+                        name,
+                    ),
+                    name,
+                    id,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            const expectedErr = `The suborchestration call (n = 1) should be executed with an instance id of ${subId} instead of the provided instance id of ${id}:0. Check your code for non-deterministic behavior.`;
+
+            expect(mockContext.doneValue!.error).to
+                .include(expectedErr);
+
+            expect(mockContext.err!.toString()).to.include(expectedErr);
+        });
+
         it("handles a completed suborchestrator function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
             const name = "World";
@@ -937,10 +994,11 @@ describe("Orchestrator", () => {
                     [ new CallSubOrchestratorAction("SayHelloWithActivity", childId, name) ],
                 ],
             });
-            expect(mockContext.doneValue.error).to
+
+            expect(mockContext.doneValue!.error).to
                 .include(expectedErr);
 
-            expect(mockContext.err.toString()).to.include(expectedErr);
+            expect(mockContext.err!.toString()).to.include(expectedErr);
         });
     });
 
@@ -965,10 +1023,10 @@ describe("Orchestrator", () => {
                 isDone: false,
                 actions: [],
             });
-            expect(mockContext.doneValue.error).to
+            expect(mockContext.doneValue!.error).to
                 .include(expectedErr);
 
-            expect(mockContext.err.toString()).to.include(expectedErr);
+            expect(mockContext.err!.toString()).to.include(expectedErr);
         });
 
         it("schedules a suborchestrator function", async () => {
@@ -1120,10 +1178,10 @@ describe("Orchestrator", () => {
                     ],
                 ],
             });
-            expect(mockContext.doneValue.error).to
+            expect(mockContext.doneValue!.error).to
                 .include(expectedErr);
 
-            expect(mockContext.err.toString()).to.include(expectedErr);
+            expect(mockContext.err!.toString()).to.include(expectedErr);
         });
 
         it("handles a completed suborchestrator function", async () => {
@@ -1284,7 +1342,7 @@ describe("Orchestrator", () => {
             orchestrator(mockContext1);
             orchestrator(mockContext2);
 
-            expect(mockContext1.doneValue.isDone).to.equal(true);
+            expect(mockContext1.doneValue!.isDone).to.equal(true);
             expect(mockContext1.doneValue).to.deep.equal(mockContext2.doneValue);
         });
     });
@@ -1298,7 +1356,7 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            const expectedLockState = new LockState(false, undefined);
+            const expectedLockState = new LockState(false, [new EntityId("samplename", "samplekey")]);
 
             orchestrator(mockContext);
 
@@ -1346,7 +1404,7 @@ describe("Orchestrator", () => {
             orchestrator(mockContext1);
             orchestrator(mockContext2);
 
-            expect(mockContext1.doneValue.isDone).to.equal(true);
+            expect(mockContext1.doneValue!.isDone).to.equal(true);
             expect(mockContext1.doneValue).to.deep.equal(mockContext2.doneValue);
         });
     });
@@ -1581,8 +1639,8 @@ describe("Orchestrator", () => {
                     ],
                 }),
             );
-            expect(mockContext.doneValue.error).to.include(expectedErr);
-            expect(mockContext.err.toString()).to.include(expectedErr);
+            expect(mockContext.doneValue!.error).to.include(expectedErr);
+            expect(mockContext.err!.toString()).to.include(expectedErr);
         });
 
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
