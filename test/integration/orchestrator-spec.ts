@@ -840,6 +840,98 @@ describe("Orchestrator", () => {
             );
         });
 
+        it("Succesfully runs multiple suborchestrator function with no instanceId", async () => {
+            const orchestrator = TestOrchestrations.MultipleSubOrchestratorNoSubId;
+            const name = "World";
+            const id = uuidv1();
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetMultipleSubOrchestratorNoIdsSubOrchestrationsFinished(
+                        moment.utc().toDate(),
+                        orchestrator,
+                        ["SayHelloWithActivity", "SayHelloInline", "SayHelloWithActivity", "SayHelloInline"],
+                        name,
+                    ),
+                    name,
+                    id,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    output: [`Hello, ${name}_SayHelloWithActivity_0!`, `Hello, ${name}_SayHelloInline_1!`, `Hello, ${name}_SayHelloWithActivity_2!`, `Hello, ${name}_SayHelloInline_3!`],
+                    actions: [
+                                [
+                                    new CallSubOrchestratorAction("SayHelloWithActivity", undefined, `${name}_SayHelloWithActivity_0`),
+                                    new CallSubOrchestratorAction("SayHelloInline", undefined, `${name}_SayHelloInline_1`),
+                                    new CallSubOrchestratorAction("SayHelloWithActivity", undefined, `${name}_SayHelloWithActivity_2`),
+                                    new CallSubOrchestratorAction("SayHelloInline", undefined, `${name}_SayHelloInline_3`),
+                                ],
+                            ],
+                }),
+            );
+        });
+
+        it("replay does not match history (mismatched suborchestration name) and throws error.", async () => {
+            const orchestrator = TestOrchestrations.MultipleSubOrchestratorNoSubId;
+            const name = "World";
+            const id = uuidv1();
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetMultipleSubOrchestratorNoIdsSubOrchestrationsFinished(
+                        moment.utc().toDate(),
+                        orchestrator,
+                        // The order in the sample suborchestrator is ["SayHelloWithActivity", "SayHelloInline", "SayHelloWithActivity", "SayHelloInline"]
+                        ["SayHelloInline", "SayHelloWithActivity", "SayHelloWithActivity", "SayHelloInline"],
+                        name,
+                    ),
+                    name,
+                    id,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            const expectedErr = "The sub-orchestration call (n = 1) should be executed with a function name of SayHelloInline instead of the provided function name of SayHelloWithActivity. Check your code for non-deterministic behavior.";
+
+            expect(mockContext.doneValue!.error).to
+                .include(expectedErr);
+
+            expect(mockContext.err!.toString()).to.include(expectedErr);
+        });
+
+        it("replay does not match history (mismatched suborchestration instance id) and throws error.", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
+            const name = "World";
+            const id = uuidv1();
+            const subId = id + ":1";
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
+                        moment.utc().toDate(),
+                        orchestrator,
+                        "SayHelloWithActivity",
+                        subId,
+                        name,
+                    ),
+                    name,
+                    id,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            const expectedErr = `The sub-orchestration call (n = 1) should be executed with an instance id of ${subId} instead of the provided instance id of ${id}:0. Check your code for non-deterministic behavior.`;
+
+            expect(mockContext.doneValue!.error).to
+                .include(expectedErr);
+
+            expect(mockContext.err!.toString()).to.include(expectedErr);
+        });
+
         it("handles a completed suborchestrator function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
             const name = "World";
@@ -902,6 +994,7 @@ describe("Orchestrator", () => {
                     [ new CallSubOrchestratorAction("SayHelloWithActivity", childId, name) ],
                 ],
             });
+
             expect(mockContext.doneValue!.error).to
                 .include(expectedErr);
 

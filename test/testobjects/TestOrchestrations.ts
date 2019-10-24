@@ -137,6 +137,17 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static MultipleSubOrchestratorNoSubId: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput();
+        const subOrchName1 = "SayHelloWithActivity";
+        const subOrchName2 = "SayHelloInline";
+        const output = context.df.callSubOrchestrator(subOrchName1, `${input}_${subOrchName1}_0`);
+        const output2 = context.df.callSubOrchestrator(subOrchName2, `${input}_${subOrchName2}_1`);
+        const output3 = context.df.callSubOrchestrator(subOrchName1, `${input}_${subOrchName1}_2`);
+        const output4 = context.df.callSubOrchestrator(subOrchName2, `${input}_${subOrchName2}_3`);
+        return yield context.df.Task.all([output, output2, output3, output4]);
+    });
+
     public static SayHelloWithSubOrchestratorRetry: any = df.orchestrator(function*(context: any) {
         const input = context.df.getInput();
         const childId = context.df.instanceId + ":0";
