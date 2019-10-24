@@ -254,7 +254,7 @@ export class Orchestrator {
 
     private callSubOrchestrator(state: HistoryEvent[], name: string, input?: unknown, instanceId?: string): Task {
         if (!name) {
-            throw new Error("A suborchestration function name must be provided when attempting to create a suborchestration");
+            throw new Error("A sub-orchestration function name must be provided when attempting to create a suborchestration");
         }
 
         const newAction = new CallSubOrchestratorAction(name, instanceId, input);
@@ -302,7 +302,7 @@ export class Orchestrator {
         instanceId?: string)
         : Task {
         if (!name) {
-            throw new Error("A suborchestration function name must be provided when attempting to create a suborchestration");
+            throw new Error("A sub-orchestration function name must be provided when attempting to create a suborchestration");
         }
 
         const newAction = new CallSubOrchestratorWithRetryAction(name, retryOptions, input, instanceId);
