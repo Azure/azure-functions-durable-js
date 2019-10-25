@@ -86,6 +86,29 @@ export class Orchestrator {
             let g = gen.next(undefined);
 
             while (true) {
+
+                if (!(g.value instanceof Task || g.value instanceof TaskSet)) {
+                    if (!g.done) {
+                        // The orchestrator must have yielded a non-Task related type,
+                        // so just return execution flow with what they yielded back.
+                        g = gen.next(g.value);
+                        continue;
+                    } else {
+                        log("Iterator is done");
+                        // The customer returned an absolute type.
+                        context.done(
+                            null,
+                            new OrchestratorState({
+                                isDone: true,
+                                output: g.value,
+                                actions,
+                                customStatus: this.customStatus,
+                            }),
+                        );
+                        return;
+                    }
+                }
+
                 partialResult = g.value as Task | TaskSet;
                 if (partialResult instanceof Task && partialResult.action) {
                     actions.push([ partialResult.action ]);
@@ -93,7 +116,21 @@ export class Orchestrator {
                     actions.push(partialResult.actions);
                 }
 
-                if (this.shouldFinish(partialResult)) {
+                // Return continue as new events as completed, as the execution itself is now completed.
+                if (partialResult instanceof Task && partialResult.action instanceof ContinueAsNewAction) {
+                    context.done(
+                        null,
+                        new OrchestratorState({
+                            isDone: true,
+                            output: undefined,
+                            actions,
+                            customStatus: this.customStatus,
+                        }),
+                    );
+                    return;
+                }
+
+                if (!partialResult.isCompleted) {
                     context.done(
                         null,
                         new OrchestratorState({
@@ -106,7 +143,7 @@ export class Orchestrator {
                     return;
                 }
 
-                if ((partialResult instanceof Task || partialResult instanceof TaskSet) && partialResult.isFaulted) {
+                if (partialResult.isFaulted) {
                     if (!gen.throw) {
                         throw new Error("Cannot properly throw the execption returned by customer code");
                     }
@@ -114,13 +151,16 @@ export class Orchestrator {
                     continue;
                 }
 
+                // Handles the case where an orchestration completes with a returns a return value of
+                // completed (non-faulted) task. This shouldn't generally happen as hopefully the customer
+                // would yield the task before returning out of the generator function.
                 if (g.done) {
                     log("Iterator is done");
                     context.done(null,
                         new OrchestratorState({
                             isDone: true,
                             actions,
-                            output: g.value,
+                            output: partialResult.result,
                             customStatus: this.customStatus,
                         }),
                     );
@@ -735,10 +775,5 @@ export class Orchestrator {
         events.map((val: HistoryEvent | undefined) => {
             if (val) { val.IsProcessed = true; }
         });
-    }
-
-    private shouldFinish(result: unknown): boolean {
-        return result && Object.prototype.hasOwnProperty.call(result, "isCompleted") && !(result as Task).isCompleted
-            || result instanceof Task && result.action instanceof ContinueAsNewAction;
     }
 }
