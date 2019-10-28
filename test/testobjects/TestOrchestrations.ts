@@ -93,10 +93,20 @@ export class TestOrchestrations {
         return `Hello, ${input}!`;
     });
 
+    public static SayHelloInlineInproperYield: any = df.orchestrator(function*(context: any) {
+        const input = yield context.df.getInput();
+        return `Hello, ${input}!`;
+    });
+
     public static SayHelloWithActivity: any = df.orchestrator(function*(context: any) {
         const input = context.df.getInput();
         const output = yield context.df.callActivity("Hello", input);
         return output;
+    });
+
+    public static SayHelloWithActivityDirectReturn: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput();
+        return context.df.callActivity("Hello", input);
     });
 
     public static SayHelloWithActivityRetry: any = df.orchestrator(function*(context: any) {

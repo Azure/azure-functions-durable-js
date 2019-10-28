@@ -40,6 +40,29 @@ describe("Orchestrator", () => {
         );
     });
 
+    it("handles a simple orchestration function (no activity functions), with yield of non-Task object", async () => {
+        const orchestrator = TestOrchestrations.SayHelloInlineInproperYield;
+        const name = "World";
+        const mockContext = new MockContext({
+            context: new DurableOrchestrationBindingInfo(
+                TestHistories.GetOrchestratorStart(
+                    "SayHelloInlineInproperYield",
+                    moment.utc().toDate(),
+                    name),
+                name,
+            ),
+        });
+        orchestrator(mockContext);
+
+        expect(mockContext.doneValue).to.be.deep.equal(
+            new OrchestratorState({
+                isDone: true,
+                actions: [],
+                output: `Hello, ${name}!`,
+            }),
+        );
+    });
+
     falsyValues.forEach((falsyValue) => {
         it(`handles an orchestration function that returns ${falsyValue === "" ? "empty string" : falsyValue}`, async () => {
             const orchestrator = TestOrchestrations.PassThrough;
@@ -368,6 +391,33 @@ describe("Orchestrator", () => {
                 context: new DurableOrchestrationBindingInfo(
                     TestHistories.GetSayHelloWithActivityReplayOne(
                         "SayHelloWithActivity",
+                        moment.utc().toDate(),
+                        name),
+                    name,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
+                    [
+                        [ new CallActivityAction("Hello", name) ],
+                    ],
+                    output: `Hello, ${name}!`,
+                }),
+            );
+        });
+
+        it("handles a completed activity function by returning instead of yielding", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithActivityDirectReturn;
+            const name = "World";
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityReplayOne(
+                        "SayHelloWithActivityDirectReturn",
                         moment.utc().toDate(),
                         name),
                     name,
@@ -1241,7 +1291,8 @@ describe("Orchestrator", () => {
 
             expect(mockContext.doneValue).to.be.deep.equal(
                 new OrchestratorState({
-                    isDone: false,
+                    // Is Done needs to be marked as true for 1.8.0 and later to properly process continueAsNew
+                    isDone: true,
                     output: undefined,
                     actions:
                     [
