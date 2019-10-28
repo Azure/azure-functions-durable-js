@@ -151,7 +151,7 @@ export class Orchestrator {
                     continue;
                 }
 
-                // Handles the case where an orchestration completes with a returns a return value of
+                // Handles the case where an orchestration completes with a return value of a
                 // completed (non-faulted) task. This shouldn't generally happen as hopefully the customer
                 // would yield the task before returning out of the generator function.
                 if (g.done) {
