@@ -6,10 +6,22 @@ export class TestOrchestrations {
         const completeInOrder = context.df.getInput();
 
         const tasks = [];
-        tasks.push(context.df.callActivity("TaskA", !completeInOrder));
+        tasks.push(context.df.callActivity("TaskA", completeInOrder));
         tasks.push(context.df.callActivity("TaskB", completeInOrder));
 
         const output = yield context.df.Task.any(tasks);
+        return output.result;
+    });
+
+    public static AnyAOrBYieldATwice: any = df.orchestrator(function*(context: any) {
+        const completeInOrder = context.df.getInput();
+
+        const tasks = [];
+        tasks.push(context.df.callActivity("TaskA", completeInOrder));
+        tasks.push(context.df.callActivity("TaskB", completeInOrder));
+        const output = yield context.df.Task.any(tasks);
+
+        yield tasks[0];
         return output.result;
     });
 
@@ -103,6 +115,13 @@ export class TestOrchestrations {
         const input = context.df.getInput();
         const output = yield context.df.callActivity("Hello", input);
         return output;
+    });
+
+    public static SayHelloWithActivityYieldTwice: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput();
+        const task = context.df.callActivity("Hello", input);
+        const output = yield task;
+        return yield task;
     });
 
     public static SayHelloWithActivityDirectReturn: any = df.orchestrator(function*(context: any) {
