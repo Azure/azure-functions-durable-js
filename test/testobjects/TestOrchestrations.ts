@@ -93,10 +93,20 @@ export class TestOrchestrations {
         return `Hello, ${input}!`;
     });
 
+    public static SayHelloInlineInproperYield: any = df.orchestrator(function*(context: any) {
+        const input = yield context.df.getInput();
+        return `Hello, ${input}!`;
+    });
+
     public static SayHelloWithActivity: any = df.orchestrator(function*(context: any) {
         const input = context.df.getInput();
         const output = yield context.df.callActivity("Hello", input);
         return output;
+    });
+
+    public static SayHelloWithActivityDirectReturn: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput();
+        return context.df.callActivity("Hello", input);
     });
 
     public static SayHelloWithActivityRetry: any = df.orchestrator(function*(context: any) {
@@ -135,6 +145,17 @@ export class TestOrchestrations {
         const input = context.df.getInput();
         const output = yield context.df.callSubOrchestrator("SayHelloWithActivity", input);
         return output;
+    });
+
+    public static MultipleSubOrchestratorNoSubId: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput();
+        const subOrchName1 = "SayHelloWithActivity";
+        const subOrchName2 = "SayHelloInline";
+        const output = context.df.callSubOrchestrator(subOrchName1, `${input}_${subOrchName1}_0`);
+        const output2 = context.df.callSubOrchestrator(subOrchName2, `${input}_${subOrchName2}_1`);
+        const output3 = context.df.callSubOrchestrator(subOrchName1, `${input}_${subOrchName1}_2`);
+        const output4 = context.df.callSubOrchestrator(subOrchName2, `${input}_${subOrchName2}_3`);
+        return yield context.df.Task.all([output, output2, output3, output4]);
     });
 
     public static SayHelloWithSubOrchestratorRetry: any = df.orchestrator(function*(context: any) {

@@ -14,13 +14,17 @@ describe("Entity", () => {
         operations.push({ kind: "set", value: "hello world"});
         operations.push({ kind: "get"});
 
-        const testData = TestEntityBatches.GetStringStoreBatch(operations, null);
+        const testData = TestEntityBatches.GetStringStoreBatch(operations, undefined);
         const mockContext = new MockContext({
             context: testData.input,
         });
         entity(mockContext);
 
-        entityStateMatchesExpected(mockContext.doneValue, testData.output);
+        expect(mockContext.doneValue).to.not.equal(undefined);
+
+        if (mockContext.doneValue) {
+            entityStateMatchesExpected(mockContext.doneValue, testData.output);
+        }
     });
 
     it("StringStore entity with initial state.", async () => {
@@ -34,7 +38,11 @@ describe("Entity", () => {
         });
         entity(mockContext);
 
-        entityStateMatchesExpected(mockContext.doneValue, testData.output);
+        expect(mockContext.doneValue).to.not.equal(undefined);
+
+        if (mockContext.doneValue) {
+            entityStateMatchesExpected(mockContext.doneValue, testData.output);
+        }
     });
 });
 

@@ -15,6 +15,14 @@ export class SubOrchestrationInstanceCompletedEvent extends HistoryEvent {
             options.timestamp,
         );
 
+        if (options.taskScheduledId === undefined) {
+            throw new Error("SubOrchestrationInstanceCompletedEvent needs a task scheduled id provided.");
+        }
+
+        if (options.result === undefined) {
+            throw new Error("SubOrchestrationInstanceCompletedEvent needs an result provided.");
+        }
+
         this.TaskScheduledId = options.taskScheduledId;
         this.Result = options.result;
     }

@@ -15,7 +15,7 @@ export class Entity {
 
     private async handle(context: IEntityFunctionContext): Promise<void> {
         const entityBinding = Utils.getInstancesOf<DurableEntityBindingInfo>(
-            context.bindings, new DurableEntityBindingInfo(null, null, null, []))[0];
+            context.bindings, new DurableEntityBindingInfo(new EntityId("samplename", "samplekey"), true, "", []))[0];
 
         if (entityBinding === undefined) {
             throw new Error("Could not find an entityTrigger binding on context.");

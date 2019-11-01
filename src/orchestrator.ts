@@ -19,6 +19,7 @@ export class Orchestrator {
     private currentUtcDateTime: Date;
     private customStatus: unknown;
     private newGuidCounter: number;
+    private subOrchestratorCounter: number;
 
     constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) { }
 
@@ -40,14 +41,14 @@ export class Orchestrator {
         // const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
 
         // Initialize currentUtcDateTime
-        let decisionStartedEvent: HistoryEvent = state.find((e) =>
-            (e.EventType === HistoryEventType.OrchestratorStarted));
-        this.currentUtcDateTime = decisionStartedEvent
-            ? new Date(decisionStartedEvent.Timestamp)
-            : undefined;
+        let decisionStartedEvent: HistoryEvent = Utils.ensureNonNull(
+            state.find((e) => e.EventType === HistoryEventType.OrchestratorStarted),
+            "The orchestrator can not execute without an OrchestratorStarted event.");
+        this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
 
-        // Reset newGuidCounter
+        // Reset counters
         this.newGuidCounter = 0;
+        this.subOrchestratorCounter = 0;
 
         // Create durable orchestration context
         context.df = {
@@ -81,9 +82,33 @@ export class Orchestrator {
         let partialResult: Task | TaskSet;
 
         try {
-            let g = gen.next(partialResult ? partialResult.result : undefined);
+            // First execution, we have not yet "yielded" any of the tasks.
+            let g = gen.next(undefined);
 
             while (true) {
+
+                if (!(g.value instanceof Task || g.value instanceof TaskSet)) {
+                    if (!g.done) {
+                        // The orchestrator must have yielded a non-Task related type,
+                        // so just return execution flow with what they yielded back.
+                        g = gen.next(g.value);
+                        continue;
+                    } else {
+                        log("Iterator is done");
+                        // The customer returned an absolute type.
+                        context.done(
+                            null,
+                            new OrchestratorState({
+                                isDone: true,
+                                output: g.value,
+                                actions,
+                                customStatus: this.customStatus,
+                            }),
+                        );
+                        return;
+                    }
+                }
+
                 partialResult = g.value as Task | TaskSet;
                 if (partialResult instanceof Task && partialResult.action) {
                     actions.push([ partialResult.action ]);
@@ -91,7 +116,21 @@ export class Orchestrator {
                     actions.push(partialResult.actions);
                 }
 
-                if (this.shouldFinish(partialResult)) {
+                // Return continue as new events as completed, as the execution itself is now completed.
+                if (partialResult instanceof Task && partialResult.action instanceof ContinueAsNewAction) {
+                    context.done(
+                        null,
+                        new OrchestratorState({
+                            isDone: true,
+                            output: undefined,
+                            actions,
+                            customStatus: this.customStatus,
+                        }),
+                    );
+                    return;
+                }
+
+                if (!partialResult.isCompleted) {
                     context.done(
                         null,
                         new OrchestratorState({
@@ -104,18 +143,24 @@ export class Orchestrator {
                     return;
                 }
 
-                if ((partialResult instanceof Task || partialResult instanceof TaskSet) && partialResult.isFaulted) {
-                    g = gen.throw(partialResult.exception);
+                if (partialResult.isFaulted) {
+                    if (!gen.throw) {
+                        throw new Error("Cannot properly throw the execption returned by customer code");
+                    }
+                    g = gen.throw!(partialResult.exception);
                     continue;
                 }
 
+                // Handles the case where an orchestration completes with a return value of a
+                // completed (non-faulted) task. This shouldn't generally happen as hopefully the customer
+                // would yield the task before returning out of the generator function.
                 if (g.done) {
                     log("Iterator is done");
                     context.done(null,
                         new OrchestratorState({
                             isDone: true,
                             actions,
-                            output: g.value,
+                            output: partialResult.result,
                             customStatus: this.customStatus,
                         }),
                     );
@@ -129,7 +174,7 @@ export class Orchestrator {
                 decisionStartedEvent = newDecisionStartedEvent || decisionStartedEvent;
                 context.df.currentUtcDateTime = this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
 
-                g = gen.next(partialResult ? partialResult.result : undefined);
+                g = gen.next(partialResult.result);
             }
         } catch (error) {
             log(`Error: ${error}`);
@@ -227,7 +272,7 @@ export class Orchestrator {
         const eventSent = this.findEventSent(state, schedulerId, "op");
         let eventRaised;
         if (eventSent) {
-            const eventSentInput = eventSent ? JSON.parse(eventSent.Input) as RequestMessage : undefined;
+            const eventSentInput = eventSent && eventSent.Input !== undefined ? JSON.parse(eventSent.Input) as RequestMessage : undefined;
             eventRaised = eventSentInput ? this.findEventRaised(state, eventSentInput.id) : undefined;
         }
         this.setProcessed([ eventSent, eventRaised ]);
@@ -248,12 +293,16 @@ export class Orchestrator {
     }
 
     private callSubOrchestrator(state: HistoryEvent[], name: string, input?: unknown, instanceId?: string): Task {
-        const newAction = new CallSubOrchestratorAction(name, instanceId, input);
+        if (!name) {
+            throw new Error("A sub-orchestration function name must be provided when attempting to create a suborchestration");
+        }
 
+        const newAction = new CallSubOrchestratorAction(name, instanceId, input);
         const subOrchestratorCreated = this.findSubOrchestrationInstanceCreated(state, name, instanceId);
         const subOrchestratorCompleted = this.findSubOrchestrationInstanceCompleted(state, subOrchestratorCreated);
         const subOrchestratorFailed = this.findSubOrchestrationInstanceFailed(state, subOrchestratorCreated);
-        this.setProcessed([subOrchestratorCreated, subOrchestratorCompleted]);
+
+        this.setProcessed([subOrchestratorCreated, subOrchestratorCompleted, subOrchestratorFailed]);
 
         if (subOrchestratorCompleted) {
             const result = this.parseHistoryEvent(subOrchestratorCompleted);
@@ -292,6 +341,10 @@ export class Orchestrator {
         input?: unknown,
         instanceId?: string)
         : Task {
+        if (!name) {
+            throw new Error("A sub-orchestration function name must be provided when attempting to create a suborchestration");
+        }
+
         const newAction = new CallSubOrchestratorWithRetryAction(name, retryOptions, input, instanceId);
 
         for (let attempt = 1; attempt <= retryOptions.maxNumberOfAttempts; attempt++) {
@@ -419,7 +472,7 @@ export class Orchestrator {
         );
     }
 
-    private lock(state: HistoryEvent[], instanceId: string, contextLocks: EntityId[], entities: EntityId[]): DurableLock {
+    private lock(state: HistoryEvent[], instanceId: string, contextLocks: EntityId[], entities: EntityId[]): DurableLock | undefined {
         if (contextLocks) {
             throw new Error("Cannot acquire more locks when already holding some locks.");
         }
@@ -518,10 +571,13 @@ export class Orchestrator {
         }, []);
 
         const completedTasks = tasks
-            .filter((t) => t.isCompleted)
+            .filter((t) => t && t.isCompleted)
             .sort((a, b) => {
-                if (a.timestamp > b.timestamp) { return 1; }
-                if (a.timestamp < b.timestamp) { return -1; }
+                // Because we have filtered by completed tasks, all of them should have timestamps
+                if (a.timestamp && b.timestamp) {
+                    if (a.timestamp > b.timestamp) { return 1; }
+                    if (a.timestamp < b.timestamp) { return -1; }
+                }
                 return 0;
             });
 
@@ -538,7 +594,8 @@ export class Orchestrator {
 
         switch (directiveResult.EventType) {
             case (HistoryEventType.EventRaised):
-                parsedDirectiveResult = JSON.parse((directiveResult as EventRaisedEvent).Input);
+                const eventRaised = directiveResult as EventRaisedEvent;
+                parsedDirectiveResult = (eventRaised && eventRaised.Input !== undefined) ? JSON.parse(eventRaised.Input) : undefined;
                 break;
             case (HistoryEventType.SubOrchestrationInstanceCompleted):
                 parsedDirectiveResult = JSON.parse((directiveResult as SubOrchestrationInstanceCompletedEvent).Result);
@@ -579,7 +636,7 @@ export class Orchestrator {
     }
 
     /* Returns undefined if not found. */
-    private findRetryTimer(state: HistoryEvent[], failedTask: HistoryEvent): TimerCreatedEvent {
+    private findRetryTimer(state: HistoryEvent[], failedTask: HistoryEvent | undefined): TimerCreatedEvent | undefined {
         const returnValue = failedTask
             ? state.filter((val: HistoryEvent, index: number, array: HistoryEvent[]) => {
                 const failedTaskIndex = array.indexOf(failedTask);
@@ -594,45 +651,68 @@ export class Orchestrator {
     private findSubOrchestrationInstanceCreated(
         state: HistoryEvent[],
         name: string,
-        instanceId: string)
-        : SubOrchestrationInstanceCreatedEvent {
-        const returnValue = name
-            ? state.filter((val: HistoryEvent) => {
-                return val.EventType === HistoryEventType.SubOrchestrationInstanceCreated
-                    && (val as SubOrchestrationInstanceCreatedEvent).Name === name
-                    && (val as SubOrchestrationInstanceCreatedEvent).InstanceId === instanceId
-                    && !val.IsProcessed;
-            })[0]
-            : undefined;
-        return returnValue as SubOrchestrationInstanceCreatedEvent;
+        instanceId: string | undefined)
+        : SubOrchestrationInstanceCreatedEvent | undefined {
+        const matches = state.filter((val: HistoryEvent) => {
+            return val.EventType === HistoryEventType.SubOrchestrationInstanceCreated
+                && !val.IsProcessed;
+        });
+
+        if (matches.length === 0) {
+            return undefined;
+        }
+
+        this.subOrchestratorCounter++;
+
+        // Grab the first unprocessed sub orchestration creation event and verify that
+        // it matches the same function name and instance id if provided. If not, we know that
+        // we have nondeterministic behavior, because the callSubOrchestrator*() methods were not
+        // called in the same order this replay that they were scheduled in.
+        const returnValue = matches[0] as SubOrchestrationInstanceCreatedEvent;
+        if (returnValue.Name !== name) {
+            throw new Error(`The sub-orchestration call (n = ${this.subOrchestratorCounter}) should be executed with a function name of ${returnValue.Name} instead of the provided function name of ${name}. Check your code for non-deterministic behavior.`);
+        }
+
+        if (instanceId && returnValue.InstanceId !== instanceId) {
+            throw new Error(`The sub-orchestration call (n = ${this.subOrchestratorCounter}) should be executed with an instance id of ${returnValue.InstanceId} instead of the provided instance id of ${instanceId}. Check your code for non-deterministic behavior.`);
+        }
+        return returnValue;
     }
 
     /* Returns undefined if not found. */
     private findSubOrchestrationInstanceCompleted(
         state: HistoryEvent[],
-        createdSubOrch: SubOrchestrationInstanceCreatedEvent)
-        : SubOrchestrationInstanceCompletedEvent {
-        const returnValue = createdSubOrch
-            ? state.filter((val: HistoryEvent) => {
+        createdSubOrch: SubOrchestrationInstanceCreatedEvent | undefined)
+        : SubOrchestrationInstanceCompletedEvent | undefined {
+        if (createdSubOrch === undefined) {
+            return undefined;
+        }
+
+        const matches = state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.SubOrchestrationInstanceCompleted
-                    && (val as SubOrchestrationInstanceCompletedEvent).TaskScheduledId === createdSubOrch.EventId;
-            })[0]
-            : undefined;
-        return returnValue as SubOrchestrationInstanceCompletedEvent;
+                    && (val as SubOrchestrationInstanceCompletedEvent).TaskScheduledId === createdSubOrch.EventId
+                    && !val.IsProcessed;
+            });
+
+        return (matches.length > 0) ? matches[0] as SubOrchestrationInstanceCompletedEvent : undefined;
     }
 
     /* Returns undefined if not found. */
     private findSubOrchestrationInstanceFailed(
         state: HistoryEvent[],
-        createdSubOrchInstance: SubOrchestrationInstanceCreatedEvent)
-        : SubOrchestrationInstanceFailedEvent {
-        const returnValue = createdSubOrchInstance
-            ? state.filter((val: HistoryEvent) => {
-                return val.EventType === HistoryEventType.SubOrchestrationInstanceFailed
-                    && (val as SubOrchestrationInstanceFailedEvent).TaskScheduledId === createdSubOrchInstance.EventId;
-            })[0]
-            : undefined;
-        return returnValue as SubOrchestrationInstanceFailedEvent;
+        createdSubOrchInstance: SubOrchestrationInstanceCreatedEvent | undefined)
+        : SubOrchestrationInstanceFailedEvent | undefined {
+            if (createdSubOrchInstance === undefined) {
+                return undefined;
+            }
+
+            const matches = state.filter((val: HistoryEvent) => {
+                    return val.EventType === HistoryEventType.SubOrchestrationInstanceFailed
+                        && (val as SubOrchestrationInstanceFailedEvent).TaskScheduledId === createdSubOrchInstance.EventId
+                        && !val.IsProcessed;
+                });
+
+            return (matches.length > 0) ? matches[0] as SubOrchestrationInstanceFailedEvent : undefined;
     }
 
     /* Returns undefined if not found. */
@@ -681,7 +761,7 @@ export class Orchestrator {
     }
 
     /* Returns undefined if not found. */
-    private findTimerFired(state: HistoryEvent[], createdTimer: HistoryEvent): TimerFiredEvent {
+    private findTimerFired(state: HistoryEvent[], createdTimer: TimerCreatedEvent | undefined): TimerFiredEvent | undefined {
         const returnValue = createdTimer
             ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TimerFired
@@ -691,14 +771,9 @@ export class Orchestrator {
         return returnValue as TimerFiredEvent;
     }
 
-    private setProcessed(events: HistoryEvent[]): void {
-        events.map((val: HistoryEvent) => {
+    private setProcessed(events: Array<HistoryEvent | undefined>): void {
+        events.map((val: HistoryEvent | undefined) => {
             if (val) { val.IsProcessed = true; }
         });
-    }
-
-    private shouldFinish(result: unknown): boolean {
-        return result && Object.prototype.hasOwnProperty.call(result, "isCompleted") && !(result as Task).isCompleted
-            || result instanceof Task && result.action instanceof ContinueAsNewAction;
     }
 }

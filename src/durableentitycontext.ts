@@ -26,7 +26,7 @@ export class DurableEntityContext {
      * An operation invocation on an entity includes an operation name, which
      * states what operation to perform, and optionally an operation input.
      */
-    public readonly operationName: string;
+    public readonly operationName: string | undefined;
 
     /**
      * Whether this entity is freshly constructed, i.e. did not exist prior to
