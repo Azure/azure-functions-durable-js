@@ -40,10 +40,10 @@ You can follow the [Visual Studio Code quickstart](https://docs.microsoft.com/en
 
 Run this command from the root folder of your Azure Functions app:
 ```bash
-func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.7.0
+func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.8.3
 ```
 
-**durable-functions requires Microsoft.Azure.WebJobs.Extensions.DurableTask 1.7.0 or greater.**
+**durable-functions requires Microsoft.Azure.WebJobs.Extensions.DurableTask 1.8.3 or greater.**
 
 4. Install the `durable-functions` npm package at the root of your function app:
 
