@@ -1,4 +1,5 @@
 import * as df from "../../src";
+import { DurableOrchestrationContext } from "../../src/classes";
 
 export class TestOrchestrations {
     public static AnyAOrB: any = df.orchestrator(function*(context: any) {
@@ -184,12 +185,7 @@ export class TestOrchestrations {
 
     public static SendHttpRequest: any = df.orchestrator(function*(context: any) {
         const input = context.df.getInput() as df.DurableHttpRequest;
-        const output = yield context.df.callHttp(
-            input.method,
-            input.uri,
-            input.content,
-            input.headers,
-            input.tokenSource);
+        const output = yield (context.df).callHttp(input);
         return output;
     });
 
