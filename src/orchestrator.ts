@@ -394,18 +394,12 @@ export class Orchestrator {
         );
     }
 
-    private callHttp(
-        state: HistoryEvent[],
-        method: string,
-        uri: string,
-        content?: string | object,
-        headers?: { [key: string]: string },
-        tokenSource?: TokenSource) {
+    private callHttp(state: HistoryEvent[], req: DurableHttpRequest) {
+        let { content } = req;
         if (content && typeof content !== "string") {
             content = JSON.stringify(content);
         }
 
-        const req = new DurableHttpRequest(method, uri, content as string, headers, tokenSource);
         const newAction = new CallHttpAction(req);
 
         // callHttp is internally implemented as a well-known activity function
