@@ -1,5 +1,4 @@
-import { DurableHttpRequest, DurableLock, EntityId, ITaskMethods, LockState,
-     RetryOptions, Task, TimerTask } from "./classes";
+import { EntityId, ITaskMethods, RetryOptions, Task, TimerTask } from "./classes";
 import { TokenSource } from "./tokensource";
 
 /**
