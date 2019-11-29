@@ -1,5 +1,6 @@
 import { DurableHttpRequest, DurableLock, EntityId, ITaskMethods, LockState,
      RetryOptions, Task, TimerTask } from "./classes";
+import { TokenSource } from "./tokensource";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -130,7 +131,12 @@ export class DurableOrchestrationContext {
      *
      * @param req The durable HTTP request to schedule.
      */
-    public callHttp(req: DurableHttpRequest): Task {
+    public callHttp(
+            method: string,
+            uri: string,
+            content?: string | object,
+            headers?: { [key: string]: string },
+            tokenSource?: TokenSource): Task {
         throw new Error("This is a placeholder");
     }
 
