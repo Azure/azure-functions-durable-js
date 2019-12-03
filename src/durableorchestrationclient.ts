@@ -536,7 +536,7 @@ export class DurableOrchestrationClient {
             if (response.data && response.status <= 202) {
                 return (response.data as HttpManagementPayload).id;
             } else  {
-                return Promise.reject(new Error(response.data as string));
+                return Promise.reject(new Error(JSON.stringify(response.data)));
             }
         } catch (message) {
             throw new Error(message.error);
