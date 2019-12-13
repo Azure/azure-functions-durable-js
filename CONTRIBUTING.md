@@ -118,7 +118,7 @@ The following extensions should be installed if using Visual Studio Code for deb
 
 ## Testing changes locally (Windows)
 
-Follow all the steps above in Visual Studio and use Azure Storage Emulator for Windows to simulate the storage account.
+Follow all the steps above, use the Azure Storage Emulator for windows to simulate the storage account, and optionally use Visual Studio to debug the .NET Durable Extension.
 
 ## Getting help
 
