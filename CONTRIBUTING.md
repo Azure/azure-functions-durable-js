@@ -22,7 +22,7 @@
 
 The general flow for making a change to the script host is:
 1. 🍴 Fork the repo (add the fork via `git remote add me <clone url here>`
-2. 🌳 Create a branch for your change (generally use dev) (`git checkout -b my-change`)
+2. 🌳 Create a branch for your change (generally branch from dev) (`git checkout -b my-change`)
 3. 🛠 Make your change
 4. ✔️ Test your changes
 5. ⬆️ Push your changes to your fork (`git push me my-change`)
@@ -118,7 +118,7 @@ The following extensions should be installed if using Visual Studio Code for deb
 
 ## Testing changes locally (Windows)
 
-Follow all the steps above in Visual Studio and use Azure Storage Emulator for Windows to simulate the storage account.
+Follow all the steps above, use the Azure Storage Emulator for windows to simulate the storage account, and optionally use Visual Studio to debug the .NET Durable Extension.
 
 ## Getting help
 
