@@ -43,9 +43,11 @@ export { TimerCreatedEvent } from "./history/timercreatedevent";
 export { TimerFiredEvent } from "./history/timerfiredevent";
 
 export { ITaskMethods } from "./itaskmethods";
-export { TaskSet } from "./taskset";
-export { Task } from "./task";
-export { TimerTask } from "./timertask";
+export { TaskSet } from "./tasks/taskset";
+export { Task } from "./tasks/task";
+export { TimerTask } from "./tasks/timertask";
+export { TaskFactory } from "./tasks/taskfactory";
+export { TaskFilter } from "./tasks/taskfilter";
 
 export { OrchestratorState } from "./orchestratorstate";
 export { IOrchestratorState } from "./iorchestratorstate";

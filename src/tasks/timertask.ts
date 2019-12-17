@@ -1,4 +1,5 @@
-import { Constants, CreateTimerAction, Task } from "./classes";
+import { CreateTimerAction } from "../classes";
+import { Task } from "./task";
 
 /**
  * Returned from [[DurableOrchestrationClient]].[[createTimer]] if the call is
@@ -43,21 +44,22 @@ export class TimerTask extends Task {
     /** @hidden */
     constructor(
         isCompleted: boolean,
-        isFaulted: boolean,
         /**
          * The scheduled action represented by the task. _Internal use only._
          */
         public readonly action: CreateTimerAction,
-        result?: unknown,
         timestamp?: Date,
         id?: number,
-    ) { super(isCompleted, isFaulted, action, result, timestamp, id); }
+        completionIndex?: number,
+    ) {
+        super(isCompleted, false, action, undefined, timestamp, id, undefined, completionIndex);
+    }
 
     /**
      * @returns Whether or not the timer has been canceled.
      */
     get isCanceled(): boolean {
-        return this.action && this.action.isCanceled;
+        return this.action.isCanceled;
     }
 
     /**

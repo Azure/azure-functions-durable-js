@@ -25,6 +25,26 @@ export class TestOrchestrations {
         return output.result;
     });
 
+    public static TimerActivityRace: any = df.orchestrator(function*(context: any) {
+        const tasks = [];
+        const now = new Date(context.df.currentUtcDateTime).getTime();
+        const fireAt = new Date(now + 1000);
+        tasks.push(context.df.createTimer(fireAt));
+        tasks.push(context.df.callActivity("TaskA"));
+
+        const output = yield context.df.Task.any(tasks);
+
+        if (output === tasks[1]) {
+            yield context.df.callActivity("TaskB");
+        } else if (output === tasks[0]) {
+            return "Timer finished";
+        } else {
+            throw new Error("context.df.Task.any() didn't return a task");
+        }
+
+        return output.result;
+    });
+
     public static CallActivityNoInput: any = df.orchestrator(function*(context: any) {
        const returnValue = yield context.df.callActivity("ReturnsFour");
        return returnValue;
