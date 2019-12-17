@@ -1,5 +1,5 @@
-import { Task } from "./tasks/task";
-import { TaskSet } from "./tasks/taskset";
+import { Task } from "./task";
+import { TaskSet } from "./taskset";
 
 /**
  * Methods to handle collections of pending actions represented by [[Task]]
