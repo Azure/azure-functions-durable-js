@@ -17,7 +17,7 @@
  */
 export class ManagedIdentityTokenSource {
     /** @hidden */
-    public kind: "AzureManagedIdentity";
+    public readonly kind: string = "AzureManagedIdentity";
 
     /**
      * Returns a `ManagedIdentityTokenSource` object.
