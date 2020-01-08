@@ -411,6 +411,33 @@ describe("Orchestrator", () => {
             );
         });
 
+        it("is yielded twice, only scheduled once", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithActivityYieldTwice;
+            const name = "World";
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityReplayOne(
+                        "CallActivityYieldTwice",
+                        moment.utc().toDate(),
+                        name),
+                    name,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    output: `Hello, ${name}!`,
+                    actions:
+                    [
+                        [ new CallActivityAction("Hello", name) ],
+                    ],
+                }),
+            );
+        });
+
         it("handles a completed activity function by returning instead of yielding", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityDirectReturn;
             const name = "World";
@@ -1725,7 +1752,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions:
                     [
-                        [ new CallActivityAction("TaskA", false), new CallActivityAction("TaskB", true) ],
+                        [ new CallActivityAction("TaskA", true), new CallActivityAction("TaskB", true) ],
                     ],
                     output: "A",
                 }),
@@ -1752,9 +1779,164 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions:
                     [
-                        [ new CallActivityAction("TaskA", true), new CallActivityAction("TaskB", false) ],
+                        [ new CallActivityAction("TaskA", false), new CallActivityAction("TaskB", false) ],
                     ],
                     output: "B",
+                }),
+            );
+        });
+
+        it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
+            const orchestrator = TestOrchestrations.AnyAOrB;
+            const completeInOrder = true;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetAnyAOrB(
+                        moment.utc().toDate(),
+                        completeInOrder,
+                    ),
+                    completeInOrder,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
+                    [
+                        [ new CallActivityAction("TaskA", true), new CallActivityAction("TaskB", true) ],
+                    ],
+                    output: "A",
+                }),
+            );
+        });
+
+        it("Task yielded in both Task.any() and afterwards scheduled only once", async () => {
+            const orchestrator = TestOrchestrations.AnyAOrBYieldATwice;
+            const completeInOrder = true;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetAnyAOrB(
+                        moment.utc().toDate(),
+                        completeInOrder,
+                    ),
+                    completeInOrder,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
+                    [
+                        [ new CallActivityAction("TaskA", true), new CallActivityAction("TaskB", true) ],
+                    ],
+                    output: "A",
+                }),
+            );
+        });
+
+        it("Timer in combination with Task.any() executes deterministically", async () => {
+            const orchestrator = TestOrchestrations.TimerActivityRace;
+            const currentTime = moment.utc();
+
+            // first iteration
+            let mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(
+                        currentTime.toDate(),
+                        1,
+                    ),
+                    null,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
+                    [
+                        [ new CreateTimerAction(currentTime.add(1, "s").toDate()), new CallActivityAction("TaskA") ],
+                    ],
+                    output: undefined,
+                }),
+            );
+
+            // second iteration
+            mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(
+                        currentTime.toDate(),
+                        2,
+                    ),
+                    null,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
+                    [
+                        [ new CreateTimerAction(currentTime.add(1, "s").toDate()), new CallActivityAction("TaskA") ],  [ new CallActivityAction("TaskB") ],
+                    ],
+                    output: undefined,
+                }),
+            );
+
+            // third iteration
+            mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(
+                        currentTime.toDate(),
+                        3,
+                    ),
+                    null,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
+                    [
+                        [ new CreateTimerAction(currentTime.add(1, "s").toDate()), new CallActivityAction("TaskA") ],  [ new CallActivityAction("TaskB") ],
+                    ],
+                    output: undefined,
+                }),
+            );
+
+            // final iteration
+            mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(
+                        currentTime.toDate(),
+                        4,
+                    ),
+                    null,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
+                    [
+                        [ new CreateTimerAction(currentTime.add(1, "s").toDate()), new CallActivityAction("TaskA") ],  [ new CallActivityAction("TaskB") ],
+                    ],
+                    output: {},
                 }),
             );
         });

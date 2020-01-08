@@ -42,10 +42,12 @@ export { TaskScheduledEvent } from "./history/taskscheduledevent";
 export { TimerCreatedEvent } from "./history/timercreatedevent";
 export { TimerFiredEvent } from "./history/timerfiredevent";
 
-export { ITaskMethods } from "./itaskmethods";
-export { TaskSet } from "./taskset";
-export { Task } from "./task";
-export { TimerTask } from "./timertask";
+export { ITaskMethods } from "./tasks/itaskmethods";
+export { Task } from "./tasks/task";
+export { TaskFactory } from "./tasks/taskfactory";
+export { TaskFilter } from "./tasks/taskfilter";
+export { TaskSet } from "./tasks/taskset";
+export { TimerTask } from "./tasks/timertask";
 
 export { OrchestratorState } from "./orchestratorstate";
 export { IOrchestratorState } from "./iorchestratorstate";
