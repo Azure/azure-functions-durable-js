@@ -709,15 +709,26 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
+            // This is the exact protocol expected by the durable extension
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
+                {
                     isDone: false,
                     output: undefined,
                     actions:
-                    [
-                        [ new CallHttpAction(req) ],
-                    ],
-                }),
+                    [[{
+                        actionType: 8,
+                        httpRequest: {
+                            method: req.method,
+                            uri: req.uri,
+                            content: req.content,
+                            headers: req.headers,
+                            tokenSource: {
+                                resource: "https://management.core.windows.net",
+                                kind: "AzureManagedIdentity",
+                            },
+                        },
+                    }]],
+                },
             );
         });
 
