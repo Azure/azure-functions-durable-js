@@ -1,36 +1,25 @@
 import { expect } from "chai";
 import "mocha";
-import { Constants, CreateTimerAction, TimerTask } from "../../src/classes";
+import { CreateTimerAction } from "../../src/classes";
+import { TaskFactory } from "../../src/tasks/taskfactory";
 
 describe("TimerTask", () => {
     it ("throws cannot cancel a completed task", async () => {
-        const task = new TimerTask(true, false, new CreateTimerAction(new Date(), false));
+        const task = TaskFactory.CompletedTimerTask(new CreateTimerAction(new Date(), false), new Date(), 0, 5);
         expect(() => {
             task.cancel();
         }).to.throw("Cannot cancel a completed task.");
     });
 
     it ("cancels an incomplete task", async () => {
-        const task = new TimerTask(
-            false,
-            false,
-            new CreateTimerAction(new Date()),
-            undefined,
-            undefined,
-            undefined);
+        const task = TaskFactory.UncompletedTimerTask(new CreateTimerAction(new Date()));
         task.cancel();
         expect(task.action.isCanceled).to.equal(true);
         expect(task.isCanceled).to.equal(true);
     });
 
     it ("is canceled when its action is canceled", async () => {
-        const task = new TimerTask(
-            false,
-            false,
-            new CreateTimerAction(new Date(), true),
-            undefined,
-            undefined,
-            undefined);
+        const task = TaskFactory.UncompletedTimerTask(new CreateTimerAction(new Date(), true));
         expect(task.isCanceled).to.equal(true);
     });
 });

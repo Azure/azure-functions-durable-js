@@ -1,14 +1,47 @@
 import * as df from "../../src";
+import { IOrchestrationFunctionContext } from "../../src/classes";
 
 export class TestOrchestrations {
     public static AnyAOrB: any = df.orchestrator(function*(context: any) {
         const completeInOrder = context.df.getInput();
 
         const tasks = [];
-        tasks.push(context.df.callActivity("TaskA", !completeInOrder));
+        tasks.push(context.df.callActivity("TaskA", completeInOrder));
         tasks.push(context.df.callActivity("TaskB", completeInOrder));
 
         const output = yield context.df.Task.any(tasks);
+        return output.result;
+    });
+
+    public static AnyAOrBYieldATwice: any = df.orchestrator(function*(context: any) {
+        const completeInOrder = context.df.getInput();
+
+        const tasks = [];
+        tasks.push(context.df.callActivity("TaskA", completeInOrder));
+        tasks.push(context.df.callActivity("TaskB", completeInOrder));
+        const output = yield context.df.Task.any(tasks);
+
+        yield tasks[0];
+        return output.result;
+    });
+
+    public static TimerActivityRace: any = df.orchestrator(function*(context: any) {
+        const tasks = [];
+        const now = new Date(context.df.currentUtcDateTime).getTime();
+        const fireAt = new Date(now + 1000);
+        tasks.push(context.df.createTimer(fireAt));
+        tasks.push(context.df.callActivity("TaskA"));
+
+        const output = yield context.df.Task.any(tasks);
+
+        if (output === tasks[1]) {
+            yield context.df.callActivity("TaskB");
+        } else if (output === tasks[0]) {
+            return "Timer finished";
+        } else {
+            throw new Error("context.df.Task.any() didn't return a task");
+        }
+
         return output.result;
     });
 
@@ -104,6 +137,13 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static SayHelloWithActivityYieldTwice: any = df.orchestrator(function*(context: any) {
+        const input = context.df.getInput();
+        const task = context.df.callActivity("Hello", input);
+        const output = yield task;
+        return yield task;
+    });
+
     public static SayHelloWithActivityDirectReturn: any = df.orchestrator(function*(context: any) {
         const input = context.df.getInput();
         return context.df.callActivity("Hello", input);
@@ -182,7 +222,7 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SendHttpRequest: any = df.orchestrator(function*(context: any) {
+    public static SendHttpRequest: any = df.orchestrator(function*(context: IOrchestrationFunctionContext) {
         const input = context.df.getInput() as df.DurableHttpRequest;
         const output = yield context.df.callHttp(
             input.method,

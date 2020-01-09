@@ -1,4 +1,5 @@
-import { IAction } from "./classes";
+import { IAction } from "../classes";
+import { SingleTask } from "./taskinterfaces";
 
 /**
  * Represents some pending action. Similar to a native JavaScript promise in
@@ -32,7 +33,13 @@ import { IAction } from "./classes";
  * return firstDone.result;
  * ```
  */
-export class Task {
+export class Task implements SingleTask {
+    /**
+     * Used to keep track of how many times the task has been yielded to avoid
+     * scheduling the internal action multiple times _Internal use only._
+     */
+    public wasYielded = false;
+
     /** @hidden */
     constructor(
         /**
@@ -65,6 +72,11 @@ export class Task {
          * the Task has not yet completed or has completed successfully,
          * `undefined`.
          */
-        public readonly exception?: unknown,
+        public readonly exception?: Error | undefined,
+
+        /**
+         * The index in the history state where the task was marked completed. _Internal use only._
+         */
+        public readonly completionIndex?: number,
     ) { }
 }

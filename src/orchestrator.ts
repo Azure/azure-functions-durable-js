@@ -5,10 +5,11 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
     EventRaisedEvent, EventSentEvent, ExternalEventType, GuidManager, HistoryEvent, HistoryEventType,
     IAction, IOrchestrationFunctionContext, LockState, OrchestratorState, RequestMessage, ResponseMessage,
     RetryOptions, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
-    SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFailedEvent,
+    SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFactory, TaskFailedEvent, TaskFilter,
     TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask,
     Utils, WaitForExternalEventAction,
 } from "./classes";
+import { FailedSingleTask } from "./tasks/taskinterfaces";
 import { TokenSource } from "./tokensource";
 
 /** @hidden */
@@ -87,7 +88,7 @@ export class Orchestrator {
 
             while (true) {
 
-                if (!(g.value instanceof Task || g.value instanceof TaskSet)) {
+                if (!(TaskFilter.isTask(g.value))) {
                     if (!g.done) {
                         // The orchestrator must have yielded a non-Task related type,
                         // so just return execution flow with what they yielded back.
@@ -110,14 +111,21 @@ export class Orchestrator {
                 }
 
                 partialResult = g.value as Task | TaskSet;
-                if (partialResult instanceof Task && partialResult.action) {
-                    actions.push([ partialResult.action ]);
-                } else if (partialResult instanceof TaskSet && partialResult.actions) {
-                    actions.push(partialResult.actions);
+                if (TaskFilter.isSingleTask(partialResult)) {
+                    if (!partialResult.wasYielded) {
+                        actions.push([ partialResult.action ]);
+                        partialResult.wasYielded = true;
+                    }
+                } else if (TaskFilter.isTaskSet(partialResult)) {
+                    const unyieldedTasks = partialResult.tasks.filter((task) => !task.wasYielded);
+                    actions.push(unyieldedTasks.map((task) => task.action));
+                    unyieldedTasks.forEach((task) => {
+                        task.wasYielded = true;
+                    });
                 }
 
                 // Return continue as new events as completed, as the execution itself is now completed.
-                if (partialResult instanceof Task && partialResult.action instanceof ContinueAsNewAction) {
+                if (TaskFilter.isSingleTask(partialResult) && partialResult.action instanceof ContinueAsNewAction) {
                     context.done(
                         null,
                         new OrchestratorState({
@@ -130,7 +138,7 @@ export class Orchestrator {
                     return;
                 }
 
-                if (!partialResult.isCompleted) {
+                if (!TaskFilter.isCompletedTask(partialResult)) {
                     context.done(
                         null,
                         new OrchestratorState({
@@ -143,7 +151,7 @@ export class Orchestrator {
                     return;
                 }
 
-                if (partialResult.isFaulted) {
+                if (TaskFilter.isFailedTask(partialResult)) {
                     if (!gen.throw) {
                         throw new Error("Cannot properly throw the execption returned by customer code");
                     }
@@ -203,21 +211,24 @@ export class Orchestrator {
         if (taskCompleted) {
             const result = this.parseHistoryEvent(taskCompleted);
 
-            return new Task(true, false, newAction, result, taskCompleted.Timestamp, taskCompleted.TaskScheduledId);
+            return TaskFactory.SuccessfulTask(
+                newAction,
+                result,
+                taskCompleted.Timestamp,
+                taskCompleted.TaskScheduledId,
+                state.indexOf(taskCompleted),
+            );
         } else if (taskFailed) {
-            return new Task(
-                true,
-                true,
+            return TaskFactory.FailedTask(
                 newAction,
                 taskFailed.Reason,
                 taskFailed.Timestamp,
                 taskFailed.TaskScheduledId,
+                state.indexOf(taskFailed),
                 new Error(taskFailed.Reason),
             );
         } else {
-            return new Task(
-                false,
-                false,
+            return TaskFactory.UncompletedTask(
                 newAction,
             );
         }
@@ -244,25 +255,20 @@ export class Orchestrator {
             if (taskCompleted) {
                 const result = this.parseHistoryEvent(taskCompleted);
 
-                return new Task(true, false, newAction, result, taskCompleted.Timestamp, taskCompleted.TaskScheduledId);
+                return TaskFactory.SuccessfulTask(newAction, result, taskCompleted.Timestamp, taskCompleted.TaskScheduledId, state.indexOf(taskCompleted));
             } else if (taskFailed && taskRetryTimer && attempt >= retryOptions.maxNumberOfAttempts) {
-                return new Task(
-                    true,
-                    true,
+                return TaskFactory.FailedTask(
                     newAction,
                     taskFailed.Reason,
                     taskFailed.Timestamp,
                     taskFailed.TaskScheduledId,
+                    state.indexOf(taskFailed),
                     new Error(taskFailed.Reason),
                 );
             }
         }
 
-        return new Task(
-            false,
-            false,
-            newAction,
-        );
+        return TaskFactory.UncompletedTask(newAction);
     }
 
     private callEntity(state: HistoryEvent[], entityId: EntityId, operationName: string, operationInput: unknown): Task {
@@ -280,14 +286,12 @@ export class Orchestrator {
         if (eventRaised) {
             const parsedResult = this.parseHistoryEvent(eventRaised) as ResponseMessage;
 
-            return new Task(true, false, newAction, JSON.parse(parsedResult.result), eventRaised.Timestamp, eventSent.EventId);
+            return TaskFactory.SuccessfulTask(newAction, JSON.parse(parsedResult.result), eventRaised.Timestamp, eventSent.EventId, state.indexOf(eventRaised));
         }
 
         // TODO: error handling
 
-        return new Task(
-            false,
-            false,
+        return TaskFactory.UncompletedTask(
             newAction,
         );
     }
@@ -307,28 +311,24 @@ export class Orchestrator {
         if (subOrchestratorCompleted) {
             const result = this.parseHistoryEvent(subOrchestratorCompleted);
 
-            return new Task(
-                true,
-                false,
+            return TaskFactory.SuccessfulTask(
                 newAction,
                 result,
                 subOrchestratorCompleted.Timestamp,
                 subOrchestratorCompleted.TaskScheduledId,
+                state.indexOf(subOrchestratorCompleted),
             );
         } else if (subOrchestratorFailed) {
-            return new Task(
-                true,
-                true,
+            return TaskFactory.FailedTask(
                 newAction,
                 subOrchestratorFailed.Reason,
                 subOrchestratorFailed.Timestamp,
                 subOrchestratorFailed.TaskScheduledId,
+                state.indexOf(subOrchestratorFailed),
                 new Error(subOrchestratorFailed.Reason),
             );
         } else {
-            return new Task(
-                false,
-                false,
+            return TaskFactory.UncompletedTask(
                 newAction,
             );
         }
@@ -366,30 +366,26 @@ export class Orchestrator {
             if (subOrchestratorCompleted) {
                 const result = this.parseHistoryEvent(subOrchestratorCompleted);
 
-                return new Task(
-                    true,
-                    false,
+                return TaskFactory.SuccessfulTask(
                     newAction,
                     result,
                     subOrchestratorCompleted.Timestamp,
                     subOrchestratorCompleted.TaskScheduledId,
+                    state.indexOf(subOrchestratorCompleted),
                 );
             } else if (subOrchestratorFailed && retryTimer && attempt >= retryOptions.maxNumberOfAttempts) {
-                return new Task(
-                    true,
-                    true,
+                return TaskFactory.FailedTask(
                     newAction,
                     subOrchestratorFailed.Reason,
                     subOrchestratorFailed.Timestamp,
                     subOrchestratorFailed.TaskScheduledId,
+                    state.indexOf(subOrchestratorFailed),
                     new Error(subOrchestratorFailed.Reason),
                 );
             }
         }
 
-        return new Task(
-            false,
-            false,
+        return TaskFactory.UncompletedTask(
             newAction,
         );
     }
@@ -417,21 +413,24 @@ export class Orchestrator {
         if (httpCompleted) {
             const result = this.parseHistoryEvent(httpCompleted);
 
-            return new Task(true, false, newAction, result, httpCompleted.Timestamp, httpCompleted.TaskScheduledId);
+            return TaskFactory.SuccessfulTask(
+                newAction,
+                result,
+                httpCompleted.Timestamp,
+                httpCompleted.TaskScheduledId,
+                state.indexOf(httpCompleted),
+            );
         } else if (httpFailed) {
-            return new Task(
-                true,
-                true,
+            return TaskFactory.FailedTask(
                 newAction,
                 httpFailed.Reason,
                 httpFailed.Timestamp,
                 httpFailed.TaskScheduledId,
+                state.indexOf(httpFailed),
                 new Error(httpFailed.Reason),
             );
         } else {
-            return new Task(
-                false,
-                false,
+            return TaskFactory.UncompletedTask(
                 newAction,
             );
         }
@@ -440,9 +439,7 @@ export class Orchestrator {
     private continueAsNew(state: HistoryEvent[], input: unknown): Task {
         const newAction = new ContinueAsNewAction(input);
 
-        return new Task(
-            false,
-            false,
+        return TaskFactory.UncompletedTask(
             newAction,
         );
     }
@@ -455,9 +452,9 @@ export class Orchestrator {
         this.setProcessed([ timerCreated, timerFired ]);
 
         if (timerFired) {
-            return new TimerTask(true, false, newAction, undefined, timerFired.Timestamp, timerFired.TimerId);
+            return TaskFactory.CompletedTimerTask(newAction, timerFired.Timestamp, timerFired.TimerId, state.indexOf(timerFired));
         } else {
-            return new TimerTask(false, false, newAction);
+            return TaskFactory.UncompletedTimerTask(newAction);
         }
     }
 
@@ -537,55 +534,50 @@ export class Orchestrator {
         if (eventRaised) {
             const result = this.parseHistoryEvent(eventRaised);
 
-            return new Task(true, false, newAction, result, eventRaised.Timestamp, eventRaised.EventId);
+            return TaskFactory.SuccessfulTask(
+                newAction,
+                result,
+                eventRaised.Timestamp,
+                eventRaised.EventId,
+                state.indexOf(eventRaised));
         } else {
-            return new Task(false, false, newAction);
+            return TaskFactory.UncompletedTask(newAction);
         }
     }
 
     private all(state: HistoryEvent[], tasks: Task[]): TaskSet {
-        const allActions = tasks.reduce((accumulator, currentValue) => {
-            return [...accumulator, currentValue.action];
-        }, []);
-
-        const faulted = tasks.filter((r) => r.isFaulted);
+        const faulted = tasks.filter(TaskFilter.isFailedTask);
         if (faulted.length > 0) {
-            return new TaskSet(true, true, allActions, undefined, faulted[0].exception);
+            return TaskFactory.FailedTaskSet(tasks, (faulted[0] as FailedSingleTask).exception);
         }
 
-        const isCompleted = tasks.every((r) => r.isCompleted);
+        const succesfulTasks = tasks.filter(TaskFilter.isSuccessfulSingleTask);
+        const isCompleted = succesfulTasks.length === tasks.length;
         if (isCompleted) {
-            const results = tasks.reduce((acc, t) => {
+            const results = succesfulTasks.reduce((acc, t) => {
                 return [...acc, t.result];
             }, []);
 
-            return new TaskSet(isCompleted, false, allActions, results);
+            return TaskFactory.SuccessfulTaskSet(tasks, results);
         } else {
-            return new TaskSet(isCompleted, false, allActions);
+            return TaskFactory.UncompletedTaskSet(tasks);
         }
     }
 
     private any(state: HistoryEvent[], tasks: Task[]): TaskSet {
-        const allActions = tasks.reduce((accumulator, currentValue) => {
-            return [...accumulator, currentValue.action];
-        }, []);
-
         const completedTasks = tasks
-            .filter((t) => t && t.isCompleted)
+            .filter(TaskFilter.isSuccessfulSingleTask)
             .sort((a, b) => {
-                // Because we have filtered by completed tasks, all of them should have timestamps
-                if (a.timestamp && b.timestamp) {
-                    if (a.timestamp > b.timestamp) { return 1; }
-                    if (a.timestamp < b.timestamp) { return -1; }
-                }
+                if (a.completedHistoryEventIndex > b.completedHistoryEventIndex) { return 1; }
+                if (a.completedHistoryEventIndex < b.completedHistoryEventIndex) { return -1; }
                 return 0;
             });
 
         const firstCompleted = completedTasks[0];
         if (firstCompleted) {
-            return new TaskSet(true, false, allActions, firstCompleted);
+            return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted);
         } else {
-            return new TaskSet(false, false, allActions);
+            return TaskFactory.UncompletedTaskSet(tasks);
         }
     }
 

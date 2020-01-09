@@ -71,6 +71,115 @@ export class TestHistories {
         ];
     }
 
+    public static GetTimerActivityRaceActivityWinsHistory(firstTimestamp: Date, iteration: number): HistoryEvent[] {
+        const firstIteration = moment(firstTimestamp);
+        const fireAt = firstIteration.add(1, "s").toDate();
+        const secondIteration = firstIteration.add(500, "ms").toDate();
+        const thirdIteration = firstIteration.add(1100, "ms").toDate();
+        const finalIteration = firstIteration.add(2, "s").toDate();
+
+        const history = [];
+
+        if (iteration >= 1) {
+            history.push(new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }));
+            history.push(new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: "TimerActivityRace",
+            }));
+            history.push(new TimerCreatedEvent({
+                eventId: 0,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+                fireAt,
+            }));
+            history.push(new TaskScheduledEvent({
+                eventId: 1,
+                timestamp: firstTimestamp,
+                isPlayed: iteration > 1,
+                name: "TaskA",
+            }));
+            history.push(new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: iteration > 1,
+            }));
+        }
+
+        if (iteration >= 2) {
+            history.push(new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: secondIteration,
+                isPlayed: iteration > 2,
+            }));
+            history.push(new TaskCompletedEvent({
+                eventId: -1,
+                timestamp: secondIteration,
+                isPlayed: iteration > 2,
+                taskScheduledId: 1,
+                result: "{}",
+            }));
+            history.push(new TaskScheduledEvent({
+                eventId: 2,
+                timestamp: secondIteration,
+                isPlayed: iteration > 2,
+                name: "TaskB",
+            }));
+            history.push(new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: iteration > 2,
+            }));
+        }
+
+        if (iteration >= 3) {
+            history.push(new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: thirdIteration,
+                isPlayed: iteration > 3,
+            }));
+            history.push(new TimerFiredEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                fireAt,
+                isPlayed: iteration > 3,
+                timerId: 0,
+            }));
+            history.push(new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: thirdIteration,
+                isPlayed: iteration > 3,
+            }));
+        }
+
+        if (iteration === 4) {
+            history.push(new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: finalIteration,
+                isPlayed: false,
+            }));
+            history.push(new TaskCompletedEvent({
+                eventId: -1,
+                timestamp: thirdIteration,
+                isPlayed: false,
+                taskScheduledId: 2,
+                result: "{}",
+            }));
+            history.push(new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: finalIteration,
+                isPlayed: false,
+            }));
+        }
+
+        return history;
+    }
+
     public static GetCallEntitySet(firstTimestamp: Date, entityId: EntityId) {
         const firstMoment = moment(firstTimestamp);
         const orchestratorId = uuidv1();
