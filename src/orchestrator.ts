@@ -9,6 +9,7 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
     TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask,
     Utils, WaitForExternalEventAction,
 } from "./classes";
+import { DurableFailure } from "./durablefailure";
 import { FailedSingleTask } from "./tasks/taskinterfaces";
 import { TokenSource } from "./tokensource";
 
@@ -98,7 +99,7 @@ export class Orchestrator {
                         log("Iterator is done");
                         // The customer returned an absolute type.
                         context.done(
-                            null,
+                            undefined,
                             new OrchestratorState({
                                 isDone: true,
                                 output: g.value,
@@ -127,7 +128,7 @@ export class Orchestrator {
                 // Return continue as new events as completed, as the execution itself is now completed.
                 if (TaskFilter.isSingleTask(partialResult) && partialResult.action instanceof ContinueAsNewAction) {
                     context.done(
-                        null,
+                        undefined,
                         new OrchestratorState({
                             isDone: true,
                             output: undefined,
@@ -140,7 +141,7 @@ export class Orchestrator {
 
                 if (!TaskFilter.isCompletedTask(partialResult)) {
                     context.done(
-                        null,
+                        undefined,
                         new OrchestratorState({
                             isDone: false,
                             output: undefined,
@@ -164,7 +165,7 @@ export class Orchestrator {
                 // would yield the task before returning out of the generator function.
                 if (g.done) {
                     log("Iterator is done");
-                    context.done(null,
+                    context.done(undefined,
                         new OrchestratorState({
                             isDone: true,
                             actions,
@@ -186,17 +187,36 @@ export class Orchestrator {
             }
         } catch (error) {
             log(`Error: ${error}`);
-            context.done(
-                error,
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions,
-                    error: error.stack,
-                    customStatus: this.customStatus,
-                }),
-            );
-            return;
+            if (error instanceof DurableFailure) {
+                // We will return the function execution as a success. It is up to the C# shim
+                // to correctly process the error only after reprocessing all of the actions to
+                // prevent a non-determinism error.
+                context.done(
+                    undefined,
+                    new OrchestratorState({
+                        isDone: false,
+                        output: undefined,
+                        actions,
+                        error: error.message,
+                        customStatus: this.customStatus,
+                    }),
+                );
+                return;
+            } else {
+                // Let the functions runtime treat this as an error.
+                context.done(
+                    error,
+                    new OrchestratorState({
+                        isDone: false,
+                        output: undefined,
+                        actions,
+                        error: error.stack,
+                        customStatus: this.customStatus,
+                    }),
+                );
+                return;
+            }
+
         }
     }
 
@@ -208,7 +228,7 @@ export class Orchestrator {
         const taskFailed = this.findTaskFailed(state, taskScheduled);
         this.setProcessed([taskScheduled, taskCompleted, taskFailed]);
 
-        if (taskCompleted) {
+        if (taskCompleted !== undefined) {
             const result = this.parseHistoryEvent(taskCompleted);
 
             return TaskFactory.SuccessfulTask(
@@ -218,14 +238,14 @@ export class Orchestrator {
                 taskCompleted.TaskScheduledId,
                 state.indexOf(taskCompleted),
             );
-        } else if (taskFailed) {
+        } else if (taskFailed !== undefined) {
             return TaskFactory.FailedTask(
                 newAction,
                 taskFailed.Reason,
                 taskFailed.Timestamp,
                 taskFailed.TaskScheduledId,
                 state.indexOf(taskFailed),
-                new Error(taskFailed.Reason),
+                new DurableFailure(taskFailed.Reason),
             );
         } else {
             return TaskFactory.UncompletedTask(
@@ -252,18 +272,20 @@ export class Orchestrator {
 
             if (!taskScheduled) { break; }
 
-            if (taskCompleted) {
+            if (taskCompleted !== undefined) {
                 const result = this.parseHistoryEvent(taskCompleted);
 
                 return TaskFactory.SuccessfulTask(newAction, result, taskCompleted.Timestamp, taskCompleted.TaskScheduledId, state.indexOf(taskCompleted));
-            } else if (taskFailed && taskRetryTimer && attempt >= retryOptions.maxNumberOfAttempts) {
+            } else if (taskFailed !== undefined
+                && taskRetryTimer !== undefined
+                && attempt >= retryOptions.maxNumberOfAttempts) {
                 return TaskFactory.FailedTask(
                     newAction,
                     taskFailed.Reason,
                     taskFailed.Timestamp,
                     taskFailed.TaskScheduledId,
                     state.indexOf(taskFailed),
-                    new Error(taskFailed.Reason),
+                    new DurableFailure(taskFailed.Reason),
                 );
             }
         }
@@ -308,7 +330,7 @@ export class Orchestrator {
 
         this.setProcessed([subOrchestratorCreated, subOrchestratorCompleted, subOrchestratorFailed]);
 
-        if (subOrchestratorCompleted) {
+        if (subOrchestratorCompleted !== undefined) {
             const result = this.parseHistoryEvent(subOrchestratorCompleted);
 
             return TaskFactory.SuccessfulTask(
@@ -318,14 +340,14 @@ export class Orchestrator {
                 subOrchestratorCompleted.TaskScheduledId,
                 state.indexOf(subOrchestratorCompleted),
             );
-        } else if (subOrchestratorFailed) {
+        } else if (subOrchestratorFailed !== undefined) {
             return TaskFactory.FailedTask(
                 newAction,
                 subOrchestratorFailed.Reason,
                 subOrchestratorFailed.Timestamp,
                 subOrchestratorFailed.TaskScheduledId,
                 state.indexOf(subOrchestratorFailed),
-                new Error(subOrchestratorFailed.Reason),
+                new DurableFailure(subOrchestratorFailed.Reason),
             );
         } else {
             return TaskFactory.UncompletedTask(
@@ -363,7 +385,7 @@ export class Orchestrator {
 
             if (!subOrchestratorCreated) { break; }
 
-            if (subOrchestratorCompleted) {
+            if (subOrchestratorCompleted !== undefined) {
                 const result = this.parseHistoryEvent(subOrchestratorCompleted);
 
                 return TaskFactory.SuccessfulTask(
@@ -373,14 +395,16 @@ export class Orchestrator {
                     subOrchestratorCompleted.TaskScheduledId,
                     state.indexOf(subOrchestratorCompleted),
                 );
-            } else if (subOrchestratorFailed && retryTimer && attempt >= retryOptions.maxNumberOfAttempts) {
+            } else if (subOrchestratorFailed !== undefined
+                && retryTimer !== undefined
+                && attempt >= retryOptions.maxNumberOfAttempts) {
                 return TaskFactory.FailedTask(
                     newAction,
                     subOrchestratorFailed.Reason,
                     subOrchestratorFailed.Timestamp,
                     subOrchestratorFailed.TaskScheduledId,
                     state.indexOf(subOrchestratorFailed),
-                    new Error(subOrchestratorFailed.Reason),
+                    new DurableFailure(subOrchestratorFailed.Reason),
                 );
             }
         }
@@ -410,7 +434,7 @@ export class Orchestrator {
         const httpFailed = this.findTaskFailed(state, httpScheduled);
         this.setProcessed([httpScheduled, httpCompleted, httpFailed]);
 
-        if (httpCompleted) {
+        if (httpCompleted !== undefined) {
             const result = this.parseHistoryEvent(httpCompleted);
 
             return TaskFactory.SuccessfulTask(
@@ -420,14 +444,14 @@ export class Orchestrator {
                 httpCompleted.TaskScheduledId,
                 state.indexOf(httpCompleted),
             );
-        } else if (httpFailed) {
+        } else if (httpFailed !== undefined) {
             return TaskFactory.FailedTask(
                 newAction,
                 httpFailed.Reason,
                 httpFailed.Timestamp,
                 httpFailed.TaskScheduledId,
                 state.indexOf(httpFailed),
-                new Error(httpFailed.Reason),
+                new DurableFailure(httpFailed.Reason),
             );
         } else {
             return TaskFactory.UncompletedTask(
@@ -708,37 +732,45 @@ export class Orchestrator {
     }
 
     /* Returns undefined if not found. */
-    private findTaskScheduled(state: HistoryEvent[], name: string): TaskScheduledEvent {
+    private findTaskScheduled(state: HistoryEvent[], name: string): TaskScheduledEvent | undefined {
         const returnValue = name
             ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskScheduled
                     && (val as TaskScheduledEvent).Name === name
                     && !val.IsProcessed;
-            })[0]
+            })[0] as TaskScheduledEvent
             : undefined;
-        return returnValue as TaskScheduledEvent;
+        return returnValue;
     }
 
     /* Returns undefined if not found. */
-    private findTaskCompleted(state: HistoryEvent[], scheduledTask: TaskScheduledEvent): TaskCompletedEvent {
+    private findTaskCompleted(state: HistoryEvent[], scheduledTask: TaskScheduledEvent | undefined): TaskCompletedEvent | undefined {
+        if (scheduledTask === undefined) {
+            return undefined;
+        }
+
         const returnValue = scheduledTask
             ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskCompleted
                     && (val as TaskCompletedEvent).TaskScheduledId === scheduledTask.EventId;
-            })[0]
+            })[0] as TaskCompletedEvent
             : undefined;
-        return returnValue as TaskCompletedEvent;
+        return returnValue;
     }
 
     /* Returns undefined if not found. */
-    private findTaskFailed(state: HistoryEvent[], scheduledTask: HistoryEvent): TaskFailedEvent {
+    private findTaskFailed(state: HistoryEvent[], scheduledTask: TaskScheduledEvent | undefined): TaskFailedEvent | undefined {
+        if (scheduledTask === undefined) {
+            return undefined;
+        }
+
         const returnValue = scheduledTask
         ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskFailed
                     && (val as TaskFailedEvent).TaskScheduledId === scheduledTask.EventId;
-            })[0]
+            })[0] as TaskFailedEvent
             : undefined;
-        return returnValue as TaskFailedEvent;
+        return returnValue;
     }
 
     /* Returns undefined if not found. */
@@ -758,9 +790,9 @@ export class Orchestrator {
             ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TimerFired
                     && (val as TimerFiredEvent).TimerId === createdTimer.EventId;
-            })[0]
+            })[0] as TimerFiredEvent
             : undefined;
-        return returnValue as TimerFiredEvent;
+        return returnValue;
     }
 
     private setProcessed(events: Array<HistoryEvent | undefined>): void {

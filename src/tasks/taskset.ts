@@ -7,6 +7,6 @@ export class TaskSet {
         public readonly isFaulted: boolean,
         public readonly tasks: SingleTask[],
         public result?: unknown,
-        public exception?: unknown,
+        public exception?: Error,
     ) { }
 }

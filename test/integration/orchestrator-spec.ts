@@ -90,7 +90,7 @@ describe("Orchestrator", () => {
             } else {
                 expect(mockContext.doneValue!.output).to.equal(falsyValue);
             }
-            expect(mockContext.err).to.equal(null);
+            expect(mockContext.err).to.equal(undefined);
         });
     });
 
@@ -195,7 +195,7 @@ describe("Orchestrator", () => {
 
             expect(mockContext.doneValue!.error).to.equal(undefined);
 
-            expect(mockContext.err).to.equal(null);
+            expect(mockContext.err).to.equal(undefined);
         });
     });
 
@@ -245,7 +245,7 @@ describe("Orchestrator", () => {
             });
             expect(mockContext.doneValue!.error).to.include(expectedErr);
 
-            expect(mockContext.err!.toString()).to.include(expectedErr);
+            expect(mockContext.err).to.equal(undefined);
         });
 
         it("schedules an activity function after orchestrator catches an exception", async () => {
@@ -652,7 +652,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue!.error).to
                 .include(expectedErr);
 
-            expect(mockContext.err!.toString()).to.include(expectedErr);
+            expect(mockContext.err).to.be.equal(undefined);
         });
 
         it("handles a completed activity function", async () => {
@@ -1086,7 +1086,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue!.error).to
                 .include(expectedErr);
 
-            expect(mockContext.err!.toString()).to.include(expectedErr);
+            expect(mockContext.err).to.be.equal(undefined);
         });
     });
 
@@ -1269,7 +1269,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue!.error).to
                 .include(expectedErr);
 
-            expect(mockContext.err!.toString()).to.include(expectedErr);
+            expect(mockContext.err).to.be.equal(undefined);
         });
 
         it("handles a completed suborchestrator function", async () => {
@@ -1729,7 +1729,7 @@ describe("Orchestrator", () => {
                 }),
             );
             expect(mockContext.doneValue!.error).to.include(expectedErr);
-            expect(mockContext.err!.toString()).to.include(expectedErr);
+            expect(mockContext.err).to.be.equal(undefined);
         });
 
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
@@ -1851,7 +1851,7 @@ describe("Orchestrator", () => {
                         currentTime.toDate(),
                         1,
                     ),
-                    null,
+                    undefined,
                 ),
             });
 
@@ -1875,7 +1875,7 @@ describe("Orchestrator", () => {
                         currentTime.toDate(),
                         2,
                     ),
-                    null,
+                    undefined,
                 ),
             });
 
@@ -1899,7 +1899,7 @@ describe("Orchestrator", () => {
                         currentTime.toDate(),
                         3,
                     ),
-                    null,
+                    undefined,
                 ),
             });
 
@@ -1923,7 +1923,7 @@ describe("Orchestrator", () => {
                         currentTime.toDate(),
                         4,
                     ),
-                    null,
+                    undefined,
                 ),
             });
 

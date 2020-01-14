@@ -31,7 +31,7 @@ export interface SuccessfulSingleTask extends CompletedSingleTask {
 
 export interface FailedSingleTask extends CompletedSingleTask {
     readonly isFaulted: true;
-    readonly exception: unknown;
+    readonly exception: Error;
     readonly result: undefined;
 }
 
@@ -51,7 +51,7 @@ export interface UncompletedTaskSet extends TaskCollection {
 
 export interface FailedTaskSet extends CompletedTaskSet {
     readonly isFaulted: true;
-    readonly exception: unknown;
+    readonly exception: Error;
     readonly result: undefined;
 }
 

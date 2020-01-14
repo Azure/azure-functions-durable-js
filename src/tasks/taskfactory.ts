@@ -52,7 +52,7 @@ export class TaskFactory {
         );
     }
 
-    public static FailedTaskSet(tasks: Task[], exception: unknown): TaskSet {
+    public static FailedTaskSet(tasks: Task[], exception: Error): TaskSet {
         return new TaskSet(
             true,
             true,
