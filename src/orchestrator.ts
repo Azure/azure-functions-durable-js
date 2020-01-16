@@ -10,6 +10,7 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
     Utils, WaitForExternalEventAction,
 } from "./classes";
 import { DurableFailure } from "./durablefailure";
+import { OutOfProcErrorWrapper } from "./outofprocerrorwrapper";
 import { FailedSingleTask } from "./tasks/taskinterfaces";
 import { TokenSource } from "./tokensource";
 
@@ -186,37 +187,17 @@ export class Orchestrator {
                 g = gen.next(partialResult.result);
             }
         } catch (error) {
-            log(`Error: ${error}`);
-            if (error instanceof DurableFailure) {
-                // We will return the function execution as a success. It is up to the C# shim
-                // to correctly process the error only after reprocessing all of the actions to
-                // prevent a non-determinism error.
-                context.done(
-                    undefined,
-                    new OrchestratorState({
-                        isDone: false,
-                        output: undefined,
-                        actions,
-                        error: error.message,
-                        customStatus: this.customStatus,
-                    }),
-                );
-                return;
-            } else {
-                // Let the functions runtime treat this as an error.
-                context.done(
-                    error,
-                    new OrchestratorState({
-                        isDone: false,
-                        output: undefined,
-                        actions,
-                        error: error.stack,
-                        customStatus: this.customStatus,
-                    }),
-                );
-                return;
-            }
-
+            // Wrap orchestration state in OutOfProcErrorWrapper to ensure data
+            // gets embedded in error message received by C# extension.
+            const errorState = new OrchestratorState({
+                isDone: false,
+                output: undefined,
+                actions,
+                error: error.message,
+                customStatus: this.customStatus,
+            });
+            context.done(new OutOfProcErrorWrapper(errorState), undefined);
+            return;
         }
     }
 

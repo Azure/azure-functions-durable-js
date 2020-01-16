@@ -5,12 +5,13 @@ import * as uuidv1 from "uuid/v1";
 import { isUUID } from "validator";
 import { ManagedIdentityTokenSource } from "../../src";
 import {
-    CallActivityAction, CallActivityWithRetryAction, CallEntityAction, CallHttpAction, CallSubOrchestratorAction,
+    ActionType, CallActivityAction, CallActivityWithRetryAction, CallEntityAction, CallHttpAction, CallSubOrchestratorAction,
     CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, DurableHttpRequest,
     DurableHttpResponse, DurableOrchestrationBindingInfo, DurableOrchestrationContext, EntityId,
     ExternalEventType, IOrchestratorState, LockState, OrchestratorState,
     RetryOptions, WaitForExternalEventAction,
 } from "../../src/classes";
+import { OutOfProcErrorWrapper } from "../../src/outofprocerrorwrapper";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 
@@ -214,13 +215,16 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+
+            const message = (mockContext.err as Error).message;
+            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
                 actions: [],
             });
-            expect(mockContext.doneValue!.error).to.include(expectedErr);
-
-            expect(mockContext.err!.toString()).to.include(expectedErr);
+            expect(orchestrationState.error).to.include(expectedErr);
         });
 
         it("reports an unhandled exception from activity passed through orchestrator", async () => {
@@ -236,16 +240,24 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+
+            const message = (mockContext.err as Error).message;
+            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
                 actions:
                 [
-                    [ new CallActivityAction("ThrowsErrorActivity") ],
+                    [
+                        {
+                            actionType: ActionType.CallActivity,
+                            functionName: "ThrowsErrorActivity",
+                        },
+                    ],
                 ],
             });
-            expect(mockContext.doneValue!.error).to.include(expectedErr);
-
-            expect(mockContext.err).to.equal(undefined);
+            expect(orchestrationState.error).to.include(expectedErr);
         });
 
         it("schedules an activity function after orchestrator catches an exception", async () => {
@@ -512,17 +524,16 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.an("object").that.deep.include(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [],
-                }),
-            );
-            expect(mockContext.doneValue!.error).to
-                .include(expectedErr);
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            expect(mockContext.err!.toString()).to.include(expectedErr);
+            const message = (mockContext.err as Error).message;
+            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            expect(orchestrationState).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions: [],
+            });
+            expect(orchestrationState.error).to.include(expectedErr);
         });
 
         it("schedules an activity function", async () => {
@@ -637,22 +648,16 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
-                isDone: false,
-                actions:
-                [
-                    [
-                        new CallActivityWithRetryAction(
-                            "Hello",
-                            retryOptions,
-                            name),
-                    ],
-                ],
-            });
-            expect(mockContext.doneValue!.error).to
-                .include(expectedErr);
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            expect(mockContext.err).to.be.equal(undefined);
+            const message = (mockContext.err as Error).message;
+            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            expect(orchestrationState).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions: [ [ new CallActivityWithRetryAction("Hello", retryOptions, name) ]],
+            });
+            expect(orchestrationState.error).to.include(expectedErr);
         });
 
         it("handles a completed activity function", async () => {
@@ -985,10 +990,12 @@ describe("Orchestrator", () => {
 
             const expectedErr = "The sub-orchestration call (n = 1) should be executed with a function name of SayHelloInline instead of the provided function name of SayHelloWithActivity. Check your code for non-deterministic behavior.";
 
-            expect(mockContext.doneValue!.error).to
-                .include(expectedErr);
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            expect(mockContext.err!.toString()).to.include(expectedErr);
+            const message = (mockContext.err as Error).message;
+            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            expect(orchestrationState.error).to.include(expectedErr);
         });
 
         it("replay does not match history (mismatched suborchestration instance id) and throws error.", async () => {
@@ -1014,10 +1021,12 @@ describe("Orchestrator", () => {
 
             const expectedErr = `The sub-orchestration call (n = 1) should be executed with an instance id of ${subId} instead of the provided instance id of ${id}:0. Check your code for non-deterministic behavior.`;
 
-            expect(mockContext.doneValue!.error).to
-                .include(expectedErr);
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            expect(mockContext.err!.toString()).to.include(expectedErr);
+            const message = (mockContext.err as Error).message;
+            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            expect(orchestrationState.error).to.include(expectedErr);
         });
 
         it("handles a completed suborchestrator function", async () => {
@@ -1075,18 +1084,19 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+
+            const message = (mockContext.err as Error).message;
+            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
                 actions:
                 [
                     [ new CallSubOrchestratorAction("SayHelloWithActivity", childId, name) ],
                 ],
             });
-
-            expect(mockContext.doneValue!.error).to
-                .include(expectedErr);
-
-            expect(mockContext.err).to.be.equal(undefined);
+            expect(orchestrationState.error).to.include(expectedErr);
         });
     });
 
@@ -1107,14 +1117,14 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+            const message = (mockContext.err as Error).message;
+            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
                 actions: [],
             });
-            expect(mockContext.doneValue!.error).to
-                .include(expectedErr);
-
-            expect(mockContext.err!.toString()).to.include(expectedErr);
+            expect(orchestrationState.error).to.include(expectedErr);
         });
 
         it("schedules a suborchestrator function", async () => {
@@ -1252,7 +1262,12 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.an("object").that.deep.include({
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+
+            const message = (mockContext.err as Error).message;
+            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
                 actions:
                 [
@@ -1266,10 +1281,7 @@ describe("Orchestrator", () => {
                     ],
                 ],
             });
-            expect(mockContext.doneValue!.error).to
-                .include(expectedErr);
-
-            expect(mockContext.err).to.be.equal(undefined);
+            expect(orchestrationState.error).to.include(expectedErr);
         });
 
         it("handles a completed suborchestrator function", async () => {
@@ -1717,19 +1729,21 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.include(
-                new OrchestratorState({
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            const message = (mockContext.err as Error).message;
+            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            expect(orchestrationState).to.be.deep.include(
+                {
                     isDone: false,
-                    output: undefined,
                     actions:
                     [
                         [ new CallActivityAction("GetFileList", "C:\\Dev")],
                         filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                     ],
-                }),
+                },
             );
-            expect(mockContext.doneValue!.error).to.include(expectedErr);
-            expect(mockContext.err).to.be.equal(undefined);
+            expect(orchestrationState.error).to.include(expectedErr);
         });
 
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
