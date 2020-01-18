@@ -196,7 +196,7 @@ export class Orchestrator {
                 error: error.message,
                 customStatus: this.customStatus,
             });
-            context.done(new OutOfProcErrorWrapper(errorState), undefined);
+            context.done(new OutOfProcErrorWrapper(error, errorState), undefined);
             return;
         }
     }
