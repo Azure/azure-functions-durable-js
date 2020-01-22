@@ -14,6 +14,7 @@ import {
 import { OutOfProcErrorWrapper } from "../../src/outofprocerrorwrapper";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
+import { TestUtils } from "../testobjects/testutils";
 
 describe("Orchestrator", () => {
     const falsyValues = [ false, 0, "", null, undefined, NaN ];
@@ -217,8 +218,8 @@ describe("Orchestrator", () => {
 
             expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            const message = (mockContext.err as Error).message;
-            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+            const orchestrationState =
+                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -242,8 +243,8 @@ describe("Orchestrator", () => {
 
             expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            const message = (mockContext.err as Error).message;
-            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+            const orchestrationState =
+                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -526,8 +527,10 @@ describe("Orchestrator", () => {
 
             expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            const message = (mockContext.err as Error).message;
-            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+
+            const orchestrationState =
+                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -650,8 +653,8 @@ describe("Orchestrator", () => {
 
             expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            const message = (mockContext.err as Error).message;
-            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+            const orchestrationState =
+                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -992,8 +995,8 @@ describe("Orchestrator", () => {
 
             expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            const message = (mockContext.err as Error).message;
-            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+            const orchestrationState =
+                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
 
             expect(orchestrationState.error).to.include(expectedErr);
         });
@@ -1023,8 +1026,8 @@ describe("Orchestrator", () => {
 
             expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            const message = (mockContext.err as Error).message;
-            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+            const orchestrationState =
+                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
 
             expect(orchestrationState.error).to.include(expectedErr);
         });
@@ -1086,8 +1089,8 @@ describe("Orchestrator", () => {
 
             expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            const message = (mockContext.err as Error).message;
-            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+            const orchestrationState =
+                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -1117,8 +1120,10 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            const message = (mockContext.err as Error).message;
-            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+
+            const orchestrationState =
+                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -1264,8 +1269,8 @@ describe("Orchestrator", () => {
 
             expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
 
-            const message = (mockContext.err as Error).message;
-            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+            const orchestrationState =
+                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -1730,8 +1735,9 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
-            const message = (mockContext.err as Error).message;
-            const orchestrationState = JSON.parse(message) as IOrchestratorState;
+
+            const orchestrationState =
+                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
 
             expect(orchestrationState).to.be.deep.include(
                 {
