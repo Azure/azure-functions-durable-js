@@ -1,4 +1,4 @@
-export class DurableFailure extends Error {
+export class DurableError extends Error {
     constructor(message: string | undefined) {
         super(message);
     }
