@@ -179,7 +179,7 @@ export class TestHistories {
 
         return history;
     }
-
+    
     public static GetTimerActivityRaceTimerWinsHistory(firstTimestamp: Date, iteration: number): HistoryEvent[] {
         const firstIteration = moment(firstTimestamp);
         const fireAt = firstIteration.add(1, "s").toDate();
@@ -230,6 +230,77 @@ export class TestHistories {
                 isPlayed: iteration > 2,
                 timerId: 0,
             }));
+        }
+
+        return history;
+    }
+
+    public static GetAnyWithTaskSet(firstTimestamp: Date, iteration: number, eventsBeatTimer: boolean): HistoryEvent[] {
+        const firstIteration = moment(firstTimestamp);
+        const fireAt = firstIteration.add(300, "s").toDate();
+
+        const history = [];
+
+        if (iteration >= 1) {
+            history.push(new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }));
+            history.push(new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: "AnyWithTaskSet",
+            }));
+            history.push(new TimerCreatedEvent({
+                eventId: 0,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+                fireAt,
+            }));
+            history.push(new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: iteration > 1,
+            }));
+        }
+
+        if (iteration >= 2) {
+            let secondIteration : Date;
+            if (eventsBeatTimer) {
+                secondIteration = firstIteration.add(2500, "ms").toDate();
+            } else {
+                secondIteration = firstIteration.add(31500, "ms").toDate();
+            }
+
+            history.push(new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: secondIteration,
+                isPlayed: iteration > 2,
+            }));
+            history.push(new EventRaisedEvent({
+                eventId: -1,
+                timestamp: firstIteration.add(2, "s").toDate(),
+                isPlayed: false,
+                name: "A",
+            }));
+            if (eventsBeatTimer) {
+                history.push(new EventRaisedEvent({
+                    eventId: -1,
+                    timestamp: firstIteration.add(2, "s").toDate(),
+                    isPlayed: false,
+                    name: "B",
+                }))
+            } else {
+                history.push(new TimerFiredEvent({
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    fireAt,
+                    isPlayed: false,
+                    timerId: 0,
+                }));
+            }
         }
 
         return history;

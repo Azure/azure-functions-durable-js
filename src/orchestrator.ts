@@ -12,6 +12,7 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
 import { DurableError } from "./durableerror";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
 import { FailedSingleTask } from "./tasks/taskinterfaces";
+import { Yieldable } from "./tasks/yieldable";
 import { TokenSource } from "./tokensource";
 
 /** @hidden */
@@ -90,7 +91,7 @@ export class Orchestrator {
 
             while (true) {
 
-                if (!(TaskFilter.isTask(g.value))) {
+                if (!(TaskFilter.isYieldable(g.value))) {
                     if (!g.done) {
                         // The orchestrator must have yielded a non-Task related type,
                         // so just return execution flow with what they yielded back.
@@ -113,18 +114,6 @@ export class Orchestrator {
                 }
 
                 partialResult = g.value as Task | TaskSet;
-                if (TaskFilter.isSingleTask(partialResult)) {
-                    if (!partialResult.wasYielded) {
-                        actions.push([ partialResult.action ]);
-                        partialResult.wasYielded = true;
-                    }
-                } else if (TaskFilter.isTaskSet(partialResult)) {
-                    const unyieldedTasks = partialResult.tasks.filter((task) => !task.wasYielded);
-                    actions.push(unyieldedTasks.map((task) => task.action));
-                    unyieldedTasks.forEach((task) => {
-                        task.wasYielded = true;
-                    });
-                }
 
                 // Return continue as new events as completed, as the execution itself is now completed.
                 if (TaskFilter.isSingleTask(partialResult) && partialResult.action instanceof ContinueAsNewAction) {

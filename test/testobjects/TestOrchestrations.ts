@@ -45,6 +45,33 @@ export class TestOrchestrations {
         return output.result;
     });
 
+    public static AnyWithTaskSet: any = df.orchestrator(function*(context: any) {
+        const now = new Date(context.df.currentUtcDateTime).getTime();
+        const deadline = new Date(now + 300000);
+        const timeoutTask = context.df.createTimer(deadline);
+     
+        const gate1 = context.df.waitForExternalEvent("A");
+        const gate2 = context.df.waitForExternalEvent("B");
+       
+        //this line below will not work because Task.all returns a taskset instead of a task, so 
+        //in Task.any it becomes undefined
+        const winner = yield context.df.Task.any([context.df.Task.all([gate1, gate2]), timeoutTask]);
+        const outputs = [];
+     
+        if (winner === timeoutTask) {
+            // timeout case
+            outputs.push("timeout");
+        }
+        else
+        {    
+            // success case     
+            const okaction = yield context.df.callActivity("Hello", "tokyo");
+            timeoutTask.cancel();
+            outputs.push(okaction);
+        }
+        return outputs;     
+    });
+
     public static CallActivityNoInput: any = df.orchestrator(function*(context: any) {
        const returnValue = yield context.df.callActivity("ReturnsFour");
        return returnValue;

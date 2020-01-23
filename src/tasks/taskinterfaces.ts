@@ -60,10 +60,10 @@ export interface SuccessfulTaskSet extends CompletedTaskSet {
     readonly exception: undefined;
 }
 
-export type CompletedTask = CompletedSingleTask | CompletedTaskSet;
+export type CompletedYieldable = CompletedSingleTask & CompletedTaskSet;
 
-export type UncompletedTask = UncompletedTaskSet & UncompletedSingleTask;
+export type UncompletedYieldable = UncompletedTaskSet & UncompletedSingleTask;
 
-export type SuccessfulTask =  SuccessfulTaskSet & SuccessfulSingleTask;
+export type SuccessfulYieldable =  SuccessfulTaskSet & SuccessfulSingleTask;
 
-export type FailedTask = FailedTaskSet & FailedSingleTask;
+export type FailedYieldable = FailedTaskSet & FailedSingleTask;
