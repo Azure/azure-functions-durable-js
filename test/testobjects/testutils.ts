@@ -1,6 +1,6 @@
 import { HttpCreationPayload, HttpManagementPayload, IOrchestratorState,
     OrchestrationClientInputData } from "../../src/classes";
-import { OutOfProcErrorWrapper } from "../../src/outofprocerrorwrapper";
+import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
 import { TestConstants } from "./testconstants";
 
 export class TestUtils {
@@ -75,7 +75,7 @@ export class TestUtils {
         );
     }
 
-    public static extractStateFromError(err: OutOfProcErrorWrapper): IOrchestratorState {
+    public static extractStateFromError(err: OrchestrationFailureError): IOrchestratorState {
         const label = "\n\n$OutOfProcData$:";
         const message = err.message;
         const dataStart = message.indexOf(label) + label.length;

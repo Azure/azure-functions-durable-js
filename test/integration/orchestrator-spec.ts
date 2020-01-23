@@ -11,7 +11,7 @@ import {
     ExternalEventType, IOrchestratorState, LockState, OrchestratorState,
     RetryOptions, WaitForExternalEventAction,
 } from "../../src/classes";
-import { OutOfProcErrorWrapper } from "../../src/outofprocerrorwrapper";
+import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 import { TestUtils } from "../testobjects/testutils";
@@ -216,10 +216,10 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
             const orchestrationState =
-                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
+                TestUtils.extractStateFromError(mockContext.err as OrchestrationFailureError);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -241,10 +241,10 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
             const orchestrationState =
-                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
+                TestUtils.extractStateFromError(mockContext.err as OrchestrationFailureError);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -525,12 +525,12 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
             const orchestrationState =
-                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
+                TestUtils.extractStateFromError(mockContext.err as OrchestrationFailureError);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -651,10 +651,10 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
             const orchestrationState =
-                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
+                TestUtils.extractStateFromError(mockContext.err as OrchestrationFailureError);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -993,10 +993,10 @@ describe("Orchestrator", () => {
 
             const expectedErr = "The sub-orchestration call (n = 1) should be executed with a function name of SayHelloInline instead of the provided function name of SayHelloWithActivity. Check your code for non-deterministic behavior.";
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
             const orchestrationState =
-                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
+                TestUtils.extractStateFromError(mockContext.err as OrchestrationFailureError);
 
             expect(orchestrationState.error).to.include(expectedErr);
         });
@@ -1024,10 +1024,10 @@ describe("Orchestrator", () => {
 
             const expectedErr = `The sub-orchestration call (n = 1) should be executed with an instance id of ${subId} instead of the provided instance id of ${id}:0. Check your code for non-deterministic behavior.`;
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
             const orchestrationState =
-                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
+                TestUtils.extractStateFromError(mockContext.err as OrchestrationFailureError);
 
             expect(orchestrationState.error).to.include(expectedErr);
         });
@@ -1087,10 +1087,10 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
             const orchestrationState =
-                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
+                TestUtils.extractStateFromError(mockContext.err as OrchestrationFailureError);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -1120,10 +1120,10 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
             const orchestrationState =
-                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
+                TestUtils.extractStateFromError(mockContext.err as OrchestrationFailureError);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -1267,10 +1267,10 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
             const orchestrationState =
-                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
+                TestUtils.extractStateFromError(mockContext.err as OrchestrationFailureError);
 
             expect(orchestrationState).to.be.an("object").that.deep.include({
                 isDone: false,
@@ -1734,10 +1734,10 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
-            expect(mockContext.err).to.be.an.instanceOf(OutOfProcErrorWrapper);
+            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
 
             const orchestrationState =
-                TestUtils.extractStateFromError(mockContext.err as OutOfProcErrorWrapper);
+                TestUtils.extractStateFromError(mockContext.err as OrchestrationFailureError);
 
             expect(orchestrationState).to.be.deep.include(
                 {
