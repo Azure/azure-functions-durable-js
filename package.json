@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@types/chai": "~4.1.6",
+    "@types/chai-string": "~1.4.1",
     "@types/chai-as-promised": "~7.1.0",
     "@types/commander": "~2.3.31",
     "@types/debug": "0.0.29",
@@ -48,6 +49,7 @@
     "@types/rimraf": "0.0.28",
     "@types/sinon": "~5.0.5",
     "chai": "~4.2.0",
+    "chai-string": "~1.5.0",
     "chai-as-promised": "~7.1.1",
     "mocha": "~5.2.0",
     "moment": "~2.22.2",
