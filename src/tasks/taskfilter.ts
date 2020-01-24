@@ -33,7 +33,7 @@ export class TaskFilter {
     }
 
     public static isSuccessfulSingleTask(task: Task): task is SuccessfulSingleTask  {
-        return TaskFilter.isSingleTask(task) && task.isCompleted === true && task.isFaulted === false && task.result !== undefined;
+        return TaskFilter.isSingleTask(task) && task.isCompleted === true && task.isFaulted === false && task.completionIndex !== undefined;
     }
 
     public static isFailedTask(task: Task | TaskSet): task is FailedTask {
