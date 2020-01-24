@@ -1940,6 +1940,59 @@ describe("Orchestrator", () => {
                 }),
             );
         });
+
+        it("Timer in combination with Task.any() timer wins", async () => {
+            const orchestrator = TestOrchestrations.TimerActivityRace;
+            const currentTime = moment.utc();
+
+            // first iteration
+            let mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetTimerActivityRaceTimerWinsHistory(
+                        currentTime.toDate(),
+                        1,
+                    ),
+                    null,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
+                    [
+                        [ new CreateTimerAction(currentTime.add(1, "s").toDate()), new CallActivityAction("TaskA") ],
+                    ],
+                    output: undefined,
+                }),
+            );
+
+            // second iteration
+            mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetTimerActivityRaceTimerWinsHistory(
+                        currentTime.toDate(),
+                        2,
+                    ),
+                    null,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
+                    [
+                        [ new CreateTimerAction(currentTime.add(1, "s").toDate()), new CallActivityAction("TaskA") ],
+                    ],
+                    output: "Timer finished",
+                }),
+            );
+        });
     });
 
     // rewind

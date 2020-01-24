@@ -17,7 +17,7 @@ export interface UncompletedSingleTask extends TaskBase {
 }
 
 export interface CompletedSingleTask extends SingleTask {
-    completedHistoryEventIndex: number;
+    completionIndex: number;
     readonly timestamp: Date;
     readonly id: number;
     readonly isCompleted: true;

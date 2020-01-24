@@ -180,6 +180,61 @@ export class TestHistories {
         return history;
     }
 
+    public static GetTimerActivityRaceTimerWinsHistory(firstTimestamp: Date, iteration: number): HistoryEvent[] {
+        const firstIteration = moment(firstTimestamp);
+        const fireAt = firstIteration.add(1, "s").toDate();
+        const secondIteration = firstIteration.add(1100, "ms").toDate();
+
+        const history = [];
+        if (iteration >= 1) {
+            history.push(new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }));
+            history.push(new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: "TimerActivityRace",
+            }));
+            history.push(new TimerCreatedEvent({
+                eventId: 0,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+                fireAt,
+            }));
+            history.push(new TaskScheduledEvent({
+                eventId: 1,
+                timestamp: firstTimestamp,
+                isPlayed: iteration > 1,
+                name: "TaskA",
+            }));
+            history.push(new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: iteration > 1,
+            }));
+        }
+
+        if (iteration >= 2) {
+            history.push(new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: secondIteration,
+                isPlayed: iteration > 2,
+            }));
+            history.push(new TimerFiredEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                fireAt,
+                isPlayed: iteration > 2,
+                timerId: 0,
+            }));
+        }
+
+        return history;
+    }
+
     public static GetCallEntitySet(firstTimestamp: Date, entityId: EntityId) {
         const firstMoment = moment(firstTimestamp);
         const orchestratorId = uuidv1();

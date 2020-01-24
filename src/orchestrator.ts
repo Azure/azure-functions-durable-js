@@ -568,8 +568,8 @@ export class Orchestrator {
         const completedTasks = tasks
             .filter(TaskFilter.isSuccessfulSingleTask)
             .sort((a, b) => {
-                if (a.completedHistoryEventIndex > b.completedHistoryEventIndex) { return 1; }
-                if (a.completedHistoryEventIndex < b.completedHistoryEventIndex) { return -1; }
+                if (a.completionIndex > b.completionIndex) { return 1; }
+                if (a.completionIndex < b.completionIndex) { return -1; }
                 return 0;
             });
 
