@@ -5,7 +5,6 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
 import cloneDeep = require("lodash/cloneDeep");
 import process = require("process");
 import url = require("url");
-import uuid = require("uuid/v1");
 import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
     GetStatusOptions, HttpCreationPayload, HttpManagementPayload,
@@ -13,6 +12,8 @@ import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
     OrchestrationRuntimeStatus, PurgeHistoryResult, Utils,
 } from "./classes";
 import { WebhookUtils } from "./webhookutils";
+
+const URL = url.URL;
 
 /**
  * Returns an OrchestrationClient instance.
