@@ -245,15 +245,22 @@ export class DurableOrchestrationClient {
     }
 
     /**
-     * Purge the history for a concerete instance.
+     * Purge the history for a specific orchestration instance.
      * @param instanceId The ID of the orchestration instance to purge.
      */
     public async purgeInstanceHistory(instanceId: string): Promise<PurgeHistoryResult> {
-        const template = this.clientData.managementUrls.purgeHistoryDeleteUri;
-        const idPlaceholder = this.clientData.managementUrls.id;
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            requestUrl = new URL(`instances/${instanceId}`, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            const template = this.clientData.managementUrls.purgeHistoryDeleteUri;
+            const idPlaceholder = this.clientData.managementUrls.id;
+            requestUrl = template.replace(idPlaceholder, instanceId);
+        }
 
-        const webhookUrl = template.replace(idPlaceholder, instanceId);
-        const response = await this.axiosInstance.delete(webhookUrl);
+        const response = await this.axiosInstance.delete(requestUrl);
         switch (response.status) {
             case 200: // instance found
                 return response.data as PurgeHistoryResult;
@@ -265,10 +272,10 @@ export class DurableOrchestrationClient {
     }
 
     /**
-     * Purge the orchestration history for isntances that match the conditions.
+     * Purge the orchestration history for instances that match the conditions.
      * @param createdTimeFrom Start creation time for querying instances for
      *  purging.
-     * @param createdTimeTo End creation time fo rquerying instanes for
+     * @param createdTimeTo End creation time for querying instances for
      *  purging.
      * @param runtimeStatus List of runtime statuses for querying instances for
      *  purging. Only Completed, Terminated or Failed will be processed.
@@ -277,31 +284,50 @@ export class DurableOrchestrationClient {
         createdTimeFrom: Date,
         createdTimeTo?: Date,
         runtimeStatus?: OrchestrationRuntimeStatus[],
-        ): Promise<PurgeHistoryResult> {
-        const idPlaceholder = this.clientData.managementUrls.id;
-        let requestUrl = this.clientData.managementUrls.statusQueryGetUri
-        .replace(idPlaceholder, "");
+    ): Promise<PurgeHistoryResult> {
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            let path = new URL("instances/", this.clientData.rpcBaseUrl).href;
+            const query: string[] = [];
+            if (createdTimeFrom) { query.push(`createdTimeFrom=${createdTimeFrom.toISOString()}`); }
+            if (createdTimeTo) { query.push(`createdTimeTo=${createdTimeTo.toISOString()}`); }
+            if (runtimeStatus && runtimeStatus.length > 0) {
+                const statusList: string = runtimeStatus.map((value) => value.toString()).join(",");
+                query.push(`runtimeStatus=${statusList}`);
+            }
 
-        if (!(createdTimeFrom instanceof Date)) {
-            throw new Error("createdTimeFrom must be a valid Date");
-        }
+            if (query.length > 0) {
+                path += "?" + query.join("&");
+            }
 
-        if (createdTimeFrom) {
-            requestUrl += `&${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`;
-        }
+            requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            const idPlaceholder = this.clientData.managementUrls.id;
+            requestUrl = this.clientData.managementUrls.statusQueryGetUri.replace(idPlaceholder, "");
 
-        if (createdTimeTo) {
-            requestUrl += `&${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`;
-        }
+            if (!(createdTimeFrom instanceof Date)) {
+                throw new Error("createdTimeFrom must be a valid Date");
+            }
 
-        if (runtimeStatus && runtimeStatus.length > 0) {
-            const statusesString = runtimeStatus
-                .map((value) => value.toString())
-                .reduce((acc, curr, i, arr) => {
-                    return acc + (i > 0 ? "," : "") + curr;
-            });
+            if (createdTimeFrom) {
+                requestUrl += `&${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`;
+            }
 
-            requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+            if (createdTimeTo) {
+                requestUrl += `&${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`;
+            }
+
+            if (runtimeStatus && runtimeStatus.length > 0) {
+                const statusesString = runtimeStatus
+                    .map((value) => value.toString())
+                    .reduce((acc, curr, i, arr) => {
+                        return acc + (i > 0 ? "," : "") + curr;
+                });
+
+                requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+            }
         }
 
         const response = await this.axiosInstance.delete(requestUrl);
@@ -351,12 +377,8 @@ export class DurableOrchestrationClient {
             // Fast local RPC path
             let path = `instances/${instanceId}/raiseEvent/${eventName}`;
             const query: string[] = [];
-            if (taskHubName) {
-                query.push(`taskHub=${taskHubName}`);
-            }
-            if (connectionName) {
-                query.push(`connection=${connectionName}`);
-            }
+            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
+            if (connectionName) { query.push(`connection=${connectionName}`); }
 
             if (query.length > 0) {
                 path += "?" + query.join("&");
@@ -405,17 +427,33 @@ export class DurableOrchestrationClient {
      * @returns A response containing the current state of the entity.
      */
     public async readEntityState<T>(entityId: EntityId, taskHubName?: string, connectionName?: string): Promise<EntityStateResponse<T>> {
-        if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
-            throw new Error("Cannot use the readEntityState API with this version of the Durable Task Extension.");
-        }
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            let path = `entities/${entityId.name}/${entityId.key}`;
+            const query: string[] = [];
+            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
+            if (connectionName) { query.push(`connection=${connectionName}`); }
 
-        const requestUrl = WebhookUtils.getReadEntityUrl(
-            this.clientData.rpcBaseUrl || this.clientData.baseUrl,
-            this.clientData.requiredQueryStringParameters,
-            entityId.name,
-            entityId.key,
-            taskHubName,
-            connectionName);
+            if (query.length > 0) {
+                path += "?" + query.join("&");
+            }
+
+            requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
+                throw new Error("Cannot use the readEntityState API with this version of the Durable Task Extension.");
+            }
+
+            requestUrl = WebhookUtils.getReadEntityUrl(
+                this.clientData.rpcBaseUrl || this.clientData.baseUrl,
+                this.clientData.requiredQueryStringParameters,
+                entityId.name,
+                entityId.key,
+                taskHubName,
+                connectionName);
+        }
 
         const response = await this.axiosInstance.get(requestUrl);
         switch (response.status) {
@@ -441,10 +479,19 @@ export class DurableOrchestrationClient {
 
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
-            requestUrl = new URL(
-                `${instanceId}/rewind?reason=${reason}&taskHub=${taskHubName}&connection=${connectionName}`,
-                this.clientData.rpcBaseUrl).href;
+            // Fast local RPC path
+            let path = `instances/${instanceId}/rewind?reason=${reason}`;
+            const query: string[] = [];
+            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
+            if (connectionName) {  query.push(`connection=${connectionName}`); }
+
+            if (query.length > 0) {
+                path += "&" + query.join("&");
+            }
+
+            requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
         } else {
+            // Legacy app frontend path
             requestUrl = this.clientData.managementUrls.rewindPostUri
                 .replace(idPlaceholder, instanceId)
                 .replace(this.reasonPlaceholder, reason);
@@ -478,18 +525,35 @@ export class DurableOrchestrationClient {
         taskHubName?: string,
         connectionName?: string,
     ): Promise<void> {
-        if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
-            throw new Error("Cannot use the signalEntity API with this version of the Durable Task Extension.");
-        }
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            let path = `entities/${entityId.name}/${entityId.key}`;
+            const query: string[] = [];
+            if (operationName) { query.push(`op=${operationName}`); }
+            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
+            if (connectionName) { query.push(`connection=${connectionName}`); }
 
-        const requestUrl = WebhookUtils.getSignalEntityUrl(
-            this.clientData.rpcBaseUrl || this.clientData.baseUrl,
-            this.clientData.requiredQueryStringParameters,
-            entityId.name,
-            entityId.key,
-            operationName,
-            taskHubName,
-            connectionName);
+            if (query.length > 0) {
+                path += "?" + query.join("&");
+            }
+
+            requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
+                throw new Error("Cannot use the signalEntity API with this version of the Durable Task Extension.");
+            }
+
+            requestUrl = WebhookUtils.getSignalEntityUrl(
+                this.clientData.rpcBaseUrl || this.clientData.baseUrl,
+                this.clientData.requiredQueryStringParameters,
+                entityId.name,
+                entityId.key,
+                operationName,
+                taskHubName,
+                connectionName);
+        }
 
         const response = await this.axiosInstance.post(requestUrl, JSON.stringify(operationContent));
         switch (response.status) {
@@ -554,9 +618,18 @@ export class DurableOrchestrationClient {
      */
     public async terminate(instanceId: string, reason: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
-        const requestUrl = this.clientData.managementUrls.terminatePostUri
-            .replace(idPlaceholder, instanceId)
-            .replace(this.reasonPlaceholder, reason);
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            requestUrl = new URL(
+                `instances/${instanceId}/terminate?reason=${reason}`,
+                this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            requestUrl = this.clientData.managementUrls.terminatePostUri
+                .replace(idPlaceholder, instanceId)
+                .replace(this.reasonPlaceholder, reason);
+        }
 
         const response = await this.axiosInstance.post(requestUrl);
         switch (response.status) {
@@ -591,7 +664,7 @@ export class DurableOrchestrationClient {
         instanceId: string,
         timeoutInMilliseconds: number = 10000,
         retryIntervalInMilliseconds: number = 1000,
-        ): Promise<IHttpResponse> {
+    ): Promise<IHttpResponse> {
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
             throw new Error(`Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`);
         }

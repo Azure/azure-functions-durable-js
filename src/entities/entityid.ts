@@ -24,6 +24,7 @@ export class EntityId {
      */
     constructor(
         // TODO: consider how to name these fields more accurately without interfering with JSON serialization
+        // TODO: entity keys are supposed to be optional
         /** The name of the entity class. */
         public readonly name: string,
         /** The entity key. Uniquely identifies an entity among all instances of the same class. */

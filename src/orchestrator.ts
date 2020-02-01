@@ -592,7 +592,7 @@ export class Orchestrator {
         switch (directiveResult.EventType) {
             case (HistoryEventType.EventRaised):
                 const eventRaised = directiveResult as EventRaisedEvent;
-                parsedDirectiveResult = (eventRaised && eventRaised.Input) 
+                parsedDirectiveResult = (eventRaised && eventRaised.Input)
                     ? JSON.parse(eventRaised.Input) : undefined;
                 break;
             case (HistoryEventType.SubOrchestrationInstanceCompleted):
