@@ -65,7 +65,7 @@ export class TestOrchestrations {
         else
         {    
             // success case     
-            const okaction = yield context.df.callActivity("Hello", "tokyo");
+            const okaction = yield context.df.callActivity("Hello", "Tokyo");
             timeoutTask.cancel();
             outputs.push(okaction);
         }

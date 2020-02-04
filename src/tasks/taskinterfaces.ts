@@ -1,69 +1,31 @@
 import { IAction } from "../classes";
 
  // Base interfaces
-interface TaskBase {
+export interface TaskBase {
     readonly isCompleted: boolean;
     readonly isFaulted: boolean;
+    yield(): IAction[];
  }
 
-export interface SingleTask extends TaskBase {
-    readonly action: IAction;
-    wasYielded: boolean;
-}
-
-export interface UncompletedSingleTask extends TaskBase {
+ export interface UncompletedTask extends TaskBase {
     readonly isCompleted: false;
     readonly isFaulted: false;
 }
 
-export interface CompletedSingleTask extends SingleTask {
-    completionIndex: number;
-    readonly timestamp: Date;
-    readonly id: number;
-    readonly isCompleted: true;
-    readonly result: unknown;
+export interface CompletedTask extends TaskBase {
+    readonly completionIndex: number;
+    readonly isCompleted: true
+    readonly result: unknown | undefined;
 }
 
-export interface SuccessfulSingleTask extends CompletedSingleTask {
+export interface SuccessfulTask extends CompletedTask {
     readonly isFaulted: false;
+    readonly result: unknown;
     readonly exception: undefined;
 }
 
-export interface FailedSingleTask extends CompletedSingleTask {
+export interface FailedTask extends CompletedTask {
     readonly isFaulted: true;
     readonly exception: Error;
     readonly result: undefined;
 }
-
-interface TaskCollection extends TaskBase {
-    readonly tasks: SingleTask[];
-}
-
-export interface CompletedTaskSet extends TaskCollection {
-    readonly isCompleted: true;
-    readonly result: unknown;
-}
-
-export interface UncompletedTaskSet extends TaskCollection {
-    readonly isCompleted: false;
-    readonly isFaulted: false;
-}
-
-export interface FailedTaskSet extends CompletedTaskSet {
-    readonly isFaulted: true;
-    readonly exception: Error;
-    readonly result: undefined;
-}
-
-export interface SuccessfulTaskSet extends CompletedTaskSet {
-    readonly isFaulted: false;
-    readonly exception: undefined;
-}
-
-export type CompletedYieldable = CompletedSingleTask & CompletedTaskSet;
-
-export type UncompletedYieldable = UncompletedTaskSet & UncompletedSingleTask;
-
-export type SuccessfulYieldable =  SuccessfulTaskSet & SuccessfulSingleTask;
-
-export type FailedYieldable = FailedTaskSet & FailedSingleTask;

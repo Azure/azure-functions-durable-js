@@ -11,8 +11,7 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
 } from "./classes";
 import { DurableError } from "./durableerror";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
-import { FailedSingleTask } from "./tasks/taskinterfaces";
-import { Yieldable } from "./tasks/yieldable";
+import { FailedTask, TaskBase } from "./tasks/taskinterfaces";
 import { TokenSource } from "./tokensource";
 
 /** @hidden */
@@ -83,7 +82,7 @@ export class Orchestrator {
         // Setup
         const gen = this.fn(context);
         const actions: IAction[][] = [];
-        let partialResult: Task | TaskSet;
+        let partialResult: TaskBase;
 
         try {
             // First execution, we have not yet "yielded" any of the tasks.
@@ -113,7 +112,11 @@ export class Orchestrator {
                     }
                 }
 
-                partialResult = g.value as Task | TaskSet;
+                partialResult = g.value as TaskBase;
+                let newActions = partialResult.yield();
+                if (newActions && newActions.length > 0) {
+                    actions.push(newActions);
+                }
 
                 // Return continue as new events as completed, as the execution itself is now completed.
                 if (TaskFilter.isSingleTask(partialResult) && partialResult.action instanceof ContinueAsNewAction) {
@@ -539,28 +542,27 @@ export class Orchestrator {
         }
     }
 
-    private all(state: HistoryEvent[], tasks: Task[]): TaskSet {
-        const faulted = tasks.filter(TaskFilter.isFailedTask);
-        if (faulted.length > 0) {
-            return TaskFactory.FailedTaskSet(tasks, (faulted[0] as FailedSingleTask).exception);
-        }
+    private all(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
+        const completedTasks = tasks.filter(TaskFilter.isCompletedTask);
+        if (completedTasks.length === tasks.length) {
+            const sortedTasks = completedTasks.sort(TaskFilter.CompareFinishedTime) 
+            const completionIndex = sortedTasks[tasks.length-1].completionIndex;
 
-        const succesfulTasks = tasks.filter(TaskFilter.isSuccessfulSingleTask);
-        const isCompleted = succesfulTasks.length === tasks.length;
-        if (isCompleted) {
-            const results = succesfulTasks.reduce((acc, t) => {
-                return [...acc, t.result];
-            }, []);
-
-            return TaskFactory.SuccessfulTaskSet(tasks, results);
+            const failedTasks = completedTasks.filter(TaskFilter.isFailedTask);
+            if (failedTasks.length > 0) {
+                return TaskFactory.FailedTaskSet(tasks, completionIndex, (failedTasks[0] as FailedTask).exception);
+            } else {
+                const results = completedTasks.map((task) => task.result);
+                return TaskFactory.SuccessfulTaskSet(tasks, completionIndex, results);
+            }
         } else {
             return TaskFactory.UncompletedTaskSet(tasks);
         }
     }
 
-    private any(state: HistoryEvent[], tasks: Task[]): TaskSet {
+    private any(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
         const completedTasks = tasks
-            .filter(TaskFilter.isSuccessfulSingleTask)
+            .filter(TaskFilter.isCompletedTask)
             .sort((a, b) => {
                 if (a.completionIndex > b.completionIndex) { return 1; }
                 if (a.completionIndex < b.completionIndex) { return -1; }
@@ -569,7 +571,7 @@ export class Orchestrator {
 
         const firstCompleted = completedTasks[0];
         if (firstCompleted) {
-            return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted);
+            return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted.completionIndex, firstCompleted);
         } else {
             return TaskFactory.UncompletedTaskSet(tasks);
         }

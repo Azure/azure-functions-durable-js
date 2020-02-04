@@ -2,6 +2,7 @@ import { CreateTimerAction, IAction } from "../classes";
 import { Task} from "./task";
 import { TaskSet } from "./taskset";
 import { TimerTask } from "./timertask";
+import { TaskBase} from "./taskinterfaces";
 
 export class TaskFactory {
     public static UncompletedTask(action: IAction): Task {
@@ -42,31 +43,34 @@ export class TaskFactory {
         return new TimerTask(false, action);
     }
 
-    public static SuccessfulTaskSet(tasks: Task[], result: unknown): TaskSet {
+    public static SuccessfulTaskSet(tasks: TaskBase[], completionIndex: number, result: unknown): TaskSet {
         return new TaskSet(
             true,
             false,
             tasks,
+            completionIndex,
             result,
             undefined,
         );
     }
 
-    public static FailedTaskSet(tasks: Task[], exception: Error): TaskSet {
+    public static FailedTaskSet(tasks: TaskBase[], completionIndex: number, exception: Error): TaskSet {
         return new TaskSet(
             true,
             true,
             tasks,
+            completionIndex,
             undefined,
             exception,
         );
     }
 
-    public static UncompletedTaskSet(tasks: Task[]): TaskSet {
+    public static UncompletedTaskSet(tasks: TaskBase[]): TaskSet {
         return new TaskSet(
             false,
             false,
             tasks,
+            undefined,
             undefined,
             undefined,
         );

@@ -1,5 +1,5 @@
 import { IAction } from "../classes";
-import { SingleTask } from "./taskinterfaces";
+import { TaskBase } from "./taskinterfaces";
 
 /**
  * Represents some pending action. Similar to a native JavaScript promise in
@@ -33,12 +33,12 @@ import { SingleTask } from "./taskinterfaces";
  * return firstDone.result;
  * ```
  */
-export class Task implements SingleTask {
+export class Task implements TaskBase {
     /**
      * Used to keep track of how many times the task has been yielded to avoid
      * scheduling the internal action multiple times _Internal use only._
      */
-    public wasYielded = false;
+    private wasYielded = false;
 
     /** @hidden */
     constructor(
@@ -79,4 +79,17 @@ export class Task implements SingleTask {
          */
         public readonly completionIndex?: number,
     ) { }
+
+    getCompletionIndex(): number | undefined {
+        return this.completionIndex;
+    }
+
+    yield(): IAction[] {
+        if (!this.wasYielded) {
+            this.wasYielded = true;
+            return [ this.action ];
+        }
+        
+        return [];
+    }
 }

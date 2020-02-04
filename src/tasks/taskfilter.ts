@@ -1,43 +1,39 @@
 import { Task } from "./task";
-import { CompletedYieldable, FailedYieldable, SuccessfulSingleTask, SuccessfulYieldable, UncompletedYieldable } from "./taskinterfaces";
 import { TaskSet } from "./taskset";
-import { Yieldable } from "./yieldable";
+import { CompletedTask, TaskBase, SuccessfulTask, FailedTask, UncompletedTask } from "./taskinterfaces"
 
 export class TaskFilter {
-    public static isYieldable(value: unknown): value is Yieldable {
-        if (!value) {
-            return false;
-        }
-        const task = value as (Yieldable);
-        return task.isCompleted !== undefined && task.isFaulted !== undefined;
+    public static CompareFinishedTime(taskA: CompletedTask, taskB: CompletedTask) {
+        if (taskA.completionIndex > taskB.completionIndex) { return 1; }
+        if (taskA.completionIndex < taskB.completionIndex) { return -1; }
+        return 0;
     }
 
-    public static isSingleTask(task: Yieldable): task is Task {
+    public static isYieldable(task: any) : task is TaskBase {
+        return (task instanceof Task) || (task instanceof TaskSet);
+    }
+
+    public static isSingleTask(task: TaskBase): task is Task {
         return (task instanceof Task);
     }
 
-    public static isTaskSet(task: Yieldable): task is TaskSet {
+    public static isTaskSet(task: TaskBase): task is TaskSet {
         return (task instanceof TaskSet);
     }
 
-    public static isCompletedTask(task: Yieldable): task is CompletedYieldable {
+    public static isCompletedTask(task: TaskBase): task is CompletedTask {
         return task.isCompleted;
     }
 
-    public static isUncompletedTask(task: Yieldable): task is UncompletedYieldable  {
+    public static isUncompletedTask(task: TaskBase): task is UncompletedTask  {
         return task.isCompleted === false;
     }
 
-    public static isSuccessfulTask(task: Yieldable): task is SuccessfulYieldable  {
-        const successfulTask = task as SuccessfulYieldable;
-        return successfulTask.isCompleted === true && successfulTask.isFaulted === false && successfulTask.result !== undefined;
+    public static isSuccessfulTask(task: TaskBase): task is SuccessfulTask {
+        return task.isCompleted === true && task.isFaulted === false;
     }
 
-    public static isSuccessfulSingleTask(task: Task): task is SuccessfulSingleTask  {
-        return TaskFilter.isSingleTask(task) && task.isCompleted === true && task.isFaulted === false && task.completionIndex !== undefined;
-    }
-
-    public static isFailedTask(task: Yieldable): task is FailedYieldable {
+    public static isFailedTask(task: TaskBase): task is FailedTask {
         return task.isCompleted === true && task.isFaulted === true;
     }
 }
