@@ -550,6 +550,7 @@ export class Orchestrator {
 
             const failedTasks = completedTasks.filter(TaskFilter.isFailedTask);
             if (failedTasks.length > 0) {
+                // TODO: aggregate all failures into one clean error.
                 return TaskFactory.FailedTaskSet(tasks, completionIndex, (failedTasks[0] as FailedTask).exception);
             } else {
                 const results = completedTasks.map((task) => task.result);
