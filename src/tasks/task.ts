@@ -80,16 +80,15 @@ export class Task implements TaskBase {
         public readonly completionIndex?: number,
     ) { }
 
-    getCompletionIndex(): number | undefined {
-        return this.completionIndex;
-    }
-
-    yield(): IAction[] {
+    /**
+     * _Internal use only._
+     */
+    public yieldNewActions(): IAction[] {
         if (!this.wasYielded) {
             this.wasYielded = true;
             return [ this.action ];
         }
-        
+
         return [];
     }
 }

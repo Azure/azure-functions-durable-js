@@ -179,7 +179,7 @@ export class TestHistories {
 
         return history;
     }
-    
+
     public static GetTimerActivityRaceTimerWinsHistory(firstTimestamp: Date, iteration: number): HistoryEvent[] {
         const firstIteration = moment(firstTimestamp);
         const fireAt = firstIteration.add(1, "s").toDate();
@@ -267,12 +267,9 @@ export class TestHistories {
         }
 
         if (iteration >= 2) {
-            let secondIteration : Date;
-            if (eventsBeatTimer) {
-                secondIteration = firstIteration.add(2500, "ms").toDate();
-            } else {
-                secondIteration = firstIteration.add(31500, "ms").toDate();
-            }
+            const secondIteration: Date = eventsBeatTimer
+                ? firstIteration.add(2500, "ms").toDate()
+                : firstIteration.add(31500, "ms").toDate();
 
             history.push(new OrchestratorStartedEvent({
                 eventId: -1,
@@ -291,7 +288,7 @@ export class TestHistories {
                     timestamp: firstIteration.add(2, "s").toDate(),
                     isPlayed: false,
                     name: "B",
-                }))
+                }));
             } else {
                 history.push(new TimerFiredEvent({
                     eventId: -1,

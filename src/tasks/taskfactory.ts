@@ -1,8 +1,8 @@
 import { CreateTimerAction, IAction } from "../classes";
 import { Task} from "./task";
+import { TaskBase} from "./taskinterfaces";
 import { TaskSet } from "./taskset";
 import { TimerTask } from "./timertask";
-import { TaskBase} from "./taskinterfaces";
 
 export class TaskFactory {
     public static UncompletedTask(action: IAction): Task {

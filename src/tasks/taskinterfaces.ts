@@ -4,17 +4,17 @@ import { IAction } from "../classes";
 export interface TaskBase {
     readonly isCompleted: boolean;
     readonly isFaulted: boolean;
-    yield(): IAction[];
+    yieldNewActions(): IAction[];
  }
 
- export interface UncompletedTask extends TaskBase {
+export interface UncompletedTask extends TaskBase {
     readonly isCompleted: false;
     readonly isFaulted: false;
 }
 
 export interface CompletedTask extends TaskBase {
     readonly completionIndex: number;
-    readonly isCompleted: true
+    readonly isCompleted: true;
     readonly result: unknown | undefined;
 }
 

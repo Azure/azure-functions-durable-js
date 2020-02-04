@@ -1809,7 +1809,7 @@ describe("Orchestrator", () => {
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
             const orchestrator = TestOrchestrations.AnyAOrB;
             const completeInOrder = true;
-            const initialDate = moment.utc().toDate()
+            const initialDate = moment.utc().toDate();
             const mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
                     TestHistories.GetAnyAOrB(
@@ -1844,7 +1844,7 @@ describe("Orchestrator", () => {
                         initialTime.toDate(),
                         1,
                         eventsWin,
-                    )
+                    ),
                 ),
             });
 
@@ -1858,10 +1858,10 @@ describe("Orchestrator", () => {
                         [
                             new WaitForExternalEventAction("A"),
                             new WaitForExternalEventAction("B"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate())
+                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
                         ],
                     ],
-                    output: undefined
+                    output: undefined,
                 }),
             );
 
@@ -1871,7 +1871,7 @@ describe("Orchestrator", () => {
                         initialTime.toDate(),
                         2,
                         eventsWin,
-                    )
+                    ),
                 ),
             });
 
@@ -1885,11 +1885,11 @@ describe("Orchestrator", () => {
                         [
                             new WaitForExternalEventAction("A"),
                             new WaitForExternalEventAction("B"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate())
+                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
                         ],
                         [ new CallActivityAction("Hello", "Tokyo") ],
                     ],
-                    output: undefined
+                    output: undefined,
                 }),
             );
         });
@@ -1904,7 +1904,7 @@ describe("Orchestrator", () => {
                         initialTime.toDate(),
                         1,
                         eventsWin,
-                    )
+                    ),
                 ),
             });
 
@@ -1918,10 +1918,10 @@ describe("Orchestrator", () => {
                         [
                             new WaitForExternalEventAction("A"),
                             new WaitForExternalEventAction("B"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate())
+                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
                         ],
                     ],
-                    output: undefined
+                    output: undefined,
                 }),
             );
 
@@ -1931,7 +1931,7 @@ describe("Orchestrator", () => {
                         initialTime.toDate(),
                         2,
                         eventsWin,
-                    )
+                    ),
                 ),
             });
 
@@ -1945,10 +1945,10 @@ describe("Orchestrator", () => {
                         [
                             new WaitForExternalEventAction("A"),
                             new WaitForExternalEventAction("B"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate())
+                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
                         ],
                     ],
-                    output: ["timeout"]
+                    output: ["timeout"],
                 }),
             );
         });

@@ -113,7 +113,7 @@ export class Orchestrator {
                 }
 
                 partialResult = g.value as TaskBase;
-                let newActions = partialResult.yield();
+                const newActions = partialResult.yieldNewActions();
                 if (newActions && newActions.length > 0) {
                     actions.push(newActions);
                 }
@@ -545,8 +545,8 @@ export class Orchestrator {
     private all(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
         const completedTasks = tasks.filter(TaskFilter.isCompletedTask);
         if (completedTasks.length === tasks.length) {
-            const sortedTasks = completedTasks.sort(TaskFilter.CompareFinishedTime) 
-            const completionIndex = sortedTasks[tasks.length-1].completionIndex;
+            const sortedTasks = completedTasks.sort(TaskFilter.CompareFinishedTime);
+            const completionIndex = sortedTasks[tasks.length - 1].completionIndex;
 
             const failedTasks = completedTasks.filter(TaskFilter.isFailedTask);
             if (failedTasks.length > 0) {

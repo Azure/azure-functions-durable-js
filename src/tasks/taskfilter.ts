@@ -1,6 +1,6 @@
 import { Task } from "./task";
+import { CompletedTask, FailedTask, SuccessfulTask, TaskBase, UncompletedTask } from "./taskinterfaces";
 import { TaskSet } from "./taskset";
-import { CompletedTask, TaskBase, SuccessfulTask, FailedTask, UncompletedTask } from "./taskinterfaces"
 
 export class TaskFilter {
     public static CompareFinishedTime(taskA: CompletedTask, taskB: CompletedTask) {
@@ -9,7 +9,7 @@ export class TaskFilter {
         return 0;
     }
 
-    public static isYieldable(task: any) : task is TaskBase {
+    public static isYieldable(task: any): task is TaskBase {
         return (task instanceof Task) || (task instanceof TaskSet);
     }
 
