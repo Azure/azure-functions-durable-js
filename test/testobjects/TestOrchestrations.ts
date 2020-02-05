@@ -50,10 +50,12 @@ export class TestOrchestrations {
         const deadline = new Date(now + 300000);
         const timeoutTask = context.df.createTimer(deadline);
 
-        const gate1 = context.df.waitForExternalEvent("A");
-        const gate2 = context.df.waitForExternalEvent("B");
+        const firstRequiredTask = context.df.waitForExternalEvent("firstRequiredEvent");
+        const secondRequiredTask = context.df.waitForExternalEvent("secondRequiredEvent");
 
-        const winner = yield context.df.Task.any([context.df.Task.all([gate1, gate2]), timeoutTask]);
+        const allRequiredEvents = context.df.Task.all([firstRequiredTask, secondRequiredTask]);
+
+        const winner = yield context.df.Task.any([allRequiredEvents, timeoutTask]);
         const outputs = [];
 
         if (winner === timeoutTask) {

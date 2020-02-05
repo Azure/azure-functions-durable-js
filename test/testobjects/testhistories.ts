@@ -280,14 +280,21 @@ export class TestHistories {
                 eventId: -1,
                 timestamp: firstIteration.add(2, "s").toDate(),
                 isPlayed: false,
-                name: "A",
+                name: "firstRequiredEvent",
             }));
             if (eventsBeatTimer) {
                 history.push(new EventRaisedEvent({
                     eventId: -1,
                     timestamp: firstIteration.add(2, "s").toDate(),
                     isPlayed: false,
-                    name: "B",
+                    name: "secondRequiredEvent",
+                }));
+                history.push(new TimerFiredEvent({
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    fireAt,
+                    isPlayed: false,
+                    timerId: 0,
                 }));
             } else {
                 history.push(new TimerFiredEvent({
@@ -296,6 +303,12 @@ export class TestHistories {
                     fireAt,
                     isPlayed: false,
                     timerId: 0,
+                }));
+                history.push(new EventRaisedEvent({
+                    eventId: -1,
+                    timestamp: firstIteration.add(3, "s").toDate(),
+                    isPlayed: false,
+                    name: "secondRequiredEvent",
                 }));
             }
         }
@@ -588,7 +601,7 @@ export class TestHistories {
             new OrchestratorStartedEvent(
                 {
                     eventId: -1,
-                    timestamp: firstMoment.add(3, "s").toDate(),
+                    timestamp: firstMoment.add(4, "s").toDate(),
                     isPlayed: false,
                 },
             ),
@@ -601,27 +614,15 @@ export class TestHistories {
                     taskScheduledId: 1,
                 },
             ),
-            new TaskCompletedEvent(
+            new TaskFailedEvent(
                 {
                     eventId: -1,
                     timestamp: firstMoment.add(3, "s").toDate(),
                     isPlayed: false,
                     result: JSON.stringify(2),
                     taskScheduledId: 2,
-                },
-            ),
-            new OrchestratorCompletedEvent(
-                {
-                    eventId: -1,
-                    timestamp: firstTimestamp,
-                    isPlayed: false,
-                },
-            ),
-            new OrchestratorStartedEvent(
-                {
-                    eventId: -1,
-                    timestamp: firstMoment.add(4, "s").toDate(),
-                    isPlayed: false,
+                    reason: `Activity function 'GetFileSize' failed: Could not find file ${files[1]}`,
+                    details: "Serialized System.Exception here",
                 },
             ),
             new TaskFailedEvent(
@@ -630,7 +631,7 @@ export class TestHistories {
                     timestamp: firstMoment.add(4, "s").toDate(),
                     isPlayed: false,
                     taskScheduledId: 3,
-                    reason: "Activity function 'GetFileSize' failed: Could not find file.",
+                    reason: `Activity function 'GetFileSize' failed: Could not find file ${files[2]}`,
                     details: "Serialized System.Exception here",
                 },
             ),

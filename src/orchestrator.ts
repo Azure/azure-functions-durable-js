@@ -1,4 +1,5 @@
 import * as debug from "debug";
+import { AggregatedError } from "./aggregatederror";
 import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, CallHttpAction,
     CallSubOrchestratorAction, CallSubOrchestratorWithRetryAction, ContinueAsNewAction,
     CreateTimerAction, DurableHttpRequest, DurableLock, DurableOrchestrationBindingInfo, EntityId,
@@ -11,7 +12,7 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
 } from "./classes";
 import { DurableError } from "./durableerror";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
-import { FailedTask, TaskBase } from "./tasks/taskinterfaces";
+import { TaskBase } from "./tasks/taskinterfaces";
 import { TokenSource } from "./tokensource";
 
 /** @hidden */
@@ -545,13 +546,14 @@ export class Orchestrator {
     private all(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
         const completedTasks = tasks.filter(TaskFilter.isCompletedTask);
         if (completedTasks.length === tasks.length) {
-            const sortedTasks = completedTasks.sort(TaskFilter.CompareFinishedTime);
-            const completionIndex = sortedTasks[tasks.length - 1].completionIndex;
+            const completionIndex = Math.max.apply(
+                null,
+                completedTasks.map((task) => task.completionIndex));
 
             const failedTasks = completedTasks.filter(TaskFilter.isFailedTask);
             if (failedTasks.length > 0) {
-                // TODO: aggregate all failures into one clean error.
-                return TaskFactory.FailedTaskSet(tasks, completionIndex, (failedTasks[0] as FailedTask).exception);
+                const allErrors = failedTasks.map((task) => task.exception);
+                return TaskFactory.FailedTaskSet(tasks, completionIndex, new AggregatedError(allErrors));
             } else {
                 const results = completedTasks.map((task) => task.result);
                 return TaskFactory.SuccessfulTaskSet(tasks, completionIndex, results);
@@ -562,20 +564,22 @@ export class Orchestrator {
     }
 
     private any(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
-        const completedTasks = tasks
-            .filter(TaskFilter.isCompletedTask)
-            .sort((a, b) => {
-                if (a.completionIndex > b.completionIndex) { return 1; }
-                if (a.completionIndex < b.completionIndex) { return -1; }
-                return 0;
-            });
+        if (!tasks || tasks.length === 0) {
+            throw new Error("At least one yieldable task must be provided to wait for.");
+        }
 
-        const firstCompleted = completedTasks[0];
-        if (firstCompleted) {
-            return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted.completionIndex, firstCompleted);
-        } else {
+        const completedTasks = tasks.filter(TaskFilter.isCompletedTask);
+        if (completedTasks.length === 0) {
             return TaskFactory.UncompletedTaskSet(tasks);
         }
+
+        // Find the completed task with the lowest completion index
+        let firstCompleted = completedTasks[0];
+        completedTasks.forEach((task) =>
+            firstCompleted = task.completionIndex < firstCompleted.completionIndex ? task : firstCompleted,
+        );
+
+        return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted.completionIndex, firstCompleted);
     }
 
     private parseHistoryEvent(directiveResult: HistoryEvent): unknown {

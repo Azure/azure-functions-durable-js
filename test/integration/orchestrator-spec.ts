@@ -1730,7 +1730,8 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            const expectedErr = "Activity function 'GetFileSize' failed: Could not find file.";
+            const expectedErr1 = "Activity function 'GetFileSize' failed: Could not find file file2.png";
+            const expectedErr2 = "Activity function 'GetFileSize' failed: Could not find file file3.csx";
 
             orchestrator(mockContext);
 
@@ -1749,7 +1750,9 @@ describe("Orchestrator", () => {
                     ],
                 },
             );
-            expect(orchestrationState.error).to.include(expectedErr);
+
+            expect(orchestrationState.error).to.include(expectedErr1);
+            expect(orchestrationState.error).to.include(expectedErr2);
         });
 
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
@@ -1809,7 +1812,6 @@ describe("Orchestrator", () => {
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
             const orchestrator = TestOrchestrations.AnyAOrB;
             const completeInOrder = true;
-            const initialDate = moment.utc().toDate();
             const mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
                     TestHistories.GetAnyAOrB(
@@ -1856,8 +1858,8 @@ describe("Orchestrator", () => {
                     actions:
                     [
                         [
-                            new WaitForExternalEventAction("A"),
-                            new WaitForExternalEventAction("B"),
+                            new WaitForExternalEventAction("firstRequiredEvent"),
+                            new WaitForExternalEventAction("secondRequiredEvent"),
                             new CreateTimerAction(initialTime.add(300, "s").toDate()),
                         ],
                     ],
@@ -1883,8 +1885,8 @@ describe("Orchestrator", () => {
                     actions:
                     [
                         [
-                            new WaitForExternalEventAction("A"),
-                            new WaitForExternalEventAction("B"),
+                            new WaitForExternalEventAction("firstRequiredEvent"),
+                            new WaitForExternalEventAction("secondRequiredEvent"),
                             new CreateTimerAction(initialTime.add(300, "s").toDate()),
                         ],
                         [ new CallActivityAction("Hello", "Tokyo") ],
@@ -1916,8 +1918,8 @@ describe("Orchestrator", () => {
                     actions:
                     [
                         [
-                            new WaitForExternalEventAction("A"),
-                            new WaitForExternalEventAction("B"),
+                            new WaitForExternalEventAction("firstRequiredEvent"),
+                            new WaitForExternalEventAction("secondRequiredEvent"),
                             new CreateTimerAction(initialTime.add(300, "s").toDate()),
                         ],
                     ],
@@ -1943,8 +1945,8 @@ describe("Orchestrator", () => {
                     actions:
                     [
                         [
-                            new WaitForExternalEventAction("A"),
-                            new WaitForExternalEventAction("B"),
+                            new WaitForExternalEventAction("firstRequiredEvent"),
+                            new WaitForExternalEventAction("secondRequiredEvent"),
                             new CreateTimerAction(initialTime.add(300, "s").toDate()),
                         ],
                     ],
