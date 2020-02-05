@@ -17,6 +17,7 @@ chai.use(chaiString);
 const expect = chai.expect;
 const URL = url.URL;
 
+// DNS failures are expected if we accidentally try to reach this fake domain (durable.gov).
 const externalOrigin = "https://durable.gov";
 const externalBaseUrl = `${externalOrigin}/runtime/webhooks/durableTask`;
 const testRpcOrigin = "http://127.0.0.1:17071";

@@ -204,7 +204,7 @@ export class DurableOrchestrationClient {
             case 500: // instance failed with unhandled exception
                 return response.data as DurableOrchestrationStatus;
             default:
-                return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -213,7 +213,12 @@ export class DurableOrchestrationClient {
      */
     public async getStatusAll(): Promise<DurableOrchestrationStatus[]> {
         const response = await this.getStatusInternal({});
-        return response.data as DurableOrchestrationStatus[];
+        switch (response.status) {
+            case 200:
+                return response.data as DurableOrchestrationStatus[];
+            default:
+                return Promise.reject(this.createGenericError(response));
+        }
     }
 
     /**
@@ -236,12 +241,13 @@ export class DurableOrchestrationClient {
             createdTimeTo,
             runtimeStatus,
         };
-        const response = await this.getStatusInternal(options);
 
-        if (response.status > 202) {
-            return Promise.reject(new Error(`Webhook returned status code ${response.status}: ${response.data}`));
-        } else {
-            return response.data as DurableOrchestrationStatus[];
+        const response = await this.getStatusInternal(options);
+        switch (response.status) {
+            case 200:
+                return response.data as DurableOrchestrationStatus[];
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -268,7 +274,7 @@ export class DurableOrchestrationClient {
             case 404: // instance not found
                 return new PurgeHistoryResult(0);
             default:
-                return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -338,7 +344,7 @@ export class DurableOrchestrationClient {
             case 404: // instance not found
                 return new PurgeHistoryResult(0);
             default:
-                return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -409,10 +415,8 @@ export class DurableOrchestrationClient {
                 return;
             case 404:
                 return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
-            case 400:
-                return Promise.reject(new Error("Only application/json request content is supported"));
             default:
-                return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -448,7 +452,7 @@ export class DurableOrchestrationClient {
             }
 
             requestUrl = WebhookUtils.getReadEntityUrl(
-                this.clientData.rpcBaseUrl || this.clientData.baseUrl,
+                this.clientData.baseUrl,
                 this.clientData.requiredQueryStringParameters,
                 entityId.name,
                 entityId.key,
@@ -463,7 +467,7 @@ export class DurableOrchestrationClient {
             case 404:   // entity does not exist
                 return new EntityStateResponse(false, undefined);
             default:
-                return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -507,7 +511,7 @@ export class DurableOrchestrationClient {
             case 410:
                 return Promise.reject(new Error("The rewind operation is only supported on failed orchestration instances."));
             default:
-                return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -547,7 +551,7 @@ export class DurableOrchestrationClient {
             }
 
             requestUrl = WebhookUtils.getSignalEntityUrl(
-                this.clientData.rpcBaseUrl || this.clientData.baseUrl,
+                this.clientData.baseUrl,
                 this.clientData.requiredQueryStringParameters,
                 entityId.name,
                 entityId.key,
@@ -561,7 +565,7 @@ export class DurableOrchestrationClient {
             case 202: // signal accepted
                 return;
             default:
-                return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -603,7 +607,7 @@ export class DurableOrchestrationClient {
         if (response.data && response.status <= 202) {
             return (response.data as HttpManagementPayload).id;
         } else  {
-            return Promise.reject(new Error(JSON.stringify(response.data)));
+            return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -640,7 +644,7 @@ export class DurableOrchestrationClient {
             case 404:
                 return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
             default:
-                return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -826,5 +830,9 @@ export class DurableOrchestrationClient {
         }
 
         return this.axiosInstance.get(requestUrl);
+    }
+
+    private createGenericError(response: AxiosResponse<any>): Error {
+        return new Error(`The operation failed with an unexpected status code: ${response.status}. Details: ${JSON.stringify(response.data)}`);
     }
 }
