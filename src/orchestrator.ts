@@ -12,7 +12,7 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
 } from "./classes";
 import { DurableError } from "./durableerror";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
-import { TaskBase } from "./tasks/taskinterfaces";
+import { CompletedTask, TaskBase } from "./tasks/taskinterfaces";
 import { TokenSource } from "./tokensource";
 
 /** @hidden */
@@ -544,27 +544,36 @@ export class Orchestrator {
     }
 
     private all(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
-        const completedTasks = tasks.filter(TaskFilter.isCompletedTask);
-        if (completedTasks.length === tasks.length) {
-            const maximumCompletionIndex = Math.max.apply(
-                null,
-                completedTasks.map((task) => task.completionIndex));
-
-            // Add a small amount to the completion index for the task
-            // returned by this method, so that it doesn't tie with
-            // its child task that finished last.
-            const completionIndex = maximumCompletionIndex + .0001;
-
-            const failedTasks = completedTasks.filter(TaskFilter.isFailedTask);
-            if (failedTasks.length > 0) {
-                const allErrors = failedTasks.map((task) => task.exception);
-                return TaskFactory.FailedTaskSet(tasks, completionIndex, new AggregatedError(allErrors));
-            } else {
-                const results = completedTasks.map((task) => task.result);
-                return TaskFactory.SuccessfulTaskSet(tasks, completionIndex, results);
+        let maxCompletionIndex: number | undefined = undefined;
+        const errors: Error[] = [];
+        const results: unknown[] = [];
+        for (let index = 0; index < tasks.length; index++) {
+            const task = tasks[index];
+            if (!TaskFilter.isCompletedTask(task)) {
+                return TaskFactory.UncompletedTaskSet(tasks);
             }
+
+            if (!maxCompletionIndex) {
+                maxCompletionIndex = task.completionIndex;
+            } else if (maxCompletionIndex < task.completionIndex) {
+                maxCompletionIndex = task.completionIndex;
+            }
+
+            if (TaskFilter.isFailedTask(task)) {
+                errors.push(task.exception);
+            } else {
+                results.push(task.result);
+            }
+        }
+
+        // We are guaranteed that maxCompletionIndex is not undefined, or
+        // we would have alreayd returned an uncompleted task set.
+        const completionIndex = maxCompletionIndex as number;
+
+        if (errors.length > 0) {
+            return TaskFactory.FailedTaskSet(tasks, completionIndex, new AggregatedError(errors));
         } else {
-            return TaskFactory.UncompletedTaskSet(tasks);
+            return TaskFactory.SuccessfulTaskSet(tasks, completionIndex, results);
         }
     }
 
@@ -573,18 +582,23 @@ export class Orchestrator {
             throw new Error("At least one yieldable task must be provided to wait for.");
         }
 
-        const completedTasks = tasks.filter(TaskFilter.isCompletedTask);
-        if (completedTasks.length === 0) {
-            return TaskFactory.UncompletedTaskSet(tasks);
+        let firstCompleted: CompletedTask | undefined = undefined;
+        for (let index = 0; index < tasks.length; index++) {
+            const task = tasks[index];
+            if (TaskFilter.isCompletedTask(task)) {
+                if (!firstCompleted) {
+                    firstCompleted = task;
+                } else if (task.completionIndex < firstCompleted.completionIndex) {
+                    firstCompleted = task;
+                }
+            }
         }
 
-        // Find the completed task with the lowest completion index
-        let firstCompleted = completedTasks[0];
-        completedTasks.forEach((task) =>
-            firstCompleted = task.completionIndex < firstCompleted.completionIndex ? task : firstCompleted,
-        );
-
-        return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted.completionIndex, firstCompleted);
+        if (firstCompleted) {
+            return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted.completionIndex, firstCompleted);
+        } else {
+            return TaskFactory.UncompletedTaskSet(tasks);
+        }
     }
 
     private parseHistoryEvent(directiveResult: HistoryEvent): unknown {

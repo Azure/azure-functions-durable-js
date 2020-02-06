@@ -12,9 +12,9 @@ export class TaskFilter {
     public static isYieldable(task: any): task is TaskBase {
         const taskBase = task as TaskBase;
         return taskBase
-            && taskBase.isCompleted != null
-            && taskBase.isFaulted != null
-            && taskBase.yieldNewActions != null;
+            && taskBase.isCompleted !== undefined
+            && taskBase.isFaulted !== undefined
+            && taskBase.yieldNewActions !== undefined;
     }
 
     public static isSingleTask(task: TaskBase): task is Task {
