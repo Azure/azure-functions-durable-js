@@ -546,9 +546,14 @@ export class Orchestrator {
     private all(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
         const completedTasks = tasks.filter(TaskFilter.isCompletedTask);
         if (completedTasks.length === tasks.length) {
-            const completionIndex = Math.max.apply(
+            const maximumCompletionIndex = Math.max.apply(
                 null,
                 completedTasks.map((task) => task.completionIndex));
+
+            // Add a small amount to the completion index for the task
+            // returned by this method, so that it doesn't tie with
+            // its child task that finished last.
+            const completionIndex = maximumCompletionIndex + .0001;
 
             const failedTasks = completedTasks.filter(TaskFilter.isFailedTask);
             if (failedTasks.length > 0) {

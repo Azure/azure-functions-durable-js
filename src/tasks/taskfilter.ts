@@ -10,7 +10,11 @@ export class TaskFilter {
     }
 
     public static isYieldable(task: any): task is TaskBase {
-        return (task instanceof Task) || (task instanceof TaskSet);
+        const taskBase = task as TaskBase;
+        return taskBase
+            && taskBase.isCompleted != null
+            && taskBase.isFaulted != null
+            && taskBase.yieldNewActions != null;
     }
 
     public static isSingleTask(task: TaskBase): task is Task {
