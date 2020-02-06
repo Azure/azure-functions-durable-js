@@ -1730,7 +1730,8 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            const expectedErr = "Activity function 'GetFileSize' failed: Could not find file.";
+            const expectedErr1 = "Activity function 'GetFileSize' failed: Could not find file file2.png";
+            const expectedErr2 = "Activity function 'GetFileSize' failed: Could not find file file3.csx";
 
             orchestrator(mockContext);
 
@@ -1749,7 +1750,9 @@ describe("Orchestrator", () => {
                     ],
                 },
             );
-            expect(orchestrationState.error).to.include(expectedErr);
+
+            expect(orchestrationState.error).to.include(expectedErr1);
+            expect(orchestrationState.error).to.include(expectedErr2);
         });
 
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
@@ -1829,6 +1832,125 @@ describe("Orchestrator", () => {
                         [ new CallActivityAction("TaskA", true), new CallActivityAction("TaskB", true) ],
                     ],
                     output: "A",
+                }),
+            );
+        });
+
+        it("Task.any called with one TaskSet and one timer where TaskSet wins", async () => {
+            const orchestrator = TestOrchestrations.AnyWithTaskSet;
+            const eventsWin = true;
+            const initialTime = moment.utc();
+            let mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetAnyWithTaskSet(
+                        initialTime.toDate(),
+                        1,
+                        eventsWin,
+                    ),
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
+                    [
+                        [
+                            new WaitForExternalEventAction("firstRequiredEvent"),
+                            new WaitForExternalEventAction("secondRequiredEvent"),
+                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                        ],
+                    ],
+                    output: undefined,
+                }),
+            );
+
+            mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetAnyWithTaskSet(
+                        initialTime.toDate(),
+                        2,
+                        eventsWin,
+                    ),
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
+                    [
+                        [
+                            new WaitForExternalEventAction("firstRequiredEvent"),
+                            new WaitForExternalEventAction("secondRequiredEvent"),
+                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                        ],
+                        [ new CallActivityAction("Hello", "Tokyo") ],
+                    ],
+                    output: undefined,
+                }),
+            );
+        });
+
+        it("Task.any called with one TaskSet and one timer where timer wins", async () => {
+            const orchestrator = TestOrchestrations.AnyWithTaskSet;
+            const eventsWin = false;
+            const initialTime = moment.utc();
+            let mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetAnyWithTaskSet(
+                        initialTime.toDate(),
+                        1,
+                        eventsWin,
+                    ),
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    actions:
+                    [
+                        [
+                            new WaitForExternalEventAction("firstRequiredEvent"),
+                            new WaitForExternalEventAction("secondRequiredEvent"),
+                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                        ],
+                    ],
+                    output: undefined,
+                }),
+            );
+
+            mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetAnyWithTaskSet(
+                        initialTime.toDate(),
+                        2,
+                        eventsWin,
+                    ),
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions:
+                    [
+                        [
+                            new WaitForExternalEventAction("firstRequiredEvent"),
+                            new WaitForExternalEventAction("secondRequiredEvent"),
+                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                        ],
+                    ],
+                    output: ["timeout"],
                 }),
             );
         });

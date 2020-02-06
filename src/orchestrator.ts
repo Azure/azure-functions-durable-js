@@ -1,4 +1,5 @@
 import * as debug from "debug";
+import { AggregatedError } from "./aggregatederror";
 import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, CallHttpAction,
     CallSubOrchestratorAction, CallSubOrchestratorWithRetryAction, ContinueAsNewAction,
     CreateTimerAction, DurableHttpRequest, DurableLock, DurableOrchestrationBindingInfo, EntityId,
@@ -11,7 +12,7 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
 } from "./classes";
 import { DurableError } from "./durableerror";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
-import { FailedSingleTask } from "./tasks/taskinterfaces";
+import { CompletedTask, TaskBase } from "./tasks/taskinterfaces";
 import { TokenSource } from "./tokensource";
 
 /** @hidden */
@@ -82,7 +83,7 @@ export class Orchestrator {
         // Setup
         const gen = this.fn(context);
         const actions: IAction[][] = [];
-        let partialResult: Task | TaskSet;
+        let partialResult: TaskBase;
 
         try {
             // First execution, we have not yet "yielded" any of the tasks.
@@ -90,7 +91,7 @@ export class Orchestrator {
 
             while (true) {
 
-                if (!(TaskFilter.isTask(g.value))) {
+                if (!(TaskFilter.isYieldable(g.value))) {
                     if (!g.done) {
                         // The orchestrator must have yielded a non-Task related type,
                         // so just return execution flow with what they yielded back.
@@ -112,18 +113,10 @@ export class Orchestrator {
                     }
                 }
 
-                partialResult = g.value as Task | TaskSet;
-                if (TaskFilter.isSingleTask(partialResult)) {
-                    if (!partialResult.wasYielded) {
-                        actions.push([ partialResult.action ]);
-                        partialResult.wasYielded = true;
-                    }
-                } else if (TaskFilter.isTaskSet(partialResult)) {
-                    const unyieldedTasks = partialResult.tasks.filter((task) => !task.wasYielded);
-                    actions.push(unyieldedTasks.map((task) => task.action));
-                    unyieldedTasks.forEach((task) => {
-                        task.wasYielded = true;
-                    });
+                partialResult = g.value as TaskBase;
+                const newActions = partialResult.yieldNewActions();
+                if (newActions && newActions.length > 0) {
+                    actions.push(newActions);
                 }
 
                 // Return continue as new events as completed, as the execution itself is now completed.
@@ -550,37 +543,59 @@ export class Orchestrator {
         }
     }
 
-    private all(state: HistoryEvent[], tasks: Task[]): TaskSet {
-        const faulted = tasks.filter(TaskFilter.isFailedTask);
-        if (faulted.length > 0) {
-            return TaskFactory.FailedTaskSet(tasks, (faulted[0] as FailedSingleTask).exception);
+    private all(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
+        let maxCompletionIndex: number | undefined = undefined;
+        const errors: Error[] = [];
+        const results: unknown[] = [];
+        for (let index = 0; index < tasks.length; index++) {
+            const task = tasks[index];
+            if (!TaskFilter.isCompletedTask(task)) {
+                return TaskFactory.UncompletedTaskSet(tasks);
+            }
+
+            if (!maxCompletionIndex) {
+                maxCompletionIndex = task.completionIndex;
+            } else if (maxCompletionIndex < task.completionIndex) {
+                maxCompletionIndex = task.completionIndex;
+            }
+
+            if (TaskFilter.isFailedTask(task)) {
+                errors.push(task.exception);
+            } else {
+                results.push(task.result);
+            }
         }
 
-        const succesfulTasks = tasks.filter(TaskFilter.isSuccessfulSingleTask);
-        const isCompleted = succesfulTasks.length === tasks.length;
-        if (isCompleted) {
-            const results = succesfulTasks.reduce((acc, t) => {
-                return [...acc, t.result];
-            }, []);
+        // We are guaranteed that maxCompletionIndex is not undefined, or
+        // we would have alreayd returned an uncompleted task set.
+        const completionIndex = maxCompletionIndex as number;
 
-            return TaskFactory.SuccessfulTaskSet(tasks, results);
+        if (errors.length > 0) {
+            return TaskFactory.FailedTaskSet(tasks, completionIndex, new AggregatedError(errors));
         } else {
-            return TaskFactory.UncompletedTaskSet(tasks);
+            return TaskFactory.SuccessfulTaskSet(tasks, completionIndex, results);
         }
     }
 
-    private any(state: HistoryEvent[], tasks: Task[]): TaskSet {
-        const completedTasks = tasks
-            .filter(TaskFilter.isSuccessfulSingleTask)
-            .sort((a, b) => {
-                if (a.completionIndex > b.completionIndex) { return 1; }
-                if (a.completionIndex < b.completionIndex) { return -1; }
-                return 0;
-            });
+    private any(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
+        if (!tasks || tasks.length === 0) {
+            throw new Error("At least one yieldable task must be provided to wait for.");
+        }
 
-        const firstCompleted = completedTasks[0];
+        let firstCompleted: CompletedTask | undefined = undefined;
+        for (let index = 0; index < tasks.length; index++) {
+            const task = tasks[index];
+            if (TaskFilter.isCompletedTask(task)) {
+                if (!firstCompleted) {
+                    firstCompleted = task;
+                } else if (task.completionIndex < firstCompleted.completionIndex) {
+                    firstCompleted = task;
+                }
+            }
+        }
+
         if (firstCompleted) {
-            return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted);
+            return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted.completionIndex, firstCompleted);
         } else {
             return TaskFactory.UncompletedTaskSet(tasks);
         }
