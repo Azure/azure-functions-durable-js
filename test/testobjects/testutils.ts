@@ -1,5 +1,6 @@
-import { HttpCreationPayload, HttpManagementPayload,
+import { HttpCreationPayload, HttpManagementPayload, IOrchestratorState,
     OrchestrationClientInputData } from "../../src/classes";
+import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
 import { TestConstants } from "./testconstants";
 
 export class TestUtils {
@@ -12,7 +13,8 @@ export class TestUtils {
             taskHub,
             TestUtils.createHttpCreationPayload(host, taskHub, connection),
             TestUtils.createHttpManagementPayload(id, host, taskHub, connection),
-            `${host}${TestConstants.webhookPath.replace(/\/$/, "")}`, // Returns baseURL with remaining whitespace trimmed.
+            // Returns baseURL with remaining whitespace trimmed.
+            `${host}${TestConstants.webhookPath.replace(/\/$/, "")}`,
             TestConstants.testCode,
         );
     }
@@ -71,5 +73,13 @@ export class TestUtils {
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
         );
+    }
+
+    public static extractStateFromError(err: OrchestrationFailureError): IOrchestratorState {
+        const label = "\n\n$OutOfProcData$:";
+        const message = err.message;
+        const dataStart = message.indexOf(label) + label.length;
+        const dataJson = message.substr(dataStart);
+        return JSON.parse(dataJson) as IOrchestratorState;
     }
 }

@@ -5,7 +5,6 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
 import cloneDeep = require("lodash/cloneDeep");
 import process = require("process");
 import url = require("url");
-import uuid = require("uuid/v1");
 import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
     GetStatusOptions, HttpCreationPayload, HttpManagementPayload,
@@ -13,6 +12,8 @@ import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
     OrchestrationRuntimeStatus, PurgeHistoryResult, Utils,
 } from "./classes";
 import { WebhookUtils } from "./webhookutils";
+
+const URL = url.URL;
 
 /**
  * Returns an OrchestrationClient instance.
@@ -186,28 +187,24 @@ export class DurableOrchestrationClient {
         showHistory?: boolean,
         showHistoryOutput?: boolean,
         showInput?: boolean,
-        ): Promise<DurableOrchestrationStatus> {
-        try {
-            const options: GetStatusOptions = {
-                instanceId,
-                showHistory,
-                showHistoryOutput,
-                showInput,
-            };
-            const response = await this.getStatusInternal(options);
+    ): Promise<DurableOrchestrationStatus> {
+        const options: GetStatusOptions = {
+            instanceId,
+            showHistory,
+            showHistoryOutput,
+            showInput,
+        };
+        const response = await this.getStatusInternal(options);
 
-            switch (response.status) {
-                case 200: // instance completed
-                case 202: // instance in progress
-                case 400: // instance failed or terminated
-                case 404: // instance not found or pending
-                case 500: // instance failed with unhandled exception
-                    return response.data as DurableOrchestrationStatus;
-                default:
-                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
-            }
-        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
-            throw error.message;
+        switch (response.status) {
+            case 200: // instance completed
+            case 202: // instance in progress
+            case 400: // instance failed or terminated
+            case 404: // instance not found or pending
+            case 500: // instance failed with unhandled exception
+                return response.data as DurableOrchestrationStatus;
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -215,11 +212,12 @@ export class DurableOrchestrationClient {
      * Gets the status of all orchestration instances.
      */
     public async getStatusAll(): Promise<DurableOrchestrationStatus[]> {
-        try {
-            const response = await this.getStatusInternal({});
-            return response.data as DurableOrchestrationStatus[];
-        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
-            throw error.message;
+        const response = await this.getStatusInternal({});
+        switch (response.status) {
+            case 200:
+                return response.data as DurableOrchestrationStatus[];
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -237,55 +235,54 @@ export class DurableOrchestrationClient {
         createdTimeFrom: Date | undefined,
         createdTimeTo: Date | undefined,
         runtimeStatus: OrchestrationRuntimeStatus[],
-        ): Promise<DurableOrchestrationStatus[]> {
-        try {
-            const options: GetStatusOptions = {
-                createdTimeFrom,
-                createdTimeTo,
-                runtimeStatus,
-            };
-            const response = await this.getStatusInternal(options);
+    ): Promise<DurableOrchestrationStatus[]> {
+        const options: GetStatusOptions = {
+            createdTimeFrom,
+            createdTimeTo,
+            runtimeStatus,
+        };
 
-            if (response.status > 202) {
-                return Promise.reject(new Error(`Webhook returned status code ${response.status}: ${response.data}`));
-            } else {
+        const response = await this.getStatusInternal(options);
+        switch (response.status) {
+            case 200:
                 return response.data as DurableOrchestrationStatus[];
-            }
-        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
-            throw error.message;
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
     /**
-     * Purge the history for a concerete instance.
+     * Purge the history for a specific orchestration instance.
      * @param instanceId The ID of the orchestration instance to purge.
      */
     public async purgeInstanceHistory(instanceId: string): Promise<PurgeHistoryResult> {
-        const template = this.clientData.managementUrls.purgeHistoryDeleteUri;
-        const idPlaceholder = this.clientData.managementUrls.id;
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            requestUrl = new URL(`instances/${instanceId}`, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            const template = this.clientData.managementUrls.purgeHistoryDeleteUri;
+            const idPlaceholder = this.clientData.managementUrls.id;
+            requestUrl = template.replace(idPlaceholder, instanceId);
+        }
 
-        const webhookUrl = template.replace(idPlaceholder, instanceId);
-
-        try {
-            const response = await this.axiosInstance.delete(webhookUrl);
-            switch (response.status) {
-                case 200: // instance found
-                    return response.data as PurgeHistoryResult;
-                case 404: // instance not found
-                    return new PurgeHistoryResult(0);
-                default:
-                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
-            }
-        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
-            throw error.message;
+        const response = await this.axiosInstance.delete(requestUrl);
+        switch (response.status) {
+            case 200: // instance found
+                return response.data as PurgeHistoryResult;
+            case 404: // instance not found
+                return new PurgeHistoryResult(0);
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
     /**
-     * Purge the orchestration history for isntances that match the conditions.
+     * Purge the orchestration history for instances that match the conditions.
      * @param createdTimeFrom Start creation time for querying instances for
      *  purging.
-     * @param createdTimeTo End creation time fo rquerying instanes for
+     * @param createdTimeTo End creation time for querying instances for
      *  purging.
      * @param runtimeStatus List of runtime statuses for querying instances for
      *  purging. Only Completed, Terminated or Failed will be processed.
@@ -294,45 +291,60 @@ export class DurableOrchestrationClient {
         createdTimeFrom: Date,
         createdTimeTo?: Date,
         runtimeStatus?: OrchestrationRuntimeStatus[],
-        ): Promise<PurgeHistoryResult> {
-        const idPlaceholder = this.clientData.managementUrls.id;
-        let requestUrl = this.clientData.managementUrls.statusQueryGetUri
-        .replace(idPlaceholder, "");
-
-        if (!(createdTimeFrom instanceof Date)) {
-            throw new Error("createdTimeFrom must be a valid Date");
-        }
-
-        if (createdTimeFrom) {
-            requestUrl += `&${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`;
-        }
-
-        if (createdTimeTo) {
-            requestUrl += `&${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`;
-        }
-
-        if (runtimeStatus && runtimeStatus.length > 0) {
-            const statusesString = runtimeStatus
-                .map((value) => value.toString())
-                .reduce((acc, curr, i, arr) => {
-                    return acc + (i > 0 ? "," : "") + curr;
-            });
-
-            requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
-        }
-
-        try {
-            const response = await this.axiosInstance.delete(requestUrl);
-            switch (response.status) {
-                case 200: // instance found
-                    return response.data as PurgeHistoryResult;
-                case 404: // instance not found
-                    return new PurgeHistoryResult(0);
-                default:
-                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+    ): Promise<PurgeHistoryResult> {
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            let path = new URL("instances/", this.clientData.rpcBaseUrl).href;
+            const query: string[] = [];
+            if (createdTimeFrom) { query.push(`createdTimeFrom=${createdTimeFrom.toISOString()}`); }
+            if (createdTimeTo) { query.push(`createdTimeTo=${createdTimeTo.toISOString()}`); }
+            if (runtimeStatus && runtimeStatus.length > 0) {
+                const statusList: string = runtimeStatus.map((value) => value.toString()).join(",");
+                query.push(`runtimeStatus=${statusList}`);
             }
-        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
-            throw error.message;
+
+            if (query.length > 0) {
+                path += "?" + query.join("&");
+            }
+
+            requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            const idPlaceholder = this.clientData.managementUrls.id;
+            requestUrl = this.clientData.managementUrls.statusQueryGetUri.replace(idPlaceholder, "");
+
+            if (!(createdTimeFrom instanceof Date)) {
+                throw new Error("createdTimeFrom must be a valid Date");
+            }
+
+            if (createdTimeFrom) {
+                requestUrl += `&${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`;
+            }
+
+            if (createdTimeTo) {
+                requestUrl += `&${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`;
+            }
+
+            if (runtimeStatus && runtimeStatus.length > 0) {
+                const statusesString = runtimeStatus
+                    .map((value) => value.toString())
+                    .reduce((acc, curr, i, arr) => {
+                        return acc + (i > 0 ? "," : "") + curr;
+                });
+
+                requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+            }
+        }
+
+        const response = await this.axiosInstance.delete(requestUrl);
+        switch (response.status) {
+            case 200: // instance found
+                return response.data as PurgeHistoryResult;
+            case 404: // instance not found
+                return new PurgeHistoryResult(0);
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -362,39 +374,49 @@ export class DurableOrchestrationClient {
         eventData: unknown,
         taskHubName?: string,
         connectionName?: string,
-        ): Promise<void> {
+    ): Promise<void> {
         if (!eventName) {
             throw new Error("eventName must be a valid string.");
         }
 
-        const idPlaceholder = this.clientData.managementUrls.id;
-        let requestUrl = this.clientData.managementUrls.sendEventPostUri
-            .replace(idPlaceholder, instanceId)
-            .replace(this.eventNamePlaceholder, eventName);
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            let path = `instances/${instanceId}/raiseEvent/${eventName}`;
+            const query: string[] = [];
+            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
+            if (connectionName) { query.push(`connection=${connectionName}`); }
 
-        if (taskHubName) {
-            requestUrl = requestUrl.replace(this.clientData.taskHubName, taskHubName);
-        }
-
-        if (connectionName) {
-            requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + connectionName);
-        }
-
-        try {
-            const response = await this.axiosInstance.post(requestUrl, JSON.stringify(eventData));
-            switch (response.status) {
-                case 202: // event accepted
-                case 410: // instance completed or failed
-                    return;
-                case 404:
-                    return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
-                case 400:
-                    return Promise.reject(new Error("Only application/json request content is supported"));
-                default:
-                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+            if (query.length > 0) {
+                path += "?" + query.join("&");
             }
-        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
-            throw error.message;
+
+            requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            const idPlaceholder = this.clientData.managementUrls.id;
+            requestUrl = this.clientData.managementUrls.sendEventPostUri
+                .replace(idPlaceholder, instanceId)
+                .replace(this.eventNamePlaceholder, eventName);
+
+            if (taskHubName) {
+                requestUrl = requestUrl.replace(this.clientData.taskHubName, taskHubName);
+            }
+
+            if (connectionName) {
+                requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + connectionName);
+            }
+        }
+
+        const response = await this.axiosInstance.post(requestUrl, JSON.stringify(eventData));
+        switch (response.status) {
+            case 202: // event accepted
+            case 410: // instance completed or failed
+                return;
+            case 404:
+                return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -410,29 +432,42 @@ export class DurableOrchestrationClient {
      * @returns A response containing the current state of the entity.
      */
     public async readEntityState<T>(entityId: EntityId, taskHubName?: string, connectionName?: string): Promise<EntityStateResponse<T>> {
-        if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
-            throw new Error("Cannot use the readEntityState API with this version of the Durable Task Extension.");
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            let path = `entities/${entityId.name}/${entityId.key}`;
+            const query: string[] = [];
+            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
+            if (connectionName) { query.push(`connection=${connectionName}`); }
+
+            if (query.length > 0) {
+                path += "?" + query.join("&");
+            }
+
+            requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
+                throw new Error("Cannot use the readEntityState API with this version of the Durable Task Extension.");
+            }
+
+            requestUrl = WebhookUtils.getReadEntityUrl(
+                this.clientData.baseUrl,
+                this.clientData.requiredQueryStringParameters,
+                entityId.name,
+                entityId.key,
+                taskHubName,
+                connectionName);
         }
 
-        const requestUrl = WebhookUtils.getReadEntityUrl(this.clientData.baseUrl,
-            this.clientData.requiredQueryStringParameters,
-            entityId.name,
-            entityId.key,
-            taskHubName,
-            connectionName);
-
-        try {
-            const response = await this.axiosInstance.get(requestUrl);
-            switch (response.status) {
-                case 200:   // entity exists
-                    return new EntityStateResponse(true, response.data as T);
-                case 404:   // entity does not exist
-                    return new EntityStateResponse(false, undefined);
-                default:
-                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
-            }
-        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
-            throw error.message;
+        const response = await this.axiosInstance.get(requestUrl);
+        switch (response.status) {
+            case 200:   // entity exists
+                return new EntityStateResponse(true, response.data as T);
+            case 404:   // entity does not exist
+                return new EntityStateResponse(false, undefined);
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -444,26 +479,39 @@ export class DurableOrchestrationClient {
      *
      * This feature is currently in preview.
      */
-    public async rewind(instanceId: string, reason: string): Promise<void> {
+    public async rewind(instanceId: string, reason: string, taskHubName?: string, connectionName?: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
-        const requestUrl = this.clientData.managementUrls.rewindPostUri
-            .replace(idPlaceholder, instanceId)
-            .replace(this.reasonPlaceholder, reason);
 
-        try {
-            const response = await this.axiosInstance.post(requestUrl);
-            switch (response.status) {
-                case 202:
-                    return;
-                case 404:
-                    return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
-                case 410:
-                    return Promise.reject(new Error("The rewind operation is only supported on failed orchestration instances."));
-                default:
-                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            let path = `instances/${instanceId}/rewind?reason=${reason}`;
+            const query: string[] = [];
+            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
+            if (connectionName) {  query.push(`connection=${connectionName}`); }
+
+            if (query.length > 0) {
+                path += "&" + query.join("&");
             }
-        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
-            throw error.message;
+
+            requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            requestUrl = this.clientData.managementUrls.rewindPostUri
+                .replace(idPlaceholder, instanceId)
+                .replace(this.reasonPlaceholder, reason);
+        }
+
+        const response = await this.axiosInstance.post(requestUrl);
+        switch (response.status) {
+            case 202:
+                return;
+            case 404:
+                return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
+            case 410:
+                return Promise.reject(new Error("The rewind operation is only supported on failed orchestration instances."));
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -481,29 +529,43 @@ export class DurableOrchestrationClient {
         operationContent?: unknown,
         taskHubName?: string,
         connectionName?: string,
-        ): Promise<void> {
-        if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
-            throw new Error("Cannot use the signalEntity API with this version of the Durable Task Extension.");
+    ): Promise<void> {
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            let path = `entities/${entityId.name}/${entityId.key}`;
+            const query: string[] = [];
+            if (operationName) { query.push(`op=${operationName}`); }
+            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
+            if (connectionName) { query.push(`connection=${connectionName}`); }
+
+            if (query.length > 0) {
+                path += "?" + query.join("&");
+            }
+
+            requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
+                throw new Error("Cannot use the signalEntity API with this version of the Durable Task Extension.");
+            }
+
+            requestUrl = WebhookUtils.getSignalEntityUrl(
+                this.clientData.baseUrl,
+                this.clientData.requiredQueryStringParameters,
+                entityId.name,
+                entityId.key,
+                operationName,
+                taskHubName,
+                connectionName);
         }
 
-        const requestUrl = WebhookUtils.getSignalEntityUrl(this.clientData.baseUrl,
-            this.clientData.requiredQueryStringParameters,
-            entityId.name,
-            entityId.key,
-            operationName,
-            taskHubName,
-            connectionName);
-
-        try {
-            const response = await this.axiosInstance.post(requestUrl, JSON.stringify(operationContent));
-            switch (response.status) {
-                case 202: // signal accepted
-                    return;
-                default:
-                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
-            }
-        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
-            throw error.message;
+        const response = await this.axiosInstance.post(requestUrl, JSON.stringify(operationContent));
+        switch (response.status) {
+            case 202: // signal accepted
+                return;
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -526,20 +588,26 @@ export class DurableOrchestrationClient {
             throw new Error("orchestratorFunctionName must be a valid string.");
         }
 
-        let requestUrl = this.clientData.creationUrls.createNewInstancePostUri;
-        requestUrl = requestUrl
-            .replace(this.functionNamePlaceholder, orchestratorFunctionName)
-            .replace(this.instanceIdPlaceholder, (instanceId ? `/${instanceId}` : ""));
+        // TODO: Add support for specifying a task hub and a connection name
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            requestUrl = new URL(
+                `orchestrators/${orchestratorFunctionName}${(instanceId ? `/${instanceId}` : "")}`,
+                this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            requestUrl = this.clientData.creationUrls.createNewInstancePostUri;
+            requestUrl = requestUrl
+                .replace(this.functionNamePlaceholder, orchestratorFunctionName)
+                .replace(this.instanceIdPlaceholder, (instanceId ? `/${instanceId}` : ""));
+        }
 
-        try {
-            const response = await this.axiosInstance.post(requestUrl, input !== undefined ? JSON.stringify(input) : "");
-            if (response.data && response.status <= 202) {
-                return (response.data as HttpManagementPayload).id;
-            } else  {
-                return Promise.reject(new Error(JSON.stringify(response.data)));
-            }
-        } catch (message) {
-            throw new Error(message.error);
+        const response = await this.axiosInstance.post(requestUrl, input !== undefined ? JSON.stringify(input) : "");
+        if (response.data && response.status <= 202) {
+            return (response.data as HttpManagementPayload).id;
+        } else  {
+            return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -555,23 +623,28 @@ export class DurableOrchestrationClient {
      */
     public async terminate(instanceId: string, reason: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
-        const requestUrl = this.clientData.managementUrls.terminatePostUri
-            .replace(idPlaceholder, instanceId)
-            .replace(this.reasonPlaceholder, reason);
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            requestUrl = new URL(
+                `instances/${instanceId}/terminate?reason=${reason}`,
+                this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend path
+            requestUrl = this.clientData.managementUrls.terminatePostUri
+                .replace(idPlaceholder, instanceId)
+                .replace(this.reasonPlaceholder, reason);
+        }
 
-        try {
-            const response = await this.axiosInstance.post(requestUrl);
-            switch (response.status) {
-                case 202: // terminate accepted
-                case 410: // instance completed or failed
-                    return;
-                case 404:
-                    return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
-                default:
-                    return Promise.reject(new Error(`Webhook returned unrecognized status code ${response.status}`));
-            }
-        } catch (error) {   // error object is axios-specific, not a JavaScript Error; extract relevant bit
-            throw error.message;
+        const response = await this.axiosInstance.post(requestUrl);
+        switch (response.status) {
+            case 202: // terminate accepted
+            case 410: // instance completed or failed
+                return;
+            case 404:
+                return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
+            default:
+                return Promise.reject(this.createGenericError(response));
         }
     }
 
@@ -596,7 +669,7 @@ export class DurableOrchestrationClient {
         instanceId: string,
         timeoutInMilliseconds: number = 10000,
         retryIntervalInMilliseconds: number = 1000,
-        ): Promise<IHttpResponse> {
+    ): Promise<IHttpResponse> {
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
             throw new Error(`Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`);
         }
@@ -696,41 +769,70 @@ export class DurableOrchestrationClient {
     }
 
     private async getStatusInternal(options: GetStatusOptions): Promise<AxiosResponse> {
-        const template = this.clientData.managementUrls.statusQueryGetUri;
-        const idPlaceholder = this.clientData.managementUrls.id;
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            let path = new URL(`instances/${options.instanceId || ""}`, this.clientData.rpcBaseUrl).href;
+            const query: string[] = [];
+            if (options.taskHubName) { query.push(`taskHub=${options.taskHubName}`); }
+            if (options.connectionName) { query.push(`connection=${options.connectionName}`); }
+            if (options.showHistory) { query.push(`showHistory=${options.showHistory}`); }
+            if (options.showHistoryOutput) { query.push(`showHistoryOutput=${options.showHistoryOutput}`); }
+            if (options.showInput) { query.push(`showInput=${options.showInput}`); }
+            if (options.createdTimeFrom) { query.push(`createdTimeFrom=${options.createdTimeFrom.toISOString()}`); }
+            if (options.createdTimeTo) { query.push(`createdTimeTo=${options.createdTimeTo.toISOString()}`); }
+            if (options.runtimeStatus && options.runtimeStatus.length > 0) {
+                const statusList: string = options.runtimeStatus.map((value) => value.toString()).join(",");
+                query.push(`runtimeStatus=${statusList}`);
+            }
 
-        let requestUrl = template.replace(idPlaceholder, typeof(options.instanceId) === "string" ? options.instanceId : "");
-        if (options.taskHubName) {
-            requestUrl = requestUrl.replace(this.clientData.taskHubName, options.taskHubName);
-        }
-        if (options.connectionName) {
-            requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + options.connectionName);
-        }
-        if (options.showHistory) {
-            requestUrl += `&${this.showHistoryQueryKey}=${options.showHistory}`;
-        }
-        if (options.showHistoryOutput) {
-            requestUrl += `&${this.showHistoryOutputQueryKey}=${options.showHistoryOutput}`;
-        }
-        if (options.createdTimeFrom) {
-            requestUrl += `&${this.createdTimeFromQueryKey}=${options.createdTimeFrom.toISOString()}`;
-        }
-        if (options.createdTimeTo) {
-            requestUrl += `&${this.createdTimeToQueryKey}=${options.createdTimeTo.toISOString()}`;
-        }
-        if (options.runtimeStatus && options.runtimeStatus.length > 0) {
-            const statusesString = options.runtimeStatus
-                .map((value) => value.toString())
-                .reduce((acc, curr, i, arr) => {
-                    return acc + (i > 0 ? "," : "") + curr;
-            });
+            if (query.length > 0) {
+                path += "?" + query.join("&");
+            }
 
-            requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
-        }
-        if (typeof options.showInput === "boolean") {
-            requestUrl += `&${this.showInputQueryKey}=${options.showInput}`;
+            requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
+        } else {
+            // Legacy app frontend code path
+            const template = this.clientData.managementUrls.statusQueryGetUri;
+            const idPlaceholder = this.clientData.managementUrls.id;
+
+            requestUrl = template.replace(idPlaceholder, typeof(options.instanceId) === "string" ? options.instanceId : "");
+            if (options.taskHubName) {
+                requestUrl = requestUrl.replace(this.clientData.taskHubName, options.taskHubName);
+            }
+            if (options.connectionName) {
+                requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + options.connectionName);
+            }
+            if (options.showHistory) {
+                requestUrl += `&${this.showHistoryQueryKey}=${options.showHistory}`;
+            }
+            if (options.showHistoryOutput) {
+                requestUrl += `&${this.showHistoryOutputQueryKey}=${options.showHistoryOutput}`;
+            }
+            if (options.createdTimeFrom) {
+                requestUrl += `&${this.createdTimeFromQueryKey}=${options.createdTimeFrom.toISOString()}`;
+            }
+            if (options.createdTimeTo) {
+                requestUrl += `&${this.createdTimeToQueryKey}=${options.createdTimeTo.toISOString()}`;
+            }
+            if (options.runtimeStatus && options.runtimeStatus.length > 0) {
+                const statusesString = options.runtimeStatus
+                    .map((value) => value.toString())
+                    .reduce((acc, curr, i, arr) => {
+                        return acc + (i > 0 ? "," : "") + curr;
+                });
+
+                requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+            }
+            if (typeof options.showInput === "boolean") {
+                requestUrl += `&${this.showInputQueryKey}=${options.showInput}`;
+            }
         }
 
         return this.axiosInstance.get(requestUrl);
+    }
+
+    private createGenericError(response: AxiosResponse<any>): Error {
+        return new Error(`The operation failed with an unexpected status code: ${response.status}. Details: ${JSON.stringify(response.data)}`);
     }
 }

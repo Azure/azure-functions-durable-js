@@ -1,4 +1,5 @@
 import * as debug from "debug";
+import { AggregatedError } from "./aggregatederror";
 import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, CallHttpAction,
     CallSubOrchestratorAction, CallSubOrchestratorWithRetryAction, ContinueAsNewAction,
     CreateTimerAction, DurableHttpRequest, DurableLock, DurableOrchestrationBindingInfo, EntityId,
@@ -9,7 +10,9 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
     TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask,
     Utils, WaitForExternalEventAction,
 } from "./classes";
-import { FailedSingleTask } from "./tasks/taskinterfaces";
+import { DurableError } from "./durableerror";
+import { OrchestrationFailureError } from "./orchestrationfailureerror";
+import { CompletedTask, TaskBase } from "./tasks/taskinterfaces";
 import { TokenSource } from "./tokensource";
 
 /** @hidden */
@@ -80,7 +83,7 @@ export class Orchestrator {
         // Setup
         const gen = this.fn(context);
         const actions: IAction[][] = [];
-        let partialResult: Task | TaskSet;
+        let partialResult: TaskBase;
 
         try {
             // First execution, we have not yet "yielded" any of the tasks.
@@ -88,7 +91,7 @@ export class Orchestrator {
 
             while (true) {
 
-                if (!(TaskFilter.isTask(g.value))) {
+                if (!(TaskFilter.isYieldable(g.value))) {
                     if (!g.done) {
                         // The orchestrator must have yielded a non-Task related type,
                         // so just return execution flow with what they yielded back.
@@ -98,7 +101,7 @@ export class Orchestrator {
                         log("Iterator is done");
                         // The customer returned an absolute type.
                         context.done(
-                            null,
+                            undefined,
                             new OrchestratorState({
                                 isDone: true,
                                 output: g.value,
@@ -110,24 +113,16 @@ export class Orchestrator {
                     }
                 }
 
-                partialResult = g.value as Task | TaskSet;
-                if (TaskFilter.isSingleTask(partialResult)) {
-                    if (!partialResult.wasYielded) {
-                        actions.push([ partialResult.action ]);
-                        partialResult.wasYielded = true;
-                    }
-                } else if (TaskFilter.isTaskSet(partialResult)) {
-                    const unyieldedTasks = partialResult.tasks.filter((task) => !task.wasYielded);
-                    actions.push(unyieldedTasks.map((task) => task.action));
-                    unyieldedTasks.forEach((task) => {
-                        task.wasYielded = true;
-                    });
+                partialResult = g.value as TaskBase;
+                const newActions = partialResult.yieldNewActions();
+                if (newActions && newActions.length > 0) {
+                    actions.push(newActions);
                 }
 
                 // Return continue as new events as completed, as the execution itself is now completed.
                 if (TaskFilter.isSingleTask(partialResult) && partialResult.action instanceof ContinueAsNewAction) {
                     context.done(
-                        null,
+                        undefined,
                         new OrchestratorState({
                             isDone: true,
                             output: undefined,
@@ -140,7 +135,7 @@ export class Orchestrator {
 
                 if (!TaskFilter.isCompletedTask(partialResult)) {
                     context.done(
-                        null,
+                        undefined,
                         new OrchestratorState({
                             isDone: false,
                             output: undefined,
@@ -164,7 +159,7 @@ export class Orchestrator {
                 // would yield the task before returning out of the generator function.
                 if (g.done) {
                     log("Iterator is done");
-                    context.done(null,
+                    context.done(undefined,
                         new OrchestratorState({
                             isDone: true,
                             actions,
@@ -185,17 +180,16 @@ export class Orchestrator {
                 g = gen.next(partialResult.result);
             }
         } catch (error) {
-            log(`Error: ${error}`);
-            context.done(
-                error,
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions,
-                    error: error.stack,
-                    customStatus: this.customStatus,
-                }),
-            );
+            // Wrap orchestration state in OutOfProcErrorWrapper to ensure data
+            // gets embedded in error message received by C# extension.
+            const errorState = new OrchestratorState({
+                isDone: false,
+                output: undefined,
+                actions,
+                error: error.message,
+                customStatus: this.customStatus,
+            });
+            context.done(new OrchestrationFailureError(error, errorState), undefined);
             return;
         }
     }
@@ -225,7 +219,7 @@ export class Orchestrator {
                 taskFailed.Timestamp,
                 taskFailed.TaskScheduledId,
                 state.indexOf(taskFailed),
-                new Error(taskFailed.Reason),
+                new DurableError(taskFailed.Reason),
             );
         } else {
             return TaskFactory.UncompletedTask(
@@ -256,14 +250,16 @@ export class Orchestrator {
                 const result = this.parseHistoryEvent(taskCompleted);
 
                 return TaskFactory.SuccessfulTask(newAction, result, taskCompleted.Timestamp, taskCompleted.TaskScheduledId, state.indexOf(taskCompleted));
-            } else if (taskFailed && taskRetryTimer && attempt >= retryOptions.maxNumberOfAttempts) {
+            } else if (taskFailed
+                && taskRetryTimer
+                && attempt >= retryOptions.maxNumberOfAttempts) {
                 return TaskFactory.FailedTask(
                     newAction,
                     taskFailed.Reason,
                     taskFailed.Timestamp,
                     taskFailed.TaskScheduledId,
                     state.indexOf(taskFailed),
-                    new Error(taskFailed.Reason),
+                    new DurableError(taskFailed.Reason),
                 );
             }
         }
@@ -278,7 +274,7 @@ export class Orchestrator {
         const eventSent = this.findEventSent(state, schedulerId, "op");
         let eventRaised;
         if (eventSent) {
-            const eventSentInput = eventSent && eventSent.Input !== undefined ? JSON.parse(eventSent.Input) as RequestMessage : undefined;
+            const eventSentInput = eventSent && eventSent.Input ? JSON.parse(eventSent.Input) as RequestMessage : undefined;
             eventRaised = eventSentInput ? this.findEventRaised(state, eventSentInput.id) : undefined;
         }
         this.setProcessed([ eventSent, eventRaised ]);
@@ -325,7 +321,7 @@ export class Orchestrator {
                 subOrchestratorFailed.Timestamp,
                 subOrchestratorFailed.TaskScheduledId,
                 state.indexOf(subOrchestratorFailed),
-                new Error(subOrchestratorFailed.Reason),
+                new DurableError(subOrchestratorFailed.Reason),
             );
         } else {
             return TaskFactory.UncompletedTask(
@@ -373,14 +369,16 @@ export class Orchestrator {
                     subOrchestratorCompleted.TaskScheduledId,
                     state.indexOf(subOrchestratorCompleted),
                 );
-            } else if (subOrchestratorFailed && retryTimer && attempt >= retryOptions.maxNumberOfAttempts) {
+            } else if (subOrchestratorFailed
+                && retryTimer
+                && attempt >= retryOptions.maxNumberOfAttempts) {
                 return TaskFactory.FailedTask(
                     newAction,
                     subOrchestratorFailed.Reason,
                     subOrchestratorFailed.Timestamp,
                     subOrchestratorFailed.TaskScheduledId,
                     state.indexOf(subOrchestratorFailed),
-                    new Error(subOrchestratorFailed.Reason),
+                    new DurableError(subOrchestratorFailed.Reason),
                 );
             }
         }
@@ -427,7 +425,7 @@ export class Orchestrator {
                 httpFailed.Timestamp,
                 httpFailed.TaskScheduledId,
                 state.indexOf(httpFailed),
-                new Error(httpFailed.Reason),
+                new DurableError(httpFailed.Reason),
             );
         } else {
             return TaskFactory.UncompletedTask(
@@ -464,7 +462,7 @@ export class Orchestrator {
 
     private isLocked(contextLocks: EntityId[]): LockState {
         return new LockState(
-            contextLocks !== undefined && contextLocks !== null,
+            contextLocks && contextLocks !== null,
             contextLocks,
         );
     }
@@ -545,37 +543,59 @@ export class Orchestrator {
         }
     }
 
-    private all(state: HistoryEvent[], tasks: Task[]): TaskSet {
-        const faulted = tasks.filter(TaskFilter.isFailedTask);
-        if (faulted.length > 0) {
-            return TaskFactory.FailedTaskSet(tasks, (faulted[0] as FailedSingleTask).exception);
+    private all(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
+        let maxCompletionIndex: number | undefined = undefined;
+        const errors: Error[] = [];
+        const results: unknown[] = [];
+        for (let index = 0; index < tasks.length; index++) {
+            const task = tasks[index];
+            if (!TaskFilter.isCompletedTask(task)) {
+                return TaskFactory.UncompletedTaskSet(tasks);
+            }
+
+            if (!maxCompletionIndex) {
+                maxCompletionIndex = task.completionIndex;
+            } else if (maxCompletionIndex < task.completionIndex) {
+                maxCompletionIndex = task.completionIndex;
+            }
+
+            if (TaskFilter.isFailedTask(task)) {
+                errors.push(task.exception);
+            } else {
+                results.push(task.result);
+            }
         }
 
-        const succesfulTasks = tasks.filter(TaskFilter.isSuccessfulSingleTask);
-        const isCompleted = succesfulTasks.length === tasks.length;
-        if (isCompleted) {
-            const results = succesfulTasks.reduce((acc, t) => {
-                return [...acc, t.result];
-            }, []);
+        // We are guaranteed that maxCompletionIndex is not undefined, or
+        // we would have alreayd returned an uncompleted task set.
+        const completionIndex = maxCompletionIndex as number;
 
-            return TaskFactory.SuccessfulTaskSet(tasks, results);
+        if (errors.length > 0) {
+            return TaskFactory.FailedTaskSet(tasks, completionIndex, new AggregatedError(errors));
         } else {
-            return TaskFactory.UncompletedTaskSet(tasks);
+            return TaskFactory.SuccessfulTaskSet(tasks, completionIndex, results);
         }
     }
 
-    private any(state: HistoryEvent[], tasks: Task[]): TaskSet {
-        const completedTasks = tasks
-            .filter(TaskFilter.isSuccessfulSingleTask)
-            .sort((a, b) => {
-                if (a.completedHistoryEventIndex > b.completedHistoryEventIndex) { return 1; }
-                if (a.completedHistoryEventIndex < b.completedHistoryEventIndex) { return -1; }
-                return 0;
-            });
+    private any(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
+        if (!tasks || tasks.length === 0) {
+            throw new Error("At least one yieldable task must be provided to wait for.");
+        }
 
-        const firstCompleted = completedTasks[0];
+        let firstCompleted: CompletedTask | undefined = undefined;
+        for (let index = 0; index < tasks.length; index++) {
+            const task = tasks[index];
+            if (TaskFilter.isCompletedTask(task)) {
+                if (!firstCompleted) {
+                    firstCompleted = task;
+                } else if (task.completionIndex < firstCompleted.completionIndex) {
+                    firstCompleted = task;
+                }
+            }
+        }
+
         if (firstCompleted) {
-            return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted);
+            return TaskFactory.SuccessfulTaskSet(tasks, firstCompleted.completionIndex, firstCompleted);
         } else {
             return TaskFactory.UncompletedTaskSet(tasks);
         }
@@ -587,7 +607,8 @@ export class Orchestrator {
         switch (directiveResult.EventType) {
             case (HistoryEventType.EventRaised):
                 const eventRaised = directiveResult as EventRaisedEvent;
-                parsedDirectiveResult = (eventRaised && eventRaised.Input !== undefined) ? JSON.parse(eventRaised.Input) : undefined;
+                parsedDirectiveResult = (eventRaised && eventRaised.Input)
+                    ? JSON.parse(eventRaised.Input) : undefined;
                 break;
             case (HistoryEventType.SubOrchestrationInstanceCompleted):
                 parsedDirectiveResult = JSON.parse((directiveResult as SubOrchestrationInstanceCompletedEvent).Result);
@@ -708,37 +729,45 @@ export class Orchestrator {
     }
 
     /* Returns undefined if not found. */
-    private findTaskScheduled(state: HistoryEvent[], name: string): TaskScheduledEvent {
+    private findTaskScheduled(state: HistoryEvent[], name: string): TaskScheduledEvent | undefined {
         const returnValue = name
             ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskScheduled
                     && (val as TaskScheduledEvent).Name === name
                     && !val.IsProcessed;
-            })[0]
+            })[0] as TaskScheduledEvent
             : undefined;
-        return returnValue as TaskScheduledEvent;
+        return returnValue;
     }
 
     /* Returns undefined if not found. */
-    private findTaskCompleted(state: HistoryEvent[], scheduledTask: TaskScheduledEvent): TaskCompletedEvent {
+    private findTaskCompleted(state: HistoryEvent[], scheduledTask: TaskScheduledEvent | undefined): TaskCompletedEvent | undefined {
+        if (scheduledTask === undefined) {
+            return undefined;
+        }
+
         const returnValue = scheduledTask
             ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskCompleted
                     && (val as TaskCompletedEvent).TaskScheduledId === scheduledTask.EventId;
-            })[0]
+            })[0] as TaskCompletedEvent
             : undefined;
-        return returnValue as TaskCompletedEvent;
+        return returnValue;
     }
 
     /* Returns undefined if not found. */
-    private findTaskFailed(state: HistoryEvent[], scheduledTask: HistoryEvent): TaskFailedEvent {
+    private findTaskFailed(state: HistoryEvent[], scheduledTask: TaskScheduledEvent | undefined): TaskFailedEvent | undefined {
+        if (scheduledTask === undefined) {
+            return undefined;
+        }
+
         const returnValue = scheduledTask
         ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TaskFailed
                     && (val as TaskFailedEvent).TaskScheduledId === scheduledTask.EventId;
-            })[0]
+            })[0] as TaskFailedEvent
             : undefined;
-        return returnValue as TaskFailedEvent;
+        return returnValue;
     }
 
     /* Returns undefined if not found. */
@@ -758,9 +787,9 @@ export class Orchestrator {
             ? state.filter((val: HistoryEvent) => {
                 return val.EventType === HistoryEventType.TimerFired
                     && (val as TimerFiredEvent).TimerId === createdTimer.EventId;
-            })[0]
+            })[0] as TimerFiredEvent
             : undefined;
-        return returnValue as TimerFiredEvent;
+        return returnValue;
     }
 
     private setProcessed(events: Array<HistoryEvent | undefined>): void {

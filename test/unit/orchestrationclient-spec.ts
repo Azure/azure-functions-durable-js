@@ -290,7 +290,7 @@ describe("Orchestration Client", () => {
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
                 .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
-                .reply(202, expectedStatuses);
+                .reply(200, expectedStatuses);
 
             const result = await client.getStatusAll();
             expect(scope.isDone()).to.be.equal(true);
@@ -335,7 +335,7 @@ describe("Orchestration Client", () => {
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
                 .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
-                .reply(202, expectedStatuses);
+                .reply(200, expectedStatuses);
 
             const result = await client.getStatusBy(createdTimeFrom, createdTimeTo, runtimeStatuses);
             expect(scope.isDone()).to.be.equal(true);
@@ -355,7 +355,7 @@ describe("Orchestration Client", () => {
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
                 .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
-                .reply(202, expectedStatuses);
+                .reply(200, expectedStatuses);
 
             const result = await client.getStatusBy(undefined, undefined, runtimeStatuses);
             expect(scope.isDone()).to.be.equal(true);
@@ -716,10 +716,10 @@ describe("Orchestration Client", () => {
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
                 .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
-                .reply(500);
+                .reply(500, { error: "Something blew up!" });
 
             await expect(client.rewind(testId, testReason)).to.be
-                .rejectedWith(`Webhook returned unrecognized status code 500`);
+                .rejectedWith(`The operation failed with an unexpected status code: 500. Details: {"error":"Something blew up!"}`);
             expect(scope.isDone()).to.be.equal(true);
         });
     });
@@ -904,10 +904,10 @@ describe("Orchestration Client", () => {
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
                 .query((actualQueryObject: object) => urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject))
-                .reply(500);
+                .reply(500, "Kah-BOOOM!!");
 
             await expect(client.terminate(id, testReason)).to.be
-                .rejectedWith(`Webhook returned unrecognized status code 500`);
+                .rejectedWith(`The operation failed with an unexpected status code: 500. Details: "Kah-BOOOM!!"`);
             expect(scope.isDone()).to.be.equal(true);
         });
     });

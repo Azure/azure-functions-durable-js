@@ -19,7 +19,15 @@ export class WebhookUtils {
         return requestUrl;
     }
 
-    public static getSignalEntityUrl(baseUrl: string, requiredQueryStrings: string, entityName: string, entityKey: string, operationName?: string, taskHubName?: string, connectionName?: string) {
+    public static getSignalEntityUrl(
+        baseUrl: string,
+        requiredQueryStrings: string,
+        entityName: string,
+        entityKey: string,
+        operationName?: string,
+        taskHubName?: string,
+        connectionName?: string,
+    ) {
         let requestUrl = baseUrl + "/entities/"
         + entityName + "/"
         + entityKey + "?";

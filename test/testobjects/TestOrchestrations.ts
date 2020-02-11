@@ -45,6 +45,31 @@ export class TestOrchestrations {
         return output.result;
     });
 
+    public static AnyWithTaskSet: any = df.orchestrator(function*(context: any) {
+        const now = new Date(context.df.currentUtcDateTime).getTime();
+        const deadline = new Date(now + 300000);
+        const timeoutTask = context.df.createTimer(deadline);
+
+        const firstRequiredTask = context.df.waitForExternalEvent("firstRequiredEvent");
+        const secondRequiredTask = context.df.waitForExternalEvent("secondRequiredEvent");
+
+        const allRequiredEvents = context.df.Task.all([firstRequiredTask, secondRequiredTask]);
+
+        const winner = yield context.df.Task.any([allRequiredEvents, timeoutTask]);
+        const outputs = [];
+
+        if (winner === timeoutTask) {
+            // timeout case
+            outputs.push("timeout");
+        } else {
+            // success case
+            const okaction = yield context.df.callActivity("Hello", "Tokyo");
+            timeoutTask.cancel();
+            outputs.push(okaction);
+        }
+        return outputs;
+    });
+
     public static CallActivityNoInput: any = df.orchestrator(function*(context: any) {
        const returnValue = yield context.df.callActivity("ReturnsFour");
        return returnValue;
