@@ -177,6 +177,10 @@ export class Orchestrator {
                 decisionStartedEvent = newDecisionStartedEvent || decisionStartedEvent;
                 context.df.currentUtcDateTime = this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
 
+                if (state[partialResult.completionIndex] !== undefined) {
+                  context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
+                }
+
                 g = gen.next(partialResult.result);
             }
         } catch (error) {
@@ -544,9 +548,9 @@ export class Orchestrator {
     }
 
     private all(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
-        let maxCompletionIndex: number | undefined = undefined;
+        let maxCompletionIndex: number | undefined;
         const errors: Error[] = [];
-        const results: unknown[] = [];
+        const results: Array<unknown> = [];
         for (let index = 0; index < tasks.length; index++) {
             const task = tasks[index];
             if (!TaskFilter.isCompletedTask(task)) {
@@ -582,7 +586,7 @@ export class Orchestrator {
             throw new Error("At least one yieldable task must be provided to wait for.");
         }
 
-        let firstCompleted: CompletedTask | undefined = undefined;
+        let firstCompleted: CompletedTask | undefined;
         for (let index = 0; index < tasks.length; index++) {
             const task = tasks[index];
             if (TaskFilter.isCompletedTask(task)) {

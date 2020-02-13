@@ -16,6 +16,17 @@ export class DurableOrchestrationContext {
     public readonly instanceId: string;
 
     /**
+     * The ID of the parent orchestration of the current sub-orchestration
+     * instance. The value will be available only in sub-orchestrations.
+     *
+     * The parent instance ID is generated and fixed when the parent
+     * orchestrator function is scheduled. It can be either auto-generated, in
+     * which case it is formatted as a GUID, or it can be user-specified with
+     * any format.
+     */
+    public readonly parentInstanceId: string | undefined;
+
+    /**
      * Gets a value indicating whether the orchestrator function is currently
      * replaying itself.
      *
@@ -26,18 +37,7 @@ export class DurableOrchestrationContext {
      * whether the function is being replayed and then issue the log statements
      * when this value is `false`.
      */
-    public readonly isReplaying: boolean;
-
-    /**
-     * The ID of the parent orchestration of the current sub-orchestration
-     * instance. The value will be available only in sub-orchestrations.
-     *
-     * The parent instance ID is generated and fixed when the parent
-     * orchestrator function is scheduled. It can be either auto-generated, in
-     * which case it is formatted as a GUID, or it can be user-specified with
-     * any format.
-     */
-    public readonly parentInstanceId: string | undefined;
+    public isReplaying: boolean;
 
     /**
      * Gets the current date/time in a way that is safe for use by orchestrator
