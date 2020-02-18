@@ -8,8 +8,8 @@ import {
     ActionType, CallActivityAction, CallActivityWithRetryAction, CallEntityAction, CallHttpAction, CallSubOrchestratorAction,
     CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, DurableHttpRequest,
     DurableHttpResponse, DurableOrchestrationBindingInfo, DurableOrchestrationContext, EntityId,
-    ExternalEventType, IOrchestratorState, LockState, OrchestratorState,
-    RetryOptions, WaitForExternalEventAction,
+    ExternalEventType, HistoryEvent, IOrchestratorState, LockState,
+    OrchestratorState, RetryOptions, WaitForExternalEventAction,
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
 import { TestHistories } from "../testobjects/testhistories";
@@ -119,23 +119,18 @@ describe("Orchestrator", () => {
         it("assigns isReplaying", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";
-            const replaying = true;
+
+            const mockHistory = TestHistories.GetSayHelloWithActivityReplayOne("SayHelloWithActivity", moment.utc().toDate(), name);
 
             const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetSayHelloWithActivityReplayOne(
-                        "SayHelloWithActivity",
-                        moment.utc().toDate(),
-                        name),
-                    name,
-                    undefined,
-                    replaying,
-                ),
+              context: new DurableOrchestrationBindingInfo(mockHistory, name),
             });
 
             orchestrator(mockContext);
 
-            expect(mockContext.df!.isReplaying).to.be.equal(replaying);
+            const lastEvent = mockHistory.pop() as HistoryEvent;
+
+            expect(mockContext.df!.isReplaying).to.be.equal(lastEvent.IsPlayed);
         });
 
         it("assigns parentInstanceId", async () => {
