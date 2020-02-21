@@ -146,6 +146,13 @@ export class Orchestrator {
                     return;
                 }
 
+                // The first time a task is marked as complete, the history event that finally marked the task as completed
+                // should not yet have been played by the Durable Task framework, resulting in isReplaying being false.
+                // On replays, the event will have already been processed by the framework, and IsPlayed will be marked as true.
+                if (state[partialResult.completionIndex] !== undefined) {
+                  context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
+                }
+
                 if (TaskFilter.isFailedTask(partialResult)) {
                     if (!gen.throw) {
                         throw new Error("Cannot properly throw the execption returned by customer code");
@@ -176,13 +183,6 @@ export class Orchestrator {
 
                 decisionStartedEvent = newDecisionStartedEvent || decisionStartedEvent;
                 context.df.currentUtcDateTime = this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
-
-                // The first time a task is marked as complete, the history event that finally marked the task as completed
-                // should not yet have been played by the Durable Task framework, resulting in isReplaying being false.
-                // On replays, the event will have already been processed by the framework, and IsPlayed will be marked as true.
-                if (state[partialResult.completionIndex] !== undefined) {
-                  context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
-                }
 
                 g = gen.next(partialResult.result);
             }
