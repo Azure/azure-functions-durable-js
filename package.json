@@ -20,6 +20,8 @@
     "clean": "rimraf lib",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:test": "eslint \"test/**/*.ts\"",
+    "lint:srcfix": "eslint --fix \"src/**/*.ts\"",
+    "lint:testfix": "eslint --fix \"test/**/*.ts\"",
     "build": "npm run clean && npm run lint && npm run lint:test && npm run stripInternalDocs && echo Done",
     "build:nolint": "npm run clean && npm run stripInternalDocs && echo Done",
     "stripInternalDocs": "tsc --pretty -p tsconfig.nocomments",
@@ -67,6 +69,7 @@
     "moment": "~2.22.2",
     "nock": "^10.0.6",
     "prettier": "^2.0.5",
+    "prettier-eslint": "11.0.0",
     "sinon": "~7.1.1",
     "ts-node": "~1.0.0",
     "typescript": "^3.8.3"

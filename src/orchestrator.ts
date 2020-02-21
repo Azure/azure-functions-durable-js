@@ -292,47 +292,90 @@ export class Orchestrator {
     ): Task {
         const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
 
-        for (let attempt = 1; attempt <= retryOptions.maxNumberOfAttempts; attempt++) {
-            const taskScheduled = this.findTaskScheduled(state, name);
-            const taskCompleted = this.findTaskCompleted(state, taskScheduled);
-            const taskFailed = this.findTaskFailed(state, taskScheduled);
-            const taskRetryTimer = this.findRetryTimer(state, taskFailed);
-            const taskRetryTimerFired = this.findTimerFired(state, taskRetryTimer);
-            this.setProcessed([
-                taskScheduled,
-                taskCompleted,
-                taskFailed,
-                taskRetryTimer,
-                taskRetryTimerFired,
-            ]);
-
-            if (!taskScheduled) {
-                break;
+        let attempt = 1;
+        let taskScheduled: TaskScheduledEvent | undefined;
+        let taskFailed: TaskFailedEvent | undefined;
+        let taskRetryTimer: TimerCreatedEvent | undefined;
+        for (let i = 0; i < state.length; i++) {
+            const historyEvent = state[i];
+            if (historyEvent.IsProcessed) {
+                continue;
             }
 
-            if (taskCompleted) {
-                const result = this.parseHistoryEvent(taskCompleted);
+            if (!taskScheduled) {
+                if (historyEvent.EventType === HistoryEventType.TaskScheduled) {
+                    if ((historyEvent as TaskScheduledEvent).Name === name) {
+                        taskScheduled = historyEvent as TaskScheduledEvent;
+                    }
+                }
+                continue;
+            }
 
-                return TaskFactory.SuccessfulTask(
-                    newAction,
-                    result,
-                    taskCompleted.Timestamp,
-                    taskCompleted.TaskScheduledId,
-                    state.indexOf(taskCompleted)
-                );
-            } else if (
-                taskFailed &&
-                taskRetryTimer &&
-                attempt >= retryOptions.maxNumberOfAttempts
-            ) {
-                return TaskFactory.FailedTask(
-                    newAction,
-                    taskFailed.Reason,
-                    taskFailed.Timestamp,
-                    taskFailed.TaskScheduledId,
-                    state.indexOf(taskFailed),
-                    new DurableError(taskFailed.Reason)
-                );
+            if (historyEvent.EventType === HistoryEventType.TaskCompleted) {
+                if (
+                    (historyEvent as TaskCompletedEvent).TaskScheduledId === taskScheduled.EventId
+                ) {
+                    const taskCompleted = historyEvent as TaskCompletedEvent;
+                    this.setProcessed([taskScheduled, taskCompleted]);
+                    const result = this.parseHistoryEvent(taskCompleted);
+                    return TaskFactory.SuccessfulTask(
+                        newAction,
+                        result,
+                        taskCompleted.Timestamp,
+                        taskCompleted.TaskScheduledId,
+                        i
+                    );
+                } else {
+                    continue;
+                }
+            }
+
+            if (!taskFailed) {
+                if (historyEvent.EventType === HistoryEventType.TaskFailed) {
+                    if (
+                        (historyEvent as TaskFailedEvent).TaskScheduledId === taskScheduled.EventId
+                    ) {
+                        taskFailed = historyEvent as TaskFailedEvent;
+                    }
+                }
+                continue;
+            }
+
+            if (!taskRetryTimer) {
+                if (historyEvent.EventType === HistoryEventType.TimerCreated) {
+                    taskRetryTimer = historyEvent as TimerCreatedEvent;
+                } else {
+                    continue;
+                }
+            }
+
+            if (historyEvent.EventType === HistoryEventType.TimerFired) {
+                if ((historyEvent as TimerFiredEvent).TimerId === taskRetryTimer.EventId) {
+                    const taskRetryTimerFired = historyEvent as TimerFiredEvent;
+                    this.setProcessed([
+                        taskScheduled,
+                        taskFailed,
+                        taskRetryTimer,
+                        taskRetryTimerFired,
+                    ]);
+                    if (attempt >= retryOptions.maxNumberOfAttempts) {
+                        return TaskFactory.FailedTask(
+                            newAction,
+                            taskFailed.Reason,
+                            taskFailed.Timestamp,
+                            taskFailed.TaskScheduledId,
+                            i,
+                            new DurableError(taskFailed.Reason)
+                        );
+                    } else {
+                        attempt++;
+                        taskScheduled = undefined;
+                        taskFailed = undefined;
+                        taskRetryTimer = undefined;
+                    }
+                } else {
+                    continue;
+                }
             }
         }
 
@@ -455,57 +498,95 @@ export class Orchestrator {
             instanceId
         );
 
-        for (let attempt = 1; attempt <= retryOptions.maxNumberOfAttempts; attempt++) {
-            const subOrchestratorCreated = this.findSubOrchestrationInstanceCreated(
-                state,
-                name,
-                instanceId
-            );
-            const subOrchestratorCompleted = this.findSubOrchestrationInstanceCompleted(
-                state,
-                subOrchestratorCreated
-            );
-            const subOrchestratorFailed = this.findSubOrchestrationInstanceFailed(
-                state,
-                subOrchestratorCreated
-            );
-            const retryTimer = this.findRetryTimer(state, subOrchestratorFailed);
-            const retryTimerFired = this.findTimerFired(state, retryTimer);
-            this.setProcessed([
-                subOrchestratorCreated,
-                subOrchestratorCompleted,
-                subOrchestratorFailed,
-                retryTimer,
-                retryTimerFired,
-            ]);
-
-            if (!subOrchestratorCreated) {
-                break;
+        let attempt = 1;
+        let subOrchestratorCreated: SubOrchestrationInstanceCreatedEvent | undefined;
+        let subOrchestratorFailed: SubOrchestrationInstanceFailedEvent | undefined;
+        let taskRetryTimer: TimerCreatedEvent | undefined;
+        for (let i = 0; i < state.length; i++) {
+            const historyEvent = state[i];
+            if (historyEvent.IsProcessed) {
+                continue;
             }
 
-            if (subOrchestratorCompleted) {
-                const result = this.parseHistoryEvent(subOrchestratorCompleted);
+            if (!subOrchestratorCreated) {
+                if (historyEvent.EventType === HistoryEventType.SubOrchestrationInstanceCreated) {
+                    const subOrchEvent = historyEvent as SubOrchestrationInstanceCreatedEvent;
+                    if (
+                        subOrchEvent.Name === name &&
+                        (!instanceId || instanceId === subOrchEvent.InstanceId)
+                    ) {
+                        subOrchestratorCreated = subOrchEvent;
+                    }
+                }
+                continue;
+            }
 
-                return TaskFactory.SuccessfulTask(
-                    newAction,
-                    result,
-                    subOrchestratorCompleted.Timestamp,
-                    subOrchestratorCompleted.TaskScheduledId,
-                    state.indexOf(subOrchestratorCompleted)
-                );
-            } else if (
-                subOrchestratorFailed &&
-                retryTimer &&
-                attempt >= retryOptions.maxNumberOfAttempts
-            ) {
-                return TaskFactory.FailedTask(
-                    newAction,
-                    subOrchestratorFailed.Reason,
-                    subOrchestratorFailed.Timestamp,
-                    subOrchestratorFailed.TaskScheduledId,
-                    state.indexOf(subOrchestratorFailed),
-                    new DurableError(subOrchestratorFailed.Reason)
-                );
+            if (historyEvent.EventType === HistoryEventType.SubOrchestrationInstanceCompleted) {
+                if (
+                    (historyEvent as SubOrchestrationInstanceCompletedEvent).TaskScheduledId ===
+                    subOrchestratorCreated.EventId
+                ) {
+                    const subOrchCompleted = historyEvent as SubOrchestrationInstanceCompletedEvent;
+                    this.setProcessed([subOrchestratorCreated, subOrchCompleted]);
+                    const result = this.parseHistoryEvent(subOrchCompleted);
+                    return TaskFactory.SuccessfulTask(
+                        newAction,
+                        result,
+                        subOrchCompleted.Timestamp,
+                        subOrchCompleted.TaskScheduledId,
+                        i
+                    );
+                } else {
+                    continue;
+                }
+            }
+
+            if (!subOrchestratorFailed) {
+                if (historyEvent.EventType === HistoryEventType.SubOrchestrationInstanceFailed) {
+                    if (
+                        (historyEvent as SubOrchestrationInstanceFailedEvent).TaskScheduledId ===
+                        subOrchestratorCreated.EventId
+                    ) {
+                        subOrchestratorFailed = historyEvent as SubOrchestrationInstanceFailedEvent;
+                    }
+                }
+                continue;
+            }
+
+            if (!taskRetryTimer) {
+                if (historyEvent.EventType === HistoryEventType.TimerCreated) {
+                    taskRetryTimer = historyEvent as TimerCreatedEvent;
+                }
+                continue;
+            }
+
+            if (historyEvent.EventType === HistoryEventType.TimerFired) {
+                if ((historyEvent as TimerFiredEvent).TimerId === taskRetryTimer.EventId) {
+                    const taskRetryTimerFired = historyEvent as TimerFiredEvent;
+                    this.setProcessed([
+                        subOrchestratorCreated,
+                        subOrchestratorFailed,
+                        taskRetryTimer,
+                        taskRetryTimerFired,
+                    ]);
+                    if (attempt >= retryOptions.maxNumberOfAttempts) {
+                        return TaskFactory.FailedTask(
+                            newAction,
+                            subOrchestratorFailed.Reason,
+                            subOrchestratorFailed.Timestamp,
+                            subOrchestratorFailed.TaskScheduledId,
+                            i,
+                            new DurableError(subOrchestratorFailed.Reason)
+                        );
+                    } else {
+                        attempt += 1;
+                        subOrchestratorCreated = undefined;
+                        subOrchestratorFailed = undefined;
+                        taskRetryTimer = undefined;
+                    }
+                } else {
+                    continue;
+                }
             }
         }
 
@@ -678,8 +759,7 @@ export class Orchestrator {
         let maxCompletionIndex: number | undefined;
         const errors: Error[] = [];
         const results: Array<unknown> = [];
-        for (let index = 0; index < tasks.length; index++) {
-            const task = tasks[index];
+        for (const task of tasks) {
             if (!TaskFilter.isCompletedTask(task)) {
                 return TaskFactory.UncompletedTaskSet(tasks);
             }
@@ -714,8 +794,7 @@ export class Orchestrator {
         }
 
         let firstCompleted: CompletedTask | undefined;
-        for (let index = 0; index < tasks.length; index++) {
-            const task = tasks[index];
+        for (const task of tasks) {
             if (TaskFilter.isCompletedTask(task)) {
                 if (!firstCompleted) {
                     firstCompleted = task;
@@ -791,23 +870,6 @@ export class Orchestrator {
               })[0]
             : undefined;
         return returnValue as EventSentEvent;
-    }
-
-    /* Returns undefined if not found. */
-    private findRetryTimer(
-        state: HistoryEvent[],
-        failedTask: HistoryEvent | undefined
-    ): TimerCreatedEvent | undefined {
-        const returnValue = failedTask
-            ? state.filter((val: HistoryEvent, index: number, array: HistoryEvent[]) => {
-                  const failedTaskIndex = array.indexOf(failedTask);
-                  return (
-                      val.EventType === HistoryEventType.TimerCreated &&
-                      index === failedTaskIndex + 1
-                  );
-              })[0]
-            : undefined;
-        return returnValue as TimerCreatedEvent;
     }
 
     /* Returns undefined if not found. */
