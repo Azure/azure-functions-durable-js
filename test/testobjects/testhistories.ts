@@ -1410,6 +1410,171 @@ export class TestHistories {
         ];
     }
 
+    public static GetSayHelloWithActivityRetryFanout(
+        firstTimestamp: Date,
+        retryInterval: number,
+        iteration: number
+    ): HistoryEvent[] {
+        const firstMoment = moment(firstTimestamp);
+
+        const historyEvents: HistoryEvent[] = [];
+        if (iteration >= 1) {
+            historyEvents.push(
+                new OrchestratorStartedEvent({
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: iteration > 1,
+                })
+            );
+            historyEvents.push(
+                new ExecutionStartedEvent({
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: iteration > 1,
+                    name: "SayHelloWithActivityRetryFanout",
+                    input: undefined,
+                })
+            );
+            historyEvents.push(
+                new TaskScheduledEvent({
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: iteration > 1,
+                    name: "Hello",
+                    input: "Tokyo",
+                })
+            );
+            historyEvents.push(
+                new TaskScheduledEvent({
+                    eventId: 1,
+                    timestamp: firstTimestamp,
+                    isPlayed: iteration > 1,
+                    name: "Hello",
+                    input: "Seattle",
+                })
+            );
+            historyEvents.push(
+                new OrchestratorCompletedEvent({
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: iteration > 1,
+                })
+            );
+        }
+
+        if (iteration >= 2) {
+            historyEvents.push(
+                new OrchestratorStartedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(110, "ms").toDate(),
+                    isPlayed: iteration > 2,
+                })
+            );
+            historyEvents.push(
+                new TaskFailedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    isPlayed: iteration > 2,
+                    taskScheduledId: 0,
+                    details: "Big stack trace here",
+                    reason: "Activity function 'Hello' failed: Result: Failure",
+                })
+            );
+            historyEvents.push(
+                new TimerCreatedEvent({
+                    eventId: 2,
+                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    isPlayed: iteration > 2,
+                    fireAt: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                })
+            );
+            historyEvents.push(
+                new TaskCompletedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment
+                        .add(100, "s")
+                        .add(retryInterval, "ms")
+                        .add(100, "ms")
+                        .toDate(),
+                    isPlayed: iteration > 2,
+                    result: JSON.stringify(`Hello, Seattle!`),
+                    taskScheduledId: 1,
+                })
+            );
+            historyEvents.push(
+                new OrchestratorCompletedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    isPlayed: iteration > 2,
+                })
+            );
+        }
+
+        if (iteration >= 3) {
+            historyEvents.push(
+                new OrchestratorStartedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: iteration > 3,
+                })
+            );
+            historyEvents.push(
+                new TimerFiredEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                    isPlayed: iteration > 3,
+                    fireAt: firstMoment.add(100, "s").add(retryInterval, "ms").toDate(),
+                    timerId: 2,
+                })
+            );
+            historyEvents.push(
+                new TaskScheduledEvent({
+                    eventId: 3,
+                    timestamp: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                    isPlayed: iteration > 3,
+                    name: "Hello",
+                    input: "Tokyo",
+                })
+            );
+            historyEvents.push(
+                new OrchestratorCompletedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    isPlayed: iteration > 3,
+                })
+            );
+        }
+
+        if (iteration >= 4) {
+            historyEvents.push(
+                new OrchestratorStartedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment
+                        .add(100, "s")
+                        .add(retryInterval, "ms")
+                        .add(100, "ms")
+                        .toDate(),
+                    isPlayed: iteration > 3,
+                })
+            );
+            historyEvents.push(
+                new TaskCompletedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment
+                        .add(100, "s")
+                        .add(retryInterval, "ms")
+                        .add(100, "ms")
+                        .toDate(),
+                    isPlayed: false,
+                    result: JSON.stringify(`Hello, Tokyo!`),
+                    taskScheduledId: 3,
+                })
+            );
+        }
+
+        return historyEvents;
+    }
+
     public static GetSendHttpRequestReplayOne(
         name: string,
         firstTimestamp: Date,
@@ -1865,6 +2030,178 @@ export class TestHistories {
                 timerId: 3,
             }),
         ];
+    }
+
+    public static GetSayHelloWithSuborchestratorRetryFanout(
+        firstTimestamp: Date,
+        retryInterval: number,
+        iteration: number
+    ): HistoryEvent[] {
+        const firstMoment = moment(firstTimestamp);
+        const instanceIds = [uuidv1(), uuidv1(), uuidv1()];
+
+        const historyEvents: HistoryEvent[] = [];
+        if (iteration >= 1) {
+            historyEvents.push(
+                new OrchestratorStartedEvent({
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: iteration > 1,
+                })
+            );
+            historyEvents.push(
+                new ExecutionStartedEvent({
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: iteration > 1,
+                    name: "SayHelloWithSubOrchestratorRetryFanout",
+                    input: undefined,
+                })
+            );
+            historyEvents.push(
+                new SubOrchestrationInstanceCreatedEvent({
+                    eventId: 0,
+                    timestamp: firstTimestamp,
+                    isPlayed: iteration > 1,
+                    name: "SayHelloInline",
+                    input: "Tokyo",
+                    instanceId: instanceIds[0],
+                })
+            );
+            historyEvents.push(
+                new SubOrchestrationInstanceCreatedEvent({
+                    eventId: 1,
+                    timestamp: firstTimestamp,
+                    isPlayed: iteration > 1,
+                    name: "SayHelloInline",
+                    input: "Seattle",
+                    instanceId: instanceIds[1],
+                })
+            );
+            historyEvents.push(
+                new OrchestratorCompletedEvent({
+                    eventId: -1,
+                    timestamp: firstTimestamp,
+                    isPlayed: iteration > 1,
+                })
+            );
+        }
+
+        if (iteration >= 2) {
+            historyEvents.push(
+                new OrchestratorStartedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(110, "ms").toDate(),
+                    isPlayed: iteration > 2,
+                })
+            );
+            historyEvents.push(
+                new SubOrchestrationInstanceFailedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    isPlayed: iteration > 2,
+                    taskScheduledId: 0,
+                    details: "Big stack trace here",
+                    reason: "Activity function 'Hello' failed: Result: Failure",
+                    instanceId: instanceIds[0],
+                })
+            );
+            historyEvents.push(
+                new SubOrchestrationInstanceCompletedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment
+                        .add(100, "s")
+                        .add(retryInterval, "ms")
+                        .add(100, "ms")
+                        .toDate(),
+                    isPlayed: iteration > 2,
+                    result: JSON.stringify(`Hello, Seattle!`),
+                    taskScheduledId: 1,
+                    instanceId: instanceIds[1],
+                })
+            );
+            historyEvents.push(
+                new TimerCreatedEvent({
+                    eventId: 2,
+                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    isPlayed: iteration > 2,
+                    fireAt: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                })
+            );
+            historyEvents.push(
+                new OrchestratorCompletedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    isPlayed: iteration > 2,
+                })
+            );
+        }
+
+        if (iteration >= 3) {
+            historyEvents.push(
+                new OrchestratorStartedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                    isPlayed: iteration > 3,
+                })
+            );
+            historyEvents.push(
+                new TimerFiredEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                    isPlayed: iteration > 3,
+                    fireAt: firstMoment.add(100, "s").add(retryInterval, "ms").toDate(),
+                    timerId: 2,
+                })
+            );
+            historyEvents.push(
+                new SubOrchestrationInstanceCreatedEvent({
+                    eventId: 3,
+                    timestamp: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                    isPlayed: iteration > 3,
+                    name: "SayHelloInline",
+                    input: "Tokyo",
+                    instanceId: instanceIds[2],
+                })
+            );
+            historyEvents.push(
+                new OrchestratorCompletedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    isPlayed: iteration > 3,
+                })
+            );
+        }
+
+        if (iteration >= 4) {
+            historyEvents.push(
+                new OrchestratorStartedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment
+                        .add(100, "s")
+                        .add(retryInterval, "ms")
+                        .add(100, "ms")
+                        .toDate(),
+                    isPlayed: iteration > 4,
+                })
+            );
+            historyEvents.push(
+                new SubOrchestrationInstanceCompletedEvent({
+                    eventId: -1,
+                    timestamp: firstMoment
+                        .add(100, "s")
+                        .add(retryInterval, "ms")
+                        .add(100, "ms")
+                        .toDate(),
+                    isPlayed: iteration > 4,
+                    result: JSON.stringify(`Hello, Tokyo!`),
+                    taskScheduledId: 3,
+                    instanceId: instanceIds[2],
+                })
+            );
+        }
+
+        return historyEvents;
     }
 
     public static GetThrowsExceptionFromActivityReplayOne(firstTimestamp: Date): HistoryEvent[] {

@@ -691,6 +691,44 @@ describe("Orchestrator", () => {
                 })
             );
         });
+
+        it("works with fan-out/fan-in", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithActivityRetryFanout;
+            const retryOptions = new RetryOptions(100, 5);
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityRetryFanout(
+                        moment.utc().toDate(),
+                        retryOptions.firstRetryIntervalInMilliseconds,
+                        4
+                    ),
+                    undefined
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions: [
+                        [
+                            new CallActivityWithRetryAction(
+                                "Hello",
+                                new RetryOptions(100, 5),
+                                "Tokyo"
+                            ),
+                            new CallActivityWithRetryAction(
+                                "Hello",
+                                new RetryOptions(100, 5),
+                                "Seattle"
+                            ),
+                        ],
+                    ],
+                    output: ["Hello, Tokyo!", "Hello, Seattle!"],
+                })
+            );
+        });
     });
 
     describe("callHttp()", () => {
@@ -1333,6 +1371,44 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: `Hello, ${name}!`,
+                })
+            );
+        });
+
+        it("handles fan-out/fan-in", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetryFanout;
+            const retryOptions = new RetryOptions(100, 5);
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithSuborchestratorRetryFanout(
+                        moment.utc().toDate(),
+                        retryOptions.firstRetryIntervalInMilliseconds,
+                        4
+                    ),
+                    undefined
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions: [
+                        [
+                            new CallSubOrchestratorWithRetryAction(
+                                "SayHelloInline",
+                                new RetryOptions(100, 5),
+                                "Tokyo"
+                            ),
+                            new CallSubOrchestratorWithRetryAction(
+                                "SayHelloInline",
+                                new RetryOptions(100, 5),
+                                "Seattle"
+                            ),
+                        ],
+                    ],
+                    output: ["Hello, Tokyo!", "Hello, Seattle!"],
                 })
             );
         });
