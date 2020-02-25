@@ -38,4 +38,21 @@ export class TestEntities {
                 throw Error("Invalid operation");
         }
     });
+
+    public static AsyncStringStore: any = df.entity(async (context: IEntityFunctionContext) => {
+        await new Promise((resolve) => {
+            switch (context.df.operationName) {
+                case "set":
+                    context.df.setState(context.df.getInput());
+                    break;
+                case "get":
+                    context.df.return(context.df.getState());
+                    break;
+                default:
+                    throw new Error("No such operation exists");
+            }
+
+            resolve();
+        });
+    });
 }

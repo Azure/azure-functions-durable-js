@@ -30,7 +30,8 @@ export class Entity {
             context.df = this.getCurrentDurableEntityContext(entityBinding, returnState, i, startTime);
 
             try {
-                this.fn(context);
+                // this.fn(context);
+                await Promise.resolve(this.fn(context));
                 if (!returnState.results[i]) {
                     const elapsedMs = this.computeElapsedMilliseconds(startTime);
                     returnState.results[i] = new OperationResult(false, elapsedMs);
