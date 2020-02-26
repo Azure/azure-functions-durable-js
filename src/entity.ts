@@ -68,9 +68,9 @@ export class Entity {
             entityId: bindingInfo.self,
             operationName: currentRequest.name,
             isNewlyConstructed: !batchState.entityExists,
-            getState: this.getState.bind(this, batchState),
+            getState: this.getState.bind(this, batchState) as <T>(initialiser: () => T) => T | undefined,
             setState: this.setState.bind(this, batchState),
-            getInput: this.getInput.bind(this, currentRequest),
+            getInput: this.getInput.bind(this, currentRequest) as <T>() => T,
             return: this.return.bind(this, batchState, startTime),
             destructOnExit: this.destructOnExit.bind(this, batchState),
             signalEntity: this.signalEntity.bind(this, batchState),
@@ -82,28 +82,28 @@ export class Entity {
         batchState.entityState = undefined;
     }
 
-    private getInput(currentRequest: RequestMessage): unknown | undefined {
+    private getInput<T>(currentRequest: RequestMessage): T | undefined {
         if (currentRequest.input) {
-            return JSON.parse(currentRequest.input);
+            return JSON.parse(currentRequest.input) as T;
         }
         return undefined;
     }
 
-    private getState(returnState: EntityState, initializer?: () => unknown): unknown | undefined {
+    private getState<T>(returnState: EntityState, initializer?: () => T): T | undefined {
         if (returnState.entityState) {
-            return JSON.parse(returnState.entityState);
+            return JSON.parse(returnState.entityState) as T;
         } else if (initializer != null) {
             return initializer();
         }
         return undefined;
     }
 
-    private return(returnState: EntityState, startTime: Date, result: unknown): void {
+    private return<T>(returnState: EntityState, startTime: Date, result: T): void {
         returnState.entityExists = true;
         returnState.results.push(new OperationResult(false, this.computeElapsedMilliseconds(startTime), JSON.stringify(result)));
     }
 
-    private setState(returnState: EntityState, state: unknown): void {
+    private setState<T>(returnState: EntityState, state: T): void {
         returnState.entityExists = true;
         returnState.entityState = JSON.stringify(state);
     }
