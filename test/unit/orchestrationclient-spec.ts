@@ -998,6 +998,22 @@ describe("Orchestration Client", () => {
 
             const expectedOutput = 42;
 
+            const expectedStatus = new DurableOrchestrationStatus(
+                defaultOrchestrationName,
+                defaultInstanceId,
+                new Date(),
+                new Date(),
+                undefined,
+                expectedOutput,
+                OrchestrationRuntimeStatus.Completed,
+                undefined,
+                undefined
+            );
+
+            nock(Constants.DefaultLocalOrigin)
+                .get(/.*/)
+                .reply(202, expectedStatus);
+
             const expectedResponse = {
                 status: 200,
                 body: JSON.stringify(expectedOutput),
@@ -1027,6 +1043,10 @@ describe("Orchestration Client", () => {
                 undefined,
                 OrchestrationRuntimeStatus.Canceled
             );
+
+            nock(Constants.DefaultLocalOrigin)
+                .get(/.*/)
+                .reply(202, expectedStatus);
 
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
             const expectedResponse = {
@@ -1059,6 +1079,10 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Terminated
             );
 
+            nock(Constants.DefaultLocalOrigin)
+                .get(/.*/)
+                .reply(202, expectedStatus);
+
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
             const expectedResponse = {
                 status: 200,
@@ -1089,6 +1113,10 @@ describe("Orchestration Client", () => {
                 undefined,
                 OrchestrationRuntimeStatus.Failed
             );
+
+            nock(Constants.DefaultLocalOrigin)
+                .get(/.*/)
+                .reply(202, expectedStatus);
 
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
             const expectedResponse = {
