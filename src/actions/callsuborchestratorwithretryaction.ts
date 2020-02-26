@@ -8,7 +8,7 @@ export class CallSubOrchestratorWithRetryAction implements IAction {
         public readonly functionName: string,
         public readonly retryOptions: RetryOptions,
         public readonly input?: unknown,
-        public readonly instanceId?: string,
+        public readonly instanceId?: string
     ) {
         Utils.throwIfEmpty(functionName, "functionName");
 

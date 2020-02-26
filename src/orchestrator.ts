@@ -1,14 +1,46 @@
 import * as debug from "debug";
 import { AggregatedError } from "./aggregatederror";
-import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, CallHttpAction,
-    CallSubOrchestratorAction, CallSubOrchestratorWithRetryAction, ContinueAsNewAction,
-    CreateTimerAction, DurableHttpRequest, DurableLock, DurableOrchestrationBindingInfo, EntityId,
-    EventRaisedEvent, EventSentEvent, ExternalEventType, GuidManager, HistoryEvent, HistoryEventType,
-    IAction, IOrchestrationFunctionContext, LockState, OrchestratorState, RequestMessage, ResponseMessage,
-    RetryOptions, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
-    SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFactory, TaskFailedEvent, TaskFilter,
-    TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask,
-    Utils, WaitForExternalEventAction,
+import {
+    CallActivityAction,
+    CallActivityWithRetryAction,
+    CallEntityAction,
+    CallHttpAction,
+    CallSubOrchestratorAction,
+    CallSubOrchestratorWithRetryAction,
+    ContinueAsNewAction,
+    CreateTimerAction,
+    DurableHttpRequest,
+    DurableLock,
+    DurableOrchestrationBindingInfo,
+    EntityId,
+    EventRaisedEvent,
+    EventSentEvent,
+    ExternalEventType,
+    GuidManager,
+    HistoryEvent,
+    HistoryEventType,
+    IAction,
+    IOrchestrationFunctionContext,
+    LockState,
+    OrchestratorState,
+    RequestMessage,
+    ResponseMessage,
+    RetryOptions,
+    SubOrchestrationInstanceCompletedEvent,
+    SubOrchestrationInstanceCreatedEvent,
+    SubOrchestrationInstanceFailedEvent,
+    Task,
+    TaskCompletedEvent,
+    TaskFactory,
+    TaskFailedEvent,
+    TaskFilter,
+    TaskScheduledEvent,
+    TaskSet,
+    TimerCreatedEvent,
+    TimerFiredEvent,
+    TimerTask,
+    Utils,
+    WaitForExternalEventAction,
 } from "./classes";
 import { DurableError } from "./durableerror";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
@@ -25,15 +57,17 @@ export class Orchestrator {
     private newGuidCounter: number;
     private subOrchestratorCounter: number;
 
-    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) { }
+    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {}
 
-    public listen() {
+    public listen(): (context: IOrchestrationFunctionContext) => Promise<void> {
         return this.handle.bind(this);
     }
 
     private async handle(context: IOrchestrationFunctionContext): Promise<void> {
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
-            context.bindings, new DurableOrchestrationBindingInfo())[0];
+            context.bindings,
+            new DurableOrchestrationBindingInfo()
+        )[0];
 
         if (!orchestrationBinding) {
             throw new Error("Could not finding an orchestrationClient binding on context.");
@@ -46,8 +80,9 @@ export class Orchestrator {
 
         // Initialize currentUtcDateTime
         let decisionStartedEvent: HistoryEvent = Utils.ensureNonNull(
-            state.find((e) => e.EventType === HistoryEventType.OrchestratorStarted),
-            "The orchestrator can not execute without an OrchestratorStarted event.");
+            state.find(e => e.EventType === HistoryEventType.OrchestratorStarted),
+            "The orchestrator can not execute without an OrchestratorStarted event."
+        );
         this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
 
         // Reset counters
@@ -90,8 +125,7 @@ export class Orchestrator {
             let g = gen.next(undefined);
 
             while (true) {
-
-                if (!(TaskFilter.isYieldable(g.value))) {
+                if (!TaskFilter.isYieldable(g.value)) {
                     if (!g.done) {
                         // The orchestrator must have yielded a non-Task related type,
                         // so just return execution flow with what they yielded back.
@@ -107,7 +141,7 @@ export class Orchestrator {
                                 output: g.value,
                                 actions,
                                 customStatus: this.customStatus,
-                            }),
+                            })
                         );
                         return;
                     }
@@ -128,7 +162,7 @@ export class Orchestrator {
                             output: undefined,
                             actions,
                             customStatus: this.customStatus,
-                        }),
+                        })
                     );
                     return;
                 }
@@ -141,7 +175,7 @@ export class Orchestrator {
                             output: undefined,
                             actions,
                             customStatus: this.customStatus,
-                        }),
+                        })
                     );
                     return;
                 }
@@ -157,7 +191,7 @@ export class Orchestrator {
                     if (!gen.throw) {
                         throw new Error("Cannot properly throw the execption returned by customer code");
                     }
-                    g = gen.throw!(partialResult.exception);
+                    g = gen.throw(partialResult.exception);
                     continue;
                 }
 
@@ -166,23 +200,31 @@ export class Orchestrator {
                 // would yield the task before returning out of the generator function.
                 if (g.done) {
                     log("Iterator is done");
-                    context.done(undefined,
+                    context.done(
+                        undefined,
                         new OrchestratorState({
                             isDone: true,
                             actions,
                             output: partialResult.result,
                             customStatus: this.customStatus,
-                        }),
+                        })
                     );
                     return;
                 }
 
-                const newDecisionStartedEvent = state.find((e) =>
-                    e.EventType === HistoryEventType.OrchestratorStarted &&
-                    e.Timestamp > decisionStartedEvent.Timestamp);
+                const newDecisionStartedEvent = state.find(
+                    e => e.EventType === HistoryEventType.OrchestratorStarted && e.Timestamp > decisionStartedEvent.Timestamp
+                );
 
                 decisionStartedEvent = newDecisionStartedEvent || decisionStartedEvent;
                 context.df.currentUtcDateTime = this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
+
+                // The first time a task is marked as complete, the history event that finally marked the task as completed
+                // should not yet have been played by the Durable Task framework, resulting in isReplaying being false.
+                // On replays, the event will have already been processed by the framework, and IsPlayed will be marked as true.
+                if (state[partialResult.completionIndex] !== undefined) {
+                    context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
+                }
 
                 g = gen.next(partialResult.result);
             }
@@ -217,7 +259,7 @@ export class Orchestrator {
                 result,
                 taskCompleted.Timestamp,
                 taskCompleted.TaskScheduledId,
-                state.indexOf(taskCompleted),
+                state.indexOf(taskCompleted)
             );
         } else if (taskFailed) {
             return TaskFactory.FailedTask(
@@ -226,21 +268,14 @@ export class Orchestrator {
                 taskFailed.Timestamp,
                 taskFailed.TaskScheduledId,
                 state.indexOf(taskFailed),
-                new DurableError(taskFailed.Reason),
+                new DurableError(taskFailed.Reason)
             );
         } else {
-            return TaskFactory.UncompletedTask(
-                newAction,
-            );
+            return TaskFactory.UncompletedTask(newAction);
         }
     }
 
-    private callActivityWithRetry(
-        state: HistoryEvent[],
-        name: string,
-        retryOptions: RetryOptions,
-        input?: unknown)
-        : Task {
+    private callActivityWithRetry(state: HistoryEvent[], name: string, retryOptions: RetryOptions, input?: unknown): Task {
         const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
 
         for (let attempt = 1; attempt <= retryOptions.maxNumberOfAttempts; attempt++) {
@@ -249,24 +284,30 @@ export class Orchestrator {
             const taskFailed = this.findTaskFailed(state, taskScheduled);
             const taskRetryTimer = this.findRetryTimer(state, taskFailed);
             const taskRetryTimerFired = this.findTimerFired(state, taskRetryTimer);
-            this.setProcessed([ taskScheduled, taskCompleted, taskFailed, taskRetryTimer, taskRetryTimerFired ]);
+            this.setProcessed([taskScheduled, taskCompleted, taskFailed, taskRetryTimer, taskRetryTimerFired]);
 
-            if (!taskScheduled) { break; }
+            if (!taskScheduled) {
+                break;
+            }
 
             if (taskCompleted) {
                 const result = this.parseHistoryEvent(taskCompleted);
 
-                return TaskFactory.SuccessfulTask(newAction, result, taskCompleted.Timestamp, taskCompleted.TaskScheduledId, state.indexOf(taskCompleted));
-            } else if (taskFailed
-                && taskRetryTimer
-                && attempt >= retryOptions.maxNumberOfAttempts) {
+                return TaskFactory.SuccessfulTask(
+                    newAction,
+                    result,
+                    taskCompleted.Timestamp,
+                    taskCompleted.TaskScheduledId,
+                    state.indexOf(taskCompleted)
+                );
+            } else if (taskFailed && taskRetryTimer && attempt >= retryOptions.maxNumberOfAttempts) {
                 return TaskFactory.FailedTask(
                     newAction,
                     taskFailed.Reason,
                     taskFailed.Timestamp,
                     taskFailed.TaskScheduledId,
                     state.indexOf(taskFailed),
-                    new DurableError(taskFailed.Reason),
+                    new DurableError(taskFailed.Reason)
                 );
             }
         }
@@ -281,22 +322,26 @@ export class Orchestrator {
         const eventSent = this.findEventSent(state, schedulerId, "op");
         let eventRaised;
         if (eventSent) {
-            const eventSentInput = eventSent && eventSent.Input ? JSON.parse(eventSent.Input) as RequestMessage : undefined;
+            const eventSentInput = eventSent && eventSent.Input ? (JSON.parse(eventSent.Input) as RequestMessage) : undefined;
             eventRaised = eventSentInput ? this.findEventRaised(state, eventSentInput.id) : undefined;
         }
-        this.setProcessed([ eventSent, eventRaised ]);
+        this.setProcessed([eventSent, eventRaised]);
 
         if (eventRaised) {
             const parsedResult = this.parseHistoryEvent(eventRaised) as ResponseMessage;
 
-            return TaskFactory.SuccessfulTask(newAction, JSON.parse(parsedResult.result), eventRaised.Timestamp, eventSent.EventId, state.indexOf(eventRaised));
+            return TaskFactory.SuccessfulTask(
+                newAction,
+                JSON.parse(parsedResult.result),
+                eventRaised.Timestamp,
+                eventSent.EventId,
+                state.indexOf(eventRaised)
+            );
         }
 
         // TODO: error handling
 
-        return TaskFactory.UncompletedTask(
-            newAction,
-        );
+        return TaskFactory.UncompletedTask(newAction);
     }
 
     private callSubOrchestrator(state: HistoryEvent[], name: string, input?: unknown, instanceId?: string): Task {
@@ -319,7 +364,7 @@ export class Orchestrator {
                 result,
                 subOrchestratorCompleted.Timestamp,
                 subOrchestratorCompleted.TaskScheduledId,
-                state.indexOf(subOrchestratorCompleted),
+                state.indexOf(subOrchestratorCompleted)
             );
         } else if (subOrchestratorFailed) {
             return TaskFactory.FailedTask(
@@ -328,12 +373,10 @@ export class Orchestrator {
                 subOrchestratorFailed.Timestamp,
                 subOrchestratorFailed.TaskScheduledId,
                 state.indexOf(subOrchestratorFailed),
-                new DurableError(subOrchestratorFailed.Reason),
+                new DurableError(subOrchestratorFailed.Reason)
             );
         } else {
-            return TaskFactory.UncompletedTask(
-                newAction,
-            );
+            return TaskFactory.UncompletedTask(newAction);
         }
     }
 
@@ -342,8 +385,8 @@ export class Orchestrator {
         name: string,
         retryOptions: RetryOptions,
         input?: unknown,
-        instanceId?: string)
-        : Task {
+        instanceId?: string
+    ): Task {
         if (!name) {
             throw new Error("A sub-orchestration function name must be provided when attempting to create a suborchestration");
         }
@@ -356,15 +399,11 @@ export class Orchestrator {
             const subOrchestratorFailed = this.findSubOrchestrationInstanceFailed(state, subOrchestratorCreated);
             const retryTimer = this.findRetryTimer(state, subOrchestratorFailed);
             const retryTimerFired = this.findTimerFired(state, retryTimer);
-            this.setProcessed([
-                subOrchestratorCreated,
-                subOrchestratorCompleted,
-                subOrchestratorFailed,
-                retryTimer,
-                retryTimerFired,
-            ]);
+            this.setProcessed([subOrchestratorCreated, subOrchestratorCompleted, subOrchestratorFailed, retryTimer, retryTimerFired]);
 
-            if (!subOrchestratorCreated) { break; }
+            if (!subOrchestratorCreated) {
+                break;
+            }
 
             if (subOrchestratorCompleted) {
                 const result = this.parseHistoryEvent(subOrchestratorCompleted);
@@ -374,25 +413,21 @@ export class Orchestrator {
                     result,
                     subOrchestratorCompleted.Timestamp,
                     subOrchestratorCompleted.TaskScheduledId,
-                    state.indexOf(subOrchestratorCompleted),
+                    state.indexOf(subOrchestratorCompleted)
                 );
-            } else if (subOrchestratorFailed
-                && retryTimer
-                && attempt >= retryOptions.maxNumberOfAttempts) {
+            } else if (subOrchestratorFailed && retryTimer && attempt >= retryOptions.maxNumberOfAttempts) {
                 return TaskFactory.FailedTask(
                     newAction,
                     subOrchestratorFailed.Reason,
                     subOrchestratorFailed.Timestamp,
                     subOrchestratorFailed.TaskScheduledId,
                     state.indexOf(subOrchestratorFailed),
-                    new DurableError(subOrchestratorFailed.Reason),
+                    new DurableError(subOrchestratorFailed.Reason)
                 );
             }
         }
 
-        return TaskFactory.UncompletedTask(
-            newAction,
-        );
+        return TaskFactory.UncompletedTask(newAction);
     }
 
     private callHttp(
@@ -401,7 +436,8 @@ export class Orchestrator {
         uri: string,
         content?: string | object,
         headers?: { [key: string]: string },
-        tokenSource?: TokenSource) {
+        tokenSource?: TokenSource
+    ): Task {
         if (content && typeof content !== "string") {
             content = JSON.stringify(content);
         }
@@ -423,7 +459,7 @@ export class Orchestrator {
                 result,
                 httpCompleted.Timestamp,
                 httpCompleted.TaskScheduledId,
-                state.indexOf(httpCompleted),
+                state.indexOf(httpCompleted)
             );
         } else if (httpFailed) {
             return TaskFactory.FailedTask(
@@ -432,21 +468,17 @@ export class Orchestrator {
                 httpFailed.Timestamp,
                 httpFailed.TaskScheduledId,
                 state.indexOf(httpFailed),
-                new DurableError(httpFailed.Reason),
+                new DurableError(httpFailed.Reason)
             );
         } else {
-            return TaskFactory.UncompletedTask(
-                newAction,
-            );
+            return TaskFactory.UncompletedTask(newAction);
         }
     }
 
     private continueAsNew(state: HistoryEvent[], input: unknown): Task {
         const newAction = new ContinueAsNewAction(input);
 
-        return TaskFactory.UncompletedTask(
-            newAction,
-        );
+        return TaskFactory.UncompletedTask(newAction);
     }
 
     private createTimer(state: HistoryEvent[], fireAt: Date): TimerTask {
@@ -454,7 +486,7 @@ export class Orchestrator {
 
         const timerCreated = this.findTimerCreated(state, fireAt);
         const timerFired = this.findTimerFired(state, timerCreated);
-        this.setProcessed([ timerCreated, timerFired ]);
+        this.setProcessed([timerCreated, timerFired]);
 
         if (timerFired) {
             return TaskFactory.CompletedTimerTask(newAction, timerFired.Timestamp, timerFired.TimerId, state.indexOf(timerFired));
@@ -468,10 +500,7 @@ export class Orchestrator {
     }
 
     private isLocked(contextLocks: EntityId[]): LockState {
-        return new LockState(
-            contextLocks && contextLocks !== null,
-            contextLocks,
-        );
+        return new LockState(contextLocks && contextLocks !== null, contextLocks);
     }
 
     private lock(state: HistoryEvent[], instanceId: string, contextLocks: EntityId[], entities: EntityId[]): DurableLock | undefined {
@@ -485,7 +514,7 @@ export class Orchestrator {
 
         entities = this.cleanEntities(entities);
 
-        const lockRequestId = this.newGuid(instanceId);
+        this.newGuid(instanceId);
 
         // All the entities in entities[] need to be locked, but to avoid
         // deadlock, the locks have to be acquired sequentially, in order. So,
@@ -534,17 +563,12 @@ export class Orchestrator {
         const newAction = new WaitForExternalEventAction(name, ExternalEventType.ExternalEvent);
 
         const eventRaised = this.findEventRaised(state, name);
-        this.setProcessed([ eventRaised ]);
+        this.setProcessed([eventRaised]);
 
         if (eventRaised) {
             const result = this.parseHistoryEvent(eventRaised);
 
-            return TaskFactory.SuccessfulTask(
-                newAction,
-                result,
-                eventRaised.Timestamp,
-                eventRaised.EventId,
-                state.indexOf(eventRaised));
+            return TaskFactory.SuccessfulTask(newAction, result, eventRaised.Timestamp, eventRaised.EventId, state.indexOf(eventRaised));
         } else {
             return TaskFactory.UncompletedTask(newAction);
         }
@@ -612,15 +636,14 @@ export class Orchestrator {
         let parsedDirectiveResult: unknown;
 
         switch (directiveResult.EventType) {
-            case (HistoryEventType.EventRaised):
+            case HistoryEventType.EventRaised:
                 const eventRaised = directiveResult as EventRaisedEvent;
-                parsedDirectiveResult = (eventRaised && eventRaised.Input)
-                    ? JSON.parse(eventRaised.Input) : undefined;
+                parsedDirectiveResult = eventRaised && eventRaised.Input ? JSON.parse(eventRaised.Input) : undefined;
                 break;
-            case (HistoryEventType.SubOrchestrationInstanceCompleted):
+            case HistoryEventType.SubOrchestrationInstanceCompleted:
                 parsedDirectiveResult = JSON.parse((directiveResult as SubOrchestrationInstanceCompletedEvent).Result);
                 break;
-            case (HistoryEventType.TaskCompleted):
+            case HistoryEventType.TaskCompleted:
                 parsedDirectiveResult = JSON.parse((directiveResult as TaskCompletedEvent).Result);
                 break;
             default:
@@ -634,10 +657,8 @@ export class Orchestrator {
     private findEventRaised(state: HistoryEvent[], eventName: string): EventRaisedEvent {
         const returnValue = eventName
             ? state.filter((val: HistoryEvent) => {
-                return val.EventType === HistoryEventType.EventRaised
-                    && (val as EventRaisedEvent).Name === eventName
-                    && !val.IsProcessed;
-            })[0]
+                  return val.EventType === HistoryEventType.EventRaised && (val as EventRaisedEvent).Name === eventName && !val.IsProcessed;
+              })[0]
             : undefined;
         return returnValue as EventRaisedEvent;
     }
@@ -646,11 +667,13 @@ export class Orchestrator {
     private findEventSent(state: HistoryEvent[], instanceId: string, eventName: string): EventSentEvent {
         const returnValue = eventName
             ? state.filter((val: HistoryEvent) => {
-                return val.EventType === HistoryEventType.EventSent
-                    && (val as EventSentEvent).InstanceId === instanceId
-                    && (val as EventSentEvent).Name === eventName
-                    && !val.IsProcessed;
-            })[0]
+                  return (
+                      val.EventType === HistoryEventType.EventSent &&
+                      (val as EventSentEvent).InstanceId === instanceId &&
+                      (val as EventSentEvent).Name === eventName &&
+                      !val.IsProcessed
+                  );
+              })[0]
             : undefined;
         return returnValue as EventSentEvent;
     }
@@ -659,10 +682,9 @@ export class Orchestrator {
     private findRetryTimer(state: HistoryEvent[], failedTask: HistoryEvent | undefined): TimerCreatedEvent | undefined {
         const returnValue = failedTask
             ? state.filter((val: HistoryEvent, index: number, array: HistoryEvent[]) => {
-                const failedTaskIndex = array.indexOf(failedTask);
-                return val.EventType === HistoryEventType.TimerCreated
-                    && index === (failedTaskIndex + 1);
-            })[0]
+                  const failedTaskIndex = array.indexOf(failedTask);
+                  return val.EventType === HistoryEventType.TimerCreated && index === failedTaskIndex + 1;
+              })[0]
             : undefined;
         return returnValue as TimerCreatedEvent;
     }
@@ -671,11 +693,10 @@ export class Orchestrator {
     private findSubOrchestrationInstanceCreated(
         state: HistoryEvent[],
         name: string,
-        instanceId: string | undefined)
-        : SubOrchestrationInstanceCreatedEvent | undefined {
+        instanceId: string | undefined
+    ): SubOrchestrationInstanceCreatedEvent | undefined {
         const matches = state.filter((val: HistoryEvent) => {
-            return val.EventType === HistoryEventType.SubOrchestrationInstanceCreated
-                && !val.IsProcessed;
+            return val.EventType === HistoryEventType.SubOrchestrationInstanceCreated && !val.IsProcessed;
         });
 
         if (matches.length === 0) {
@@ -690,11 +711,15 @@ export class Orchestrator {
         // called in the same order this replay that they were scheduled in.
         const returnValue = matches[0] as SubOrchestrationInstanceCreatedEvent;
         if (returnValue.Name !== name) {
-            throw new Error(`The sub-orchestration call (n = ${this.subOrchestratorCounter}) should be executed with a function name of ${returnValue.Name} instead of the provided function name of ${name}. Check your code for non-deterministic behavior.`);
+            throw new Error(
+                `The sub-orchestration call (n = ${this.subOrchestratorCounter}) should be executed with a function name of ${returnValue.Name} instead of the provided function name of ${name}. Check your code for non-deterministic behavior.`
+            );
         }
 
         if (instanceId && returnValue.InstanceId !== instanceId) {
-            throw new Error(`The sub-orchestration call (n = ${this.subOrchestratorCounter}) should be executed with an instance id of ${returnValue.InstanceId} instead of the provided instance id of ${instanceId}. Check your code for non-deterministic behavior.`);
+            throw new Error(
+                `The sub-orchestration call (n = ${this.subOrchestratorCounter}) should be executed with an instance id of ${returnValue.InstanceId} instead of the provided instance id of ${instanceId}. Check your code for non-deterministic behavior.`
+            );
         }
         return returnValue;
     }
@@ -702,47 +727,49 @@ export class Orchestrator {
     /* Returns undefined if not found. */
     private findSubOrchestrationInstanceCompleted(
         state: HistoryEvent[],
-        createdSubOrch: SubOrchestrationInstanceCreatedEvent | undefined)
-        : SubOrchestrationInstanceCompletedEvent | undefined {
+        createdSubOrch: SubOrchestrationInstanceCreatedEvent | undefined
+    ): SubOrchestrationInstanceCompletedEvent | undefined {
         if (createdSubOrch === undefined) {
             return undefined;
         }
 
         const matches = state.filter((val: HistoryEvent) => {
-                return val.EventType === HistoryEventType.SubOrchestrationInstanceCompleted
-                    && (val as SubOrchestrationInstanceCompletedEvent).TaskScheduledId === createdSubOrch.EventId
-                    && !val.IsProcessed;
-            });
+            return (
+                val.EventType === HistoryEventType.SubOrchestrationInstanceCompleted &&
+                (val as SubOrchestrationInstanceCompletedEvent).TaskScheduledId === createdSubOrch.EventId &&
+                !val.IsProcessed
+            );
+        });
 
-        return (matches.length > 0) ? matches[0] as SubOrchestrationInstanceCompletedEvent : undefined;
+        return matches.length > 0 ? (matches[0] as SubOrchestrationInstanceCompletedEvent) : undefined;
     }
 
     /* Returns undefined if not found. */
     private findSubOrchestrationInstanceFailed(
         state: HistoryEvent[],
-        createdSubOrchInstance: SubOrchestrationInstanceCreatedEvent | undefined)
-        : SubOrchestrationInstanceFailedEvent | undefined {
-            if (createdSubOrchInstance === undefined) {
-                return undefined;
-            }
+        createdSubOrchInstance: SubOrchestrationInstanceCreatedEvent | undefined
+    ): SubOrchestrationInstanceFailedEvent | undefined {
+        if (createdSubOrchInstance === undefined) {
+            return undefined;
+        }
 
-            const matches = state.filter((val: HistoryEvent) => {
-                    return val.EventType === HistoryEventType.SubOrchestrationInstanceFailed
-                        && (val as SubOrchestrationInstanceFailedEvent).TaskScheduledId === createdSubOrchInstance.EventId
-                        && !val.IsProcessed;
-                });
+        const matches = state.filter((val: HistoryEvent) => {
+            return (
+                val.EventType === HistoryEventType.SubOrchestrationInstanceFailed &&
+                (val as SubOrchestrationInstanceFailedEvent).TaskScheduledId === createdSubOrchInstance.EventId &&
+                !val.IsProcessed
+            );
+        });
 
-            return (matches.length > 0) ? matches[0] as SubOrchestrationInstanceFailedEvent : undefined;
+        return matches.length > 0 ? (matches[0] as SubOrchestrationInstanceFailedEvent) : undefined;
     }
 
     /* Returns undefined if not found. */
     private findTaskScheduled(state: HistoryEvent[], name: string): TaskScheduledEvent | undefined {
         const returnValue = name
-            ? state.filter((val: HistoryEvent) => {
-                return val.EventType === HistoryEventType.TaskScheduled
-                    && (val as TaskScheduledEvent).Name === name
-                    && !val.IsProcessed;
-            })[0] as TaskScheduledEvent
+            ? (state.filter((val: HistoryEvent) => {
+                  return val.EventType === HistoryEventType.TaskScheduled && (val as TaskScheduledEvent).Name === name && !val.IsProcessed;
+              })[0] as TaskScheduledEvent)
             : undefined;
         return returnValue;
     }
@@ -754,10 +781,12 @@ export class Orchestrator {
         }
 
         const returnValue = scheduledTask
-            ? state.filter((val: HistoryEvent) => {
-                return val.EventType === HistoryEventType.TaskCompleted
-                    && (val as TaskCompletedEvent).TaskScheduledId === scheduledTask.EventId;
-            })[0] as TaskCompletedEvent
+            ? (state.filter((val: HistoryEvent) => {
+                  return (
+                      val.EventType === HistoryEventType.TaskCompleted &&
+                      (val as TaskCompletedEvent).TaskScheduledId === scheduledTask.EventId
+                  );
+              })[0] as TaskCompletedEvent)
             : undefined;
         return returnValue;
     }
@@ -769,10 +798,11 @@ export class Orchestrator {
         }
 
         const returnValue = scheduledTask
-        ? state.filter((val: HistoryEvent) => {
-                return val.EventType === HistoryEventType.TaskFailed
-                    && (val as TaskFailedEvent).TaskScheduledId === scheduledTask.EventId;
-            })[0] as TaskFailedEvent
+            ? (state.filter((val: HistoryEvent) => {
+                  return (
+                      val.EventType === HistoryEventType.TaskFailed && (val as TaskFailedEvent).TaskScheduledId === scheduledTask.EventId
+                  );
+              })[0] as TaskFailedEvent)
             : undefined;
         return returnValue;
     }
@@ -781,9 +811,11 @@ export class Orchestrator {
     private findTimerCreated(state: HistoryEvent[], fireAt: Date): TimerCreatedEvent {
         const returnValue = fireAt
             ? state.filter((val: HistoryEvent) => {
-                return val.EventType === HistoryEventType.TimerCreated
-                    && new Date((val as TimerCreatedEvent).FireAt).getTime() === fireAt.getTime();
-            })[0]
+                  return (
+                      val.EventType === HistoryEventType.TimerCreated &&
+                      new Date((val as TimerCreatedEvent).FireAt).getTime() === fireAt.getTime()
+                  );
+              })[0]
             : undefined;
         return returnValue as TimerCreatedEvent;
     }
@@ -791,17 +823,18 @@ export class Orchestrator {
     /* Returns undefined if not found. */
     private findTimerFired(state: HistoryEvent[], createdTimer: TimerCreatedEvent | undefined): TimerFiredEvent | undefined {
         const returnValue = createdTimer
-            ? state.filter((val: HistoryEvent) => {
-                return val.EventType === HistoryEventType.TimerFired
-                    && (val as TimerFiredEvent).TimerId === createdTimer.EventId;
-            })[0] as TimerFiredEvent
+            ? (state.filter((val: HistoryEvent) => {
+                  return val.EventType === HistoryEventType.TimerFired && (val as TimerFiredEvent).TimerId === createdTimer.EventId;
+              })[0] as TimerFiredEvent)
             : undefined;
         return returnValue;
     }
 
     private setProcessed(events: Array<HistoryEvent | undefined>): void {
         events.map((val: HistoryEvent | undefined) => {
-            if (val) { val.IsProcessed = true; }
+            if (val) {
+                val.IsProcessed = true;
+            }
         });
     }
 }

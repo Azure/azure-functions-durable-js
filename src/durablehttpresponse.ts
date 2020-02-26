@@ -20,6 +20,6 @@ export class DurableHttpResponse {
         /** The HTTP response headers. */
         public headers?: {
             [key: string]: string;
-        },
-    ) { }
+        }
+    ) {}
 }

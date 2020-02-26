@@ -16,7 +16,7 @@ export class OrchestrationFailureError extends Error {
         let errorMessage: string;
         if (error instanceof Error) {
             errorMessage = error.message;
-        } else if (typeof(error) === "string") {
+        } else if (typeof error === "string") {
             errorMessage = error;
         } else {
             errorMessage = JSON.stringify(error);

@@ -9,6 +9,6 @@ export class LockState {
         /** Whether the context already holds some locks. */
         public readonly isLocked: boolean,
         /** The locks held by the context. */
-        public readonly ownedLocks: EntityId[],
-    ) { }
+        public readonly ownedLocks: EntityId[]
+    ) {}
 }

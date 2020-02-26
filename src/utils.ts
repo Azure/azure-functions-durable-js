@@ -2,9 +2,9 @@
 export class Utils {
     public static getInstancesOf<T>(collection: { [index: string]: unknown }, typeInstance: T): T[] {
         return collection && typeInstance
-            ? Object.keys(collection)
-                .filter((key: string) => this.hasAllPropertiesOf(collection[key], typeInstance))
-                .map((key: string) => collection[key]) as T[]
+            ? (Object.keys(collection)
+                  .filter((key: string) => this.hasAllPropertiesOf(collection[key], typeInstance))
+                  .map((key: string) => collection[key]) as T[])
             : [];
     }
 
@@ -13,15 +13,17 @@ export class Utils {
     }
 
     public static hasAllPropertiesOf<T>(obj: unknown, refInstance: T): boolean {
-        return typeof refInstance === "object"
-            && typeof obj === "object"
-            && obj !== null
-            && Object.keys(refInstance).every((key: string) => {
+        return (
+            typeof refInstance === "object" &&
+            typeof obj === "object" &&
+            obj !== null &&
+            Object.keys(refInstance).every((key: string) => {
                 return obj.hasOwnProperty(key);
-            });
+            })
+        );
     }
 
-    public static ensureNonNull<T>(argument: T | undefined, message: string) {
+    public static ensureNonNull<T>(argument: T | undefined, message: string): T {
         if (argument === undefined) {
             throw new TypeError(message);
         }
@@ -30,7 +32,7 @@ export class Utils {
     }
 
     public static sleep(delayInMilliseconds: number): Promise<NodeJS.Timer> {
-        return new Promise((resolve) => setTimeout(resolve, delayInMilliseconds));
+        return new Promise(resolve => setTimeout(resolve, delayInMilliseconds));
     }
 
     public static throwIfNotInstanceOf<T>(value: unknown, name: string, refInstance: T, type: string): void {

@@ -1,11 +1,11 @@
 import { IAction } from "../classes";
 
- // Base interfaces
+// Base interfaces
 export interface TaskBase {
     readonly isCompleted: boolean;
     readonly isFaulted: boolean;
     yieldNewActions(): IAction[];
- }
+}
 
 export interface UncompletedTask extends TaskBase {
     readonly isCompleted: false;

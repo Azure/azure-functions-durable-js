@@ -6,15 +6,8 @@ export class SubOrchestrationInstanceCreatedEvent extends HistoryEvent {
     public InstanceId: string;
     public Input: string | undefined;
 
-    constructor(
-        options: HistoryEventOptions,
-    ) {
-        super(
-            HistoryEventType.SubOrchestrationInstanceCreated,
-            options.eventId,
-            options.isPlayed,
-            options.timestamp,
-        );
+    constructor(options: HistoryEventOptions) {
+        super(HistoryEventType.SubOrchestrationInstanceCreated, options.eventId, options.isPlayed, options.timestamp);
 
         if (options.name === undefined) {
             throw new Error("SubOrchestrationInstanceCreatedEvent needs a name provided.");
