@@ -10,10 +10,19 @@
   ],
   "dependencies": {
     "azure-storage": "^2.10.2",
-    "durable-functions": "^1.2.2",
+    "durable-functions": "file:..",
     "moment": "^2.22.2",
     "readdirp": "^2.2.1",
     "request": "^2.87.0",
     "seedrandom": "^2.4.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:production": "npm run prestart && npm prune --production",
+    "watch": "tsc --w",
+    "prestart": "npm run build && func extensions install",
+    "start:host": "func start",
+    "start": "npm-run-all --parallel start:host watch",
+    "test": "echo \"No tests yet...\""
   }
 }

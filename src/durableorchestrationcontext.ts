@@ -88,7 +88,7 @@ export class DurableOrchestrationContext {
      * @param operationName The name of the operation.
      * @param operationInput The input for the operation.
      */
-    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
+    public callEntity<T>(entityId: EntityId, operationName: string, operationInput?: T): Task<T> {
         throw new Error("This is a placeholder.");
     }
 

@@ -1,0 +1,11 @@
+{
+    "bindings": [
+        {
+            "name": "context",
+            "type": "orchestrationTrigger",
+            "direction": "in"
+        }
+    ],
+    "disabled": false,
+    "scriptFile": "../dist/CounterOrchestrationTypeScript/index.js"
+}

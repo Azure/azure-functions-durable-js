@@ -96,7 +96,7 @@ export class Orchestrator {
             parentInstanceId: orchestrationBinding.parentInstanceId,
             callActivity: this.callActivity.bind(this, state),
             callActivityWithRetry: this.callActivityWithRetry.bind(this, state),
-            callEntity: this.callEntity.bind(this, state),
+            callEntity: this.callEntity.bind(this, state) as <T>(entityId: EntityId, operationName: string, operationInput?: T) => Task<T>,
             callSubOrchestrator: this.callSubOrchestrator.bind(this, state),
             callSubOrchestratorWithRetry: this.callSubOrchestratorWithRetry.bind(this, state),
             callHttp: this.callHttp.bind(this, state),
@@ -308,7 +308,7 @@ export class Orchestrator {
         return TaskFactory.UncompletedTask(newAction);
     }
 
-    private callEntity(state: HistoryEvent[], entityId: EntityId, operationName: string, operationInput: unknown): Task {
+    private callEntity<T>(state: HistoryEvent[], entityId: EntityId, operationName: string, operationInput: unknown): Task<T> {
         const newAction = new CallEntityAction(entityId, operationName, operationInput);
 
         const schedulerId = EntityId.getSchedulerIdFromEntityId(entityId);
@@ -323,7 +323,7 @@ export class Orchestrator {
         if (eventRaised) {
             const parsedResult = this.parseHistoryEvent(eventRaised) as ResponseMessage;
 
-            return TaskFactory.SuccessfulTask(
+            return TaskFactory.SuccessfulTask<T>(
                 newAction,
                 JSON.parse(parsedResult.result),
                 eventRaised.Timestamp,

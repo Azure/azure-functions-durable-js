@@ -33,7 +33,7 @@ import { TaskBase } from "./taskinterfaces";
  * return firstDone.result;
  * ```
  */
-export class Task implements TaskBase {
+export class Task<T = unknown> implements TaskBase {
     /**
      * Used to keep track of how many times the task has been yielded to avoid
      * scheduling the internal action multiple times _Internal use only._
@@ -58,7 +58,7 @@ export class Task implements TaskBase {
         /**
          * The result of the task, if completed. Otherwise `undefined`.
          */
-        public readonly result?: unknown,
+        public readonly result?: T,
         /**
          * The timestamp of the task.
          */

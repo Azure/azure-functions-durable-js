@@ -5,12 +5,12 @@ import { TaskSet } from "./taskset";
 import { TimerTask } from "./timertask";
 
 export class TaskFactory {
-    public static UncompletedTask(action: IAction): Task {
-        return new Task(false, false, action);
+    public static UncompletedTask<T>(action: IAction): Task<T> {
+        return new Task<T>(false, false, action);
     }
 
-    public static SuccessfulTask(action: IAction, result: unknown, timestamp: Date, id: number, completedHistoryEventIndex: number): Task {
-        return new Task(true, false, action, result, timestamp, id, undefined, completedHistoryEventIndex);
+    public static SuccessfulTask<T>(action: IAction, result: T, timestamp: Date, id: number, completedHistoryEventIndex: number): Task<T> {
+        return new Task<T>(true, false, action, result, timestamp, id, undefined, completedHistoryEventIndex);
     }
 
     public static FailedTask(
