@@ -1,21 +1,32 @@
 import * as debug from "debug";
-import { DurableEntityBindingInfo, DurableEntityContext, EntityId, EntityState, IEntityFunctionContext,
-    OperationResult, RequestMessage, Signal, Utils } from "./classes";
+import {
+    DurableEntityBindingInfo,
+    DurableEntityContext,
+    EntityId,
+    EntityState,
+    IEntityFunctionContext,
+    OperationResult,
+    RequestMessage,
+    Signal,
+    Utils,
+} from "./classes";
 
 /** @hidden */
 const log = debug("orchestrator");
 
 /** @hidden */
 export class Entity {
-    constructor(public fn: (context: IEntityFunctionContext) => unknown) { }
+    constructor(public fn: (context: IEntityFunctionContext) => unknown) {}
 
-    public listen() {
+    public listen(): (context: IEntityFunctionContext) => Promise<void> {
         return this.handle.bind(this);
     }
 
     private async handle(context: IEntityFunctionContext): Promise<void> {
         const entityBinding = Utils.getInstancesOf<DurableEntityBindingInfo>(
-            context.bindings, new DurableEntityBindingInfo(new EntityId("samplename", "samplekey"), true, "", []))[0];
+            context.bindings,
+            new DurableEntityBindingInfo(new EntityId("samplename", "samplekey"), true, "", [])
+        )[0];
 
         if (entityBinding === undefined) {
             throw new Error("Could not find an entityTrigger binding on context.");
@@ -44,7 +55,12 @@ export class Entity {
         context.done(null, returnState);
     }
 
-    private getCurrentDurableEntityContext(bindingInfo: DurableEntityBindingInfo, batchState: EntityState, requestIndex: number, startTime: Date): DurableEntityContext  {
+    private getCurrentDurableEntityContext(
+        bindingInfo: DurableEntityBindingInfo,
+        batchState: EntityState,
+        requestIndex: number,
+        startTime: Date
+    ): DurableEntityContext {
         const currentRequest = bindingInfo.batch[requestIndex];
         return {
             entityName: bindingInfo.self.name,

@@ -14,18 +14,18 @@ import { Entity, IEntityFunctionContext, IOrchestrationFunctionContext, Orchestr
  * });
  * ```
  */
-export function orchestrator(fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>)
-    : (context: IOrchestrationFunctionContext) => void {
+export function orchestrator(
+    fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>
+): (context: IOrchestrationFunctionContext) => void {
     const listener = new Orchestrator(fn).listen();
-    return (context: IOrchestrationFunctionContext) => {
+    return (context: IOrchestrationFunctionContext): void => {
         listener(context);
     };
 }
 
-export function entity(fn: (context: IEntityFunctionContext) => unknown)
-    : (context: IEntityFunctionContext) => void {
+export function entity(fn: (context: IEntityFunctionContext) => unknown): (context: IEntityFunctionContext) => void {
     const listener = new Entity(fn).listen();
-    return (context: IEntityFunctionContext) => {
+    return (context: IEntityFunctionContext): void => {
         listener(context);
     };
 }

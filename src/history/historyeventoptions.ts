@@ -10,9 +10,5 @@ export class HistoryEventOptions {
     public taskScheduledId?: number;
     public timerId?: number;
 
-    constructor(
-        public eventId: number,
-        public timestamp: Date,
-        public isPlayed: boolean = false,
-    ) { }
+    constructor(public eventId: number, public timestamp: Date, public isPlayed: boolean = false) {}
 }
