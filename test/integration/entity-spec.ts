@@ -1,9 +1,10 @@
 import { expect } from "chai";
 import "mocha";
-import { DurableEntityContext, EntityState } from "../../src/classes";
+import { DurableEntityContext, EntityState, IEntityFunctionContext } from "../../src/classes";
 import { TestEntities } from "../testobjects/testentities";
 import { TestEntityBatches } from "../testobjects/testentitybatches";
 import { StringStoreOperation } from "../testobjects/testentityoperations";
+import { BindingDefinition, ExecutionContext, Logger, HttpRequest } from "@azure/functions";
 
 describe("Entity", () => {
     it("StringStore entity with no initial state.", async () => {
@@ -57,13 +58,16 @@ function entityStateMatchesExpected(actual: EntityState, expected: EntityState):
     }
 }
 
-class MockContext {
-    constructor(
-        public bindings: IBindings,
-        public df?: DurableEntityContext,
-        public doneValue?: EntityState,
-        public err?: Error | string | null
-    ) {}
+class MockContext implements IEntityFunctionContext {
+    constructor(public bindings: IBindings, public doneValue?: EntityState, public err?: Error | string | null) {}
+    public invocationId: string;
+    public executionContext: ExecutionContext;
+    public bindingData: { [key: string]: any };
+    public bindingDefinitions: BindingDefinition[];
+    public log: Logger;
+    public req?: HttpRequest | undefined;
+    public res?: { [key: string]: any } | undefined;
+    public df: DurableEntityContext;
 
     public done(err?: Error | string | null, result?: EntityState): void {
         this.doneValue = result;
