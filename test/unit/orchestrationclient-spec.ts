@@ -1217,7 +1217,7 @@ function createInstanceWebhookUrl(
     instanceId?: string,
     timeoutInSeconds?: number,
     intervalInSeconds?: number
-): url.Url {
+): url.URL {
     let webhookUrl = "";
     if (timeoutInSeconds && intervalInSeconds) {
         webhookUrl = TestConstants.waitOnPostUriTemplate
