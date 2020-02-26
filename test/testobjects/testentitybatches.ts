@@ -1,15 +1,14 @@
 import * as df from "../../src";
 import { DurableEntityBindingInfo, EntityState, OperationResult, RequestMessage } from "../../src/classes";
-import { CounterOperation, EntityInputsAndOutputs, StringStoreOperation  } from "../testobjects/testentityoperations";
+import { CounterOperation, EntityInputsAndOutputs, StringStoreOperation } from "../testobjects/testentityoperations";
 
 export class TestEntityBatches {
-
     public static GetStringStoreBatch(operations: StringStoreOperation[], existingState: string | undefined): EntityInputsAndOutputs {
         const id = new df.EntityId("stringstore", "stringstorekey");
 
         const entityExists = existingState !== undefined;
         const output = new EntityState([], []);
-        if (entityExists)  {
+        if (entityExists) {
             output.entityState = JSON.stringify(existingState);
             output.entityExists = entityExists;
         }
@@ -44,7 +43,7 @@ export class TestEntityBatches {
             }
             operationCount++;
         }
-        return  {
+        return {
             input: new DurableEntityBindingInfo(id, entityExists, JSON.stringify(existingState), batch),
             output,
         };
@@ -57,7 +56,7 @@ export class TestEntityBatches {
             currentState = Number(existingState);
         }
 
-        const entityExists: boolean = !existingState;
+        const entityExists = !existingState;
         const output = new EntityState([], []);
         output.entityExists = entityExists;
         const batch: RequestMessage[] = [];
@@ -127,8 +126,13 @@ export class TestEntityBatches {
             }
             operationCount++;
         }
-        return  {
-            input: new DurableEntityBindingInfo(id, entityExists, existingState !== undefined ? existingState.toString() : undefined, batch),
+        return {
+            input: new DurableEntityBindingInfo(
+                id,
+                entityExists,
+                existingState !== undefined ? existingState.toString() : undefined,
+                batch
+            ),
             output,
         };
     }

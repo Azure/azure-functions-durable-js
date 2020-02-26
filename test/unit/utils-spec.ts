@@ -37,7 +37,7 @@ describe("Utils", () => {
             };
 
             const result = Utils.getInstancesOf(collection, new TestType());
-            expect(result).to.be.deep.equal([ instance1, instance2 ]);
+            expect(result).to.be.deep.equal([instance1, instance2]);
         });
     });
 
@@ -80,25 +80,21 @@ describe("Utils", () => {
     });
 
     describe("throwIfNotInstanceOf", () => {
-        const notObjects = [ undefined, true, 3, "thing", Symbol(), () => 3 ];
+        const notObjects = [undefined, true, 3, "thing", Symbol(), (): number => 3];
         const defaultName = "name";
 
-        notObjects.forEach((notObject) => {
+        notObjects.forEach(notObject => {
             it(`throws when called with ${typeof notObject}`, async () => {
                 expect(() => {
                     Utils.throwIfNotInstanceOf<TestType>(notObject, defaultName, new TestType(), "TestType");
-                }).to.throw(
-                    `${defaultName}: Expected object of type TestType but got ${typeof notObject}; are you missing properties?`,
-                );
+                }).to.throw(`${defaultName}: Expected object of type TestType but got ${typeof notObject}; are you missing properties?`);
             });
         });
 
         it("throws when called with null", async () => {
             expect(() => {
                 Utils.throwIfNotInstanceOf<TestType>(null, defaultName, new TestType(), "TestType");
-            }).to.throw(
-                `${defaultName}: Expected object of type TestType but got ${typeof null}; are you missing properties?`,
-            );
+            }).to.throw(`${defaultName}: Expected object of type TestType but got ${typeof null}; are you missing properties?`);
         });
 
         it("does not throw when called with instance of type", async () => {
@@ -109,33 +105,27 @@ describe("Utils", () => {
     });
 
     describe("throwIfEmpty", () => {
-        const notStrings = [ undefined, true, 3, Symbol(), () => 3, { key: "value" } ];
+        const notStrings = [undefined, true, 3, Symbol(), (): number => 3, { key: "value" }];
         const defaultName = "name";
 
-        notStrings.forEach((notString) => {
+        notStrings.forEach(notString => {
             it(`throws when called with ${typeof notString}`, async () => {
                 expect(() => {
                     Utils.throwIfEmpty(notString, defaultName);
-                }).to.throw(
-                    `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof notString}`,
-                );
+                }).to.throw(`${defaultName}: Expected non-empty, non-whitespace string but got ${typeof notString}`);
             });
         });
 
         it("throws when called with null", async () => {
             expect(() => {
                 Utils.throwIfEmpty(null, defaultName);
-            }).to.throw(
-                `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof null}`,
-            );
+            }).to.throw(`${defaultName}: Expected non-empty, non-whitespace string but got ${typeof null}`);
         });
 
         it("throws when called with whitespace", async () => {
             expect(() => {
                 Utils.throwIfEmpty("  ", defaultName);
-            }).to.throw(
-                `${defaultName}: Expected non-empty, non-whitespace string but got empty string`,
-            );
+            }).to.throw(`${defaultName}: Expected non-empty, non-whitespace string but got empty string`);
         });
 
         it("does not throw when called with non-empty string", async () => {
@@ -147,10 +137,5 @@ describe("Utils", () => {
 });
 
 class TestType {
-    constructor(
-        public property0: boolean = false,
-        public property1: string = "",
-        public property2?: unknown,
-        public property3?: object,
-    ) { }
+    constructor(public property0: boolean = false, public property1: string = "", public property2?: unknown, public property3?: object) {}
 }

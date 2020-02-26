@@ -16,7 +16,7 @@ describe("EntityId", () => {
     });
 
     describe("getEntityIdFromSchedulerId", () => {
-        it ("constructs correct entity ID from scheduler ID", () => {
+        it("constructs correct entity ID from scheduler ID", () => {
             const schedulerId = `@${defaultEntityName}@${defaultEntityKey}`;
 
             const expectedEntityId = new EntityId(defaultEntityName, defaultEntityKey);
@@ -28,7 +28,7 @@ describe("EntityId", () => {
     });
 
     describe("getSchedulerIdFromEntityId", () => {
-        it ("constructs correct scheduler ID from entity ID", () => {
+        it("constructs correct scheduler ID from entity ID", () => {
             const expectedSchedulerId = `@${defaultEntityName}@${defaultEntityKey}`;
 
             const result = EntityId.getSchedulerIdFromEntityId(defaultEntityId);

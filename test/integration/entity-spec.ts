@@ -1,18 +1,18 @@
 import { expect } from "chai";
 import "mocha";
-import { DurableEntityContext, EntityState, OperationResult } from "../../src/classes";
+import { DurableEntityContext, EntityState } from "../../src/classes";
 import { TestEntities } from "../testobjects/testentities";
-import { TestEntityBatches  } from "../testobjects/testentitybatches";
-import { StringStoreOperation  } from "../testobjects/testentityoperations";
+import { TestEntityBatches } from "../testobjects/testentitybatches";
+import { StringStoreOperation } from "../testobjects/testentityoperations";
 
 describe("Entity", () => {
     it("StringStore entity with no initial state.", async () => {
         const entity = TestEntities.StringStore;
         const operations: StringStoreOperation[] = [];
-        operations.push({ kind: "set", value: "hello"});
-        operations.push({ kind: "get"});
-        operations.push({ kind: "set", value: "hello world"});
-        operations.push({ kind: "get"});
+        operations.push({ kind: "set", value: "hello" });
+        operations.push({ kind: "get" });
+        operations.push({ kind: "set", value: "hello world" });
+        operations.push({ kind: "get" });
 
         const testData = TestEntityBatches.GetStringStoreBatch(operations, undefined);
         const mockContext = new MockContext({
@@ -30,7 +30,7 @@ describe("Entity", () => {
     it("StringStore entity with initial state.", async () => {
         const entity = TestEntities.StringStore;
         const operations: StringStoreOperation[] = [];
-        operations.push({ kind: "get"});
+        operations.push({ kind: "get" });
 
         const testData = TestEntityBatches.GetStringStoreBatch(operations, "Hello world");
         const mockContext = new MockContext({
@@ -68,7 +68,7 @@ describe("Entity", () => {
 });
 
 // Have to compare on an element by element basis as elapsed time is not deterministic.
-function entityStateMatchesExpected(actual: EntityState, expected: EntityState) {
+function entityStateMatchesExpected(actual: EntityState, expected: EntityState): void {
     expect(actual.entityExists).to.be.equal(expected.entityExists);
     expect(actual.entityState).to.be.deep.equal(expected.entityState);
     expect(actual.signals).to.be.deep.equal(expected.signals);
@@ -83,10 +83,10 @@ class MockContext {
         public bindings: IBindings,
         public df?: DurableEntityContext,
         public doneValue?: EntityState,
-        public err?: Error | string | null,
-    ) { }
+        public err?: Error | string | null
+    ) {}
 
-    public done(err?: Error | string | null, result?: EntityState) {
+    public done(err?: Error | string | null, result?: EntityState): void {
         this.doneValue = result;
         this.err = err;
     }

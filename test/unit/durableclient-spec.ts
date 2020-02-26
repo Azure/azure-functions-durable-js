@@ -28,7 +28,7 @@ const testConnectionName = "MyStorageAccount";
 // We start with the JSON that matches the expected contract.
 const durableClientBindingInputJson = JSON.stringify({
     taskHubName: testTaskHubName,
-    creationUrls: { },
+    creationUrls: {},
     managementUrls: {
         id: "INSTANCEID",
         statusQueryGetUri: `${externalBaseUrl}/instances/INSTANCEID?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
@@ -71,9 +71,9 @@ describe("Durable client RPC endpoint", () => {
             const request: HttpRequest = {
                 method: "GET",
                 url: `${externalOrigin}/api/Foo`,
-                headers: { },
-                query: { },
-                params: { },
+                headers: {},
+                query: {},
+                params: {},
             };
 
             const instanceId = "abc123";
@@ -224,12 +224,10 @@ describe("Durable client RPC endpoint", () => {
                 .query({ createdTimeFrom, createdTimeTo, runtimeStatus })
                 .reply(200, []);
 
-            const statusList = runtimeStatus.split(",").map(
-                (status) => OrchestrationRuntimeStatus[status as keyof typeof OrchestrationRuntimeStatus]);
-            const result = await client.getStatusBy(
-                new Date(createdTimeFrom),
-                new Date(createdTimeTo),
-                statusList);
+            const statusList = runtimeStatus
+                .split(",")
+                .map(status => OrchestrationRuntimeStatus[status as keyof typeof OrchestrationRuntimeStatus]);
+            const result = await client.getStatusBy(new Date(createdTimeFrom), new Date(createdTimeTo), statusList);
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.an("array");
         });
@@ -255,7 +253,7 @@ describe("Durable client RPC endpoint", () => {
     });
 
     describe("purgeInstanceHistory[By]()", () => {
-        it ("uses the RPC endpoint (single instance)", async () => {
+        it("uses the RPC endpoint (single instance)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
             const client = new DurableOrchestrationClient(input);
 
@@ -272,7 +270,7 @@ describe("Durable client RPC endpoint", () => {
             expect(result.instancesDeleted).to.be.equal(1);
         });
 
-        it ("uses the RPC endpoint (multiple instances)", async () => {
+        it("uses the RPC endpoint (multiple instances)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
             const client = new DurableOrchestrationClient(input);
 
@@ -288,12 +286,14 @@ describe("Durable client RPC endpoint", () => {
                 .query({ createdTimeFrom, createdTimeTo, runtimeStatus })
                 .reply(200, { instancesDeleted: 10 });
 
-            const statusList = runtimeStatus.split(",").map(
-                (status) => OrchestrationRuntimeStatus[status as keyof typeof OrchestrationRuntimeStatus]);
+            const statusList = runtimeStatus
+                .split(",")
+                .map(status => OrchestrationRuntimeStatus[status as keyof typeof OrchestrationRuntimeStatus]);
             const result: PurgeHistoryResult = await client.purgeInstanceHistoryBy(
                 new Date(createdTimeFrom),
                 new Date(createdTimeTo),
-                statusList);
+                statusList
+            );
             expect(scope.isDone()).to.be.equal(true);
             expect(result.instancesDeleted).to.be.equal(10);
         });
@@ -326,7 +326,9 @@ describe("Durable client RPC endpoint", () => {
             const reason = "because";
             const taskHub = "hub";
             const connection = "Storage";
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/${instanceId}/rewind?reason=${reason}&taskHub=${taskHub}&connection=${connection}`);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/${instanceId}/rewind?reason=${reason}&taskHub=${taskHub}&connection=${connection}`
+            );
 
             const scope = nock(expectedUrl.origin)
                 .post(expectedUrl.pathname)
@@ -366,7 +368,9 @@ describe("Durable client RPC endpoint", () => {
             const connection = "Storage";
             const op = "incr";
             const payload = { value: 42 };
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/entities/${entityId.name}/${entityId.key}?op=${op}&taskHub=${taskHub}&connection=${connection}`);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/entities/${entityId.name}/${entityId.key}?op=${op}&taskHub=${taskHub}&connection=${connection}`
+            );
             const expectedHeaders = { reqheaders: { "Content-Type": "application/json" } };
 
             const scope = nock(expectedUrl.origin, expectedHeaders)

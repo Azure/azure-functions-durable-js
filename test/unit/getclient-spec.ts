@@ -2,7 +2,6 @@ import chai = require("chai");
 import chaiAsPromised = require("chai-as-promised");
 import "mocha";
 import "process";
-import uuidv1 = require("uuid/v1");
 import { getClient } from "../../src";
 import { Constants, DurableOrchestrationClient } from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
@@ -19,13 +18,15 @@ describe("getClient()", () => {
         TestConstants.idPlaceholder,
         Constants.DefaultLocalOrigin,
         defaultTaskHub,
-        defaultConnection);
+        defaultConnection
+    );
 
     const v1ClientInputData = TestUtils.createV1OrchestrationClientInputData(
         TestConstants.idPlaceholder,
         Constants.DefaultLocalOrigin,
         defaultTaskHub,
-        defaultConnection);
+        defaultConnection
+    );
 
     const defaultContext = {
         bindings: {
@@ -42,7 +43,9 @@ describe("getClient()", () => {
     it("throws if context.bindings is undefined", async () => {
         expect(() => {
             getClient({});
-        }).to.throw("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
+        }).to.throw(
+            "An orchestration client function must have an orchestrationClient input binding. Check your function.json definition."
+        );
     });
 
     it("throws if context.bindings does not contain valid orchestrationClient input binding", async () => {
@@ -53,7 +56,9 @@ describe("getClient()", () => {
                 },
             };
             getClient(badContext);
-        }).to.throw("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
+        }).to.throw(
+            "An orchestration client function must have an orchestrationClient input binding. Check your function.json definition."
+        );
     });
 
     it("returns DurableOrchestrationClient if called with valid context", async () => {
@@ -84,14 +89,14 @@ describe("getClient()", () => {
                         TestConstants.idPlaceholder,
                         "http://0.0.0.0:12345",
                         defaultTaskHub,
-                        defaultConnection,
+                        defaultConnection
                     ),
                 },
             };
 
             const client = getClient(badContext);
 
-            const expectedUniqueWebhookOrigins: string[] = [ Constants.DefaultLocalOrigin ];
+            const expectedUniqueWebhookOrigins: string[] = [Constants.DefaultLocalOrigin];
             expect(client.uniqueWebhookOrigins).to.deep.equal(expectedUniqueWebhookOrigins);
         });
 
@@ -105,14 +110,14 @@ describe("getClient()", () => {
                         TestConstants.idPlaceholder,
                         `http://${process.env.WEBSITE_HOSTNAME}`,
                         defaultTaskHub,
-                        defaultConnection,
+                        defaultConnection
                     ),
                 },
             };
 
             const client = getClient(badContext);
 
-            const expectedUniqueWebhookOrigins: string[] = [ Constants.DefaultLocalOrigin ];
+            const expectedUniqueWebhookOrigins: string[] = [Constants.DefaultLocalOrigin];
             expect(client.uniqueWebhookOrigins).to.deep.equal(expectedUniqueWebhookOrigins);
         });
     });
