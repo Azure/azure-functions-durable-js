@@ -71,8 +71,8 @@ export class TestOrchestrations {
     });
 
     public static CallActivityNoInput: any = df.orchestrator(function*(context: any) {
-       const returnValue = yield context.df.callActivity("ReturnsFour");
-       return returnValue;
+        const returnValue = yield context.df.callActivity("ReturnsFour");
+        return returnValue;
     });
 
     public static CallEntitySet: any = df.orchestrator(function*(context: any) {
@@ -88,11 +88,7 @@ export class TestOrchestrations {
 
     public static ContinueAsNewCounter: any = df.orchestrator(function*(context: any) {
         const currentValueObject = context.df.getInput();
-        let currentValue = currentValueObject
-            ? currentValueObject.value
-                ? currentValueObject.value
-                : 0
-            : 0;
+        let currentValue = currentValueObject ? (currentValueObject.value ? currentValueObject.value : 0) : 0;
         currentValue++;
 
         yield context.df.continueAsNew({ value: currentValue });
@@ -118,7 +114,7 @@ export class TestOrchestrations {
     public static GetAndReleaseLock: any = df.orchestrator(function*(context: any) {
         const entities = context.df.getInput();
 
-        const lock = yield context.df.lock(entities);
+        yield context.df.lock(entities);
 
         return "ok";
     });
@@ -126,7 +122,7 @@ export class TestOrchestrations {
     public static GetLockBadly: any = df.orchestrator(function*(context: any) {
         const locksToGet = context.df.getInput();
 
-        const lock = yield context.df.lock(locksToGet);
+        yield context.df.lock(locksToGet);
 
         return "ok";
     });
@@ -165,7 +161,7 @@ export class TestOrchestrations {
     public static SayHelloWithActivityYieldTwice: any = df.orchestrator(function*(context: any) {
         const input = context.df.getInput();
         const task = context.df.callActivity("Hello", input);
-        const output = yield task;
+        yield task;
         return yield task;
     });
 
@@ -249,12 +245,7 @@ export class TestOrchestrations {
 
     public static SendHttpRequest: any = df.orchestrator(function*(context: IOrchestrationFunctionContext) {
         const input = context.df.getInput() as df.DurableHttpRequest;
-        const output = yield context.df.callHttp(
-            input.method,
-            input.uri,
-            input.content,
-            input.headers,
-            input.tokenSource);
+        const output = yield context.df.callHttp(input.method, input.uri, input.content, input.headers, input.tokenSource);
         return output;
     });
 
@@ -305,13 +296,11 @@ export class TestOrchestrations {
         return "Timer fired!";
     });
 
-    public static ThrowsExceptionFromActivity: any = df.orchestrator(function*(context: any)
-    : IterableIterator<unknown> {
+    public static ThrowsExceptionFromActivity: any = df.orchestrator(function*(context: any): IterableIterator<unknown> {
         yield context.df.callActivity("ThrowsErrorActivity");
     });
 
-    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function*(context: any)
-    : IterableIterator<unknown> {
+    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function*(context: any): IterableIterator<unknown> {
         try {
             yield context.df.callActivity("ThrowsErrorActivity");
         } catch (e) {
@@ -322,8 +311,7 @@ export class TestOrchestrations {
         }
     });
 
-    public static ThrowsExceptionInline: any = df.orchestrator(function*(context: any)
-    : IterableIterator<unknown> {
+    public static ThrowsExceptionInline: any = df.orchestrator(function*(): IterableIterator<unknown> {
         throw Error("Exception from Orchestrator");
     });
 }
