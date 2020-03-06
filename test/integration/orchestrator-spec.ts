@@ -5,7 +5,7 @@ import * as uuidv1 from "uuid/v1";
 import { isUUID } from "validator";
 import { ManagedIdentityTokenSource } from "../../src";
 import {
-    ActionType, CallActivityAction, CallActivityWithRetryAction, CallEntityAction, CallHttpAction, CallSubOrchestratorAction,
+    ActionType, CallActivityAction, CallActivityWithRetryAction, CallEntityAction, SignalEntityAction, CallHttpAction, CallSubOrchestratorAction,
     CallSubOrchestratorWithRetryAction, ContinueAsNewAction, CreateTimerAction, DurableHttpRequest,
     DurableHttpResponse, DurableOrchestrationBindingInfo, DurableOrchestrationContext, EntityId,
     ExternalEventType, HistoryEvent, IOrchestratorState, LockState,
@@ -870,6 +870,45 @@ describe("Orchestrator", () => {
             );
         });
     });
+
+    describe("signalEntity()", () => {
+        const testEntityId = new EntityId("StringStore2", "12345");
+
+        it("schedules an entity request", async () => {
+            const orchestrator = TestOrchestrations.SignalEntitySet;
+            const instanceId = uuidv1();
+            const expectedEntity = new EntityId("StringStore2", "12345");
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart(
+                        "SignalEntity",
+                        moment.utc().toDate(),
+                    ),
+                    expectedEntity,
+                    instanceId,
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    output: undefined,
+                    actions:
+                        [
+                            [
+                                new SignalEntityAction(
+                                    expectedEntity,
+                                    "set",
+                                    "testString"),
+                            ],
+                        ],
+                }),
+            );
+        });
+    });
+
 
     describe("callSubOrchestrator()", () => {
         it("schedules a suborchestrator function", async () => {

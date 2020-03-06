@@ -82,6 +82,13 @@ export class TestOrchestrations {
         return "OK";
     });
 
+    public static SignalEntitySet: any = df.orchestrator(function* (context: any) {
+        const entity = context.df.getInput() as df.EntityId;
+        yield context.df.signalEntity(entity, "set", "testString");
+
+        return "OK";
+    });
+
     public static CheckForLocksNone: any = df.orchestrator(function*(context: any) {
         return context.df.isLocked();
     });

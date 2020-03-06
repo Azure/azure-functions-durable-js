@@ -93,6 +93,18 @@ export class DurableOrchestrationContext {
     }
 
     /**
+     * Signals an operation on an entity, passing an argument, but does not
+     * wait for it to complete.
+     *
+     * @param entityId The target entity.
+     * @param operationName The name of the operation.
+     * @param operationInput The input for the operation.
+     */
+    public signalEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
+        throw new Error("This is a placeholder.");
+    }
+
+    /**
      * Schedules an orchestration function named `name` for execution.
      *
      * @param name The name of the orchestrator function to call.

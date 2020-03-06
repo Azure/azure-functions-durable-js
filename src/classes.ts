@@ -18,6 +18,7 @@ export { ExternalEventType } from "./actions/externaleventtype";
 export { CallActivityAction } from "./actions/callactivityaction";
 export { CallActivityWithRetryAction } from "./actions/callactivitywithretryaction";
 export { CallEntityAction } from "./actions/callentityaction";
+export { SignalEntityAction } from "./actions/signalentityaction";
 export { CallSubOrchestratorAction } from "./actions/callsuborchestratoraction";
 export { CallSubOrchestratorWithRetryAction } from "./actions/callsuborchestratorwithretryaction";
 export { CallHttpAction } from "./actions/callhttpaction";

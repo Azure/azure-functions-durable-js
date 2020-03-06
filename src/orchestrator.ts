@@ -1,6 +1,6 @@
 import * as debug from "debug";
 import { AggregatedError } from "./aggregatederror";
-import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, CallHttpAction,
+import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, SignalEntityAction, CallHttpAction,
     CallSubOrchestratorAction, CallSubOrchestratorWithRetryAction, ContinueAsNewAction,
     CreateTimerAction, DurableHttpRequest, DurableLock, DurableOrchestrationBindingInfo, EntityId,
     EventRaisedEvent, EventSentEvent, ExternalEventType, GuidManager, HistoryEvent, HistoryEventType,
@@ -62,6 +62,7 @@ export class Orchestrator {
             callActivity: this.callActivity.bind(this, state),
             callActivityWithRetry: this.callActivityWithRetry.bind(this, state),
             callEntity: this.callEntity.bind(this, state),
+            signalEntity: this.signalEntity.bind(this, state),
             callSubOrchestrator: this.callSubOrchestrator.bind(this, state),
             callSubOrchestratorWithRetry: this.callSubOrchestratorWithRetry.bind(this, state),
             callHttp: this.callHttp.bind(this, state),
@@ -290,6 +291,23 @@ export class Orchestrator {
             const parsedResult = this.parseHistoryEvent(eventRaised) as ResponseMessage;
 
             return TaskFactory.SuccessfulTask(newAction, JSON.parse(parsedResult.result), eventRaised.Timestamp, eventSent.EventId, state.indexOf(eventRaised));
+        }
+
+        // TODO: error handling
+
+        return TaskFactory.UncompletedTask(
+            newAction,
+        );
+    }
+
+    private signalEntity(state: HistoryEvent[], entityId: EntityId, operationName: string, operationInput: unknown): Task {
+        const newAction = new SignalEntityAction(entityId, operationName, operationInput);
+
+        const schedulerId = EntityId.getSchedulerIdFromEntityId(entityId);
+        const eventSent = this.findEventSent(state, schedulerId, "op");
+        this.setProcessed([eventSent]); //TODO: did this for safety, but it's unclear if it needs to be flagged
+        if (eventSent) { 
+            return TaskFactory.SuccessfulTask(newAction, null, eventSent.Timestamp, eventSent.EventId, state.indexOf(eventSent)); // TODO: null is likely unsafe
         }
 
         // TODO: error handling
