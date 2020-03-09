@@ -132,4 +132,50 @@ export class TestEntityBatches {
             output,
         };
     }
+
+    public static GetAsyncStringStoreBatch(operations: StringStoreOperation[], existingState: string | undefined): EntityInputsAndOutputs {
+        const id = new df.EntityId("asyncstringstore", "asyncstringstorekey");
+
+        const entityExists = existingState !== undefined;
+        const output = new EntityState([], []);
+        if (entityExists)  {
+            output.entityState = JSON.stringify(existingState);
+            output.entityExists = entityExists;
+        }
+
+        const batch: RequestMessage[] = [];
+        let operationCount = 0;
+        for (const operation of operations) {
+            batch[operationCount] = new RequestMessage();
+            switch (operation.kind) {
+                case "get":
+                    // Handle inputs
+                    batch[operationCount].id = JSON.stringify(operationCount);
+                    batch[operationCount].name = "get";
+                    batch[operationCount].signal = false;
+
+                    // Handle outputs
+                    output.results[operationCount] = new OperationResult(false, -1, output.entityState);
+                    break;
+                case "set":
+                    // Handle inputs
+                    const value = JSON.stringify(operation.value);
+                    batch[operationCount].id = JSON.stringify(operationCount);
+                    batch[operationCount].name = "set";
+                    batch[operationCount].signal = false;
+                    batch[operationCount].input = value;
+
+                    // Handle outputs
+                    output.results[operationCount] = new OperationResult(false, -1);
+                    output.entityExists = true;
+                    output.entityState = value;
+                    break;
+            }
+            operationCount++;
+        }
+        return  {
+            input: new DurableEntityBindingInfo(id, entityExists, JSON.stringify(existingState), batch),
+            output,
+        };
+    }
 }
