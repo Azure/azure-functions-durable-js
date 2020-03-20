@@ -320,8 +320,7 @@ export class TestOrchestrations {
         }
     });
 
-    public static ThrowsExceptionInline: any = df.orchestrator(function*(context: any)
-    : Generator<unknown, unknown, any> {
+    public static ThrowsExceptionInline: any = df.orchestrator(function*(context: any) {
         throw Error("Exception from Orchestrator");
     });
 }
