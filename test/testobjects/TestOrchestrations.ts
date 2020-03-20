@@ -305,13 +305,11 @@ export class TestOrchestrations {
         return "Timer fired!";
     });
 
-    public static ThrowsExceptionFromActivity: any = df.orchestrator(function*(context: any)
-    : Generator<void, void, any> {
+    public static ThrowsExceptionFromActivity: any = df.orchestrator(function*(context: any) {
         yield context.df.callActivity("ThrowsErrorActivity");
     });
 
-    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function*(context: any)
-    : Generator<unknown, unknown, any> {
+    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function*(context: any) {
         try {
             yield context.df.callActivity("ThrowsErrorActivity");
         } catch (e) {

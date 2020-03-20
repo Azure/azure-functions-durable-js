@@ -52,6 +52,5 @@ export class TestEntities {
                 throw new Error("No such operation exists");
         }
 
-
     });
 }
