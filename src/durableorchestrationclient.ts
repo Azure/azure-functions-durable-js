@@ -465,7 +465,7 @@ export class DurableOrchestrationClient {
             case 200:   // entity exists
                 return new EntityStateResponse(true, response.data as T);
             case 404:   // entity does not exist
-                return new EntityStateResponse(false, undefined);
+                return new EntityStateResponse(false);
             default:
                 return Promise.reject(this.createGenericError(response));
         }

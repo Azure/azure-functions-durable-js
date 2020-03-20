@@ -306,12 +306,12 @@ export class TestOrchestrations {
     });
 
     public static ThrowsExceptionFromActivity: any = df.orchestrator(function*(context: any)
-    : IterableIterator<unknown> {
+    : Generator<void, void, any> {
         yield context.df.callActivity("ThrowsErrorActivity");
     });
 
     public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function*(context: any)
-    : IterableIterator<unknown> {
+    : Generator<unknown, unknown, any> {
         try {
             yield context.df.callActivity("ThrowsErrorActivity");
         } catch (e) {
@@ -323,7 +323,7 @@ export class TestOrchestrations {
     });
 
     public static ThrowsExceptionInline: any = df.orchestrator(function*(context: any)
-    : IterableIterator<unknown> {
+    : Generator<unknown, unknown, any> {
         throw Error("Exception from Orchestrator");
     });
 }
