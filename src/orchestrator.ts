@@ -25,7 +25,7 @@ export class Orchestrator {
     private newGuidCounter: number;
     private subOrchestratorCounter: number;
 
-    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) { }
+    constructor(public fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>) { }
 
     public listen() {
         return this.handle.bind(this);
@@ -87,7 +87,7 @@ export class Orchestrator {
 
         try {
             // First execution, we have not yet "yielded" any of the tasks.
-            let g = gen.next(undefined);
+            let g = gen.next();
 
             while (true) {
 
@@ -554,8 +554,7 @@ export class Orchestrator {
         let maxCompletionIndex: number | undefined;
         const errors: Error[] = [];
         const results: Array<unknown> = [];
-        for (let index = 0; index < tasks.length; index++) {
-            const task = tasks[index];
+        for (const task of tasks) {
             if (!TaskFilter.isCompletedTask(task)) {
                 return TaskFactory.UncompletedTaskSet(tasks);
             }
@@ -590,8 +589,7 @@ export class Orchestrator {
         }
 
         let firstCompleted: CompletedTask | undefined;
-        for (let index = 0; index < tasks.length; index++) {
-            const task = tasks[index];
+        for (const task of tasks) {
             if (TaskFilter.isCompletedTask(task)) {
                 if (!firstCompleted) {
                     firstCompleted = task;

@@ -14,7 +14,7 @@ import { Entity, IEntityFunctionContext, IOrchestrationFunctionContext, Orchestr
  * });
  * ```
  */
-export function orchestrator(fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>)
+export function orchestrator(fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>)
     : (context: IOrchestrationFunctionContext) => void {
     const listener = new Orchestrator(fn).listen();
     return (context: IOrchestrationFunctionContext) => {
