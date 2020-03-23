@@ -48,10 +48,10 @@ describe("Entity", () => {
     it("AsyncStringStore entity with no initial state.", async () => {
         const entity = TestEntities.AsyncStringStore;
         const operations: StringStoreOperation[] = [];
-        operations.push({ kind: "set", value: "set 1"});
-        operations.push({ kind: "get"});
-        operations.push({ kind: "set", value: "set 2"});
-        operations.push({ kind: "get"});
+        operations.push({ kind: "set", value: "set 1" });
+        operations.push({ kind: "get" });
+        operations.push({ kind: "set", value: "set 2" });
+        operations.push({ kind: "get" });
 
         const testData = TestEntityBatches.GetAsyncStringStoreBatch(operations, undefined);
         const mockContext = new MockContext({

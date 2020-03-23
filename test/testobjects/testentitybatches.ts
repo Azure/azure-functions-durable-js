@@ -142,7 +142,7 @@ export class TestEntityBatches {
 
         const entityExists = existingState !== undefined;
         const output = new EntityState([], []);
-        if (entityExists)  {
+        if (entityExists) {
             output.entityState = JSON.stringify(existingState);
             output.entityExists = entityExists;
         }
@@ -177,7 +177,7 @@ export class TestEntityBatches {
             }
             operationCount++;
         }
-        return  {
+        return {
             input: new DurableEntityBindingInfo(id, entityExists, JSON.stringify(existingState), batch),
             output,
         };

@@ -184,7 +184,7 @@ export class Orchestrator {
                 // should not yet have been played by the Durable Task framework, resulting in isReplaying being false.
                 // On replays, the event will have already been processed by the framework, and IsPlayed will be marked as true.
                 if (state[partialResult.completionIndex] !== undefined) {
-                  context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
+                    context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
                 }
 
                 if (TaskFilter.isFailedTask(partialResult)) {
