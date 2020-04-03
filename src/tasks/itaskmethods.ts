@@ -1,4 +1,4 @@
-import { Task } from "./task";
+import { TaskBase } from "./taskinterfaces";
 import { TaskSet } from "./taskset";
 
 /**
@@ -11,11 +11,11 @@ export interface ITaskMethods {
      * array containing the results of all [[Task]]s passed to it. It returns
      * when all of the [[Task]] instances have completed.
      */
-    all: (tasks: Task[]) => TaskSet;
+    all: (tasks: TaskBase[]) => TaskSet;
 
     /**
      * Similar to Promise.race. When called with `yield` or `return`, returns
      * the first [[Task]] instance to complete.
      */
-    any: (tasks: Task[]) => TaskSet;
+    any: (tasks: TaskBase[]) => TaskSet;
 }
