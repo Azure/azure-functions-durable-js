@@ -603,7 +603,7 @@ export class DurableOrchestrationClient {
                 .replace(this.instanceIdPlaceholder, (instanceId ? `/${instanceId}` : ""));
         }
 
-        const response = await this.axiosInstance.post(requestUrl, input !== undefined ? JSON.stringify(input) : "");
+        const response = await this.axiosInstance.post(requestUrl, JSON.stringify(input));
         if (response.data && response.status <= 202) {
             return (response.data as HttpManagementPayload).id;
         } else  {
