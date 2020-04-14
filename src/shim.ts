@@ -14,7 +14,7 @@ import { Entity, IEntityFunctionContext, IOrchestrationFunctionContext, Orchestr
  * });
  * ```
  */
-export function orchestrator(fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>)
+export function orchestrator(fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>)
     : (context: IOrchestrationFunctionContext) => void {
     const listener = new Orchestrator(fn).listen();
     return (context: IOrchestrationFunctionContext) => {
@@ -25,7 +25,7 @@ export function orchestrator(fn: (context: IOrchestrationFunctionContext) => Ite
 export function entity(fn: (context: IEntityFunctionContext) => unknown)
     : (context: IEntityFunctionContext) => void {
     const listener = new Entity(fn).listen();
-    return (context: IEntityFunctionContext) => {
-        listener(context);
+    return async (context: IEntityFunctionContext) => {
+        await listener(context);
     };
 }

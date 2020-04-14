@@ -25,7 +25,7 @@ export class Orchestrator {
     private newGuidCounter: number;
     private subOrchestratorCounter: number;
 
-    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) { }
+    constructor(public fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>) { }
 
     public listen() {
         return this.handle.bind(this);
@@ -87,7 +87,7 @@ export class Orchestrator {
 
         try {
             // First execution, we have not yet "yielded" any of the tasks.
-            let g = gen.next(undefined);
+            let g = gen.next();
 
             while (true) {
 
@@ -144,6 +144,13 @@ export class Orchestrator {
                         }),
                     );
                     return;
+                }
+
+                // The first time a task is marked as complete, the history event that finally marked the task as completed
+                // should not yet have been played by the Durable Task framework, resulting in isReplaying being false.
+                // On replays, the event will have already been processed by the framework, and IsPlayed will be marked as true.
+                if (state[partialResult.completionIndex] !== undefined) {
+                  context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
                 }
 
                 if (TaskFilter.isFailedTask(partialResult)) {
@@ -544,11 +551,10 @@ export class Orchestrator {
     }
 
     private all(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
-        let maxCompletionIndex: number | undefined = undefined;
+        let maxCompletionIndex: number | undefined;
         const errors: Error[] = [];
-        const results: unknown[] = [];
-        for (let index = 0; index < tasks.length; index++) {
-            const task = tasks[index];
+        const results: Array<unknown> = [];
+        for (const task of tasks) {
             if (!TaskFilter.isCompletedTask(task)) {
                 return TaskFactory.UncompletedTaskSet(tasks);
             }
@@ -582,9 +588,8 @@ export class Orchestrator {
             throw new Error("At least one yieldable task must be provided to wait for.");
         }
 
-        let firstCompleted: CompletedTask | undefined = undefined;
-        for (let index = 0; index < tasks.length; index++) {
-            const task = tasks[index];
+        let firstCompleted: CompletedTask | undefined;
+        for (const task of tasks) {
             if (TaskFilter.isCompletedTask(task)) {
                 if (!firstCompleted) {
                     firstCompleted = task;

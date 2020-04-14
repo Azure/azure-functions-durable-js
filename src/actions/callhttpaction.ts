@@ -1,4 +1,4 @@
-import { ActionType, DurableHttpRequest, IAction, Utils } from "../classes";
+import { ActionType, DurableHttpRequest, IAction } from "../classes";
 
 /** @hidden */
 export class CallHttpAction implements IAction {
