@@ -20,7 +20,7 @@
     "clean": "rimraf lib",
     "lint": "tslint --project tsconfig.json --config tslint.json --force --format verbose \"src/**/*.ts\"",
     "lint:test": "tslint --force --format verbose \"test/**/*.ts\"",
-    "build": "npm run clean && npm run lint && npm run lint:test && echo Using TypeScript && tsc --version && tsc --pretty && echo Done",
+    "build": "npm run clean && npm run lint && npm run lint:test && echo Using TypeScript && tsc --version && tsc --pretty && tsc --pretty -p tsconfig.nocomments && echo Done",
     "test": "npm run build && mocha --recursive ./lib/test/**/*-spec.js",
     "watch": "npm run build -- --watch",
     "watch:test": "npm run test -- --watch",
