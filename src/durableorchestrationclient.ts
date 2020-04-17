@@ -2,8 +2,11 @@
 
 import { HttpRequest } from "@azure/functions";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+/** @hidden */
 import cloneDeep = require("lodash/cloneDeep");
+/** @hidden */
 import process = require("process");
+/** @hidden */
 import url = require("url");
 import { isURL } from "validator";
 import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
@@ -13,6 +16,7 @@ import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
 } from "./classes";
 import { WebhookUtils } from "./webhookutils";
 
+/** @hidden */
 const URL = url.URL;
 
 /**

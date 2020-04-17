@@ -35,6 +35,7 @@ import { TaskBase } from "./taskinterfaces";
  */
 export class Task implements TaskBase {
     /**
+     * @hidden
      * Used to keep track of how many times the task has been yielded to avoid
      * scheduling the internal action multiple times _Internal use only._
      */
@@ -52,6 +53,7 @@ export class Task implements TaskBase {
          */
         public readonly isFaulted: boolean,
         /**
+         * @hidden
          * The scheduled action represented by the task. _Internal use only._
          */
         public readonly action: IAction,
@@ -64,6 +66,7 @@ export class Task implements TaskBase {
          */
         public readonly timestamp?: Date,
         /**
+         * @hidden
          * The ID number of the task. _Internal use only._
          */
         public readonly id?: number,
@@ -75,12 +78,14 @@ export class Task implements TaskBase {
         public readonly exception?: Error | undefined,
 
         /**
+         * @hidden
          * The index in the history state where the task was marked completed. _Internal use only._
          */
         public readonly completionIndex?: number,
     ) { }
 
     /**
+     * @hidden
      * _Internal use only._
      */
     public yieldNewActions(): IAction[] {
