@@ -1,6 +1,6 @@
 {
   "name": "durable-functions",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Durable Functions library for Node.js Azure Functions",
   "license": "MIT",
   "repository": {
@@ -20,7 +20,8 @@
     "clean": "rimraf lib",
     "lint": "tslint --project tsconfig.json --config tslint.json --force --format verbose \"src/**/*.ts\"",
     "lint:test": "tslint --force --format verbose \"test/**/*.ts\"",
-    "build": "npm run clean && npm run lint && npm run lint:test && echo Using TypeScript && tsc --version && tsc --pretty && echo Done",
+    "stripInternalDocs": "tsc --pretty -p tsconfig.nocomments",
+    "build": "npm run clean && npm run lint && npm run lint:test && echo Using TypeScript && tsc --version && tsc --pretty && npm run stripInternalDocs && echo Done",
     "test": "npm run build && mocha --recursive ./lib/test/**/*-spec.js",
     "watch": "npm run build -- --watch",
     "watch:test": "npm run test -- --watch",

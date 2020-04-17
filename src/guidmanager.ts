@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+/** @hidden */
 import uuidv5 = require("uuid/v5");
 import { Utils } from "./classes";
 
@@ -25,6 +26,7 @@ export class GuidManager {
     }
 }
 
+/** @hidden */
 enum DeterministicGuidVersion {
     V3 = 0,
     V5 = 1,
