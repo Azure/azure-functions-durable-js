@@ -10,6 +10,9 @@ import { TaskBase } from "./taskinterfaces";
  * [[DurableOrchestrationContext]] operation is not called with `yield`. They
  * are useful for parallelization and timeout operations in conjunction with
  * Task.all and Task.any.
+ * 
+ * We discourage the usage of `instanceof`-style guards on this type,
+ * as it is subject to change in the future.
  *
  * @example Wait for all parallel operations to complete
  * ```javascript
@@ -32,9 +35,6 @@ import { TaskBase } from "./taskinterfaces";
  *
  * return firstDone.result;
  * ```
- * 
- * We discourage the usage of `instanceof`-style guards on this type,
- * as it is subject to change in the future.
  */
 export class Task implements TaskBase {
     /**
