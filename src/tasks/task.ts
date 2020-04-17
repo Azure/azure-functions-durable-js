@@ -2,6 +2,7 @@ import { IAction } from "../classes";
 import { TaskBase } from "./taskinterfaces";
 
 /**
+ * @hidden
  * Represents some pending action. Similar to a native JavaScript promise in
  * that it acts as a placeholder for outstanding asynchronous work, but has
  * a synchronous implementation and is specific to Durable Functions.
@@ -62,6 +63,7 @@ export class Task implements TaskBase {
          */
         public readonly result?: unknown,
         /**
+         * @hidden
          * The timestamp of the task.
          */
         public readonly timestamp?: Date,

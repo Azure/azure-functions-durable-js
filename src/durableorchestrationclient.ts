@@ -45,6 +45,7 @@ export function getClient(context: unknown): DurableOrchestrationClient {
     return new DurableOrchestrationClient(clientData);
 }
 
+/** @hidden */
 function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
     if (context.bindings) {
         const matchingInstances = Object.keys(context.bindings)
@@ -59,6 +60,7 @@ function getClientData(context: IOrchestrationFunctionContext): OrchestrationCli
     throw new Error("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
 }
 
+/** @hidden */
 function correctClientData(clientData: OrchestrationClientInputData): OrchestrationClientInputData {
     const returnValue = cloneDeep(clientData);
 
@@ -68,6 +70,7 @@ function correctClientData(clientData: OrchestrationClientInputData): Orchestrat
     return returnValue;
 }
 
+/** @hidden */
 function correctUrls(obj: { [key: string]: string }): { [key: string]: string } {
     const returnValue = cloneDeep(obj);
 
