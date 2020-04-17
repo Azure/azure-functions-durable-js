@@ -32,6 +32,9 @@ import { TaskBase } from "./taskinterfaces";
  *
  * return firstDone.result;
  * ```
+ * 
+ * We discourage the usage of `instanceof`-style guards on this type,
+ * as it is subject to change in the future.
  */
 export class Task implements TaskBase {
     /**
