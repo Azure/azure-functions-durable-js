@@ -2,6 +2,7 @@ import { Task } from "./task";
 import { CompletedTask, FailedTask, SuccessfulTask, TaskBase, UncompletedTask } from "./taskinterfaces";
 import { TaskSet } from "./taskset";
 
+/** @hidden */
 export class TaskFilter {
     public static CompareFinishedTime(taskA: CompletedTask, taskB: CompletedTask) {
         if (taskA.completionIndex > taskB.completionIndex) { return 1; }

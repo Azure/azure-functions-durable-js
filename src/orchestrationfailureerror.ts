@@ -1,8 +1,9 @@
 import { OrchestratorState } from "./classes";
-
+/** @hidden */
 const outOfProcDataLabel = "\n\n$OutOfProcData$:";
 
 /**
+ * @hidden
  * A wrapper for all errors thrown within an orchestrator function. This exception will embed
  * the orchestrator state in a way that the C# extension knows how to read so that it can replay the
  * actions scheduled before throwing an exception. This prevents non-determinism errors in Durable Task.
