@@ -1,6 +1,7 @@
 import { EntityId } from "../classes";
 
 /**
+ * @hidden
  * Returned by [DurableOrchestrationContext].[isLocked] and
  * [DurableEntityContext].[isLocked].
  */
