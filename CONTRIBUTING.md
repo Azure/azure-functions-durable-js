@@ -10,12 +10,12 @@
 - OS
     - MacOS (or) Windows10
 - Language Runtimes
-    - .NET Core 2.0
-    - Python 3.6.x
+    - [.NET Core 2.0](https://dotnet.microsoft.com/download/dotnet-core/2.0)
+    - [Python 3.6.x](https://www.python.org/downloads/)
 - Editor
-    - VS Code (or) Visual Studio
+    - [VSCode](https://code.visualstudio.com/) (or) [Visual Studio](https://visualstudio.microsoft.com/downloads/)
 - Tools
-    - [Azurite V2](https://github.com/Azure/Azurite/tree/legacy-master) (for MacOS) (or) [Azure Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator) (or) Storage account in Azure
+    - [Azurite V2](https://github.com/Azure/Azurite/tree/legacy-master) (for MacOS) (or) [Azure Storage Emulator](https://azure.microsoft.com/en-us/features/storage-explorer/) (or) Storage account in Azure
     - [Azure Functions Core Tools](https://github.com/Azure/azure-functions-core-tools) v2.7.x and above.
 
 ## Change flow
@@ -67,7 +67,7 @@ The following extensions should be installed if using Visual Studio Code for deb
 - C# for Visual Studio Code (powered by OmniSharp)
 - Azure Functions Extensions for Visual Studio Code v0.19.1 and above.
 
-### Setting up durable-js debugging
+### Setting up Durable JavaScript using sample code
 
 - Create a Durable Functions Orchestrator for FunctionChaining pattern using [starter templates](https://docs.microsoft.com/en-us/azure/azure-functions/durable/quickstart-js-vscode)
   Note: In this starter template, ignore the line that says: "On a Mac or Linux computer, you must set the AzureWebJobsStorage property to the connection string of an existing Azure storage account". We will be setting up the AzureWebJobsStorage property to `UseDevelopmentStorage=true`
@@ -85,35 +85,29 @@ The following extensions should be installed if using Visual Studio Code for deb
 }
 ```
 
-- `func extensions install` (this will install an extensions.csproj that contains the version of DurableTask as seen below)
+- `func extensions install` (this will install an extensions.csproj that contains the version of DurableTask as seen below). We recommend using version `2.2.0` or greater.
 
 ```xml <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="1.8.2" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.2.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator" Version="1.1.0" />
   </ItemGroup>
 ```
 
-### Setting up Durable Extension .NET debugging
+- Then, in your sample code, instead of requiring the `npm`-hosted version of the code, directly refer to your local changes. There are many ways of going about this,
+but a simple solution is changing a reference to `require("durable-functions")` to `require("<your-local-path-to-my-this-repo>")`.
 
-- Download the source code of DurableTask extension from [here](https://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions.DurableTask)
-- In launch.json, add requireExactSource and justMyCode fields for .NET Core Attach task.
+- Finally, start your VSCode editor, click Debug -> Start Debugging. This will internally start `func host start` through core tools and provides the orchestrator client URL.
+After doing this, you should be able to add breakpoints to test your changes for Durable JavaScript!
 
-```
- {
-            "name": ".NET Core Attach",
-            "type": "coreclr",
-            "request": "attach",
-            "processId": "${command:pickProcess}",
-            "requireExactSource": false,
-            "justMyCode": false
- }
- ```
 
-### Debugging end-to-end
+### Debugging end-to-end with the Durable Extension
+
+In some advanced scenarious, you may want to inspect how your repo interacts with the underlying Durable Extension. In these settings, we
+recommend using Visual Studio.
 
 1. Open the Azure Storage Explorer and connect to the local storage emulator or the storage account you are using.
 2. In the VSCode editor for durable-js click Debug -> Start Debugging. This will internally start `func host start` through core tools and provides the orchestrator client URL
-3. In the VSCode editor for DurableTask, click Debug -> .NET Core Attach Process and search for `func host start` process and attach to it.
+3. In the Visual Studio editor for DurableTask, click Debug -> .NET Core Attach Process and search for `func host start` process and attach to it.
 4. Add a breakpoint in both editors and continue debugging.
 
 ## Testing changes locally (Windows)
