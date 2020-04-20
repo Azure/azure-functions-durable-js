@@ -1,13 +1,13 @@
 import { IAction } from "../classes";
-import { TaskBase } from "./taskinterfaces";
+import { Task } from "./taskinterfaces";
 
 /** @hidden */
-export class TaskSet implements TaskBase {
+export class TaskSet implements Task {
 
     constructor(
         public readonly isCompleted: boolean,
         public readonly isFaulted: boolean,
-        private readonly tasks: TaskBase[],
+        private readonly tasks: Task[],
         private readonly completionIndex?: number,
         public result?: unknown,
         public exception?: Error,

@@ -1,5 +1,5 @@
 import { CreateTimerAction } from "../classes";
-import { Task } from "./task";
+import { SingleTask } from "./task";
 
 /**
  * Returned from [[DurableOrchestrationClient]].[[createTimer]] if the call is
@@ -40,7 +40,7 @@ import { Task } from "./task";
  * }
  * ```
  */
-export class TimerTask extends Task {
+export class TimerTask extends SingleTask {
     /** @hidden */
     constructor(
         isCompleted: boolean,

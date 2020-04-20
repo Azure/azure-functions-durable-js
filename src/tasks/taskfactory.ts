@@ -1,17 +1,17 @@
 import { CreateTimerAction, IAction } from "../classes";
-import { Task} from "./task";
-import { TaskBase} from "./taskinterfaces";
+import { SingleTask } from "./task";
+import { Task } from "./taskinterfaces";
 import { TaskSet } from "./taskset";
 import { TimerTask } from "./timertask";
 
 /** @hidden */
 export class TaskFactory {
-    public static UncompletedTask(action: IAction): Task {
-        return new Task(false, false, action);
+    public static UncompletedTask(action: IAction): SingleTask {
+        return new SingleTask(false, false, action);
     }
 
-    public static SuccessfulTask(action: IAction, result: unknown, timestamp: Date, id: number, completedHistoryEventIndex: number): Task {
-        return new Task(
+    public static SuccessfulTask(action: IAction, result: unknown, timestamp: Date, id: number, completedHistoryEventIndex: number): SingleTask {
+        return new SingleTask(
             true,
             false,
             action,
@@ -23,8 +23,8 @@ export class TaskFactory {
         );
     }
 
-    public static FailedTask(action: IAction, reason: string | undefined, timestamp: Date, id: number, completedHistoryEventIndex: number, exception: Error): Task {
-        return new Task(
+    public static FailedTask(action: IAction, reason: string | undefined, timestamp: Date, id: number, completedHistoryEventIndex: number, exception: Error): SingleTask {
+        return new SingleTask(
             true,
             true,
             action,
@@ -44,7 +44,7 @@ export class TaskFactory {
         return new TimerTask(false, action);
     }
 
-    public static SuccessfulTaskSet(tasks: TaskBase[], completionIndex: number, result: unknown): TaskSet {
+    public static SuccessfulTaskSet(tasks: Task[], completionIndex: number, result: unknown): TaskSet {
         return new TaskSet(
             true,
             false,
@@ -55,7 +55,7 @@ export class TaskFactory {
         );
     }
 
-    public static FailedTaskSet(tasks: TaskBase[], completionIndex: number, exception: Error): TaskSet {
+    public static FailedTaskSet(tasks: Task[], completionIndex: number, exception: Error): TaskSet {
         return new TaskSet(
             true,
             true,
@@ -66,7 +66,7 @@ export class TaskFactory {
         );
     }
 
-    public static UncompletedTaskSet(tasks: TaskBase[]): TaskSet {
+    public static UncompletedTaskSet(tasks: Task[]): TaskSet {
         return new TaskSet(
             false,
             false,

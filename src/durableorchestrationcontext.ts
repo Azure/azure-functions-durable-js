@@ -1,4 +1,4 @@
-import { EntityId, ITaskMethods, RetryOptions, Task, TimerTask } from "./classes";
+import { EntityId, ITaskMethods, RetryOptions, SingleTask, TimerTask } from "./classes";
 import { TokenSource } from "./tokensource";
 
 /**
@@ -65,7 +65,7 @@ export class DurableOrchestrationContext {
      * @returns A Durable Task that completes when the called activity
      * function completes or fails.
      */
-    public callActivity(name: string, input?: unknown): Task {
+    public callActivity(name: string, input?: unknown): SingleTask {
         throw new Error("This is a placeholder.");
     }
 
@@ -78,7 +78,7 @@ export class DurableOrchestrationContext {
      * @param input The JSON-serializable input to pass to the activity
      * function.
      */
-    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
+    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): SingleTask {
         throw new Error("This is a placeholder.");
     }
 
@@ -90,7 +90,7 @@ export class DurableOrchestrationContext {
      * @param operationName The name of the operation.
      * @param operationInput The input for the operation.
      */
-    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
+    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): SingleTask {
         throw new Error("This is a placeholder.");
     }
 
@@ -104,7 +104,7 @@ export class DurableOrchestrationContext {
      * If `instanceId` is not specified, the extension will generate an id in
      * the format `<calling orchestrator instance ID>:<#>`
      */
-    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
+    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): SingleTask {
         throw new Error("This is a placeholder.");
     }
 
@@ -123,7 +123,7 @@ export class DurableOrchestrationContext {
         retryOptions: RetryOptions,
         input?: unknown,
         instanceId?: string)
-        : Task {
+        : SingleTask {
             throw new Error("This is a placeholder.");
         }
 
@@ -137,7 +137,7 @@ export class DurableOrchestrationContext {
             uri: string,
             content?: string | object,
             headers?: { [key: string]: string },
-            tokenSource?: TokenSource): Task {
+            tokenSource?: TokenSource): SingleTask {
         throw new Error("This is a placeholder");
     }
 
@@ -146,7 +146,7 @@ export class DurableOrchestrationContext {
      *
      * @param The JSON-serializable data to re-initialize the instance with.
      */
-    public continueAsNew(input: unknown): Task {
+    public continueAsNew(input: unknown): SingleTask {
         throw new Error("This is a placeholder.");
     }
 
@@ -213,7 +213,7 @@ export class DurableOrchestrationContext {
      * External clients can raise events to a waiting orchestration instance
      * using [[raiseEvent]].
      */
-    public waitForExternalEvent(name: string): Task {
+    public waitForExternalEvent(name: string): SingleTask {
         throw new Error("This is a placeholder.");
     }
 }

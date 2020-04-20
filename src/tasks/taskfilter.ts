@@ -1,5 +1,5 @@
-import { Task } from "./task";
-import { CompletedTask, FailedTask, SuccessfulTask, TaskBase, UncompletedTask } from "./taskinterfaces";
+import { SingleTask } from "./task";
+import { CompletedTask, FailedTask, SuccessfulTask, Task, UncompletedTask } from "./taskinterfaces";
 import { TaskSet } from "./taskset";
 
 /** @hidden */
@@ -10,35 +10,35 @@ export class TaskFilter {
         return 0;
     }
 
-    public static isYieldable(task: any): task is TaskBase {
-        const taskBase = task as TaskBase;
-        return taskBase
-            && taskBase.isCompleted !== undefined
-            && taskBase.isFaulted !== undefined
-            && taskBase.yieldNewActions !== undefined;
+    public static isYieldable(task: any): task is Task {
+        const ATask = task as Task;
+        return ATask
+            && ATask.isCompleted !== undefined
+            && ATask.isFaulted !== undefined
+            && ATask.yieldNewActions !== undefined;
     }
 
-    public static isSingleTask(task: TaskBase): task is Task {
-        return (task instanceof Task);
+    public static isSingleTask(task: Task): task is SingleTask {
+        return (task instanceof SingleTask);
     }
 
-    public static isTaskSet(task: TaskBase): task is TaskSet {
+    public static isTaskSet(task: Task): task is TaskSet {
         return (task instanceof TaskSet);
     }
 
-    public static isCompletedTask(task: TaskBase): task is CompletedTask {
+    public static isCompletedTask(task: Task): task is CompletedTask {
         return task.isCompleted;
     }
 
-    public static isUncompletedTask(task: TaskBase): task is UncompletedTask  {
+    public static isUncompletedTask(task: Task): task is UncompletedTask  {
         return task.isCompleted === false;
     }
 
-    public static isSuccessfulTask(task: TaskBase): task is SuccessfulTask {
+    public static isSuccessfulTask(task: Task): task is SuccessfulTask {
         return task.isCompleted === true && task.isFaulted === false;
     }
 
-    public static isFailedTask(task: TaskBase): task is FailedTask {
+    public static isFailedTask(task: Task): task is FailedTask {
         return task.isCompleted === true && task.isFaulted === true;
     }
 }

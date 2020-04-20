@@ -119,6 +119,6 @@ In spite of this, Durable Functions ensures reliable execution of orchestrations
 
 The `durable-functions` shim lets you express a workflow in code as a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators) wrapped by a call to the `orchestrator` method. `orchestrator` treats `yield`-ed calls to your function `context`'s `df` object, like `context.df.callActivity`, as points where you want to schedule an asynchronous unit of work and wait for it to complete.
 
-These calls return a `Task` or `TaskSet` object signifying the outstanding work. The `orchestrator` method appends the action(s) of the `Task` or `TaskSet` object to a list which it passes back to the Functions runtime, plus whether the function is completed, and any output or errors.
+These calls return a `Task` object signifying the outstanding work. The `orchestrator` method appends the action(s) of the `Task` object to a list which it passes back to the Functions runtime, plus whether the function is completed, and any output or errors.
 
 The Azure Functions extension schedules the desired actions. When the actions complete, the extension triggers the orchestrator function to replay up to the next incomplete asynchronous unit of work or its end, whichever comes first.
