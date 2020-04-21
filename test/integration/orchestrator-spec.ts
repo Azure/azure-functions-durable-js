@@ -26,6 +26,7 @@ import {
     OrchestratorState,
     RetryOptions,
     WaitForExternalEventAction,
+    IOrchestrationFunctionContext,
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
 import { TestHistories } from "../testobjects/testhistories";
@@ -1775,13 +1776,18 @@ describe("Orchestrator", () => {
     // ...
 });
 
-class MockContext {
-    constructor(
-        public bindings: IBindings,
-        public df?: DurableOrchestrationContext,
-        public doneValue?: IOrchestratorState,
-        public err?: Error | string | null
-    ) {}
+class MockContext implements IOrchestrationFunctionContext {
+    public doneValue: IOrchestratorState | undefined;
+    public err: string | Error | null | undefined;
+    constructor(public bindings: IBindings) {}
+    df: DurableOrchestrationContext;
+    invocationId: string;
+    executionContext: import("@azure/functions").ExecutionContext;
+    bindingData: { [key: string]: any };
+    bindingDefinitions: import("@azure/functions").BindingDefinition[];
+    log: import("@azure/functions").Logger;
+    req?: import("@azure/functions").HttpRequest | undefined;
+    res?: { [key: string]: any } | undefined;
 
     public done(err?: Error | string | null, result?: IOrchestratorState): void {
         this.doneValue = result;

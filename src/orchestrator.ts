@@ -122,14 +122,14 @@ export class Orchestrator {
 
         try {
             // First execution, we have not yet "yielded" any of the tasks.
-            let g = gen.next(undefined);
+            let g = gen.next(undefined as any);
 
             while (true) {
                 if (!TaskFilter.isYieldable(g.value)) {
                     if (!g.done) {
                         // The orchestrator must have yielded a non-Task related type,
                         // so just return execution flow with what they yielded back.
-                        g = gen.next(g.value);
+                        g = gen.next(g.value as any);
                         continue;
                     } else {
                         log("Iterator is done");
@@ -226,7 +226,7 @@ export class Orchestrator {
                     context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
                 }
 
-                g = gen.next(partialResult.result);
+                g = gen.next(partialResult.result as any);
             }
         } catch (error) {
             // Wrap orchestration state in OutOfProcErrorWrapper to ensure data

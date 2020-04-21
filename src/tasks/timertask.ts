@@ -45,6 +45,7 @@ export class TimerTask extends Task {
     constructor(
         isCompleted: boolean,
         /**
+         * @hidden
          * The scheduled action represented by the task. _Internal use only._
          */
         public readonly action: CreateTimerAction,

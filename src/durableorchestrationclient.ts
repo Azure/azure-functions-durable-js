@@ -2,8 +2,11 @@
 
 import { HttpRequest } from "@azure/functions";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+/** @hidden */
 import cloneDeep = require("lodash/cloneDeep");
+/** @hidden */
 import process = require("process");
+/** @hidden */
 import url = require("url");
 import { isURL } from "validator";
 import {
@@ -24,6 +27,7 @@ import {
 } from "./classes";
 import { WebhookUtils } from "./webhookutils";
 
+/** @hidden */
 const URL = url.URL;
 
 /**
@@ -52,6 +56,7 @@ export function getClient(context: unknown): DurableOrchestrationClient {
     return new DurableOrchestrationClient(clientData);
 }
 
+/** @hidden */
 function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
     if (context.bindings) {
         const matchingInstances = Object.keys(context.bindings)
@@ -68,6 +73,7 @@ function getClientData(context: IOrchestrationFunctionContext): OrchestrationCli
     );
 }
 
+/** @hidden */
 function correctClientData(clientData: OrchestrationClientInputData): OrchestrationClientInputData {
     const returnValue = cloneDeep(clientData);
 
@@ -77,6 +83,7 @@ function correctClientData(clientData: OrchestrationClientInputData): Orchestrat
     return returnValue;
 }
 
+/** @hidden */
 function correctUrls(obj: { [key: string]: string }): { [key: string]: string } {
     const returnValue = cloneDeep(obj);
 
@@ -496,7 +503,7 @@ export class DurableOrchestrationClient {
             case 200: // entity exists
                 return new EntityStateResponse(true, response.data as T);
             case 404: // entity does not exist
-                return new EntityStateResponse(false, undefined);
+                return new EntityStateResponse(false);
             default:
                 return Promise.reject(this.createGenericError(response));
         }

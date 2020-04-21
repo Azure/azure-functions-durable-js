@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+/** @hidden */
 import uuidv5 = require("uuid/v5");
 import { Utils } from "./classes";
 
@@ -10,10 +11,10 @@ export class GuidManager {
     public static IsoOidNamespaceValue = "9e952958-5e33-4daf-827f-2fa12937b875";
 
     public static createDeterministicGuid(namespaceValue: string, name: string): string {
-        return this.createDeterministicGuidCore(namespaceValue, name, DeterministicGuidVersion.V5);
+        return this.createDeterministicGuidCore(namespaceValue, name);
     }
 
-    private static createDeterministicGuidCore(namespaceValue: string, name: string, version: DeterministicGuidVersion): string {
+    private static createDeterministicGuidCore(namespaceValue: string, name: string): string {
         Utils.throwIfEmpty(namespaceValue, "namespaceValue");
         Utils.throwIfEmpty(name, "name");
 
@@ -23,9 +24,4 @@ export class GuidManager {
 
         return uuidv5(namespaceValue, bytes);
     }
-}
-
-enum DeterministicGuidVersion {
-    V3 = 0,
-    V5 = 1,
 }

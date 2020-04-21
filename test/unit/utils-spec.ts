@@ -5,12 +5,12 @@ import { Utils } from "../../src/classes";
 describe("Utils", () => {
     describe("getInstancesOf()", () => {
         it("returns empty array when typeInstance is not object", () => {
-            const result = Utils.getInstancesOf<boolean>([], true);
+            const result = Utils.getInstancesOf<boolean>({}, true);
             return expect(result).to.be.an("array").that.is.empty;
         });
 
         it("returns empty array when typeInstance is undefined", async () => {
-            const result = Utils.getInstancesOf([], undefined);
+            const result = Utils.getInstancesOf({}, undefined);
             return expect(result).to.be.an("array").that.is.empty;
         });
 

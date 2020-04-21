@@ -3,7 +3,7 @@ import { Entity, IEntityFunctionContext, IOrchestrationFunctionContext, Orchestr
 /**
  * Enables a generator function to act as an orchestrator function.
  *
- * Orchestration context methods can be acces
+ * Orchestration context methods can be access
  * @param fn the generator function that should act as an orchestrator
  * @example Initialize an orchestrator
  * ```javascript

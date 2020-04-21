@@ -72,12 +72,13 @@ describe("getClient()", () => {
     });
 
     describe("Azure/azure-functions-durable-js#28 patch", () => {
+        let WEBSITE_HOSTNAME: string | undefined;
         beforeEach(() => {
-            this.WEBSITE_HOSTNAME = process.env.WEBSITE_HOSTNAME;
+            WEBSITE_HOSTNAME = process.env.WEBSITE_HOSTNAME;
         });
 
         afterEach(() => {
-            process.env.WEBSITE_HOSTNAME = this.WEBSITE_HOSTNAME;
+            process.env.WEBSITE_HOSTNAME = WEBSITE_HOSTNAME;
         });
 
         it("corrects API endpoints if WEBSITE_HOSTNAME environment variable not found", async () => {
