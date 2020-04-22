@@ -107,7 +107,7 @@ Two changes are necessary in your JavaScript sample code to make this work.
   </ItemGroup>
 ```
 
-- Finally, open a terminal and run `func extensions install`. This will the dependencies listed in your `extensions.csproj` file.
+- Finally, open a terminal and run `func extensions install`. This will install the dependencies listed in your `extensions.csproj` file.
 
 
 Now you are ready to start debugging Durable Functions end-to-end. Follow the instructions below:
