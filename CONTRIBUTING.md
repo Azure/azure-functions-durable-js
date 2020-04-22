@@ -72,6 +72,18 @@ The following extensions should be installed if using Visual Studio Code for deb
 - Create a Durable Functions Orchestrator for FunctionChaining pattern using [starter templates](https://docs.microsoft.com/en-us/azure/azure-functions/durable/quickstart-js-vscode)
   Note: In this starter template, ignore the line that says: "On a Mac or Linux computer, you must set the AzureWebJobsStorage property to the connection string of an existing Azure storage account". We will be setting up the AzureWebJobsStorage property to `UseDevelopmentStorage=true`
 
+- Then, in your sample code, instead of requiring the `npm`-hosted version of the code, directly refer to your local changes. There are many ways of going about this, but a simple solution is changing a reference to `require("durable-functions")` to `require("<your-local-path-to-my-this-repo>")`.
+
+- Finally, start your VSCode editor, click Debug -> Start Debugging. This will internally start `func host start` through core tools and provides the orchestrator client URL.
+After doing this, you should be able to add breakpoints to test your changes for Durable JavaScript!
+
+
+### Debugging end-to-end with the Durable Extension
+
+In some advanced scenarios, you may want to inspect how your repo interacts with the underlying Durable Extension. In these settings, we recommend using Visual Studio.
+
+Two changes are necessary in your JavaScript sample code to make this work.
+
 - In host.json, remove the extensionsBundle portion to enable specific version debugging. Provide a hub name (else remove the entire extensions portion to default to DurableFunctionsHub) Here's how the host.json should look like:
 
 ```
@@ -85,7 +97,7 @@ The following extensions should be installed if using Visual Studio Code for deb
 }
 ```
 
-- `func extensions install` (this will install an extensions.csproj that contains the version of DurableTask as seen below). We recommend using version `2.2.0` or greater.
+- Create an `extensions.csproj` file containing the version of the DurableTask extension that you wish to use. We recommend using the latest version on [nuget.org](https://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions.DurableTask/). To do this, take the sample `extensions.csproj` shown below, update the version of the `Microsoft.Azure.WebJobs.Extensions.DurableTask` dependency, and save it at the root of your sample.
 
 ```xml <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.2.0" />
@@ -93,26 +105,18 @@ The following extensions should be installed if using Visual Studio Code for deb
   </ItemGroup>
 ```
 
-- Then, in your sample code, instead of requiring the `npm`-hosted version of the code, directly refer to your local changes. There are many ways of going about this,
-but a simple solution is changing a reference to `require("durable-functions")` to `require("<your-local-path-to-my-this-repo>")`.
-
-- Finally, start your VSCode editor, click Debug -> Start Debugging. This will internally start `func host start` through core tools and provides the orchestrator client URL.
-After doing this, you should be able to add breakpoints to test your changes for Durable JavaScript!
+- Finally, open a terminal and run `func extensions install`. This will install the dependencies listed in your `extensions.csproj` file.
 
 
-### Debugging end-to-end with the Durable Extension
-
-In some advanced scenarious, you may want to inspect how your repo interacts with the underlying Durable Extension. In these settings, we
-recommend using Visual Studio.
-
+Now you are ready to start debugging Durable Functions end-to-end. Follow the instructions below:
 1. Open the Azure Storage Explorer and connect to the local storage emulator or the storage account you are using.
 2. In the VSCode editor for durable-js click Debug -> Start Debugging. This will internally start `func host start` through core tools and provides the orchestrator client URL
 3. In the Visual Studio editor for DurableTask, click Debug -> .NET Core Attach Process and search for `func host start` process and attach to it.
 4. Add a breakpoint in both editors and continue debugging.
 
-## Testing changes locally (Windows)
+## Testing with emulated local storage (Windows)
 
-Follow all the steps above, use the Azure Storage Emulator for windows to simulate the storage account, and optionally use Visual Studio to debug the .NET Durable Extension.
+When debugging your changes, you may want to use your local storage instead of an Azure account. To do this, follow all the steps above, use the Azure Storage Emulator for windows to simulate the storage account, and optionally use Visual Studio to debug the .NET Durable Extension.
 
 ## Getting help
 
