@@ -72,8 +72,7 @@ The following extensions should be installed if using Visual Studio Code for deb
 - Create a Durable Functions Orchestrator for FunctionChaining pattern using [starter templates](https://docs.microsoft.com/en-us/azure/azure-functions/durable/quickstart-js-vscode)
   Note: In this starter template, ignore the line that says: "On a Mac or Linux computer, you must set the AzureWebJobsStorage property to the connection string of an existing Azure storage account". We will be setting up the AzureWebJobsStorage property to `UseDevelopmentStorage=true`
 
-- Then, in your sample code, instead of requiring the `npm`-hosted version of the code, directly refer to your local changes. There are many ways of going about this,
-but a simple solution is changing a reference to `require("durable-functions")` to `require("<your-local-path-to-my-this-repo>")`.
+- Then, in your sample code, instead of requiring the `npm`-hosted version of the code, directly refer to your local changes. There are many ways of going about this, but a simple solution is changing a reference to `require("durable-functions")` to `require("<your-local-path-to-my-this-repo>")`.
 
 - Finally, start your VSCode editor, click Debug -> Start Debugging. This will internally start `func host start` through core tools and provides the orchestrator client URL.
 After doing this, you should be able to add breakpoints to test your changes for Durable JavaScript!
