@@ -15,17 +15,17 @@ import { Entity, IEntityFunctionContext, IOrchestrationFunctionContext, Orchestr
  * ```
  */
 export function orchestrator(
-    fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>
+    fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>
 ): (context: IOrchestrationFunctionContext) => void {
     const listener = new Orchestrator(fn).listen();
-    return (context: IOrchestrationFunctionContext): void => {
+    return (context: IOrchestrationFunctionContext) => {
         listener(context);
     };
 }
 
 export function entity(fn: (context: IEntityFunctionContext) => unknown): (context: IEntityFunctionContext) => void {
     const listener = new Entity(fn).listen();
-    return (context: IEntityFunctionContext): void => {
-        listener(context);
+    return async (context: IEntityFunctionContext) => {
+        await listener(context);
     };
 }
