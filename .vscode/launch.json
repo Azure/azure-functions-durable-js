@@ -44,8 +44,6 @@
             "name": "Mocha Tests",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
-                "-u",
-                "tdd",
                 "--colors",
                 "${workspaceFolder}/lib/test/**/**-spec.js",
                 "-g",
@@ -64,8 +62,6 @@
             "name": "Mocha Tests Debug",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
-                "-u",
-                "tdd",
                 "--colors",
                 "${workspaceFolder}/lib/test/**/**-spec.js",
                 "-g",

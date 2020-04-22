@@ -20,7 +20,7 @@
     "clean": "rimraf lib",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:test": "eslint \"test/**/*.ts\"",
-    "build": "npm run clean && npm run lint && npm run lint:test && echo Using TypeScript && tsc --version && tsc --pretty && npm run stripInternalDocs && echo Done",
+    "build": "npm run clean && npm run lint && npm run lint:test && npm run stripInternalDocs && echo Done",
     "stripInternalDocs": "tsc --pretty -p tsconfig.nocomments",
     "test": "npm run build && mocha --recursive ./lib/test/**/*-spec.js",
     "watch": "npm run build -- --watch",
