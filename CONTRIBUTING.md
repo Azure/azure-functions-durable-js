@@ -99,7 +99,7 @@ Two changes are necessary in your JavaScript sample code to make this work.
 }
 ```
 
-- Create an `extensions.csproj` file containing the version of the DurableTask extension that you wish ot use. We recommend using the latest version on [nuget.org](https://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions.DurableTask/). To do this, take the sample `extensions.csproj` shown below, update the version of the `Microsoft.Azure.WebJobs.Extensions.DurableTask` dependency, and save it at the root of your sample.
+- Create an `extensions.csproj` file containing the version of the DurableTask extension that you wish to use. We recommend using the latest version on [nuget.org](https://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions.DurableTask/). To do this, take the sample `extensions.csproj` shown below, update the version of the `Microsoft.Azure.WebJobs.Extensions.DurableTask` dependency, and save it at the root of your sample.
 
 ```xml <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.2.0" />
