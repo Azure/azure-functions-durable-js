@@ -81,8 +81,7 @@ After doing this, you should be able to add breakpoints to test your changes for
 
 ### Debugging end-to-end with the Durable Extension
 
-In some advanced scenarios, you may want to inspect how your repo interacts with the underlying Durable Extension. In these settings, we
-recommend using Visual Studio.
+In some advanced scenarios, you may want to inspect how your repo interacts with the underlying Durable Extension. In these settings, we recommend using Visual Studio.
 
 Two changes are necessary in your JavaScript sample code to make this work.
 
