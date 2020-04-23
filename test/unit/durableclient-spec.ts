@@ -173,13 +173,11 @@ describe("Durable client RPC endpoint", () => {
             const instanceId = "abc123";
             const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/${instanceId}`);
 
-            const scope = nock(expectedUrl.origin)
-                .get(expectedUrl.pathname)
-                .reply(202, {
-                    createdTime: "2020-01-01T05:00:00Z",
-                    lastUpdatedTime: "2020-01-01T05:00:00Z",
-                    runtimeStatus: "Running",
-                });
+            const scope = nock(expectedUrl.origin).get(expectedUrl.pathname).reply(202, {
+                createdTime: "2020-01-01T05:00:00Z",
+                lastUpdatedTime: "2020-01-01T05:00:00Z",
+                runtimeStatus: "Running",
+            });
 
             const result = await client.getStatus(instanceId);
             expect(scope.isDone()).to.be.equal(true);
@@ -233,7 +231,7 @@ describe("Durable client RPC endpoint", () => {
             const statusList = runtimeStatus
                 .split(",")
                 .map(
-                    status =>
+                    (status) =>
                         OrchestrationRuntimeStatus[
                             status as keyof typeof OrchestrationRuntimeStatus
                         ]
@@ -306,7 +304,7 @@ describe("Durable client RPC endpoint", () => {
             const statusList = runtimeStatus
                 .split(",")
                 .map(
-                    status =>
+                    (status) =>
                         OrchestrationRuntimeStatus[
                             status as keyof typeof OrchestrationRuntimeStatus
                         ]
@@ -375,9 +373,7 @@ describe("Durable client RPC endpoint", () => {
                 `${testRpcOrigin}/durabletask/entities/${entityId.name}/${entityId.key}`
             );
 
-            const scope = nock(expectedUrl.origin)
-                .post(expectedUrl.pathname)
-                .reply(202);
+            const scope = nock(expectedUrl.origin).post(expectedUrl.pathname).reply(202);
 
             await client.signalEntity(entityId);
             expect(scope.isDone()).to.be.equal(true);

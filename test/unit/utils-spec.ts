@@ -83,7 +83,7 @@ describe("Utils", () => {
         const notObjects = [undefined, true, 3, "thing", Symbol(), (): number => 3];
         const defaultName = "name";
 
-        notObjects.forEach(notObject => {
+        notObjects.forEach((notObject) => {
             it(`throws when called with ${typeof notObject}`, async () => {
                 expect(() => {
                     Utils.throwIfNotInstanceOf<TestType>(
@@ -122,7 +122,7 @@ describe("Utils", () => {
         const notStrings = [undefined, true, 3, Symbol(), (): number => 3, { key: "value" }];
         const defaultName = "name";
 
-        notStrings.forEach(notString => {
+        notStrings.forEach((notString) => {
             it(`throws when called with ${typeof notString}`, async () => {
                 expect(() => {
                     Utils.throwIfEmpty(notString, defaultName);

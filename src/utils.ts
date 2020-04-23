@@ -35,7 +35,7 @@ export class Utils {
     }
 
     public static sleep(delayInMilliseconds: number): Promise<NodeJS.Timer> {
-        return new Promise(resolve => setTimeout(resolve, delayInMilliseconds));
+        return new Promise((resolve) => setTimeout(resolve, delayInMilliseconds));
     }
 
     public static throwIfNotInstanceOf<T>(

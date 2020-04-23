@@ -64,7 +64,7 @@
     "mocha": "~7.1.1",
     "moment": "~2.22.2",
     "nock": "^10.0.6",
-    "prettier": "^1.19.1",
+    "prettier": "^2.0.5",
     "sinon": "~7.1.1",
     "ts-node": "~1.0.0",
     "typescript": "^3.8.3"

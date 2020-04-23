@@ -23,7 +23,7 @@ export function orchestrator(
     fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>
 ): (context: IOrchestrationFunctionContext) => void {
     const listener = new Orchestrator(fn).listen();
-    return (context: IOrchestrationFunctionContext) => {
+    return (context: IOrchestrationFunctionContext): void => {
         listener(context);
     };
 }
@@ -32,7 +32,7 @@ export function entity(
     fn: (context: IEntityFunctionContext) => unknown
 ): (context: IEntityFunctionContext) => void {
     const listener = new Entity(fn).listen();
-    return async (context: IEntityFunctionContext) => {
+    return async (context: IEntityFunctionContext): Promise<void> => {
         await listener(context);
     };
 }

@@ -2,7 +2,7 @@ import * as df from "../../src";
 import { IOrchestrationFunctionContext } from "../../src/classes";
 
 export class TestOrchestrations {
-    public static AnyAOrB: any = df.orchestrator(function*(context: any) {
+    public static AnyAOrB: any = df.orchestrator(function* (context: any) {
         const completeInOrder = context.df.getInput();
 
         const tasks = [];
@@ -13,7 +13,7 @@ export class TestOrchestrations {
         return output.result;
     });
 
-    public static AnyAOrBYieldATwice: any = df.orchestrator(function*(context: any) {
+    public static AnyAOrBYieldATwice: any = df.orchestrator(function* (context: any) {
         const completeInOrder = context.df.getInput();
 
         const tasks = [];
@@ -25,7 +25,7 @@ export class TestOrchestrations {
         return output.result;
     });
 
-    public static TimerActivityRace: any = df.orchestrator(function*(context: any) {
+    public static TimerActivityRace: any = df.orchestrator(function* (context: any) {
         const tasks = [];
         const now = new Date(context.df.currentUtcDateTime).getTime();
         const fireAt = new Date(now + 1000);
@@ -45,7 +45,7 @@ export class TestOrchestrations {
         return output.result;
     });
 
-    public static AnyWithTaskSet: any = df.orchestrator(function*(context: any) {
+    public static AnyWithTaskSet: any = df.orchestrator(function* (context: any) {
         const now = new Date(context.df.currentUtcDateTime).getTime();
         const deadline = new Date(now + 300000);
         const timeoutTask = context.df.createTimer(deadline);
@@ -70,23 +70,23 @@ export class TestOrchestrations {
         return outputs;
     });
 
-    public static CallActivityNoInput: any = df.orchestrator(function*(context: any) {
+    public static CallActivityNoInput: any = df.orchestrator(function* (context: any) {
         const returnValue = yield context.df.callActivity("ReturnsFour");
         return returnValue;
     });
 
-    public static CallEntitySet: any = df.orchestrator(function*(context: any) {
+    public static CallEntitySet: any = df.orchestrator(function* (context: any) {
         const entity = context.df.getInput() as df.EntityId;
         yield context.df.callEntity(entity, "set", "testString");
 
         return "OK";
     });
 
-    public static CheckForLocksNone: any = df.orchestrator(function*(context: any) {
+    public static CheckForLocksNone: any = df.orchestrator(function* (context: any) {
         return context.df.isLocked();
     });
 
-    public static ContinueAsNewCounter: any = df.orchestrator(function*(context: any) {
+    public static ContinueAsNewCounter: any = df.orchestrator(function* (context: any) {
         const currentValueObject = context.df.getInput();
         let currentValue = currentValueObject
             ? currentValueObject.value
@@ -100,7 +100,7 @@ export class TestOrchestrations {
         return currentValue;
     });
 
-    public static FanOutFanInDiskUsage: any = df.orchestrator(function*(context: any) {
+    public static FanOutFanInDiskUsage: any = df.orchestrator(function* (context: any) {
         const directory = context.df.getInput();
         const files: any = yield context.df.callActivity("GetFileList", directory);
 
@@ -115,7 +115,7 @@ export class TestOrchestrations {
         return totalBytes;
     });
 
-    public static GetAndReleaseLock: any = df.orchestrator(function*(context: any) {
+    public static GetAndReleaseLock: any = df.orchestrator(function* (context: any) {
         const entities = context.df.getInput();
 
         yield context.df.lock(entities);
@@ -123,7 +123,7 @@ export class TestOrchestrations {
         return "ok";
     });
 
-    public static GetLockBadly: any = df.orchestrator(function*(context: any) {
+    public static GetLockBadly: any = df.orchestrator(function* (context: any) {
         const locksToGet = context.df.getInput();
 
         yield context.df.lock(locksToGet);
@@ -131,7 +131,7 @@ export class TestOrchestrations {
         return "ok";
     });
 
-    public static GuidGenerator: any = df.orchestrator(function*(context: any) {
+    public static GuidGenerator: any = df.orchestrator(function* (context: any) {
         const outputs: string[] = [];
 
         for (let i = 0; i < 3; i++) {
@@ -141,54 +141,54 @@ export class TestOrchestrations {
         return outputs;
     });
 
-    public static PassThrough: any = df.orchestrator(function*(context: any) {
+    public static PassThrough: any = df.orchestrator(function* (context: any) {
         const input = context.df.getInput();
         return input;
     });
 
-    public static SayHelloInline: any = df.orchestrator(function*(context: any) {
+    public static SayHelloInline: any = df.orchestrator(function* (context: any) {
         const input = context.df.getInput();
         return `Hello, ${input}!`;
     });
 
-    public static SayHelloInlineInproperYield: any = df.orchestrator(function*(context: any) {
+    public static SayHelloInlineInproperYield: any = df.orchestrator(function* (context: any) {
         const input = yield context.df.getInput();
         return `Hello, ${input}!`;
     });
 
-    public static SayHelloWithActivity: any = df.orchestrator(function*(context: any) {
+    public static SayHelloWithActivity: any = df.orchestrator(function* (context: any) {
         const input = context.df.getInput();
         const output = yield context.df.callActivity("Hello", input);
         return output;
     });
 
-    public static SayHelloWithActivityYieldTwice: any = df.orchestrator(function*(context: any) {
+    public static SayHelloWithActivityYieldTwice: any = df.orchestrator(function* (context: any) {
         const input = context.df.getInput();
         const task = context.df.callActivity("Hello", input);
         yield task;
         return yield task;
     });
 
-    public static SayHelloWithActivityDirectReturn: any = df.orchestrator(function*(context: any) {
+    public static SayHelloWithActivityDirectReturn: any = df.orchestrator(function* (context: any) {
         const input = context.df.getInput();
         return context.df.callActivity("Hello", input);
     });
 
-    public static SayHelloWithActivityRetry: any = df.orchestrator(function*(context: any) {
+    public static SayHelloWithActivityRetry: any = df.orchestrator(function* (context: any) {
         const input = context.df.getInput();
         const retryOptions = new df.RetryOptions(10000, 2);
         const output = yield context.df.callActivityWithRetry("Hello", retryOptions, input);
         return output;
     });
 
-    public static SayHelloWithActivityRetryNoOptions: any = df.orchestrator(function*(
+    public static SayHelloWithActivityRetryNoOptions: any = df.orchestrator(function* (
         context: any
     ) {
         const output = yield context.df.callActivityWithRetry("Hello", undefined, "World");
         return output;
     });
 
-    public static SayHelloWithCustomStatus: any = df.orchestrator(function*(context: any) {
+    public static SayHelloWithCustomStatus: any = df.orchestrator(function* (context: any) {
         const output = [];
 
         output.push(yield context.df.callActivity("Hello", "Tokyo"));
@@ -201,14 +201,14 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SayHelloWithSubOrchestrator: any = df.orchestrator(function*(context: any) {
+    public static SayHelloWithSubOrchestrator: any = df.orchestrator(function* (context: any) {
         const input = context.df.getInput();
         const childId = context.df.instanceId + ":0";
         const output = yield context.df.callSubOrchestrator("SayHelloWithActivity", input, childId);
         return output;
     });
 
-    public static SayHelloWithSubOrchestratorNoSubId: any = df.orchestrator(function*(
+    public static SayHelloWithSubOrchestratorNoSubId: any = df.orchestrator(function* (
         context: any
     ) {
         const input = context.df.getInput();
@@ -216,7 +216,7 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static MultipleSubOrchestratorNoSubId: any = df.orchestrator(function*(context: any) {
+    public static MultipleSubOrchestratorNoSubId: any = df.orchestrator(function* (context: any) {
         const input = context.df.getInput();
         const subOrchName1 = "SayHelloWithActivity";
         const subOrchName2 = "SayHelloInline";
@@ -227,7 +227,7 @@ export class TestOrchestrations {
         return yield context.df.Task.all([output, output2, output3, output4]);
     });
 
-    public static SayHelloWithSubOrchestratorRetry: any = df.orchestrator(function*(context: any) {
+    public static SayHelloWithSubOrchestratorRetry: any = df.orchestrator(function* (context: any) {
         const input = context.df.getInput();
         const childId = context.df.instanceId + ":0";
         const retryOptions = new df.RetryOptions(10000, 2);
@@ -240,7 +240,7 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SayHelloWithSubOrchestratorRetryNoOptions: any = df.orchestrator(function*(
+    public static SayHelloWithSubOrchestratorRetryNoOptions: any = df.orchestrator(function* (
         context: any
     ) {
         const childId = context.df.instanceId + ":0";
@@ -253,7 +253,7 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SayHelloSequence: any = df.orchestrator(function*(context: any) {
+    public static SayHelloSequence: any = df.orchestrator(function* (context: any) {
         const output = [];
 
         output.push(yield context.df.callActivity("Hello", "Tokyo"));
@@ -263,7 +263,7 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SendHttpRequest: any = df.orchestrator(function*(
+    public static SendHttpRequest: any = df.orchestrator(function* (
         context: IOrchestrationFunctionContext
     ) {
         const input = context.df.getInput() as df.DurableHttpRequest;
@@ -282,7 +282,7 @@ export class TestOrchestrations {
      * which there are not sufficient OrchestratorStartedEvents in the history
      * array to satisfy the currentUtcDateTime advancement logic.
      */
-    public static TimestampExhaustion: any = df.orchestrator(function*(context: any) {
+    public static TimestampExhaustion: any = df.orchestrator(function* (context: any) {
         const payload = context.df.getInput();
 
         yield context.df.callActivity("Merge");
@@ -308,7 +308,7 @@ export class TestOrchestrations {
         } while (x < 10);
     });
 
-    public static WaitForExternalEvent: any = df.orchestrator(function*(context: any) {
+    public static WaitForExternalEvent: any = df.orchestrator(function* (context: any) {
         const name = yield context.df.waitForExternalEvent("start");
 
         const returnValue = yield context.df.callActivity("Hello", name);
@@ -316,7 +316,7 @@ export class TestOrchestrations {
         return returnValue;
     });
 
-    public static WaitOnTimer: any = df.orchestrator(function*(context: any) {
+    public static WaitOnTimer: any = df.orchestrator(function* (context: any) {
         const fireAt = context.df.getInput();
 
         yield context.df.createTimer(fireAt);
@@ -324,11 +324,11 @@ export class TestOrchestrations {
         return "Timer fired!";
     });
 
-    public static ThrowsExceptionFromActivity: any = df.orchestrator(function*(context: any) {
+    public static ThrowsExceptionFromActivity: any = df.orchestrator(function* (context: any) {
         yield context.df.callActivity("ThrowsErrorActivity");
     });
 
-    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function*(
+    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function* (
         context: any
     ) {
         try {
@@ -341,7 +341,7 @@ export class TestOrchestrations {
         }
     });
 
-    public static ThrowsExceptionInline: any = df.orchestrator(function*() {
+    public static ThrowsExceptionInline: any = df.orchestrator(function* () {
         throw Error("Exception from Orchestrator");
     });
 }

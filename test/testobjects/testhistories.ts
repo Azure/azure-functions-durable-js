@@ -892,9 +892,7 @@ export class TestHistories {
             }),
             new ExecutionStartedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(5, "ms")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(5, "ms").toDate(),
                 isPlayed: false,
                 name,
                 input: JSON.stringify(input),
@@ -1208,16 +1206,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(1, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskFailedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(1, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 taskScheduledId: 0,
                 details: "Big stack trace here",
@@ -1275,10 +1269,7 @@ export class TestHistories {
                 eventId: 1,
                 timestamp: firstMoment.add(1, "s").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(1, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
@@ -1287,23 +1278,14 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(1, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(1, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(1, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
                 timerId: 1,
             }),
         ];
@@ -1358,10 +1340,7 @@ export class TestHistories {
                 eventId: 1,
                 timestamp: firstMoment.add(1, "s").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(1, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
@@ -1370,23 +1349,14 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(2, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(2, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(2, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
                 timerId: 1,
             }),
             new TaskScheduledEvent({
@@ -1418,10 +1388,7 @@ export class TestHistories {
                 eventId: 3,
                 timestamp: firstMoment.add(3, "s").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(3, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(3, "s").add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
@@ -1430,23 +1397,14 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(4, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(4, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(4, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
                 timerId: 3,
             }),
         ];
@@ -1700,16 +1658,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(1, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new SubOrchestrationInstanceFailedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(1, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 details: "Big stack trace here",
                 reason: "Sub orchestrator function 'SayHelloInline' failed: Result: Failure",
@@ -1754,16 +1708,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(1, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new SubOrchestrationInstanceFailedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(1, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 details: "Big stack trace here",
                 reason: "Sub orchestrator function 'SayHelloInline' failed: Result: Failure",
@@ -1773,10 +1723,7 @@ export class TestHistories {
                 eventId: 1,
                 timestamp: firstMoment.add(1, "s").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(1, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
@@ -1785,23 +1732,14 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(1, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(1, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(1, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
                 timerId: 1,
             }),
         ];
@@ -1843,16 +1781,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(1, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new SubOrchestrationInstanceFailedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(1, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 details: "Big stack trace here",
                 reason: "Sub orchestrator function 'SayHelloInline' failed: Result: Failure",
@@ -1862,10 +1796,7 @@ export class TestHistories {
                 eventId: 1,
                 timestamp: firstMoment.add(1, "s").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(1, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
@@ -1874,23 +1805,14 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(2, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(2, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(2, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
                 timerId: 1,
             }),
             new SubOrchestrationInstanceCreatedEvent({
@@ -1908,16 +1830,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(3, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                 isPlayed: false,
             }),
             new SubOrchestrationInstanceFailedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(3, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                 isPlayed: false,
                 details: "Big stack trace here",
                 reason: "Sub orchestrator function 'SayHelloInline' failed: Result: Failure",
@@ -1927,10 +1845,7 @@ export class TestHistories {
                 eventId: 3,
                 timestamp: firstMoment.add(3, "s").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(3, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(3, "s").add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
@@ -1939,23 +1854,14 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(4, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment
-                    .add(4, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment
-                    .add(4, "s")
-                    .add(retryInterval, "ms")
-                    .toDate(),
+                fireAt: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
                 timerId: 3,
             }),
         ];
@@ -1989,16 +1895,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(1, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskFailedEvent({
                 eventId: -1,
-                timestamp: moment(firstTimestamp)
-                    .add(1, "s")
-                    .toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 taskScheduledId: 0,
                 details: "Big stack trace here",

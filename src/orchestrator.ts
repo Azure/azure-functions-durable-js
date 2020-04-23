@@ -80,7 +80,7 @@ export class Orchestrator {
 
         // Initialize currentUtcDateTime
         let decisionStartedEvent: HistoryEvent = Utils.ensureNonNull(
-            state.find(e => e.EventType === HistoryEventType.OrchestratorStarted),
+            state.find((e) => e.EventType === HistoryEventType.OrchestratorStarted),
             "The orchestrator can not execute without an OrchestratorStarted event."
         );
         this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
@@ -218,7 +218,7 @@ export class Orchestrator {
                 }
 
                 const newDecisionStartedEvent = state.find(
-                    e =>
+                    (e) =>
                         e.EventType === HistoryEventType.OrchestratorStarted &&
                         e.Timestamp > decisionStartedEvent.Timestamp
                 );
