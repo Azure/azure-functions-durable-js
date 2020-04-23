@@ -5,7 +5,12 @@ import { TaskFactory } from "../../src/tasks/taskfactory";
 
 describe("TimerTask", () => {
     it("throws cannot cancel a completed task", async () => {
-        const task = TaskFactory.CompletedTimerTask(new CreateTimerAction(new Date(), false), new Date(), 0, 5);
+        const task = TaskFactory.CompletedTimerTask(
+            new CreateTimerAction(new Date(), false),
+            new Date(),
+            0,
+            5
+        );
         expect(() => {
             task.cancel();
         }).to.throw("Cannot cancel a completed task.");

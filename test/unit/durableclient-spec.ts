@@ -100,7 +100,9 @@ describe("Durable client RPC endpoint", () => {
 
             // The startNew() method should do a POST to http://127.0.0.1:17071/durabletask/orchestrators/MyFunction
             const functionName = "MyFunction";
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/orchestrators/${functionName}`);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/orchestrators/${functionName}`
+            );
             const expectedHeaders = { reqheaders: { "Content-Type": "application/json" } };
 
             const scope = nock(expectedUrl.origin, expectedHeaders)
@@ -123,7 +125,9 @@ describe("Durable client RPC endpoint", () => {
             const instanceId = "abc123";
             const eventName = "MyEvent";
             const eventData = { value: 5 };
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/${instanceId}/raiseEvent/${eventName}`);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/${instanceId}/raiseEvent/${eventName}`
+            );
             const expectedHeaders = { reqheaders: { "Content-Type": "application/json" } };
 
             const scope = nock(expectedUrl.origin, expectedHeaders)
@@ -145,7 +149,9 @@ describe("Durable client RPC endpoint", () => {
             const taskHub = "hub";
             const connection = "Storage";
             const eventData = { value: 42 };
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/${instanceId}/raiseEvent/${eventName}`);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/${instanceId}/raiseEvent/${eventName}`
+            );
             const expectedHeaders = { reqheaders: { "Content-Type": "application/json" } };
 
             const scope = nock(expectedUrl.origin, expectedHeaders)
@@ -226,8 +232,17 @@ describe("Durable client RPC endpoint", () => {
 
             const statusList = runtimeStatus
                 .split(",")
-                .map(status => OrchestrationRuntimeStatus[status as keyof typeof OrchestrationRuntimeStatus]);
-            const result = await client.getStatusBy(new Date(createdTimeFrom), new Date(createdTimeTo), statusList);
+                .map(
+                    status =>
+                        OrchestrationRuntimeStatus[
+                            status as keyof typeof OrchestrationRuntimeStatus
+                        ]
+                );
+            const result = await client.getStatusBy(
+                new Date(createdTimeFrom),
+                new Date(createdTimeTo),
+                statusList
+            );
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.an("array");
         });
@@ -241,7 +256,9 @@ describe("Durable client RPC endpoint", () => {
             // The terminate() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/terminate?reason=because
             const instanceId = "abc123";
             const reason = "because";
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/${instanceId}/terminate?reason=${reason}`);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/${instanceId}/terminate?reason=${reason}`
+            );
 
             const scope = nock(expectedUrl.origin)
                 .post(expectedUrl.pathname + expectedUrl.search)
@@ -288,7 +305,12 @@ describe("Durable client RPC endpoint", () => {
 
             const statusList = runtimeStatus
                 .split(",")
-                .map(status => OrchestrationRuntimeStatus[status as keyof typeof OrchestrationRuntimeStatus]);
+                .map(
+                    status =>
+                        OrchestrationRuntimeStatus[
+                            status as keyof typeof OrchestrationRuntimeStatus
+                        ]
+                );
             const result: PurgeHistoryResult = await client.purgeInstanceHistoryBy(
                 new Date(createdTimeFrom),
                 new Date(createdTimeTo),
@@ -307,7 +329,9 @@ describe("Durable client RPC endpoint", () => {
             // The rewind() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/rewind?reason=because
             const instanceId = "abc123";
             const reason = "because";
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/${instanceId}/rewind?reason=${reason}`);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/${instanceId}/rewind?reason=${reason}`
+            );
 
             const scope = nock(expectedUrl.origin)
                 .post(expectedUrl.pathname + expectedUrl.search)
@@ -347,7 +371,9 @@ describe("Durable client RPC endpoint", () => {
 
             // The signalEntity() method should do a POST to http://127.0.0.1:17071/durabletask/entities/counter/abc123?op=MyEvent
             const entityId = new EntityId("counter", "abc123");
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/entities/${entityId.name}/${entityId.key}`);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/entities/${entityId.name}/${entityId.key}`
+            );
 
             const scope = nock(expectedUrl.origin)
                 .post(expectedUrl.pathname)
@@ -390,14 +416,18 @@ describe("Durable client RPC endpoint", () => {
 
             // The readEntityState() method should do a GET to http://127.0.0.1:17071/durabletask/entities/counter/abc123
             const entityId = new EntityId("counter", "abc123");
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/entities/${entityId.name}/${entityId.key}`);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/entities/${entityId.name}/${entityId.key}`
+            );
             const expectedEntityState = 5;
 
             const scope = nock(expectedUrl.origin)
                 .get(expectedUrl.pathname)
                 .reply(200, expectedEntityState);
 
-            const result: EntityStateResponse<number> = await client.readEntityState<number>(entityId);
+            const result: EntityStateResponse<number> = await client.readEntityState<number>(
+                entityId
+            );
             expect(scope.isDone()).to.equal(true);
             expect(result.entityExists).to.equal(true);
             expect(result.entityState).to.equal(expectedEntityState);
@@ -409,7 +439,9 @@ describe("Durable client RPC endpoint", () => {
 
             // The readEntityState() method should do a GET to http://127.0.0.1:17071/durabletask/entities/counter/abc123?taskHub=hub&connection=Storage
             const entityId = new EntityId("counter", "abc123");
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/entities/${entityId.name}/${entityId.key}`);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/entities/${entityId.name}/${entityId.key}`
+            );
             const taskHub = "hub";
             const connection = "Storage";
             const expectedEntityState = { value: 42 };

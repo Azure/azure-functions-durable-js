@@ -26,7 +26,10 @@ export class RetryOptions {
         /** Gets or sets the max number of attempts. */
         public readonly maxNumberOfAttempts: number
     ) {
-        Utils.throwIfNotNumber(firstRetryIntervalInMilliseconds, "firstRetryIntervalInMilliseconds");
+        Utils.throwIfNotNumber(
+            firstRetryIntervalInMilliseconds,
+            "firstRetryIntervalInMilliseconds"
+        );
         Utils.throwIfNotNumber(maxNumberOfAttempts, "maxNumberOfAttempts");
 
         if (firstRetryIntervalInMilliseconds <= 0) {

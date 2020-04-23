@@ -86,20 +86,34 @@ describe("Utils", () => {
         notObjects.forEach(notObject => {
             it(`throws when called with ${typeof notObject}`, async () => {
                 expect(() => {
-                    Utils.throwIfNotInstanceOf<TestType>(notObject, defaultName, new TestType(), "TestType");
-                }).to.throw(`${defaultName}: Expected object of type TestType but got ${typeof notObject}; are you missing properties?`);
+                    Utils.throwIfNotInstanceOf<TestType>(
+                        notObject,
+                        defaultName,
+                        new TestType(),
+                        "TestType"
+                    );
+                }).to.throw(
+                    `${defaultName}: Expected object of type TestType but got ${typeof notObject}; are you missing properties?`
+                );
             });
         });
 
         it("throws when called with null", async () => {
             expect(() => {
                 Utils.throwIfNotInstanceOf<TestType>(null, defaultName, new TestType(), "TestType");
-            }).to.throw(`${defaultName}: Expected object of type TestType but got ${typeof null}; are you missing properties?`);
+            }).to.throw(
+                `${defaultName}: Expected object of type TestType but got ${typeof null}; are you missing properties?`
+            );
         });
 
         it("does not throw when called with instance of type", async () => {
             expect(() => {
-                Utils.throwIfNotInstanceOf<TestType>(new TestType(), defaultName, new TestType(), "TestType");
+                Utils.throwIfNotInstanceOf<TestType>(
+                    new TestType(),
+                    defaultName,
+                    new TestType(),
+                    "TestType"
+                );
             }).to.not.throw();
         });
     });
@@ -112,20 +126,26 @@ describe("Utils", () => {
             it(`throws when called with ${typeof notString}`, async () => {
                 expect(() => {
                     Utils.throwIfEmpty(notString, defaultName);
-                }).to.throw(`${defaultName}: Expected non-empty, non-whitespace string but got ${typeof notString}`);
+                }).to.throw(
+                    `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof notString}`
+                );
             });
         });
 
         it("throws when called with null", async () => {
             expect(() => {
                 Utils.throwIfEmpty(null, defaultName);
-            }).to.throw(`${defaultName}: Expected non-empty, non-whitespace string but got ${typeof null}`);
+            }).to.throw(
+                `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof null}`
+            );
         });
 
         it("throws when called with whitespace", async () => {
             expect(() => {
                 Utils.throwIfEmpty("  ", defaultName);
-            }).to.throw(`${defaultName}: Expected non-empty, non-whitespace string but got empty string`);
+            }).to.throw(
+                `${defaultName}: Expected non-empty, non-whitespace string but got empty string`
+            );
         });
 
         it("does not throw when called with non-empty string", async () => {
@@ -137,5 +157,10 @@ describe("Utils", () => {
 });
 
 class TestType {
-    constructor(public property0: boolean = false, public property1: string = "", public property2?: unknown, public property3?: object) {}
+    constructor(
+        public property0: boolean = false,
+        public property1: string = "",
+        public property2?: unknown,
+        public property3?: object
+    ) {}
 }

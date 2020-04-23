@@ -3,5 +3,5 @@
     "tabWidth": 4,
     "true": false,
     "singleQuote": false,
-    "printWidth": 140
-  }
+    "printWidth": 100
+}

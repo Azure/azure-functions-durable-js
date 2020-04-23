@@ -118,7 +118,12 @@ export class DurableOrchestrationContext {
      * function.
      * @param instanceId A unique ID to use for the sub-orchestration instance.
      */
-    public callSubOrchestratorWithRetry(name: string, retryOptions: RetryOptions, input?: unknown, instanceId?: string): Task {
+    public callSubOrchestratorWithRetry(
+        name: string,
+        retryOptions: RetryOptions,
+        input?: unknown,
+        instanceId?: string
+    ): Task {
         throw new Error("This is a placeholder.");
     }
 

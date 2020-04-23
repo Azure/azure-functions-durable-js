@@ -88,7 +88,11 @@ export class TestOrchestrations {
 
     public static ContinueAsNewCounter: any = df.orchestrator(function*(context: any) {
         const currentValueObject = context.df.getInput();
-        let currentValue = currentValueObject ? (currentValueObject.value ? currentValueObject.value : 0) : 0;
+        let currentValue = currentValueObject
+            ? currentValueObject.value
+                ? currentValueObject.value
+                : 0
+            : 0;
         currentValue++;
 
         yield context.df.continueAsNew({ value: currentValue });
@@ -177,7 +181,9 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SayHelloWithActivityRetryNoOptions: any = df.orchestrator(function*(context: any) {
+    public static SayHelloWithActivityRetryNoOptions: any = df.orchestrator(function*(
+        context: any
+    ) {
         const output = yield context.df.callActivityWithRetry("Hello", undefined, "World");
         return output;
     });
@@ -202,7 +208,9 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SayHelloWithSubOrchestratorNoSubId: any = df.orchestrator(function*(context: any) {
+    public static SayHelloWithSubOrchestratorNoSubId: any = df.orchestrator(function*(
+        context: any
+    ) {
         const input = context.df.getInput();
         const output = yield context.df.callSubOrchestrator("SayHelloWithActivity", input);
         return output;
@@ -223,13 +231,25 @@ export class TestOrchestrations {
         const input = context.df.getInput();
         const childId = context.df.instanceId + ":0";
         const retryOptions = new df.RetryOptions(10000, 2);
-        const output = yield context.df.callSubOrchestratorWithRetry("SayHelloInline", retryOptions, input, childId);
+        const output = yield context.df.callSubOrchestratorWithRetry(
+            "SayHelloInline",
+            retryOptions,
+            input,
+            childId
+        );
         return output;
     });
 
-    public static SayHelloWithSubOrchestratorRetryNoOptions: any = df.orchestrator(function*(context: any) {
+    public static SayHelloWithSubOrchestratorRetryNoOptions: any = df.orchestrator(function*(
+        context: any
+    ) {
         const childId = context.df.instanceId + ":0";
-        const output = yield context.df.callSubOrchestratorWithRetry("SayHelloInline", undefined, "World", childId);
+        const output = yield context.df.callSubOrchestratorWithRetry(
+            "SayHelloInline",
+            undefined,
+            "World",
+            childId
+        );
         return output;
     });
 
@@ -243,9 +263,17 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SendHttpRequest: any = df.orchestrator(function*(context: IOrchestrationFunctionContext) {
+    public static SendHttpRequest: any = df.orchestrator(function*(
+        context: IOrchestrationFunctionContext
+    ) {
         const input = context.df.getInput() as df.DurableHttpRequest;
-        const output = yield context.df.callHttp(input.method, input.uri, input.content, input.headers, input.tokenSource);
+        const output = yield context.df.callHttp(
+            input.method,
+            input.uri,
+            input.content,
+            input.headers,
+            input.tokenSource
+        );
         return output;
     });
 
@@ -300,7 +328,9 @@ export class TestOrchestrations {
         yield context.df.callActivity("ThrowsErrorActivity");
     });
 
-    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function*(context: any) {
+    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function*(
+        context: any
+    ) {
         try {
             yield context.df.callActivity("ThrowsErrorActivity");
         } catch (e) {

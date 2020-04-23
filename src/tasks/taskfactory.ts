@@ -10,8 +10,23 @@ export class TaskFactory {
         return new Task(false, false, action);
     }
 
-    public static SuccessfulTask(action: IAction, result: unknown, timestamp: Date, id: number, completedHistoryEventIndex: number): Task {
-        return new Task(true, false, action, result, timestamp, id, undefined, completedHistoryEventIndex);
+    public static SuccessfulTask(
+        action: IAction,
+        result: unknown,
+        timestamp: Date,
+        id: number,
+        completedHistoryEventIndex: number
+    ): Task {
+        return new Task(
+            true,
+            false,
+            action,
+            result,
+            timestamp,
+            id,
+            undefined,
+            completedHistoryEventIndex
+        );
     }
 
     public static FailedTask(
@@ -22,7 +37,16 @@ export class TaskFactory {
         completedHistoryEventIndex: number,
         exception: Error
     ): Task {
-        return new Task(true, true, action, reason, timestamp, id, exception, completedHistoryEventIndex);
+        return new Task(
+            true,
+            true,
+            action,
+            reason,
+            timestamp,
+            id,
+            exception,
+            completedHistoryEventIndex
+        );
     }
 
     public static CompletedTimerTask(
@@ -38,11 +62,19 @@ export class TaskFactory {
         return new TimerTask(false, action);
     }
 
-    public static SuccessfulTaskSet(tasks: TaskBase[], completionIndex: number, result: unknown): TaskSet {
+    public static SuccessfulTaskSet(
+        tasks: TaskBase[],
+        completionIndex: number,
+        result: unknown
+    ): TaskSet {
         return new TaskSet(true, false, tasks, completionIndex, result, undefined);
     }
 
-    public static FailedTaskSet(tasks: TaskBase[], completionIndex: number, exception: Error): TaskSet {
+    public static FailedTaskSet(
+        tasks: TaskBase[],
+        completionIndex: number,
+        exception: Error
+    ): TaskSet {
         return new TaskSet(true, true, tasks, completionIndex, undefined, exception);
     }
 
