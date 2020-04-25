@@ -1,5 +1,5 @@
 import { IAction } from "../classes";
-import { TaskBase } from "./taskinterfaces";
+import { Task } from "./taskinterfaces";
 
 /**
  * Represents some pending action. Similar to a native JavaScript promise in
@@ -10,7 +10,7 @@ import { TaskBase } from "./taskinterfaces";
  * [[DurableOrchestrationContext]] operation is not called with `yield`. They
  * are useful for parallelization and timeout operations in conjunction with
  * Task.all and Task.any.
- * 
+ *
  * We discourage the usage of `instanceof`-style guards on this type,
  * as it is subject to change in the future.
  *
@@ -36,7 +36,7 @@ import { TaskBase } from "./taskinterfaces";
  * return firstDone.result;
  * ```
  */
-export class Task implements TaskBase {
+export class SingleTask implements Task {
     /**
      * @hidden
      * Used to keep track of how many times the task has been yielded to avoid

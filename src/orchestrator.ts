@@ -5,14 +5,14 @@ import { CallActivityAction, CallActivityWithRetryAction, CallEntityAction, Call
     CreateTimerAction, DurableHttpRequest, DurableLock, DurableOrchestrationBindingInfo, EntityId,
     EventRaisedEvent, EventSentEvent, ExternalEventType, GuidManager, HistoryEvent, HistoryEventType,
     IAction, IOrchestrationFunctionContext, LockState, OrchestratorState, RequestMessage, ResponseMessage,
-    RetryOptions, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
-    SubOrchestrationInstanceFailedEvent, Task, TaskCompletedEvent, TaskFactory, TaskFailedEvent, TaskFilter,
+    RetryOptions, SingleTask, SubOrchestrationInstanceCompletedEvent, SubOrchestrationInstanceCreatedEvent,
+    SubOrchestrationInstanceFailedEvent, TaskCompletedEvent, TaskFactory, TaskFailedEvent, TaskFilter,
     TaskScheduledEvent, TaskSet, TimerCreatedEvent, TimerFiredEvent, TimerTask,
     Utils, WaitForExternalEventAction,
 } from "./classes";
 import { DurableError } from "./durableerror";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
-import { CompletedTask, TaskBase } from "./tasks/taskinterfaces";
+import { CompletedTask, Task } from "./tasks/taskinterfaces";
 import { TokenSource } from "./tokensource";
 
 /** @hidden */
@@ -83,7 +83,7 @@ export class Orchestrator {
         // Setup
         const gen = this.fn(context);
         const actions: IAction[][] = [];
-        let partialResult: TaskBase;
+        let partialResult: Task;
 
         try {
             // First execution, we have not yet "yielded" any of the tasks.
@@ -113,7 +113,7 @@ export class Orchestrator {
                     }
                 }
 
-                partialResult = g.value as TaskBase;
+                partialResult = g.value as Task;
                 const newActions = partialResult.yieldNewActions();
                 if (newActions && newActions.length > 0) {
                     actions.push(newActions);
@@ -201,7 +201,7 @@ export class Orchestrator {
         }
     }
 
-    private callActivity(state: HistoryEvent[], name: string, input?: unknown): Task {
+    private callActivity(state: HistoryEvent[], name: string, input?: unknown): SingleTask {
         const newAction = new CallActivityAction(name, input);
 
         const taskScheduled = this.findTaskScheduled(state, name);
@@ -240,7 +240,7 @@ export class Orchestrator {
         name: string,
         retryOptions: RetryOptions,
         input?: unknown)
-        : Task {
+        : SingleTask {
         const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
 
         for (let attempt = 1; attempt <= retryOptions.maxNumberOfAttempts; attempt++) {
@@ -274,7 +274,7 @@ export class Orchestrator {
         return TaskFactory.UncompletedTask(newAction);
     }
 
-    private callEntity(state: HistoryEvent[], entityId: EntityId, operationName: string, operationInput: unknown): Task {
+    private callEntity(state: HistoryEvent[], entityId: EntityId, operationName: string, operationInput: unknown): SingleTask {
         const newAction = new CallEntityAction(entityId, operationName, operationInput);
 
         const schedulerId = EntityId.getSchedulerIdFromEntityId(entityId);
@@ -299,7 +299,7 @@ export class Orchestrator {
         );
     }
 
-    private callSubOrchestrator(state: HistoryEvent[], name: string, input?: unknown, instanceId?: string): Task {
+    private callSubOrchestrator(state: HistoryEvent[], name: string, input?: unknown, instanceId?: string): SingleTask {
         if (!name) {
             throw new Error("A sub-orchestration function name must be provided when attempting to create a suborchestration");
         }
@@ -343,7 +343,7 @@ export class Orchestrator {
         retryOptions: RetryOptions,
         input?: unknown,
         instanceId?: string)
-        : Task {
+        : SingleTask {
         if (!name) {
             throw new Error("A sub-orchestration function name must be provided when attempting to create a suborchestration");
         }
@@ -441,7 +441,7 @@ export class Orchestrator {
         }
     }
 
-    private continueAsNew(state: HistoryEvent[], input: unknown): Task {
+    private continueAsNew(state: HistoryEvent[], input: unknown): SingleTask {
         const newAction = new ContinueAsNewAction(input);
 
         return TaskFactory.UncompletedTask(
@@ -530,7 +530,7 @@ export class Orchestrator {
         this.customStatus = customStatusObject;
     }
 
-    private waitForExternalEvent(state: HistoryEvent[], name: string): Task {
+    private waitForExternalEvent(state: HistoryEvent[], name: string): SingleTask {
         const newAction = new WaitForExternalEventAction(name, ExternalEventType.ExternalEvent);
 
         const eventRaised = this.findEventRaised(state, name);
@@ -550,7 +550,7 @@ export class Orchestrator {
         }
     }
 
-    private all(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
+    private all(state: HistoryEvent[], tasks: Task[]): TaskSet {
         let maxCompletionIndex: number | undefined;
         const errors: Error[] = [];
         const results: Array<unknown> = [];
@@ -583,7 +583,7 @@ export class Orchestrator {
         }
     }
 
-    private any(state: HistoryEvent[], tasks: TaskBase[]): TaskSet {
+    private any(state: HistoryEvent[], tasks: Task[]): TaskSet {
         if (!tasks || tasks.length === 0) {
             throw new Error("At least one yieldable task must be provided to wait for.");
         }

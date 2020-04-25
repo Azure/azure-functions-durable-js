@@ -43,7 +43,7 @@ export { TimerCreatedEvent } from "./history/timercreatedevent";
 export { TimerFiredEvent } from "./history/timerfiredevent";
 
 export { ITaskMethods } from "./tasks/itaskmethods";
-export { Task } from "./tasks/task";
+export { SingleTask } from "./tasks/task";
 export { TaskFactory } from "./tasks/taskfactory";
 export { TaskFilter } from "./tasks/taskfilter";
 export { TaskSet } from "./tasks/taskset";
