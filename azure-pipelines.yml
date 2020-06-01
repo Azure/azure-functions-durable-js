@@ -1,7 +1,9 @@
 variables: {
   MODULE_VERSION: '1.2.2',
-  NODE_LOWER_LTS: '8.x',
-  NODE_HIGHER_LTS: '10.x'
+  NODE_8: '8.x',
+  NODE_10: '10.x',
+  NODE_12: '12.x',
+  NODE_14: '14.x'
 }
 name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
 
@@ -15,10 +17,16 @@ jobs:
     matrix:
       WINDOWS_NODE8:
         IMAGE_TYPE: 'vs2017-win2016'
-        NODE_VERSION: $(NODE_LOWER_LTS)
+        NODE_VERSION: $(NODE_8)
       WINDOWS_NODE10:
         IMAGE_TYPE: 'vs2017-win2016'
-        NODE_VERSION: $(NODE_HIGHER_LTS)
+        NODE_VERSION: $(NODE_10)
+      WINDOWS_NODE12:
+        IMAGE_TYPE: 'vs2017-win2016'
+        NODE_VERSION: $(NODE_12)
+      WINDOWS_NODE14:
+        IMAGE_TYPE: 'vs2017-win2016'
+        NODE_VERSION: $(NODE_14)
   pool:
     vmImage: $(IMAGE_TYPE)
   steps:
@@ -30,3 +38,7 @@ jobs:
     displayName: 'npm install'
   - script: npm run test
     displayName: 'npm build and test'
+    condition: ne($(NODE_VERSION), $(NODE_8))
+  - script: npm run test:nolint
+    displayName: 'npm build and test (no linting)'
+    condition: eq($(NODE_VERSION), $(NODE_8))
