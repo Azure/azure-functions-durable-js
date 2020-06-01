@@ -38,7 +38,7 @@ jobs:
     displayName: 'npm install'
   - script: npm run test
     displayName: 'npm build and test'
-    condition: ne($(NODE_VERSION), $(NODE_8))
+    condition: ne(variables['NODE_VERSION'], variables['NODE_8'])
   - script: npm run test:nolint
     displayName: 'npm build and test (no linting)'
-    condition: eq($(NODE_VERSION), $(NODE_8))
+    condition: eq(variables['NODE_VERSION'], variables['NODE_8'])
