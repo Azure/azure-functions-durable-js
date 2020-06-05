@@ -1,21 +1,33 @@
 import * as debug from "debug";
-import { DurableEntityBindingInfo, DurableEntityContext, EntityId, EntityState, IEntityFunctionContext,
-    OperationResult, RequestMessage, Signal, Utils } from "./classes";
+import {
+    DurableEntityBindingInfo,
+    DurableEntityContext,
+    EntityId,
+    EntityState,
+    IEntityFunctionContext,
+    OperationResult,
+    RequestMessage,
+    Signal,
+    Utils,
+} from "./classes";
 
 /** @hidden */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const log = debug("orchestrator");
 
 /** @hidden */
 export class Entity {
-    constructor(public fn: (context: IEntityFunctionContext) => unknown) { }
+    constructor(public fn: (context: IEntityFunctionContext) => unknown) {}
 
-    public listen() {
+    public listen(): (context: IEntityFunctionContext) => Promise<void> {
         return this.handle.bind(this);
     }
 
     private async handle(context: IEntityFunctionContext): Promise<void> {
         const entityBinding = Utils.getInstancesOf<DurableEntityBindingInfo>(
-            context.bindings, new DurableEntityBindingInfo(new EntityId("samplename", "samplekey"), true, "", []))[0];
+            context.bindings,
+            new DurableEntityBindingInfo(new EntityId("samplename", "samplekey"), true, "", [])
+        )[0];
 
         if (entityBinding === undefined) {
             throw new Error("Could not find an entityTrigger binding on context.");
@@ -27,7 +39,12 @@ export class Entity {
         returnState.entityState = entityBinding.state;
         for (let i = 0; i < entityBinding.batch.length; i++) {
             const startTime = new Date();
-            context.df = this.getCurrentDurableEntityContext(entityBinding, returnState, i, startTime);
+            context.df = this.getCurrentDurableEntityContext(
+                entityBinding,
+                returnState,
+                i,
+                startTime
+            );
 
             try {
                 await Promise.resolve(this.fn(context));
@@ -37,14 +54,23 @@ export class Entity {
                 }
             } catch (error) {
                 const elapsedMs = this.computeElapsedMilliseconds(startTime);
-                returnState.results[i] = new OperationResult(true, elapsedMs, JSON.stringify(error));
+                returnState.results[i] = new OperationResult(
+                    true,
+                    elapsedMs,
+                    JSON.stringify(error)
+                );
             }
         }
 
         context.done(null, returnState);
     }
 
-    private getCurrentDurableEntityContext(bindingInfo: DurableEntityBindingInfo, batchState: EntityState, requestIndex: number, startTime: Date): DurableEntityContext  {
+    private getCurrentDurableEntityContext(
+        bindingInfo: DurableEntityBindingInfo,
+        batchState: EntityState,
+        requestIndex: number,
+        startTime: Date
+    ): DurableEntityContext {
         const currentRequest = bindingInfo.batch[requestIndex];
         return {
             entityName: bindingInfo.self.name,
@@ -84,7 +110,13 @@ export class Entity {
 
     private return(returnState: EntityState, startTime: Date, result: unknown): void {
         returnState.entityExists = true;
-        returnState.results.push(new OperationResult(false, this.computeElapsedMilliseconds(startTime), JSON.stringify(result)));
+        returnState.results.push(
+            new OperationResult(
+                false,
+                this.computeElapsedMilliseconds(startTime),
+                JSON.stringify(result)
+            )
+        );
     }
 
     private setState(returnState: EntityState, state: unknown): void {
@@ -92,8 +124,15 @@ export class Entity {
         returnState.entityState = JSON.stringify(state);
     }
 
-    private signalEntity(returnState: EntityState, entity: EntityId, operationName: string, operationInput?: unknown): void {
-        returnState.signals.push(new Signal(entity, operationName, operationInput ? JSON.stringify(operationInput) : ""));
+    private signalEntity(
+        returnState: EntityState,
+        entity: EntityId,
+        operationName: string,
+        operationInput?: unknown
+    ): void {
+        returnState.signals.push(
+            new Signal(entity, operationName, operationInput ? JSON.stringify(operationInput) : "")
+        );
     }
 
     private computeElapsedMilliseconds(startTime: Date): number {

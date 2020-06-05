@@ -5,14 +5,12 @@ export class ExecutionStartedEvent extends HistoryEvent {
     public Name: string;
     public Input: string | undefined;
 
-    constructor(
-        options: HistoryEventOptions,
-    ) {
+    constructor(options: HistoryEventOptions) {
         super(
             HistoryEventType.ExecutionStarted,
             options.eventId,
             options.isPlayed,
-            options.timestamp,
+            options.timestamp
         );
 
         if (options.name === undefined) {

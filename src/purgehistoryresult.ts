@@ -6,6 +6,6 @@ export class PurgeHistoryResult {
         /**
          * The number of deleted instances.
          */
-        public readonly instancesDeleted: number,
-    ) { }
+        public readonly instancesDeleted: number
+    ) {}
 }

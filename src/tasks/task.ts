@@ -10,7 +10,7 @@ import { TaskBase } from "./taskinterfaces";
  * [[DurableOrchestrationContext]] operation is not called with `yield`. They
  * are useful for parallelization and timeout operations in conjunction with
  * Task.all and Task.any.
- * 
+ *
  * We discourage the usage of `instanceof`-style guards on this type,
  * as it is subject to change in the future.
  *
@@ -85,8 +85,8 @@ export class Task implements TaskBase {
          * @hidden
          * The index in the history state where the task was marked completed. _Internal use only._
          */
-        public readonly completionIndex?: number,
-    ) { }
+        public readonly completionIndex?: number
+    ) {}
 
     /**
      * @hidden
@@ -95,7 +95,7 @@ export class Task implements TaskBase {
     public yieldNewActions(): IAction[] {
         if (!this.wasYielded) {
             this.wasYielded = true;
-            return [ this.action ];
+            return [this.action];
         }
 
         return [];

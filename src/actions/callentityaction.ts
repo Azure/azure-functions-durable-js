@@ -8,7 +8,7 @@ export class CallEntityAction implements IAction {
     constructor(
         entityId: EntityId,
         public readonly operation: string,
-        public readonly input?: unknown,
+        public readonly input?: unknown
     ) {
         if (!entityId) {
             throw new Error("Must provide EntityId to CallEntityAction constructor");

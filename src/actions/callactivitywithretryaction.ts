@@ -7,10 +7,15 @@ export class CallActivityWithRetryAction implements IAction {
     constructor(
         public readonly functionName: string,
         public readonly retryOptions: RetryOptions,
-        public readonly input?: unknown,
+        public readonly input?: unknown
     ) {
         Utils.throwIfEmpty(functionName, "functionName");
 
-        Utils.throwIfNotInstanceOf<RetryOptions>(retryOptions, "retryOptions", new RetryOptions(1, 1), "RetryOptions");
+        Utils.throwIfNotInstanceOf<RetryOptions>(
+            retryOptions,
+            "retryOptions",
+            new RetryOptions(1, 1),
+            "RetryOptions"
+        );
     }
 }

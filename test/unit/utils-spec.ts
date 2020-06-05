@@ -37,7 +37,7 @@ describe("Utils", () => {
             };
 
             const result = Utils.getInstancesOf(collection, new TestType());
-            expect(result).to.be.deep.equal([ instance1, instance2 ]);
+            expect(result).to.be.deep.equal([instance1, instance2]);
         });
     });
 
@@ -80,15 +80,20 @@ describe("Utils", () => {
     });
 
     describe("throwIfNotInstanceOf", () => {
-        const notObjects = [ undefined, true, 3, "thing", Symbol(), () => 3 ];
+        const notObjects = [undefined, true, 3, "thing", Symbol(), (): number => 3];
         const defaultName = "name";
 
         notObjects.forEach((notObject) => {
             it(`throws when called with ${typeof notObject}`, async () => {
                 expect(() => {
-                    Utils.throwIfNotInstanceOf<TestType>(notObject, defaultName, new TestType(), "TestType");
+                    Utils.throwIfNotInstanceOf<TestType>(
+                        notObject,
+                        defaultName,
+                        new TestType(),
+                        "TestType"
+                    );
                 }).to.throw(
-                    `${defaultName}: Expected object of type TestType but got ${typeof notObject}; are you missing properties?`,
+                    `${defaultName}: Expected object of type TestType but got ${typeof notObject}; are you missing properties?`
                 );
             });
         });
@@ -97,19 +102,24 @@ describe("Utils", () => {
             expect(() => {
                 Utils.throwIfNotInstanceOf<TestType>(null, defaultName, new TestType(), "TestType");
             }).to.throw(
-                `${defaultName}: Expected object of type TestType but got ${typeof null}; are you missing properties?`,
+                `${defaultName}: Expected object of type TestType but got ${typeof null}; are you missing properties?`
             );
         });
 
         it("does not throw when called with instance of type", async () => {
             expect(() => {
-                Utils.throwIfNotInstanceOf<TestType>(new TestType(), defaultName, new TestType(), "TestType");
+                Utils.throwIfNotInstanceOf<TestType>(
+                    new TestType(),
+                    defaultName,
+                    new TestType(),
+                    "TestType"
+                );
             }).to.not.throw();
         });
     });
 
     describe("throwIfEmpty", () => {
-        const notStrings = [ undefined, true, 3, Symbol(), () => 3, { key: "value" } ];
+        const notStrings = [undefined, true, 3, Symbol(), (): number => 3, { key: "value" }];
         const defaultName = "name";
 
         notStrings.forEach((notString) => {
@@ -117,7 +127,7 @@ describe("Utils", () => {
                 expect(() => {
                     Utils.throwIfEmpty(notString, defaultName);
                 }).to.throw(
-                    `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof notString}`,
+                    `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof notString}`
                 );
             });
         });
@@ -126,7 +136,7 @@ describe("Utils", () => {
             expect(() => {
                 Utils.throwIfEmpty(null, defaultName);
             }).to.throw(
-                `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof null}`,
+                `${defaultName}: Expected non-empty, non-whitespace string but got ${typeof null}`
             );
         });
 
@@ -134,7 +144,7 @@ describe("Utils", () => {
             expect(() => {
                 Utils.throwIfEmpty("  ", defaultName);
             }).to.throw(
-                `${defaultName}: Expected non-empty, non-whitespace string but got empty string`,
+                `${defaultName}: Expected non-empty, non-whitespace string but got empty string`
             );
         });
 
@@ -151,6 +161,6 @@ class TestType {
         public property0: boolean = false,
         public property1: string = "",
         public property2?: unknown,
-        public property3?: object,
-    ) { }
+        public property3?: object
+    ) {}
 }

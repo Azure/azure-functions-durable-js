@@ -28,8 +28,8 @@ export class ManagedIdentityTokenSource {
          * The Azure Active Directory resource identifier of the web API being invoked.
          * For example, `https://management.core.windows.net/` or `https://graph.microsoft.com/`.
          */
-        public readonly resource: string,
-    ) { }
+        public readonly resource: string
+    ) {}
 }
 
 // Over time we will likely add more implementations

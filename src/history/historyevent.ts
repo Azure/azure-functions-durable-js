@@ -7,6 +7,6 @@ export abstract class HistoryEvent {
         public EventId: number,
         public IsPlayed: boolean,
         public Timestamp: Date,
-        public IsProcessed: boolean = false,
-    ) { }
+        public IsProcessed: boolean = false
+    ) {}
 }

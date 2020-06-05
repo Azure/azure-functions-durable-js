@@ -4,7 +4,6 @@ import { TokenSource } from "./tokensource";
  * Data structure representing a durable HTTP request.
  */
 export class DurableHttpRequest {
-
     /**
      * Creates a new instance of DurableHttpRequest with the
      * specified parameters.
@@ -27,6 +26,6 @@ export class DurableHttpRequest {
             [key: string]: string;
         },
         /** The source of OAuth token to add to the request. */
-        public readonly tokenSource?: TokenSource,
-    ) { }
+        public readonly tokenSource?: TokenSource
+    ) {}
 }

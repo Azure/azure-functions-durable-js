@@ -7,6 +7,6 @@ export class EntityStateResponse<T> {
         public entityExists: boolean,
 
         /** The current state of the entity, if it exists, or default value otherwise. */
-        public entityState?: T,
+        public entityState?: T
     ) {}
 }

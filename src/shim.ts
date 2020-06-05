@@ -1,9 +1,14 @@
-import { Entity, IEntityFunctionContext, IOrchestrationFunctionContext, Orchestrator } from "./classes";
+import {
+    Entity,
+    IEntityFunctionContext,
+    IOrchestrationFunctionContext,
+    Orchestrator,
+} from "./classes";
 
 /**
  * Enables a generator function to act as an orchestrator function.
  *
- * Orchestration context methods can be acces
+ * Orchestration context methods can be access
  * @param fn the generator function that should act as an orchestrator
  * @example Initialize an orchestrator
  * ```javascript
@@ -14,18 +19,20 @@ import { Entity, IEntityFunctionContext, IOrchestrationFunctionContext, Orchestr
  * });
  * ```
  */
-export function orchestrator(fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>)
-    : (context: IOrchestrationFunctionContext) => void {
+export function orchestrator(
+    fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>
+): (context: IOrchestrationFunctionContext) => void {
     const listener = new Orchestrator(fn).listen();
-    return (context: IOrchestrationFunctionContext) => {
+    return (context: IOrchestrationFunctionContext): void => {
         listener(context);
     };
 }
 
-export function entity(fn: (context: IEntityFunctionContext) => unknown)
-    : (context: IEntityFunctionContext) => void {
+export function entity(
+    fn: (context: IEntityFunctionContext) => unknown
+): (context: IEntityFunctionContext) => void {
     const listener = new Entity(fn).listen();
-    return async (context: IEntityFunctionContext) => {
+    return async (context: IEntityFunctionContext): Promise<void> => {
         await listener(context);
     };
 }
