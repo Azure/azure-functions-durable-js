@@ -5,7 +5,11 @@ export class CallEntityAction implements IAction {
     public readonly actionType: ActionType = ActionType.CallEntity;
     public readonly instanceId: string;
 
-    constructor(entityId: EntityId, public readonly operation: string, public readonly input?: unknown) {
+    constructor(
+        entityId: EntityId,
+        public readonly operation: string,
+        public readonly input?: unknown
+    ) {
         if (!entityId) {
             throw new Error("Must provide EntityId to CallEntityAction constructor");
         }

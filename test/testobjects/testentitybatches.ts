@@ -1,9 +1,21 @@
 import * as df from "../../src";
-import { DurableEntityBindingInfo, EntityState, OperationResult, RequestMessage } from "../../src/classes";
-import { CounterOperation, EntityInputsAndOutputs, StringStoreOperation } from "../testobjects/testentityoperations";
+import {
+    DurableEntityBindingInfo,
+    EntityState,
+    OperationResult,
+    RequestMessage,
+} from "../../src/classes";
+import {
+    CounterOperation,
+    EntityInputsAndOutputs,
+    StringStoreOperation,
+} from "../testobjects/testentityoperations";
 
 export class TestEntityBatches {
-    public static GetStringStoreBatch(operations: StringStoreOperation[], existingState: string | undefined): EntityInputsAndOutputs {
+    public static GetStringStoreBatch(
+        operations: StringStoreOperation[],
+        existingState: string | undefined
+    ): EntityInputsAndOutputs {
         const id = new df.EntityId("stringstore", "stringstorekey");
 
         const entityExists = existingState !== undefined;
@@ -25,7 +37,11 @@ export class TestEntityBatches {
                     batch[operationCount].signal = false;
 
                     // Handle outputs
-                    output.results[operationCount] = new OperationResult(false, -1, output.entityState);
+                    output.results[operationCount] = new OperationResult(
+                        false,
+                        -1,
+                        output.entityState
+                    );
                     break;
                 case "set":
                     // Handle inputs
@@ -44,12 +60,20 @@ export class TestEntityBatches {
             operationCount++;
         }
         return {
-            input: new DurableEntityBindingInfo(id, entityExists, JSON.stringify(existingState), batch),
+            input: new DurableEntityBindingInfo(
+                id,
+                entityExists,
+                JSON.stringify(existingState),
+                batch
+            ),
             output,
         };
     }
 
-    public static GetCounterBatch(operations: CounterOperation[], existingState: number | undefined): EntityInputsAndOutputs {
+    public static GetCounterBatch(
+        operations: CounterOperation[],
+        existingState: number | undefined
+    ): EntityInputsAndOutputs {
         const id = new df.EntityId("stringstore", "stringstorekey");
         let currentState: number | undefined;
         if (existingState) {
@@ -71,7 +95,11 @@ export class TestEntityBatches {
                     batch[operationCount].signal = false;
 
                     // Handle outputs
-                    output.results[operationCount] = new OperationResult(false, -1, JSON.stringify(currentState));
+                    output.results[operationCount] = new OperationResult(
+                        false,
+                        -1,
+                        JSON.stringify(currentState)
+                    );
                     break;
                 case "set":
                     // Handle inputs
@@ -97,7 +125,11 @@ export class TestEntityBatches {
                         output.entityExists = true;
                         output.entityState = currentState.toString();
                     } else {
-                        output.results[operationCount] = new OperationResult(true, -1, "dummy error message");
+                        output.results[operationCount] = new OperationResult(
+                            true,
+                            -1,
+                            "dummy error message"
+                        );
                     }
                     break;
                 case "add":
@@ -112,7 +144,11 @@ export class TestEntityBatches {
                         output.entityExists = true;
                         output.entityState = currentState.toString();
                     } else {
-                        output.results[operationCount] = new OperationResult(true, -1, "dummy error message");
+                        output.results[operationCount] = new OperationResult(
+                            true,
+                            -1,
+                            "dummy error message"
+                        );
                     }
                     break;
                 case "delete":

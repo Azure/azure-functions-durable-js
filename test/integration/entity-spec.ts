@@ -59,7 +59,11 @@ function entityStateMatchesExpected(actual: EntityState, expected: EntityState):
 }
 
 class MockContext implements IEntityFunctionContext {
-    constructor(public bindings: IBindings, public doneValue?: EntityState, public err?: Error | string | null) {}
+    constructor(
+        public bindings: IBindings,
+        public doneValue?: EntityState,
+        public err?: Error | string | null
+    ) {}
     public invocationId: string;
     public executionContext: ExecutionContext;
     public bindingData: { [key: string]: any };

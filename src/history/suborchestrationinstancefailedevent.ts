@@ -7,10 +7,17 @@ export class SubOrchestrationInstanceFailedEvent extends HistoryEvent {
     public Details: string | undefined;
 
     constructor(options: HistoryEventOptions) {
-        super(HistoryEventType.SubOrchestrationInstanceFailed, options.eventId, options.isPlayed, options.timestamp);
+        super(
+            HistoryEventType.SubOrchestrationInstanceFailed,
+            options.eventId,
+            options.isPlayed,
+            options.timestamp
+        );
 
         if (options.taskScheduledId === undefined) {
-            throw new Error("SubOrchestrationInstanceFailedEvent needs a task scheduled id provided.");
+            throw new Error(
+                "SubOrchestrationInstanceFailedEvent needs a task scheduled id provided."
+            );
         }
 
         this.TaskScheduledId = options.taskScheduledId;

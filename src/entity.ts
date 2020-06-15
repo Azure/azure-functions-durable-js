@@ -38,7 +38,12 @@ export class Entity {
         returnState.entityState = entityBinding.state;
         for (let i = 0; i < entityBinding.batch.length; i++) {
             const startTime = new Date();
-            context.df = this.getCurrentDurableEntityContext(entityBinding, returnState, i, startTime);
+            context.df = this.getCurrentDurableEntityContext(
+                entityBinding,
+                returnState,
+                i,
+                startTime
+            );
 
             try {
                 this.fn(context);
@@ -48,7 +53,11 @@ export class Entity {
                 }
             } catch (error) {
                 const elapsedMs = this.computeElapsedMilliseconds(startTime);
-                returnState.results[i] = new OperationResult(true, elapsedMs, JSON.stringify(error));
+                returnState.results[i] = new OperationResult(
+                    true,
+                    elapsedMs,
+                    JSON.stringify(error)
+                );
             }
         }
 
@@ -68,7 +77,9 @@ export class Entity {
             entityId: bindingInfo.self,
             operationName: currentRequest.name,
             isNewlyConstructed: !batchState.entityExists,
-            getState: this.getState.bind(this, batchState) as <T>(initialiser: () => T) => T | undefined,
+            getState: this.getState.bind(this, batchState) as <T>(
+                initialiser: () => T
+            ) => T | undefined,
             setState: this.setState.bind(this, batchState),
             getInput: this.getInput.bind(this, currentRequest) as <T>() => T,
             return: this.return.bind(this, batchState, startTime),
@@ -100,7 +111,13 @@ export class Entity {
 
     private return<T>(returnState: EntityState, startTime: Date, result: T): void {
         returnState.entityExists = true;
-        returnState.results.push(new OperationResult(false, this.computeElapsedMilliseconds(startTime), JSON.stringify(result)));
+        returnState.results.push(
+            new OperationResult(
+                false,
+                this.computeElapsedMilliseconds(startTime),
+                JSON.stringify(result)
+            )
+        );
     }
 
     private setState<T>(returnState: EntityState, state: T): void {
@@ -108,8 +125,15 @@ export class Entity {
         returnState.entityState = JSON.stringify(state);
     }
 
-    private signalEntity(returnState: EntityState, entity: EntityId, operationName: string, operationInput?: unknown): void {
-        returnState.signals.push(new Signal(entity, operationName, operationInput ? JSON.stringify(operationInput) : ""));
+    private signalEntity(
+        returnState: EntityState,
+        entity: EntityId,
+        operationName: string,
+        operationInput?: unknown
+    ): void {
+        returnState.signals.push(
+            new Signal(entity, operationName, operationInput ? JSON.stringify(operationInput) : "")
+        );
     }
 
     private computeElapsedMilliseconds(startTime: Date): number {

@@ -1,4 +1,9 @@
-import { Entity, IEntityFunctionContext, IOrchestrationFunctionContext, Orchestrator } from "./classes";
+import {
+    Entity,
+    IEntityFunctionContext,
+    IOrchestrationFunctionContext,
+    Orchestrator,
+} from "./classes";
 
 /**
  * Enables a generator function to act as an orchestrator function.
@@ -23,7 +28,9 @@ export function orchestrator(
     };
 }
 
-export function entity(fn: (context: IEntityFunctionContext) => unknown): (context: IEntityFunctionContext) => void {
+export function entity(
+    fn: (context: IEntityFunctionContext) => unknown
+): (context: IEntityFunctionContext) => void {
     const listener = new Entity(fn).listen();
     return (context: IEntityFunctionContext): void => {
         listener(context);

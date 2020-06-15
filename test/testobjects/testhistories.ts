@@ -71,7 +71,10 @@ export class TestHistories {
         ];
     }
 
-    public static GetTimerActivityRaceActivityWinsHistory(firstTimestamp: Date, iteration: number): HistoryEvent[] {
+    public static GetTimerActivityRaceActivityWinsHistory(
+        firstTimestamp: Date,
+        iteration: number
+    ): HistoryEvent[] {
         const firstIteration = moment(firstTimestamp);
         const fireAt = firstIteration.add(1, "s").toDate();
         const secondIteration = firstIteration.add(500, "ms").toDate();
@@ -210,7 +213,10 @@ export class TestHistories {
         return history;
     }
 
-    public static GetTimerActivityRaceTimerWinsHistory(firstTimestamp: Date, iteration: number): HistoryEvent[] {
+    public static GetTimerActivityRaceTimerWinsHistory(
+        firstTimestamp: Date,
+        iteration: number
+    ): HistoryEvent[] {
         const firstIteration = moment(firstTimestamp);
         const fireAt = firstIteration.add(1, "s").toDate();
         const secondIteration = firstIteration.add(1100, "ms").toDate();
@@ -279,7 +285,11 @@ export class TestHistories {
         return history;
     }
 
-    public static GetAnyWithTaskSet(firstTimestamp: Date, iteration: number, eventsBeatTimer: boolean): HistoryEvent[] {
+    public static GetAnyWithTaskSet(
+        firstTimestamp: Date,
+        iteration: number,
+        eventsBeatTimer: boolean
+    ): HistoryEvent[] {
         const firstIteration = moment(firstTimestamp);
         const fireAt = firstIteration.add(300, "s").toDate();
 
@@ -433,7 +443,10 @@ export class TestHistories {
         ];
     }
 
-    public static GetFanOutFanInDiskUsageComplete(firstTimestamp: Date, files: string[]): HistoryEvent[] {
+    public static GetFanOutFanInDiskUsageComplete(
+        firstTimestamp: Date,
+        files: string[]
+    ): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -541,7 +554,10 @@ export class TestHistories {
             ]);
     }
 
-    public static GetFanOutFanInDiskUsageFaulted(firstTimestamp: Date, files: string[]): HistoryEvent[] {
+    public static GetFanOutFanInDiskUsageFaulted(
+        firstTimestamp: Date,
+        files: string[]
+    ): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -642,7 +658,10 @@ export class TestHistories {
             ]);
     }
 
-    public static GetFanOutFanInDiskUsagePartComplete(firstTimestamp: Date, files: string[]): HistoryEvent[] {
+    public static GetFanOutFanInDiskUsagePartComplete(
+        firstTimestamp: Date,
+        files: string[]
+    ): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -726,7 +745,10 @@ export class TestHistories {
             ]);
     }
 
-    public static GetFanOutFanInDiskUsageReplayOne(firstTimestamp: Date, files: string[]): HistoryEvent[] {
+    public static GetFanOutFanInDiskUsageReplayOne(
+        firstTimestamp: Date,
+        files: string[]
+    ): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -857,7 +879,11 @@ export class TestHistories {
         ];
     }
 
-    public static GetOrchestratorStart(name: string, firstTimestamp: Date, input?: unknown): HistoryEvent[] {
+    public static GetOrchestratorStart(
+        name: string,
+        firstTimestamp: Date,
+        input?: unknown
+    ): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -1104,7 +1130,11 @@ export class TestHistories {
         ];
     }
 
-    public static GetSayHelloWithActivityReplayOne(name: string, firstTimestamp: Date, input: unknown): HistoryEvent[] {
+    public static GetSayHelloWithActivityReplayOne(
+        name: string,
+        firstTimestamp: Date,
+        input: unknown
+    ): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -1147,7 +1177,10 @@ export class TestHistories {
         ];
     }
 
-    public static GetSayHelloWithActivityRetryFailOne(firstTimestamp: Date, input: unknown): HistoryEvent[] {
+    public static GetSayHelloWithActivityRetryFailOne(
+        firstTimestamp: Date,
+        input: unknown
+    ): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -1193,7 +1226,11 @@ export class TestHistories {
         ];
     }
 
-    public static GetSayHelloWithActivityRetryRetryOne(firstTimestamp: Date, input: unknown, retryInterval: number): HistoryEvent[] {
+    public static GetSayHelloWithActivityRetryRetryOne(
+        firstTimestamp: Date,
+        input: unknown,
+        retryInterval: number
+    ): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -1272,7 +1309,11 @@ export class TestHistories {
         ];
     }
 
-    public static GetSayHelloWithActivityRetryRetryTwo(firstTimestamp: Date, input: unknown, retryInterval: number): HistoryEvent[] {
+    public static GetSayHelloWithActivityRetryRetryTwo(
+        firstTimestamp: Date,
+        input: unknown,
+        retryInterval: number
+    ): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [
@@ -1626,7 +1667,11 @@ export class TestHistories {
         ];
     }
 
-    public static GetSayHelloWithSubOrchestratorRetryFailOne(firstTimestamp: Date, subInstanceId: string, input: unknown): HistoryEvent[] {
+    public static GetSayHelloWithSubOrchestratorRetryFailOne(
+        firstTimestamp: Date,
+        subInstanceId: string,
+        input: unknown
+    ): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -1962,7 +2007,11 @@ export class TestHistories {
         ];
     }
 
-    public static GetWaitForExternalEventEventReceived(firstTimestamp: Date, eventName: string, input?: unknown): HistoryEvent[] {
+    public static GetWaitForExternalEventEventReceived(
+        firstTimestamp: Date,
+        eventName: string,
+        input?: unknown
+    ): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 
         return [

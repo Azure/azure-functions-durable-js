@@ -1,5 +1,11 @@
 import { Task } from "./task";
-import { CompletedTask, FailedTask, SuccessfulTask, TaskBase, UncompletedTask } from "./taskinterfaces";
+import {
+    CompletedTask,
+    FailedTask,
+    SuccessfulTask,
+    TaskBase,
+    UncompletedTask,
+} from "./taskinterfaces";
 import { TaskSet } from "./taskset";
 
 export class TaskFilter {
@@ -15,7 +21,12 @@ export class TaskFilter {
 
     public static isYieldable(task: any): task is TaskBase {
         const taskBase = task as TaskBase;
-        return taskBase && taskBase.isCompleted !== undefined && taskBase.isFaulted !== undefined && taskBase.yieldNewActions !== undefined;
+        return (
+            taskBase &&
+            taskBase.isCompleted !== undefined &&
+            taskBase.isFaulted !== undefined &&
+            taskBase.yieldNewActions !== undefined
+        );
     }
 
     public static isSingleTask(task: TaskBase): task is Task {

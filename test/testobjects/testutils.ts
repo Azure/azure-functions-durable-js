@@ -1,4 +1,9 @@
-import { HttpCreationPayload, HttpManagementPayload, IOrchestratorState, OrchestrationClientInputData } from "../../src/classes";
+import {
+    HttpCreationPayload,
+    HttpManagementPayload,
+    IOrchestratorState,
+    OrchestrationClientInputData,
+} from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
 import { TestConstants } from "./testconstants";
 
@@ -32,7 +37,11 @@ export class TestUtils {
         );
     }
 
-    public static createHttpCreationPayload(host: string, taskHub: string, connection: string): HttpCreationPayload {
+    public static createHttpCreationPayload(
+        host: string,
+        taskHub: string,
+        connection: string
+    ): HttpCreationPayload {
         return new HttpCreationPayload(
             TestConstants.createPostUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
@@ -45,7 +54,12 @@ export class TestUtils {
         );
     }
 
-    public static createHttpManagementPayload(id: string, host: string, taskHub: string, connection: string): HttpManagementPayload {
+    public static createHttpManagementPayload(
+        id: string,
+        host: string,
+        taskHub: string,
+        connection: string
+    ): HttpManagementPayload {
         return new HttpManagementPayload(
             id,
             TestConstants.statusQueryGetUriTemplate

@@ -14,6 +14,8 @@ export class TaskSet implements TaskBase {
 
     public yieldNewActions(): IAction[] {
         // Get all of the actions in subtasks and flatten into one array.
-        return this.tasks.map(task => task.yieldNewActions()).reduce((actions, subTaskActions) => actions.concat(subTaskActions));
+        return this.tasks
+            .map(task => task.yieldNewActions())
+            .reduce((actions, subTaskActions) => actions.concat(subTaskActions));
     }
 }

@@ -13,7 +13,11 @@ export class GuidManager {
         return this.createDeterministicGuidCore(namespaceValue, name, DeterministicGuidVersion.V5);
     }
 
-    private static createDeterministicGuidCore(namespaceValue: string, name: string, version: DeterministicGuidVersion): string {
+    private static createDeterministicGuidCore(
+        namespaceValue: string,
+        name: string,
+        version: DeterministicGuidVersion
+    ): string {
         Utils.throwIfEmpty(namespaceValue, "namespaceValue");
         Utils.throwIfEmpty(name, "name");
 

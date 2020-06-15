@@ -12,7 +12,12 @@ export class CallSubOrchestratorWithRetryAction implements IAction {
     ) {
         Utils.throwIfEmpty(functionName, "functionName");
 
-        Utils.throwIfNotInstanceOf<RetryOptions>(retryOptions, "retryOptions", new RetryOptions(1, 1), "RetryOptions");
+        Utils.throwIfNotInstanceOf<RetryOptions>(
+            retryOptions,
+            "retryOptions",
+            new RetryOptions(1, 1),
+            "RetryOptions"
+        );
 
         if (instanceId) {
             Utils.throwIfEmpty(instanceId, "instanceId");

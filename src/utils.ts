@@ -1,6 +1,9 @@
 /** @hidden */
 export class Utils {
-    public static getInstancesOf<T>(collection: { [index: string]: unknown }, typeInstance: T): T[] {
+    public static getInstancesOf<T>(
+        collection: { [index: string]: unknown },
+        typeInstance: T
+    ): T[] {
         return collection && typeInstance
             ? (Object.keys(collection)
                   .filter((key: string) => this.hasAllPropertiesOf(collection[key], typeInstance))
@@ -35,17 +38,28 @@ export class Utils {
         return new Promise(resolve => setTimeout(resolve, delayInMilliseconds));
     }
 
-    public static throwIfNotInstanceOf<T>(value: unknown, name: string, refInstance: T, type: string): void {
+    public static throwIfNotInstanceOf<T>(
+        value: unknown,
+        name: string,
+        refInstance: T,
+        type: string
+    ): void {
         if (!this.hasAllPropertiesOf<T>(value, refInstance)) {
-            throw new TypeError(`${name}: Expected object of type ${type} but got ${typeof value}; are you missing properties?`);
+            throw new TypeError(
+                `${name}: Expected object of type ${type} but got ${typeof value}; are you missing properties?`
+            );
         }
     }
 
     public static throwIfEmpty(value: unknown, name: string): void {
         if (typeof value !== "string") {
-            throw new TypeError(`${name}: Expected non-empty, non-whitespace string but got ${typeof value}`);
+            throw new TypeError(
+                `${name}: Expected non-empty, non-whitespace string but got ${typeof value}`
+            );
         } else if (value.trim().length < 1) {
-            throw new Error(`${name}: Expected non-empty, non-whitespace string but got empty string`);
+            throw new Error(
+                `${name}: Expected non-empty, non-whitespace string but got empty string`
+            );
         }
     }
 
