@@ -324,15 +324,11 @@ export class TestOrchestrations {
         return "Timer fired!";
     });
 
-    public static ThrowsExceptionFromActivity: any = df.orchestrator(function* (
-        context: any
-    ): IterableIterator<unknown> {
+    public static ThrowsExceptionFromActivity = df.orchestrator(function* (context) {
         yield context.df.callActivity("ThrowsErrorActivity");
     });
 
-    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function* (
-        context: any
-    ): IterableIterator<unknown> {
+    public static ThrowsExceptionFromActivityWithCatch = df.orchestrator(function* (context) {
         try {
             yield context.df.callActivity("ThrowsErrorActivity");
         } catch (e) {
@@ -343,9 +339,7 @@ export class TestOrchestrations {
         }
     });
 
-    public static ThrowsExceptionInline: any = df.orchestrator(function* (): IterableIterator<
-        unknown
-    > {
+    public static ThrowsExceptionInline: any = df.orchestrator(function* () {
         throw Error("Exception from Orchestrator");
     });
 }

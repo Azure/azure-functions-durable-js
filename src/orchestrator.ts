@@ -133,7 +133,7 @@ export class Orchestrator {
                     if (!g.done) {
                         // The orchestrator must have yielded a non-Task related type,
                         // so just return execution flow with what they yielded back.
-                        g = gen.next(g.value);
+                        g = gen.next(g.value as any);
                         continue;
                     } else {
                         log("Iterator is done");

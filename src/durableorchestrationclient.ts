@@ -505,10 +505,10 @@ export class DurableOrchestrationClient {
             );
         }
 
-        const response = await this.axiosInstance.get(requestUrl);
+        const response = await this.axiosInstance.get<T>(requestUrl);
         switch (response.status) {
             case 200: // entity exists
-                return new EntityStateResponse(true, response.data as T);
+                return new EntityStateResponse(true, response.data);
             case 404: // entity does not exist
                 return new EntityStateResponse(false);
             default:
