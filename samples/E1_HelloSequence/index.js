@@ -1,6 +1,6 @@
 const df = require("durable-functions");
 
-module.exports = df.orchestrator(function*(context){
+module.exports = df.orchestrator(function* (context) {
     context.log("Starting chain sample");
     const output = [];
     output.push(yield context.df.callActivity("E1_SayHello", "Tokyo"));

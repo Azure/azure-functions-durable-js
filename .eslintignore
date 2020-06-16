@@ -1,0 +1,3 @@
+node_modules/**
+lib/**
+samples/node_modules/**
