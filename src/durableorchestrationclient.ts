@@ -55,8 +55,8 @@ export function getClient(context: unknown): DurableOrchestrationClient {
 function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
     if (context.bindings) {
         const matchingInstances = Object.keys(context.bindings)
-            .map(key => context.bindings[key])
-            .filter(val => OrchestrationClientInputData.isOrchestrationClientInputData(val));
+            .map((key) => context.bindings[key])
+            .filter((val) => OrchestrationClientInputData.isOrchestrationClientInputData(val));
 
         if (matchingInstances && matchingInstances.length > 0) {
             return matchingInstances[0] as OrchestrationClientInputData;
@@ -81,7 +81,7 @@ function correctUrls(obj: { [key: string]: string }): { [key: string]: string } 
     const returnValue = cloneDeep(obj);
 
     const keys = Object.getOwnPropertyNames(obj);
-    keys.forEach(key => {
+    keys.forEach((key) => {
         const value = obj[key];
 
         if (
@@ -327,7 +327,7 @@ export class DurableOrchestrationClient {
                 query.push(`createdTimeTo=${createdTimeTo.toISOString()}`);
             }
             if (runtimeStatus && runtimeStatus.length > 0) {
-                const statusList: string = runtimeStatus.map(value => value.toString()).join(",");
+                const statusList: string = runtimeStatus.map((value) => value.toString()).join(",");
                 query.push(`runtimeStatus=${statusList}`);
             }
 
@@ -358,7 +358,7 @@ export class DurableOrchestrationClient {
 
             if (runtimeStatus && runtimeStatus.length > 0) {
                 const statusesString = runtimeStatus
-                    .map(value => value.toString())
+                    .map((value) => value.toString())
                     .reduce((acc, curr, i) => {
                         return acc + (i > 0 ? "," : "") + curr;
                     });
@@ -510,7 +510,7 @@ export class DurableOrchestrationClient {
             case 200: // entity exists
                 return new EntityStateResponse(true, response.data as T);
             case 404: // entity does not exist
-                return new EntityStateResponse(false, undefined);
+                return new EntityStateResponse(false);
             default:
                 return Promise.reject(this.createGenericError(response));
         }
@@ -804,7 +804,7 @@ export class DurableOrchestrationClient {
     ): HttpManagementPayload {
         const payload = { ...this.clientData.managementUrls };
 
-        (Object.keys(payload) as Array<keyof HttpManagementPayload>).forEach(key => {
+        (Object.keys(payload) as Array<keyof HttpManagementPayload>).forEach((key) => {
             if (
                 this.hasValidRequestUrl(request) &&
                 isURL(payload[key], this.urlValidationOptions)
@@ -850,7 +850,7 @@ export class DurableOrchestrationClient {
         const origins: string[] = [];
 
         const keys = Object.getOwnPropertyNames(obj);
-        keys.forEach(key => {
+        keys.forEach((key) => {
             const value = obj[key];
 
             if (isURL(value, this.urlValidationOptions)) {
@@ -893,7 +893,7 @@ export class DurableOrchestrationClient {
             }
             if (options.runtimeStatus && options.runtimeStatus.length > 0) {
                 const statusList: string = options.runtimeStatus
-                    .map(value => value.toString())
+                    .map((value) => value.toString())
                     .join(",");
                 query.push(`runtimeStatus=${statusList}`);
             }
@@ -939,7 +939,7 @@ export class DurableOrchestrationClient {
             }
             if (options.runtimeStatus && options.runtimeStatus.length > 0) {
                 const statusesString = options.runtimeStatus
-                    .map(value => value.toString())
+                    .map((value) => value.toString())
                     .reduce((acc, curr, i) => {
                         return acc + (i > 0 ? "," : "") + curr;
                     });

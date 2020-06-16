@@ -50,7 +50,9 @@ export class DurableOrchestrationContext {
     public currentUtcDateTime: Date;
 
     /**
-     *
+     * Just an entry point to reference the methods in [[ITaskMethods]].
+     * Methods to handle collections of pending actions represented by [[Task]]
+     * instances. For use in parallelization operations.
      */
     public Task: ITaskMethods;
 

@@ -80,7 +80,7 @@ export class Orchestrator {
 
         // Initialize currentUtcDateTime
         let decisionStartedEvent: HistoryEvent = Utils.ensureNonNull(
-            state.find(e => e.EventType === HistoryEventType.OrchestratorStarted),
+            state.find((e) => e.EventType === HistoryEventType.OrchestratorStarted),
             "The orchestrator can not execute without an OrchestratorStarted event."
         );
         this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
@@ -187,6 +187,13 @@ export class Orchestrator {
                     return;
                 }
 
+                // The first time a task is marked as complete, the history event that finally marked the task as completed
+                // should not yet have been played by the Durable Task framework, resulting in isReplaying being false.
+                // On replays, the event will have already been processed by the framework, and IsPlayed will be marked as true.
+                if (state[partialResult.completionIndex] !== undefined) {
+                    context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
+                }
+
                 if (TaskFilter.isFailedTask(partialResult)) {
                     if (!gen.throw) {
                         throw new Error(
@@ -215,7 +222,7 @@ export class Orchestrator {
                 }
 
                 const newDecisionStartedEvent = state.find(
-                    e =>
+                    (e) =>
                         e.EventType === HistoryEventType.OrchestratorStarted &&
                         e.Timestamp > decisionStartedEvent.Timestamp
                 );
@@ -232,7 +239,7 @@ export class Orchestrator {
                     context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
                 }
 
-                g = gen.next(partialResult.result);
+                g = gen.next(partialResult.result as any);
             }
         } catch (error) {
             // Wrap orchestration state in OutOfProcErrorWrapper to ensure data

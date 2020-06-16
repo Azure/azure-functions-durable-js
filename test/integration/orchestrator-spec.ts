@@ -26,6 +26,7 @@ import {
     OrchestratorState,
     RetryOptions,
     WaitForExternalEventAction,
+    IOrchestrationFunctionContext,
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
 import { TestHistories } from "../testobjects/testhistories";
@@ -79,7 +80,7 @@ describe("Orchestrator", () => {
         );
     });
 
-    falsyValues.forEach(falsyValue => {
+    falsyValues.forEach((falsyValue) => {
         it(`handles an orchestration function that returns ${
             falsyValue === "" ? "empty string" : falsyValue
         }`, async () => {
@@ -182,9 +183,7 @@ describe("Orchestrator", () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";
             const startTimestamp = moment.utc().toDate();
-            const nextTimestamp = moment(startTimestamp)
-                .add(1, "s")
-                .toDate();
+            const nextTimestamp = moment(startTimestamp).add(1, "s").toDate();
 
             const mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
@@ -244,12 +243,10 @@ describe("Orchestrator", () => {
                 mockContext.err as OrchestrationFailureError
             );
 
-            expect(orchestrationState)
-                .to.be.an("object")
-                .that.deep.include({
-                    isDone: false,
-                    actions: [],
-                });
+            expect(orchestrationState).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions: [],
+            });
             expect(orchestrationState.error).to.include(expectedErr);
         });
 
@@ -357,7 +354,7 @@ describe("Orchestrator", () => {
         });
 
         describe("Falsy Input", () => {
-            falsyValues.forEach(falsyValue => {
+            falsyValues.forEach((falsyValue) => {
                 it(`schedules an activity function with input ${falsyValue}`, async () => {
                     const orchestrator = TestOrchestrations.SayHelloWithActivity;
                     const mockContext = new MockContext({
@@ -534,12 +531,10 @@ describe("Orchestrator", () => {
                 mockContext.err as OrchestrationFailureError
             );
 
-            expect(orchestrationState)
-                .to.be.an("object")
-                .that.deep.include({
-                    isDone: false,
-                    actions: [],
-                });
+            expect(orchestrationState).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions: [],
+            });
             expect(orchestrationState.error).to.include(expectedErr);
         });
 
@@ -1136,12 +1131,10 @@ describe("Orchestrator", () => {
                 mockContext.err as OrchestrationFailureError
             );
 
-            expect(orchestrationState)
-                .to.be.an("object")
-                .that.deep.include({
-                    isDone: false,
-                    actions: [],
-                });
+            expect(orchestrationState).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions: [],
+            });
             expect(orchestrationState.error).to.include(expectedErr);
         });
 
@@ -1398,9 +1391,7 @@ describe("Orchestrator", () => {
         it("proceeds after a timer fires", async () => {
             const orchestrator = TestOrchestrations.WaitOnTimer;
             const startTimestamp = moment.utc().toDate();
-            const fireAt = moment(startTimestamp)
-                .add(5, "m")
-                .toDate();
+            const fireAt = moment(startTimestamp).add(5, "m").toDate();
 
             const mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
@@ -1643,7 +1634,7 @@ describe("Orchestrator", () => {
                     output: undefined,
                     actions: [
                         [new CallActivityAction("GetFileList", "C:\\Dev")],
-                        filePaths.map(file => new CallActivityAction("GetFileSize", file)),
+                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                     ],
                 })
             );
@@ -1670,7 +1661,7 @@ describe("Orchestrator", () => {
                     output: undefined,
                     actions: [
                         [new CallActivityAction("GetFileList", "C:\\Dev")],
-                        filePaths.map(file => new CallActivityAction("GetFileSize", file)),
+                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                     ],
                 })
             );
@@ -1693,7 +1684,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [
                         [new CallActivityAction("GetFileList", "C:\\Dev")],
-                        filePaths.map(file => new CallActivityAction("GetFileSize", file)),
+                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                     ],
                     output: 6,
                 })
@@ -1727,7 +1718,7 @@ describe("Orchestrator", () => {
                 isDone: false,
                 actions: [
                     [new CallActivityAction("GetFileList", "C:\\Dev")],
-                    filePaths.map(file => new CallActivityAction("GetFileSize", file)),
+                    filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                 ],
             });
 
@@ -2097,13 +2088,18 @@ describe("Orchestrator", () => {
     // ...
 });
 
-class MockContext {
-    constructor(
-        public bindings: IBindings,
-        public df?: DurableOrchestrationContext,
-        public doneValue?: IOrchestratorState,
-        public err?: Error | string | null
-    ) {}
+class MockContext implements IOrchestrationFunctionContext {
+    public doneValue: IOrchestratorState | undefined;
+    public err: string | Error | null | undefined;
+    constructor(public bindings: IBindings) {}
+    df: DurableOrchestrationContext;
+    invocationId: string;
+    executionContext: import("@azure/functions").ExecutionContext;
+    bindingData: { [key: string]: any };
+    bindingDefinitions: import("@azure/functions").BindingDefinition[];
+    log: import("@azure/functions").Logger;
+    req?: import("@azure/functions").HttpRequest | undefined;
+    res?: { [key: string]: any } | undefined;
 
     public done(err?: Error | string | null, result?: IOrchestratorState): void {
         this.doneValue = result;

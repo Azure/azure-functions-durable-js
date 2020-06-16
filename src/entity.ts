@@ -12,6 +12,7 @@ import {
 } from "./classes";
 
 /** @hidden */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const log = debug("orchestrator");
 
 /** @hidden */
@@ -46,7 +47,7 @@ export class Entity {
             );
 
             try {
-                this.fn(context);
+                await Promise.resolve(this.fn(context));
                 if (!returnState.results[i]) {
                     const elapsedMs = this.computeElapsedMilliseconds(startTime);
                     returnState.results[i] = new OperationResult(false, elapsedMs);

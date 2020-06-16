@@ -1,5 +1,6 @@
 import { EntityId } from "../classes";
 
+/** @hidden */
 export class Signal {
     constructor(
         public readonly target: EntityId,

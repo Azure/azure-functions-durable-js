@@ -19,7 +19,7 @@ describe("Entity", () => {
         const mockContext = new MockContext({
             context: testData.input,
         });
-        entity(mockContext);
+        await entity(mockContext);
 
         expect(mockContext.doneValue).to.not.equal(undefined);
 
@@ -37,7 +37,28 @@ describe("Entity", () => {
         const mockContext = new MockContext({
             context: testData.input,
         });
-        entity(mockContext);
+        await entity(mockContext);
+
+        expect(mockContext.doneValue).to.not.equal(undefined);
+
+        if (mockContext.doneValue) {
+            entityStateMatchesExpected(mockContext.doneValue, testData.output);
+        }
+    });
+
+    it("AsyncStringStore entity with no initial state.", async () => {
+        const entity = TestEntities.AsyncStringStore;
+        const operations: StringStoreOperation[] = [];
+        operations.push({ kind: "set", value: "set 1" });
+        operations.push({ kind: "get" });
+        operations.push({ kind: "set", value: "set 2" });
+        operations.push({ kind: "get" });
+
+        const testData = TestEntityBatches.GetAsyncStringStoreBatch(operations, undefined);
+        const mockContext = new MockContext({
+            context: testData.input,
+        });
+        await entity(mockContext);
 
         expect(mockContext.doneValue).to.not.equal(undefined);
 

@@ -5,12 +5,12 @@ import { Utils } from "../../src/classes";
 describe("Utils", () => {
     describe("getInstancesOf()", () => {
         it("returns empty array when typeInstance is not object", () => {
-            const result = Utils.getInstancesOf<boolean>([], true);
+            const result = Utils.getInstancesOf<boolean>({}, true);
             return expect(result).to.be.an("array").that.is.empty;
         });
 
         it("returns empty array when typeInstance is undefined", async () => {
-            const result = Utils.getInstancesOf([], undefined);
+            const result = Utils.getInstancesOf({}, undefined);
             return expect(result).to.be.an("array").that.is.empty;
         });
 
@@ -83,7 +83,7 @@ describe("Utils", () => {
         const notObjects = [undefined, true, 3, "thing", Symbol(), (): number => 3];
         const defaultName = "name";
 
-        notObjects.forEach(notObject => {
+        notObjects.forEach((notObject) => {
             it(`throws when called with ${typeof notObject}`, async () => {
                 expect(() => {
                     Utils.throwIfNotInstanceOf<TestType>(
@@ -122,7 +122,7 @@ describe("Utils", () => {
         const notStrings = [undefined, true, 3, Symbol(), (): number => 3, { key: "value" }];
         const defaultName = "name";
 
-        notStrings.forEach(notString => {
+        notStrings.forEach((notString) => {
             it(`throws when called with ${typeof notString}`, async () => {
                 expect(() => {
                     Utils.throwIfEmpty(notString, defaultName);

@@ -11,6 +11,9 @@ import { TaskBase } from "./taskinterfaces";
  * are useful for parallelization and timeout operations in conjunction with
  * Task.all and Task.any.
  *
+ * We discourage the usage of `instanceof`-style guards on this type,
+ * as it is subject to change in the future.
+ *
  * @example Wait for all parallel operations to complete
  * ```javascript
  * const operations = context.df.callActivity("GetOperations");

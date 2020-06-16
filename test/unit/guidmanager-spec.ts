@@ -22,10 +22,7 @@ describe("GuidManager", () => {
         it("returns consistent GUID for namespace and name", () => {
             const namespace = GuidManager.UrlNamespaceValue;
             const instanceId = uuidv1();
-            const currentUtcDateTime = moment
-                .utc()
-                .toDate()
-                .valueOf();
+            const currentUtcDateTime = moment.utc().toDate().valueOf();
 
             const name1 = `${instanceId}_${currentUtcDateTime}_0`;
             const name2 = `${instanceId}_${currentUtcDateTime}_12`;
