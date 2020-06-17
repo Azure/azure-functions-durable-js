@@ -1,11 +1,11 @@
 import * as df from "durable-functions";
 
-module.exports = df.entity(function (context) {
+module.exports = df.entity<number>(function (context) {
     let currentValue = context.df.getState(() => 0);
 
     switch (context.df.operationName) {
         case "add":
-            const amount = context.df.getInput<number>();
+            const amount = context.df.getInput();
             currentValue += amount;
             break;
         case "reset":

@@ -16,7 +16,7 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
 
         const testData = TestEntityBatches.GetStringStoreBatch(operations, undefined);
-        const mockContext = new MockContext({
+        const mockContext = new MockContext<string>({
             context: testData.input,
         });
         await entity(mockContext);
@@ -34,7 +34,7 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
 
         const testData = TestEntityBatches.GetStringStoreBatch(operations, "Hello world");
-        const mockContext = new MockContext({
+        const mockContext = new MockContext<string>({
             context: testData.input,
         });
         await entity(mockContext);
@@ -55,7 +55,7 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
 
         const testData = TestEntityBatches.GetAsyncStringStoreBatch(operations, undefined);
-        const mockContext = new MockContext({
+        const mockContext = new MockContext<string>({
             context: testData.input,
         });
         await entity(mockContext);
@@ -79,7 +79,7 @@ function entityStateMatchesExpected(actual: EntityState, expected: EntityState):
     }
 }
 
-class MockContext implements IEntityFunctionContext {
+class MockContext<T> implements IEntityFunctionContext<T> {
     constructor(
         public bindings: IBindings,
         public doneValue?: EntityState,
@@ -92,7 +92,7 @@ class MockContext implements IEntityFunctionContext {
     public log: Logger;
     public req?: HttpRequest | undefined;
     public res?: { [key: string]: any } | undefined;
-    public df: DurableEntityContext;
+    public df: DurableEntityContext<T>;
 
     public done(err?: Error | string | null, result?: EntityState): void {
         this.doneValue = result;

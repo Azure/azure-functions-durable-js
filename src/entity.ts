@@ -16,14 +16,14 @@ import {
 const log = debug("orchestrator");
 
 /** @hidden */
-export class Entity {
-    constructor(public fn: (context: IEntityFunctionContext) => unknown) {}
+export class Entity<T> {
+    constructor(public fn: (context: IEntityFunctionContext<T>) => void) {}
 
-    public listen(): (context: IEntityFunctionContext) => Promise<void> {
+    public listen(): (context: IEntityFunctionContext<T>) => Promise<void> {
         return this.handle.bind(this);
     }
 
-    private async handle(context: IEntityFunctionContext): Promise<void> {
+    private async handle(context: IEntityFunctionContext<T>): Promise<void> {
         const entityBinding = Utils.getInstancesOf<DurableEntityBindingInfo>(
             context.bindings,
             new DurableEntityBindingInfo(new EntityId("samplename", "samplekey"), true, "", [])
@@ -70,7 +70,7 @@ export class Entity {
         batchState: EntityState,
         requestIndex: number,
         startTime: Date
-    ): DurableEntityContext {
+    ): DurableEntityContext<T> {
         const currentRequest = bindingInfo.batch[requestIndex];
         return {
             entityName: bindingInfo.self.name,
@@ -78,11 +78,9 @@ export class Entity {
             entityId: bindingInfo.self,
             operationName: currentRequest.name,
             isNewlyConstructed: !batchState.entityExists,
-            getState: this.getState.bind(this, batchState) as <T>(
-                initialiser: () => T
-            ) => T | undefined,
+            getState: this.getState.bind(this, batchState),
             setState: this.setState.bind(this, batchState),
-            getInput: this.getInput.bind(this, currentRequest) as <T>() => T,
+            getInput: this.getInput.bind(this, currentRequest),
             return: this.return.bind(this, batchState, startTime),
             destructOnExit: this.destructOnExit.bind(this, batchState),
             signalEntity: this.signalEntity.bind(this, batchState),
@@ -94,23 +92,23 @@ export class Entity {
         batchState.entityState = undefined;
     }
 
-    private getInput<T>(currentRequest: RequestMessage): T | undefined {
+    private getInput(currentRequest: RequestMessage): T | undefined {
         if (currentRequest.input) {
             return JSON.parse(currentRequest.input) as T;
         }
         return undefined;
     }
 
-    private getState<T>(returnState: EntityState, initializer?: () => T): T | undefined {
+    private getState(returnState: EntityState, initializer?: () => T): T | undefined {
         if (returnState.entityState) {
             return JSON.parse(returnState.entityState) as T;
-        } else if (initializer != null) {
+        } else if (initializer) {
             return initializer();
         }
         return undefined;
     }
 
-    private return<T>(returnState: EntityState, startTime: Date, result: T): void {
+    private return(returnState: EntityState, startTime: Date, result: T): void {
         returnState.entityExists = true;
         returnState.results.push(
             new OperationResult(
@@ -121,7 +119,7 @@ export class Entity {
         );
     }
 
-    private setState<T>(returnState: EntityState, state: T): void {
+    private setState(returnState: EntityState, state: T): void {
         returnState.entityExists = true;
         returnState.entityState = JSON.stringify(state);
     }

@@ -4,21 +4,21 @@ import { EntityId } from "./classes";
  * Provides functionality for application code implementing an entity
  * operation.
  */
-export class DurableEntityContext {
+export type DurableEntityContext<T> = {
     /**
      * Gets the name of the currently executing entity.
      */
-    public readonly entityName: string;
+    readonly entityName: string;
 
     /**
      * Gets the key of the currently executing entity.
      */
-    public readonly entityKey: string;
+    readonly entityKey: string;
 
     /**
      * Gets the id of the currently executing entity.
      */
-    public readonly entityId: EntityId;
+    readonly entityId: EntityId;
 
     /**
      * Gets the name of the operation that was called.
@@ -26,13 +26,13 @@ export class DurableEntityContext {
      * An operation invocation on an entity includes an operation name, which
      * states what operation to perform, and optionally an operation input.
      */
-    public readonly operationName: string | undefined;
+    readonly operationName: string | undefined;
 
     /**
      * Whether this entity is freshly constructed, i.e. did not exist prior to
      * this operation being called.
      */
-    public readonly isNewlyConstructed: boolean;
+    readonly isNewlyConstructed: boolean;
 
     /**
      * Gets the current state of this entity, for reading and/or writing.
@@ -41,18 +41,14 @@ export class DurableEntityContext {
      * instead of TState's default.
      * @returns The current state of this entity, or undefined if none has been set yet.
      */
-    public getState<T>(initializer?: () => T): T | undefined {
-        throw new Error("This is a placeholder.");
-    }
+    getState(initializer?: () => T): T | undefined;
 
     /**
      * Sets the current state of this entity.
      *
      * @param state The state of the entity.
      */
-    public setState<T>(state: T): void {
-        throw new Error("This is a placeholder.");
-    }
+    setState(state: T): void;
 
     /**
      * Gets the input for this operation.
@@ -62,25 +58,19 @@ export class DurableEntityContext {
      *
      * @returns The operation input, or undefined if none.
      */
-    public getInput<T>(): T | undefined {
-        throw new Error("This is a placeholder.");
-    }
+    getInput(): T | undefined;
 
     /**
      * Returns the given result to the caller of this operation.
      *
      * @param result The result to return.
      */
-    public return<T>(result: T): void {
-        throw new Error("This is a placeholder.");
-    }
+    return(result: T): void;
 
     /**
      * Deletes this entity after this operation completes.
      */
-    public destructOnExit(): void {
-        throw new Error("This is a placeholder.");
-    }
+    destructOnExit(): void;
 
     /**
      * Signals an entity to perform an operation, without waiting for a
@@ -90,7 +80,5 @@ export class DurableEntityContext {
      * @param operationName The name of the operation.
      * @param operationInput The operation input.
      */
-    public signalEntity(entity: EntityId, operationName: string, operationInput?: unknown): void {
-        throw new Error("This is a placeholder.");
-    }
-}
+    signalEntity(entity: EntityId, operationName: string, operationInput?: unknown): void;
+};

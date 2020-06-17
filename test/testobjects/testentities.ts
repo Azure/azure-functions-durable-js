@@ -1,22 +1,22 @@
 import * as df from "../../src";
 
 export class TestEntities {
-    public static StringStore = df.entity((context): void => {
+    public static StringStore = df.entity<string>((context): void => {
         switch (context.df.operationName) {
             case "set":
-                context.df.setState(context.df.getInput<string>());
+                context.df.setState(context.df.getInput() || "");
                 break;
             case "get":
-                context.df.return(context.df.getState<string>());
+                context.df.return(context.df.getState() || "");
                 break;
             default:
                 throw new Error("No such operation exists");
         }
     });
 
-    public static Counter = df.entity((context): void => {
-        const input = context.df.getInput<number>();
-        const state = context.df.getState<number>();
+    public static Counter = df.entity<number>((context): void => {
+        const input = context.df.getInput();
+        const state = context.df.getState();
 
         if (input === undefined || state === undefined) {
             throw new Error("Input or state not set");
@@ -43,14 +43,14 @@ export class TestEntities {
         }
     });
 
-    public static AsyncStringStore: any = df.entity(async (context) => {
+    public static AsyncStringStore = df.entity<string>(async (context) => {
         await new Promise((resolve) => setTimeout(() => resolve(), 0)); // force onto the event loop and result in a no-op delay
         switch (context.df.operationName) {
             case "set":
-                context.df.setState(context.df.getInput());
+                context.df.setState(context.df.getInput() || "");
                 break;
             case "get":
-                context.df.return(context.df.getState());
+                context.df.return(context.df.getState() || "");
                 break;
             default:
                 throw new Error("No such operation exists");

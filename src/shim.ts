@@ -28,11 +28,11 @@ export function orchestrator(
     };
 }
 
-export function entity(
-    fn: (context: IEntityFunctionContext) => unknown
-): (context: IEntityFunctionContext) => void {
-    const listener = new Entity(fn).listen();
-    return async (context: IEntityFunctionContext): Promise<void> => {
+export function entity<T = unknown>(
+    fn: (context: IEntityFunctionContext<T>) => void
+): (context: IEntityFunctionContext<T>) => void {
+    const listener = new Entity<T>(fn).listen();
+    return async (context): Promise<void> => {
         await listener(context);
     };
 }
