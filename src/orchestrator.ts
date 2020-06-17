@@ -51,19 +51,21 @@ import { TokenSource } from "./tokensource";
 const log = debug("orchestrator");
 
 /** @hidden */
-export class Orchestrator {
+export class Orchestrator<T> {
     private currentUtcDateTime: Date;
     private customStatus: unknown;
     private newGuidCounter: number;
     private subOrchestratorCounter: number;
 
-    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {}
+    constructor(
+        public fn: (context: IOrchestrationFunctionContext<T>) => IterableIterator<unknown>
+    ) {}
 
-    public listen(): (context: IOrchestrationFunctionContext) => Promise<void> {
+    public listen(): (context: IOrchestrationFunctionContext<T>) => Promise<void> {
         return this.handle.bind(this);
     }
 
-    private async handle(context: IOrchestrationFunctionContext): Promise<void> {
+    private async handle(context: IOrchestrationFunctionContext<T>): Promise<void> {
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
             context.bindings,
             new DurableOrchestrationBindingInfo()
@@ -96,11 +98,7 @@ export class Orchestrator {
             parentInstanceId: orchestrationBinding.parentInstanceId,
             callActivity: this.callActivity.bind(this, state),
             callActivityWithRetry: this.callActivityWithRetry.bind(this, state),
-            callEntity: this.callEntity.bind(this, state) as <T>(
-                entityId: EntityId,
-                operationName: string,
-                operationInput?: T
-            ) => Task<T>,
+            callEntity: this.callEntity.bind(this, state),
             callSubOrchestrator: this.callSubOrchestrator.bind(this, state),
             callSubOrchestratorWithRetry: this.callSubOrchestratorWithRetry.bind(this, state),
             callHttp: this.callHttp.bind(this, state),
@@ -343,7 +341,7 @@ export class Orchestrator {
         return TaskFactory.UncompletedTask(newAction);
     }
 
-    private callEntity<T>(
+    private callEntity(
         state: HistoryEvent[],
         entityId: EntityId,
         operationName: string,

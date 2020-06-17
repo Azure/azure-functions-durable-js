@@ -2088,11 +2088,11 @@ describe("Orchestrator", () => {
     // ...
 });
 
-class MockContext implements IOrchestrationFunctionContext {
+class MockContext<T> implements IOrchestrationFunctionContext<T> {
     public doneValue: IOrchestratorState | undefined;
     public err: string | Error | null | undefined;
     constructor(public bindings: IBindings) {}
-    df: DurableOrchestrationContext;
+    df: DurableOrchestrationContext<T>;
     invocationId: string;
     executionContext: import("@azure/functions").ExecutionContext;
     bindingData: { [key: string]: any };

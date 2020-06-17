@@ -5,7 +5,7 @@ import { TokenSource } from "./tokensource";
  * Parameter data for orchestration bindings that can be used to schedule
  * function-based activities.
  */
-export class DurableOrchestrationContext {
+export class DurableOrchestrationContext<T> {
     /**
      * The ID of the current orchestration instance.
      *
@@ -90,7 +90,7 @@ export class DurableOrchestrationContext {
      * @param operationName The name of the operation.
      * @param operationInput The input for the operation.
      */
-    public callEntity<T>(entityId: EntityId, operationName: string, operationInput?: T): Task<T> {
+    public callEntity(entityId: EntityId, operationName: string, operationInput?: T): Task<T> {
         throw new Error("This is a placeholder.");
     }
 

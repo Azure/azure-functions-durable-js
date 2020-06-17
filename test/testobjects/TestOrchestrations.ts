@@ -263,9 +263,7 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SendHttpRequest: any = df.orchestrator(function* (
-        context: IOrchestrationFunctionContext
-    ) {
+    public static SendHttpRequest: any = df.orchestrator(function* (context) {
         const input = context.df.getInput() as df.DurableHttpRequest;
         const output = yield context.df.callHttp(
             input.method,

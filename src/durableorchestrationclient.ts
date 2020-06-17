@@ -46,8 +46,8 @@ const URL = url.URL;
  * };
  * ```
  */
-export function getClient(context: unknown): DurableOrchestrationClient {
-    let clientData = getClientData(context as IOrchestrationFunctionContext);
+export function getClient<T>(context: unknown): DurableOrchestrationClient {
+    let clientData = getClientData(context as IOrchestrationFunctionContext<T>);
 
     if (!process.env.WEBSITE_HOSTNAME || process.env.WEBSITE_HOSTNAME.includes("0.0.0.0")) {
         clientData = correctClientData(clientData);
@@ -57,7 +57,7 @@ export function getClient(context: unknown): DurableOrchestrationClient {
 }
 
 /** @hidden */
-function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
+function getClientData<T>(context: IOrchestrationFunctionContext<T>): OrchestrationClientInputData {
     if (context.bindings) {
         const matchingInstances = Object.keys(context.bindings)
             .map((key) => context.bindings[key])
