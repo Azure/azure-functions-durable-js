@@ -8,6 +8,7 @@ import {
 } from "./taskinterfaces";
 import { TaskSet } from "./taskset";
 
+/** @hidden */
 export class TaskFilter {
     public static CompareFinishedTime(taskA: CompletedTask, taskB: CompletedTask): -1 | 0 | 1 {
         if (taskA.completionIndex > taskB.completionIndex) {

@@ -4,6 +4,7 @@ import { TaskBase } from "./taskinterfaces";
 import { TaskSet } from "./taskset";
 import { TimerTask } from "./timertask";
 
+/** @hidden */
 export class TaskFactory {
     public static UncompletedTask<T>(action: IAction): Task<T> {
         return new Task<T>(false, false, action);

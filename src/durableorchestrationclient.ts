@@ -2,8 +2,11 @@
 
 import { HttpRequest } from "@azure/functions";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+/** @hidden */
 import cloneDeep = require("lodash/cloneDeep");
+/** @hidden */
 import process = require("process");
+/** @hidden */
 import url = require("url");
 import { isURL } from "validator";
 import {
@@ -24,6 +27,7 @@ import {
 } from "./classes";
 import { WebhookUtils } from "./webhookutils";
 
+/** @hidden */
 const URL = url.URL;
 
 /**
@@ -52,6 +56,7 @@ export function getClient(context: unknown): DurableOrchestrationClient {
     return new DurableOrchestrationClient(clientData);
 }
 
+/** @hidden */
 function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
     if (context.bindings) {
         const matchingInstances = Object.keys(context.bindings)
@@ -68,6 +73,7 @@ function getClientData(context: IOrchestrationFunctionContext): OrchestrationCli
     );
 }
 
+/** @hidden */
 function correctClientData(clientData: OrchestrationClientInputData): OrchestrationClientInputData {
     const returnValue = cloneDeep(clientData);
 
