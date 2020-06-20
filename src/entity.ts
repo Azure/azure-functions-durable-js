@@ -81,7 +81,9 @@ export class Entity<T> {
             getState: this.getState.bind(this, batchState),
             setState: this.setState.bind(this, batchState),
             getInput: this.getInput.bind(this, currentRequest) as <TInput>() => TInput | undefined,
-            return: this.return.bind(this, batchState, startTime),
+            return: this.return.bind(this, batchState, startTime) as <TResult = T>(
+                value: TResult
+            ) => void,
             destructOnExit: this.destructOnExit.bind(this, batchState),
             signalEntity: this.signalEntity.bind(this, batchState),
         };

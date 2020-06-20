@@ -1,6 +1,6 @@
 import * as df from "durable-functions";
 
-module.exports = df.orchestrator<number>(function* (context) {
+module.exports = df.orchestrator(function* (context) {
     const entityId = new df.EntityId("CounterEntityTypeScript", "myCounterTS");
 
     const currentValue: number = yield context.df.callEntity(entityId, "get");

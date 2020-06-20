@@ -5,7 +5,7 @@ module.exports = df.entity<number>(function (context) {
 
     switch (context.df.operationName) {
         case "add":
-            const amount = context.df.getInput();
+            const amount = context.df.getInput<number>();
             currentValue += amount;
             break;
         case "reset":

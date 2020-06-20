@@ -65,7 +65,7 @@ export type DurableEntityContext<T> = {
      *
      * @param result The result to return.
      */
-    return(result: T): void;
+    return<TResult = T>(result: TResult): void;
 
     /**
      * Deletes this entity after this operation completes.
