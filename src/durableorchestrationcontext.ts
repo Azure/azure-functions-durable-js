@@ -5,7 +5,7 @@ import { TokenSource } from "./tokensource";
  * Parameter data for orchestration bindings that can be used to schedule
  * function-based activities.
  */
-export class DurableOrchestrationContext<T> {
+export class DurableOrchestrationContext {
     /**
      * The ID of the current orchestration instance.
      *
@@ -65,7 +65,7 @@ export class DurableOrchestrationContext<T> {
      * @returns A Durable Task that completes when the called activity
      * function completes or fails.
      */
-    public callActivity(name: string, input?: unknown): Task {
+    public callActivity<T>(name: string, input?: T): Task {
         throw new Error("This is a placeholder.");
     }
 
@@ -78,7 +78,7 @@ export class DurableOrchestrationContext<T> {
      * @param input The JSON-serializable input to pass to the activity
      * function.
      */
-    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
+    public callActivityWithRetry<T>(name: string, retryOptions: RetryOptions, input?: T): Task {
         throw new Error("This is a placeholder.");
     }
 
@@ -90,7 +90,7 @@ export class DurableOrchestrationContext<T> {
      * @param operationName The name of the operation.
      * @param operationInput The input for the operation.
      */
-    public callEntity(entityId: EntityId, operationName: string, operationInput?: T): Task<T> {
+    public callEntity<T>(entityId: EntityId, operationName: string, operationInput?: T): Task {
         throw new Error("This is a placeholder.");
     }
 
@@ -104,7 +104,7 @@ export class DurableOrchestrationContext<T> {
      * If `instanceId` is not specified, the extension will generate an id in
      * the format `<calling orchestrator instance ID>:<#>`
      */
-    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
+    public callSubOrchestrator<T>(name: string, input?: T, instanceId?: string): Task {
         throw new Error("This is a placeholder.");
     }
 
@@ -118,10 +118,10 @@ export class DurableOrchestrationContext<T> {
      * function.
      * @param instanceId A unique ID to use for the sub-orchestration instance.
      */
-    public callSubOrchestratorWithRetry(
+    public callSubOrchestratorWithRetry<T>(
         name: string,
         retryOptions: RetryOptions,
-        input?: unknown,
+        input?: T,
         instanceId?: string
     ): Task {
         throw new Error("This is a placeholder.");
@@ -147,7 +147,7 @@ export class DurableOrchestrationContext<T> {
      *
      * @param The JSON-serializable data to re-initialize the instance with.
      */
-    public continueAsNew(input: unknown): Task {
+    public continueAsNew<T>(input: T): Task {
         throw new Error("This is a placeholder.");
     }
 
@@ -173,7 +173,7 @@ export class DurableOrchestrationContext<T> {
      * Gets the input of the current orchestrator function as a deserialized
      * value.
      */
-    public getInput(): unknown {
+    public getInput<T>(): T {
         throw new Error("This is a placeholder.");
     }
 
@@ -203,7 +203,7 @@ export class DurableOrchestrationContext<T> {
      * @param customStatusObject The JSON-serializable value to use as the
      * orchestrator function's custom status.
      */
-    public setCustomStatus(customStatusObject: unknown): void {
+    public setCustomStatus<T>(customStatusObject: T): void {
         throw new Error("This is a placeholder.");
     }
 

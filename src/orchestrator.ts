@@ -51,21 +51,19 @@ import { TokenSource } from "./tokensource";
 const log = debug("orchestrator");
 
 /** @hidden */
-export class Orchestrator<T> {
+export class Orchestrator {
     private currentUtcDateTime: Date;
     private customStatus: unknown;
     private newGuidCounter: number;
     private subOrchestratorCounter: number;
 
-    constructor(
-        public fn: (context: IOrchestrationFunctionContext<T>) => IterableIterator<unknown>
-    ) {}
+    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {}
 
-    public listen(): (context: IOrchestrationFunctionContext<T>) => Promise<void> {
+    public listen(): (context: IOrchestrationFunctionContext) => Promise<void> {
         return this.handle.bind(this);
     }
 
-    private async handle(context: IOrchestrationFunctionContext<T>): Promise<void> {
+    private async handle(context: IOrchestrationFunctionContext): Promise<void> {
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
             context.bindings,
             new DurableOrchestrationBindingInfo()
@@ -76,7 +74,7 @@ export class Orchestrator<T> {
         }
 
         const state: HistoryEvent[] = orchestrationBinding.history;
-        const input: unknown = orchestrationBinding.input;
+        const input = orchestrationBinding.input;
         const instanceId: string = orchestrationBinding.instanceId;
         // const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
 
@@ -104,7 +102,7 @@ export class Orchestrator<T> {
             callHttp: this.callHttp.bind(this, state),
             continueAsNew: this.continueAsNew.bind(this, state),
             createTimer: this.createTimer.bind(this, state),
-            getInput: this.getInput.bind(this, input),
+            getInput: this.getInput.bind(this, input) as <T>() => T,
             // isLocked: this.isLocked.bind(this, contextLocks),
             // lock: this.lock.bind(this, state, instanceId, contextLocks),
             newGuid: this.newGuid.bind(this, instanceId),
@@ -346,7 +344,7 @@ export class Orchestrator<T> {
         entityId: EntityId,
         operationName: string,
         operationInput: unknown
-    ): Task<T> {
+    ): Task {
         const newAction = new CallEntityAction(entityId, operationName, operationInput);
 
         const schedulerId = EntityId.getSchedulerIdFromEntityId(entityId);
@@ -366,7 +364,7 @@ export class Orchestrator<T> {
         if (eventRaised) {
             const parsedResult = this.parseHistoryEvent(eventRaised) as ResponseMessage;
 
-            return TaskFactory.SuccessfulTask<T>(
+            return TaskFactory.SuccessfulTask(
                 newAction,
                 JSON.parse(parsedResult.result),
                 eventRaised.Timestamp,
@@ -584,7 +582,7 @@ export class Orchestrator<T> {
         }
     }
 
-    private getInput(input: unknown): unknown {
+    private getInput<T>(input: T): T {
         return input;
     }
 

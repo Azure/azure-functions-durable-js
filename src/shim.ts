@@ -19,10 +19,10 @@ import {
  * });
  * ```
  */
-export function orchestrator<T = unknown>(
-    fn: (context: IOrchestrationFunctionContext<T>) => Generator<unknown, unknown, any>
-): (context: IOrchestrationFunctionContext<T>) => void {
-    const listener = new Orchestrator<T>(fn).listen();
+export function orchestrator(
+    fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>
+): (context: IOrchestrationFunctionContext) => void {
+    const listener = new Orchestrator(fn).listen();
     return (context): void => {
         listener(context);
     };
