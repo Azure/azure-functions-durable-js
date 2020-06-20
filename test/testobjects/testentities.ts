@@ -15,7 +15,7 @@ export class TestEntities {
     });
 
     public static Counter = df.entity<number>((context): void => {
-        const input = context.df.getInput();
+        const input = context.df.getInput<number>();
         const state = context.df.getState();
 
         if (input === undefined || state === undefined) {

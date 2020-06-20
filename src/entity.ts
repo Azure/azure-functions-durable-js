@@ -80,7 +80,7 @@ export class Entity<T> {
             isNewlyConstructed: !batchState.entityExists,
             getState: this.getState.bind(this, batchState),
             setState: this.setState.bind(this, batchState),
-            getInput: this.getInput.bind(this, currentRequest),
+            getInput: this.getInput.bind(this, currentRequest) as <TInput>() => TInput | undefined,
             return: this.return.bind(this, batchState, startTime),
             destructOnExit: this.destructOnExit.bind(this, batchState),
             signalEntity: this.signalEntity.bind(this, batchState),
@@ -92,9 +92,9 @@ export class Entity<T> {
         batchState.entityState = undefined;
     }
 
-    private getInput(currentRequest: RequestMessage): T | undefined {
+    private getInput<TInput>(currentRequest: RequestMessage): TInput | undefined {
         if (currentRequest.input) {
-            return JSON.parse(currentRequest.input) as T;
+            return JSON.parse(currentRequest.input) as TInput;
         }
         return undefined;
     }

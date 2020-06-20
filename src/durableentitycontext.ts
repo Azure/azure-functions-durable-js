@@ -58,7 +58,7 @@ export type DurableEntityContext<T> = {
      *
      * @returns The operation input, or undefined if none.
      */
-    getInput(): T | undefined;
+    getInput<TInput>(): TInput | undefined;
 
     /**
      * Returns the given result to the caller of this operation.
