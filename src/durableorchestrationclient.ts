@@ -9,10 +9,21 @@ import process = require("process");
 /** @hidden */
 import url = require("url");
 import { isURL } from "validator";
-import { Constants, DurableOrchestrationStatus, EntityId, EntityStateResponse,
-    GetStatusOptions, HttpCreationPayload, HttpManagementPayload,
-    IHttpRequest, IHttpResponse, IOrchestrationFunctionContext, OrchestrationClientInputData,
-    OrchestrationRuntimeStatus, PurgeHistoryResult, Utils,
+import {
+    Constants,
+    DurableOrchestrationStatus,
+    EntityId,
+    EntityStateResponse,
+    GetStatusOptions,
+    HttpCreationPayload,
+    HttpManagementPayload,
+    IHttpRequest,
+    IHttpResponse,
+    IOrchestrationFunctionContext,
+    OrchestrationClientInputData,
+    OrchestrationRuntimeStatus,
+    PurgeHistoryResult,
+    Utils,
 } from "./classes";
 import { WebhookUtils } from "./webhookutils";
 
@@ -49,15 +60,17 @@ export function getClient(context: unknown): DurableOrchestrationClient {
 function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
     if (context.bindings) {
         const matchingInstances = Object.keys(context.bindings)
-        .map((key) => context.bindings[key])
-        .filter((val) => OrchestrationClientInputData.isOrchestrationClientInputData(val));
+            .map((key) => context.bindings[key])
+            .filter((val) => OrchestrationClientInputData.isOrchestrationClientInputData(val));
 
         if (matchingInstances && matchingInstances.length > 0) {
             return matchingInstances[0] as OrchestrationClientInputData;
         }
     }
 
-    throw new Error("An orchestration client function must have an orchestrationClient input binding. Check your function.json definition.");
+    throw new Error(
+        "An orchestration client function must have an orchestrationClient input binding. Check your function.json definition."
+    );
 }
 
 /** @hidden */
@@ -78,11 +91,15 @@ function correctUrls(obj: { [key: string]: string }): { [key: string]: string } 
     keys.forEach((key) => {
         const value = obj[key];
 
-        if (isURL(value, {
-            protocols: ["http", "https"],
-            require_tld: false,
-            require_protocol: true,
-        })) {
+        if (
+            isURL(value, {
+                protocols: ["http", "https"],
+                // eslint-disable-next-line @typescript-eslint/camelcase
+                require_tld: false,
+                // eslint-disable-next-line @typescript-eslint/camelcase
+                require_protocol: true,
+            })
+        ) {
             const valueAsUrl = new url.URL(value);
             returnValue[key] = value.replace(valueAsUrl.origin, Constants.DefaultLocalOrigin);
         }
@@ -120,8 +137,11 @@ export class DurableOrchestrationClient {
 
     private urlValidationOptions: ValidatorJS.IsURLOptions = {
         protocols: ["http", "https"],
+        // eslint-disable-next-line @typescript-eslint/camelcase
         require_tld: false,
+        // eslint-disable-next-line @typescript-eslint/camelcase
         require_protocol: true,
+        // eslint-disable-next-line @typescript-eslint/camelcase
         require_valid_protocol: true,
     };
 
@@ -129,11 +149,11 @@ export class DurableOrchestrationClient {
      * @param clientData The object representing the orchestrationClient input
      *  binding of the Azure function that will use this client.
      */
-    constructor(
-        private readonly clientData: OrchestrationClientInputData,
-        ) {
+    constructor(private readonly clientData: OrchestrationClientInputData) {
         if (!clientData) {
-            throw new TypeError(`clientData: Expected OrchestrationClientInputData but got ${typeof clientData}`);
+            throw new TypeError(
+                `clientData: Expected OrchestrationClientInputData but got ${typeof clientData}`
+            );
         }
 
         this.axiosInstance = axios.create({
@@ -158,7 +178,10 @@ export class DurableOrchestrationClient {
      * @returns An HTTP 202 response with a Location header and a payload
      *  containing instance management URLs.
      */
-    public createCheckStatusResponse(request: IHttpRequest | HttpRequest | undefined, instanceId: string): IHttpResponse {
+    public createCheckStatusResponse(
+        request: IHttpRequest | HttpRequest | undefined,
+        instanceId: string
+    ): IHttpResponse {
         const httpManagementPayload = this.getClientResponseLinks(request, instanceId);
 
         return {
@@ -166,7 +189,7 @@ export class DurableOrchestrationClient {
             body: httpManagementPayload,
             headers: {
                 "Content-Type": "application/json",
-                "Location": httpManagementPayload.statusQueryGetUri,
+                Location: httpManagementPayload.statusQueryGetUri,
                 "Retry-After": 10,
             },
         };
@@ -193,7 +216,7 @@ export class DurableOrchestrationClient {
         instanceId: string,
         showHistory?: boolean,
         showHistoryOutput?: boolean,
-        showInput?: boolean,
+        showInput?: boolean
     ): Promise<DurableOrchestrationStatus> {
         const options: GetStatusOptions = {
             instanceId,
@@ -241,7 +264,7 @@ export class DurableOrchestrationClient {
     public async getStatusBy(
         createdTimeFrom: Date | undefined,
         createdTimeTo: Date | undefined,
-        runtimeStatus: OrchestrationRuntimeStatus[],
+        runtimeStatus: OrchestrationRuntimeStatus[]
     ): Promise<DurableOrchestrationStatus[]> {
         const options: GetStatusOptions = {
             createdTimeFrom,
@@ -297,15 +320,19 @@ export class DurableOrchestrationClient {
     public async purgeInstanceHistoryBy(
         createdTimeFrom: Date,
         createdTimeTo?: Date,
-        runtimeStatus?: OrchestrationRuntimeStatus[],
+        runtimeStatus?: OrchestrationRuntimeStatus[]
     ): Promise<PurgeHistoryResult> {
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             let path = new URL("instances/", this.clientData.rpcBaseUrl).href;
             const query: string[] = [];
-            if (createdTimeFrom) { query.push(`createdTimeFrom=${createdTimeFrom.toISOString()}`); }
-            if (createdTimeTo) { query.push(`createdTimeTo=${createdTimeTo.toISOString()}`); }
+            if (createdTimeFrom) {
+                query.push(`createdTimeFrom=${createdTimeFrom.toISOString()}`);
+            }
+            if (createdTimeTo) {
+                query.push(`createdTimeTo=${createdTimeTo.toISOString()}`);
+            }
             if (runtimeStatus && runtimeStatus.length > 0) {
                 const statusList: string = runtimeStatus.map((value) => value.toString()).join(",");
                 query.push(`runtimeStatus=${statusList}`);
@@ -319,7 +346,10 @@ export class DurableOrchestrationClient {
         } else {
             // Legacy app frontend path
             const idPlaceholder = this.clientData.managementUrls.id;
-            requestUrl = this.clientData.managementUrls.statusQueryGetUri.replace(idPlaceholder, "");
+            requestUrl = this.clientData.managementUrls.statusQueryGetUri.replace(
+                idPlaceholder,
+                ""
+            );
 
             if (!(createdTimeFrom instanceof Date)) {
                 throw new Error("createdTimeFrom must be a valid Date");
@@ -336,9 +366,9 @@ export class DurableOrchestrationClient {
             if (runtimeStatus && runtimeStatus.length > 0) {
                 const statusesString = runtimeStatus
                     .map((value) => value.toString())
-                    .reduce((acc, curr, i, arr) => {
+                    .reduce((acc, curr, i) => {
                         return acc + (i > 0 ? "," : "") + curr;
-                });
+                    });
 
                 requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
             }
@@ -380,7 +410,7 @@ export class DurableOrchestrationClient {
         eventName: string,
         eventData: unknown,
         taskHubName?: string,
-        connectionName?: string,
+        connectionName?: string
     ): Promise<void> {
         if (!eventName) {
             throw new Error("eventName must be a valid string.");
@@ -391,8 +421,12 @@ export class DurableOrchestrationClient {
             // Fast local RPC path
             let path = `instances/${instanceId}/raiseEvent/${eventName}`;
             const query: string[] = [];
-            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
-            if (connectionName) { query.push(`connection=${connectionName}`); }
+            if (taskHubName) {
+                query.push(`taskHub=${taskHubName}`);
+            }
+            if (connectionName) {
+                query.push(`connection=${connectionName}`);
+            }
 
             if (query.length > 0) {
                 path += "?" + query.join("&");
@@ -438,14 +472,22 @@ export class DurableOrchestrationClient {
      * [taskHubName].
      * @returns A response containing the current state of the entity.
      */
-    public async readEntityState<T>(entityId: EntityId, taskHubName?: string, connectionName?: string): Promise<EntityStateResponse<T>> {
+    public async readEntityState<T>(
+        entityId: EntityId,
+        taskHubName?: string,
+        connectionName?: string
+    ): Promise<EntityStateResponse<T>> {
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             let path = `entities/${entityId.name}/${entityId.key}`;
             const query: string[] = [];
-            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
-            if (connectionName) { query.push(`connection=${connectionName}`); }
+            if (taskHubName) {
+                query.push(`taskHub=${taskHubName}`);
+            }
+            if (connectionName) {
+                query.push(`connection=${connectionName}`);
+            }
 
             if (query.length > 0) {
                 path += "?" + query.join("&");
@@ -455,7 +497,9 @@ export class DurableOrchestrationClient {
         } else {
             // Legacy app frontend path
             if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
-                throw new Error("Cannot use the readEntityState API with this version of the Durable Task Extension.");
+                throw new Error(
+                    "Cannot use the readEntityState API with this version of the Durable Task Extension."
+                );
             }
 
             requestUrl = WebhookUtils.getReadEntityUrl(
@@ -464,14 +508,15 @@ export class DurableOrchestrationClient {
                 entityId.name,
                 entityId.key,
                 taskHubName,
-                connectionName);
+                connectionName
+            );
         }
 
         const response = await this.axiosInstance.get(requestUrl);
         switch (response.status) {
-            case 200:   // entity exists
+            case 200: // entity exists
                 return new EntityStateResponse(true, response.data as T);
-            case 404:   // entity does not exist
+            case 404: // entity does not exist
                 return new EntityStateResponse(false);
             default:
                 return Promise.reject(this.createGenericError(response));
@@ -486,7 +531,12 @@ export class DurableOrchestrationClient {
      *
      * This feature is currently in preview.
      */
-    public async rewind(instanceId: string, reason: string, taskHubName?: string, connectionName?: string): Promise<void> {
+    public async rewind(
+        instanceId: string,
+        reason: string,
+        taskHubName?: string,
+        connectionName?: string
+    ): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
 
         let requestUrl: string;
@@ -494,8 +544,12 @@ export class DurableOrchestrationClient {
             // Fast local RPC path
             let path = `instances/${instanceId}/rewind?reason=${reason}`;
             const query: string[] = [];
-            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
-            if (connectionName) {  query.push(`connection=${connectionName}`); }
+            if (taskHubName) {
+                query.push(`taskHub=${taskHubName}`);
+            }
+            if (connectionName) {
+                query.push(`connection=${connectionName}`);
+            }
 
             if (query.length > 0) {
                 path += "&" + query.join("&");
@@ -516,7 +570,11 @@ export class DurableOrchestrationClient {
             case 404:
                 return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
             case 410:
-                return Promise.reject(new Error("The rewind operation is only supported on failed orchestration instances."));
+                return Promise.reject(
+                    new Error(
+                        "The rewind operation is only supported on failed orchestration instances."
+                    )
+                );
             default:
                 return Promise.reject(this.createGenericError(response));
         }
@@ -535,16 +593,22 @@ export class DurableOrchestrationClient {
         operationName?: string,
         operationContent?: unknown,
         taskHubName?: string,
-        connectionName?: string,
+        connectionName?: string
     ): Promise<void> {
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             let path = `entities/${entityId.name}/${entityId.key}`;
             const query: string[] = [];
-            if (operationName) { query.push(`op=${operationName}`); }
-            if (taskHubName) { query.push(`taskHub=${taskHubName}`); }
-            if (connectionName) { query.push(`connection=${connectionName}`); }
+            if (operationName) {
+                query.push(`op=${operationName}`);
+            }
+            if (taskHubName) {
+                query.push(`taskHub=${taskHubName}`);
+            }
+            if (connectionName) {
+                query.push(`connection=${connectionName}`);
+            }
 
             if (query.length > 0) {
                 path += "?" + query.join("&");
@@ -554,7 +618,9 @@ export class DurableOrchestrationClient {
         } else {
             // Legacy app frontend path
             if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
-                throw new Error("Cannot use the signalEntity API with this version of the Durable Task Extension.");
+                throw new Error(
+                    "Cannot use the signalEntity API with this version of the Durable Task Extension."
+                );
             }
 
             requestUrl = WebhookUtils.getSignalEntityUrl(
@@ -564,10 +630,14 @@ export class DurableOrchestrationClient {
                 entityId.key,
                 operationName,
                 taskHubName,
-                connectionName);
+                connectionName
+            );
         }
 
-        const response = await this.axiosInstance.post(requestUrl, JSON.stringify(operationContent));
+        const response = await this.axiosInstance.post(
+            requestUrl,
+            JSON.stringify(operationContent)
+        );
         switch (response.status) {
             case 202: // signal accepted
                 return;
@@ -590,7 +660,11 @@ export class DurableOrchestrationClient {
      *  function.
      * @returns The ID of the new orchestration instance.
      */
-    public async startNew(orchestratorFunctionName: string, instanceId?: string, input?: unknown): Promise<string> {
+    public async startNew(
+        orchestratorFunctionName: string,
+        instanceId?: string,
+        input?: unknown
+    ): Promise<string> {
         if (!orchestratorFunctionName) {
             throw new Error("orchestratorFunctionName must be a valid string.");
         }
@@ -600,20 +674,24 @@ export class DurableOrchestrationClient {
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             requestUrl = new URL(
-                `orchestrators/${orchestratorFunctionName}${(instanceId ? `/${instanceId}` : "")}`,
-                this.clientData.rpcBaseUrl).href;
+                `orchestrators/${orchestratorFunctionName}${instanceId ? `/${instanceId}` : ""}`,
+                this.clientData.rpcBaseUrl
+            ).href;
         } else {
             // Legacy app frontend path
             requestUrl = this.clientData.creationUrls.createNewInstancePostUri;
             requestUrl = requestUrl
                 .replace(this.functionNamePlaceholder, orchestratorFunctionName)
-                .replace(this.instanceIdPlaceholder, (instanceId ? `/${instanceId}` : ""));
+                .replace(this.instanceIdPlaceholder, instanceId ? `/${instanceId}` : "");
         }
 
-        const response = await this.axiosInstance.post(requestUrl, input !== undefined ? JSON.stringify(input) : "");
+        const response = await this.axiosInstance.post(
+            requestUrl,
+            input !== undefined ? JSON.stringify(input) : ""
+        );
         if (response.data && response.status <= 202) {
             return (response.data as HttpManagementPayload).id;
-        } else  {
+        } else {
             return Promise.reject(this.createGenericError(response));
         }
     }
@@ -635,7 +713,8 @@ export class DurableOrchestrationClient {
             // Fast local RPC path
             requestUrl = new URL(
                 `instances/${instanceId}/terminate?reason=${reason}`,
-                this.clientData.rpcBaseUrl).href;
+                this.clientData.rpcBaseUrl
+            ).href;
         } else {
             // Legacy app frontend path
             requestUrl = this.clientData.managementUrls.terminatePostUri
@@ -674,11 +753,13 @@ export class DurableOrchestrationClient {
     public async waitForCompletionOrCreateCheckStatusResponse(
         request: HttpRequest,
         instanceId: string,
-        timeoutInMilliseconds: number = 10000,
-        retryIntervalInMilliseconds: number = 1000,
+        timeoutInMilliseconds = 10000,
+        retryIntervalInMilliseconds = 1000
     ): Promise<IHttpResponse> {
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
-            throw new Error(`Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`);
+            throw new Error(
+                `Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`
+            );
         }
 
         const hrStart = process.hrtime();
@@ -702,9 +783,11 @@ export class DurableOrchestrationClient {
 
             if (hrElapsedMilliseconds < timeoutInMilliseconds) {
                 const remainingTime = timeoutInMilliseconds - hrElapsedMilliseconds;
-                await Utils.sleep(remainingTime > retryIntervalInMilliseconds
-                    ? retryIntervalInMilliseconds
-                    : remainingTime);
+                await Utils.sleep(
+                    remainingTime > retryIntervalInMilliseconds
+                        ? retryIntervalInMilliseconds
+                        : remainingTime
+                );
             } else {
                 return this.createCheckStatusResponse(request, instanceId);
             }
@@ -722,12 +805,20 @@ export class DurableOrchestrationClient {
         };
     }
 
-    private getClientResponseLinks(request: IHttpRequest | HttpRequest | undefined, instanceId: string): HttpManagementPayload {
+    private getClientResponseLinks(
+        request: IHttpRequest | HttpRequest | undefined,
+        instanceId: string
+    ): HttpManagementPayload {
         const payload = { ...this.clientData.managementUrls };
 
-        (Object.keys(payload) as Array<(keyof HttpManagementPayload)>).forEach((key) => {
-            if (this.hasValidRequestUrl(request) && isURL(payload[key], this.urlValidationOptions)) {
-                const requestUrl = new url.URL((request as HttpRequest).url || (request as IHttpRequest).http.url);
+        (Object.keys(payload) as Array<keyof HttpManagementPayload>).forEach((key) => {
+            if (
+                this.hasValidRequestUrl(request) &&
+                isURL(payload[key], this.urlValidationOptions)
+            ) {
+                const requestUrl = new url.URL(
+                    (request as HttpRequest).url || (request as IHttpRequest).http.url
+                );
                 const dataUrl = new url.URL(payload[key]);
                 payload[key] = payload[key].replace(dataUrl.origin, requestUrl.origin);
             }
@@ -740,13 +831,17 @@ export class DurableOrchestrationClient {
 
     private hasValidRequestUrl(request: IHttpRequest | HttpRequest | undefined): boolean {
         const isHttpRequest = request !== undefined && (request as HttpRequest).url !== undefined;
-        const isIHttpRequest = request !== undefined && (request as IHttpRequest).http !== undefined;
-        return isHttpRequest || isIHttpRequest && (request as IHttpRequest).http.url !== undefined;
+        const isIHttpRequest =
+            request !== undefined && (request as IHttpRequest).http !== undefined;
+        return (
+            isHttpRequest || (isIHttpRequest && (request as IHttpRequest).http.url !== undefined)
+        );
     }
 
     private extractUniqueWebhookOrigins(clientData: OrchestrationClientInputData): string[] {
-        const origins = this.extractWebhookOrigins(clientData.creationUrls)
-            .concat(this.extractWebhookOrigins(clientData.managementUrls));
+        const origins = this.extractWebhookOrigins(clientData.creationUrls).concat(
+            this.extractWebhookOrigins(clientData.managementUrls)
+        );
 
         const uniqueOrigins = origins.reduce<string[]>((acc, curr) => {
             if (acc.indexOf(curr) === -1) {
@@ -779,17 +874,34 @@ export class DurableOrchestrationClient {
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
-            let path = new URL(`instances/${options.instanceId || ""}`, this.clientData.rpcBaseUrl).href;
+            let path = new URL(`instances/${options.instanceId || ""}`, this.clientData.rpcBaseUrl)
+                .href;
             const query: string[] = [];
-            if (options.taskHubName) { query.push(`taskHub=${options.taskHubName}`); }
-            if (options.connectionName) { query.push(`connection=${options.connectionName}`); }
-            if (options.showHistory) { query.push(`showHistory=${options.showHistory}`); }
-            if (options.showHistoryOutput) { query.push(`showHistoryOutput=${options.showHistoryOutput}`); }
-            if (options.showInput) { query.push(`showInput=${options.showInput}`); }
-            if (options.createdTimeFrom) { query.push(`createdTimeFrom=${options.createdTimeFrom.toISOString()}`); }
-            if (options.createdTimeTo) { query.push(`createdTimeTo=${options.createdTimeTo.toISOString()}`); }
+            if (options.taskHubName) {
+                query.push(`taskHub=${options.taskHubName}`);
+            }
+            if (options.connectionName) {
+                query.push(`connection=${options.connectionName}`);
+            }
+            if (options.showHistory) {
+                query.push(`showHistory=${options.showHistory}`);
+            }
+            if (options.showHistoryOutput) {
+                query.push(`showHistoryOutput=${options.showHistoryOutput}`);
+            }
+            if (options.showInput) {
+                query.push(`showInput=${options.showInput}`);
+            }
+            if (options.createdTimeFrom) {
+                query.push(`createdTimeFrom=${options.createdTimeFrom.toISOString()}`);
+            }
+            if (options.createdTimeTo) {
+                query.push(`createdTimeTo=${options.createdTimeTo.toISOString()}`);
+            }
             if (options.runtimeStatus && options.runtimeStatus.length > 0) {
-                const statusList: string = options.runtimeStatus.map((value) => value.toString()).join(",");
+                const statusList: string = options.runtimeStatus
+                    .map((value) => value.toString())
+                    .join(",");
                 query.push(`runtimeStatus=${statusList}`);
             }
 
@@ -803,12 +915,18 @@ export class DurableOrchestrationClient {
             const template = this.clientData.managementUrls.statusQueryGetUri;
             const idPlaceholder = this.clientData.managementUrls.id;
 
-            requestUrl = template.replace(idPlaceholder, typeof(options.instanceId) === "string" ? options.instanceId : "");
+            requestUrl = template.replace(
+                idPlaceholder,
+                typeof options.instanceId === "string" ? options.instanceId : ""
+            );
             if (options.taskHubName) {
                 requestUrl = requestUrl.replace(this.clientData.taskHubName, options.taskHubName);
             }
             if (options.connectionName) {
-                requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + options.connectionName);
+                requestUrl = requestUrl.replace(
+                    /(connection=)([\w]+)/gi,
+                    "$1" + options.connectionName
+                );
             }
             if (options.showHistory) {
                 requestUrl += `&${this.showHistoryQueryKey}=${options.showHistory}`;
@@ -817,17 +935,21 @@ export class DurableOrchestrationClient {
                 requestUrl += `&${this.showHistoryOutputQueryKey}=${options.showHistoryOutput}`;
             }
             if (options.createdTimeFrom) {
-                requestUrl += `&${this.createdTimeFromQueryKey}=${options.createdTimeFrom.toISOString()}`;
+                requestUrl += `&${
+                    this.createdTimeFromQueryKey
+                }=${options.createdTimeFrom.toISOString()}`;
             }
             if (options.createdTimeTo) {
-                requestUrl += `&${this.createdTimeToQueryKey}=${options.createdTimeTo.toISOString()}`;
+                requestUrl += `&${
+                    this.createdTimeToQueryKey
+                }=${options.createdTimeTo.toISOString()}`;
             }
             if (options.runtimeStatus && options.runtimeStatus.length > 0) {
                 const statusesString = options.runtimeStatus
                     .map((value) => value.toString())
-                    .reduce((acc, curr, i, arr) => {
+                    .reduce((acc, curr, i) => {
                         return acc + (i > 0 ? "," : "") + curr;
-                });
+                    });
 
                 requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
             }
@@ -840,6 +962,10 @@ export class DurableOrchestrationClient {
     }
 
     private createGenericError(response: AxiosResponse<any>): Error {
-        return new Error(`The operation failed with an unexpected status code: ${response.status}. Details: ${JSON.stringify(response.data)}`);
+        return new Error(
+            `The operation failed with an unexpected status code: ${
+                response.status
+            }. Details: ${JSON.stringify(response.data)}`
+        );
     }
 }

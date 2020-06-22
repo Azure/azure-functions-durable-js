@@ -1,9 +1,14 @@
 /** @hidden */
 export class WebhookUtils {
-    public static getReadEntityUrl(baseUrl: string, requiredQueryStrings: string, entityName: string, entityKey: string, taskHubName?: string, connectionName?: string): string {
-        let requestUrl = baseUrl + "/entities/"
-        + entityName + "/"
-        + entityKey + "?";
+    public static getReadEntityUrl(
+        baseUrl: string,
+        requiredQueryStrings: string,
+        entityName: string,
+        entityKey: string,
+        taskHubName?: string,
+        connectionName?: string
+    ): string {
+        let requestUrl = baseUrl + "/entities/" + entityName + "/" + entityKey + "?";
 
         const queryStrings: string[] = [];
         if (taskHubName) {
@@ -26,11 +31,9 @@ export class WebhookUtils {
         entityKey: string,
         operationName?: string,
         taskHubName?: string,
-        connectionName?: string,
-    ) {
-        let requestUrl = baseUrl + "/entities/"
-        + entityName + "/"
-        + entityKey + "?";
+        connectionName?: string
+    ): string {
+        let requestUrl = baseUrl + "/entities/" + entityName + "/" + entityKey + "?";
 
         const queryStrings: string[] = [];
         if (operationName) {

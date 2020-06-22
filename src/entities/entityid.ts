@@ -27,7 +27,7 @@ export class EntityId {
         /** The name of the entity class. */
         public readonly name: string,
         /** The entity key. Uniquely identifies an entity among all instances of the same class. */
-        public readonly key: string,
+        public readonly key: string
     ) {
         Utils.throwIfEmpty(name, "name");
         Utils.throwIfEmpty(key, "key");

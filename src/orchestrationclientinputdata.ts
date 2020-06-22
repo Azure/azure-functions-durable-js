@@ -6,9 +6,11 @@ export class OrchestrationClientInputData {
         const typedInstance = obj as { [index: string]: unknown };
         if (typedInstance) {
             // Only check for required fields.
-            if (typedInstance.taskHubName !== undefined
-                && typedInstance.creationUrls !== undefined
-                && typedInstance.managementUrls !== undefined) {
+            if (
+                typedInstance.taskHubName !== undefined &&
+                typedInstance.creationUrls !== undefined &&
+                typedInstance.managementUrls !== undefined
+            ) {
                 return true;
             }
             return false;
@@ -22,6 +24,6 @@ export class OrchestrationClientInputData {
         public managementUrls: HttpManagementPayload,
         public baseUrl?: string,
         public requiredQueryStringParameters?: string,
-        public rpcBaseUrl?: string,
-    ) { }
+        public rpcBaseUrl?: string
+    ) {}
 }
