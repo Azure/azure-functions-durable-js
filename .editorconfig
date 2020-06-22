@@ -1,0 +1,9 @@
+; editor configuration powered by http://editorconfig.org/
+; Top-most EditorConfig file
+root = true
+
+[*]
+trim_trailing_whitespace = true
+end_of_line = crlf
+indent_style = space
+indent_size = 4

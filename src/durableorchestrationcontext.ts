@@ -122,10 +122,10 @@ export class DurableOrchestrationContext {
         name: string,
         retryOptions: RetryOptions,
         input?: unknown,
-        instanceId?: string)
-        : Task {
-            throw new Error("This is a placeholder.");
-        }
+        instanceId?: string
+    ): Task {
+        throw new Error("This is a placeholder.");
+    }
 
     /**
      * Schedules a durable HTTP call to the specified endpoint.
@@ -133,11 +133,12 @@ export class DurableOrchestrationContext {
      * @param req The durable HTTP request to schedule.
      */
     public callHttp(
-            method: string,
-            uri: string,
-            content?: string | object,
-            headers?: { [key: string]: string },
-            tokenSource?: TokenSource): Task {
+        method: string,
+        uri: string,
+        content?: string | object,
+        headers?: { [key: string]: string },
+        tokenSource?: TokenSource
+    ): Task {
         throw new Error("This is a placeholder");
     }
 

@@ -6,15 +6,8 @@ export class EventSentEvent extends HistoryEvent {
     public Input: string | undefined;
     public InstanceId: string;
 
-    constructor(
-        options: HistoryEventOptions,
-    ) {
-        super(
-            HistoryEventType.EventSent,
-            options.eventId,
-            options.isPlayed,
-            options.timestamp,
-        );
+    constructor(options: HistoryEventOptions) {
+        super(HistoryEventType.EventSent, options.eventId, options.isPlayed, options.timestamp);
 
         if (options.name === undefined) {
             throw new Error("EventSentEvent needs a name provided.");

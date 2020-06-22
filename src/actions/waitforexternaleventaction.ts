@@ -6,7 +6,7 @@ export class WaitForExternalEventAction implements IAction {
 
     constructor(
         public readonly externalEventName: string,
-        public readonly reason = ExternalEventType.ExternalEvent,
+        public readonly reason = ExternalEventType.ExternalEvent
     ) {
         Utils.throwIfEmpty(externalEventName, "externalEventName");
     }

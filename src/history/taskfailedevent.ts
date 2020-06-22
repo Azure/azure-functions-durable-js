@@ -6,15 +6,8 @@ export class TaskFailedEvent extends HistoryEvent {
     public Reason: string | undefined;
     public Details: string | undefined;
 
-    constructor(
-        options: HistoryEventOptions,
-    ) {
-        super(
-            HistoryEventType.TaskFailed,
-            options.eventId,
-            options.isPlayed,
-            options.timestamp,
-        );
+    constructor(options: HistoryEventOptions) {
+        super(HistoryEventType.TaskFailed, options.eventId, options.isPlayed, options.timestamp);
 
         if (options.taskScheduledId === undefined) {
             throw new Error("TaskFailedEvent needs a task scheduled id provided.");

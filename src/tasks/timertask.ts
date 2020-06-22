@@ -51,7 +51,7 @@ export class TimerTask extends Task {
         public readonly action: CreateTimerAction,
         timestamp?: Date,
         id?: number,
-        completionIndex?: number,
+        completionIndex?: number
     ) {
         super(isCompleted, false, action, undefined, timestamp, id, undefined, completionIndex);
     }
@@ -67,7 +67,7 @@ export class TimerTask extends Task {
      * Indicates the timer should be canceled. This request will execute on the
      * next `yield` or `return` statement.
      */
-    public cancel() {
+    public cancel(): void {
         if (!this.isCompleted) {
             this.action.isCanceled = true;
         } else {

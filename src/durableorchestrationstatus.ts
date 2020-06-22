@@ -56,6 +56,6 @@ export class DurableOrchestrationStatus {
          * default. It is populated only when explicitly requested in the call
          * to [[DurableOrchestrationClient]].[[getStatus]].
          */
-        public readonly history?: Array<unknown>,
-    ) { }
+        public readonly history?: Array<unknown>
+    ) {}
 }
