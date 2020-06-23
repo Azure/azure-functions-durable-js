@@ -1,3 +1,3 @@
-module.exports = function(context) {
+module.exports = function (context) {
     context.done(null, `Hello ${context.bindings.name}!`);
 };

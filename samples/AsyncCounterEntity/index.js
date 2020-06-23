@@ -1,6 +1,6 @@
 const df = require("durable-functions");
 
-module.exports = df.entity(async function(context) {
+module.exports = df.entity(async function (context) {
     await Promise.resolve();
     let currentValue = context.df.getState(() => 0);
 

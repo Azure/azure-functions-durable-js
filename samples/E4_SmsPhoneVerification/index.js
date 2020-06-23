@@ -1,7 +1,7 @@
 const df = require("durable-functions");
-const moment = require('moment');
+const moment = require("moment");
 
-module.exports = df.orchestrator(function*(context) {
+module.exports = df.orchestrator(function* (context) {
     const phoneNumber = context.df.getInput();
     if (!phoneNumber) {
         throw "A phone number input is required.";
@@ -10,7 +10,7 @@ module.exports = df.orchestrator(function*(context) {
     const challengeCode = yield context.df.callActivity("E4_SendSmsChallenge", phoneNumber);
 
     // The user has 90 seconds to respond with the code they received in the SMS message.
-    const expiration = moment.utc(context.df.currentUtcDateTime).add(90, 's');
+    const expiration = moment.utc(context.df.currentUtcDateTime).add(90, "s");
     const timeoutTask = context.df.createTimer(expiration.toDate());
 
     let authorized = false;

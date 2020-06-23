@@ -1,6 +1,6 @@
 const df = require("durable-functions");
 
-module.exports = df.orchestrator(function*(context){
+module.exports = df.orchestrator(function* (context) {
     const rootDirectory = context.df.getInput();
     if (!rootDirectory) {
         throw new Error("A directory path is required as an input.");

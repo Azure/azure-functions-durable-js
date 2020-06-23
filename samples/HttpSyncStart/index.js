@@ -16,13 +16,14 @@ module.exports = async function (context, req) {
         context.bindingData.req,
         instanceId,
         timeoutInMilliseconds,
-        retryIntervalInMilliseconds);
+        retryIntervalInMilliseconds
+    );
     return response;
 };
 
-function getTimeInSeconds (req, queryParameterName) {
+function getTimeInSeconds(req, queryParameterName) {
     const queryValue = req.query[queryParameterName];
     return queryValue
-        ? queryValue // expected to be in seconds
-        * 1000 : undefined;
+        ? queryValue * 1000 // expected to be in seconds
+        : undefined;
 }

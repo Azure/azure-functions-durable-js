@@ -1,6 +1,12 @@
 const request = require("request");
 
-const clearWeatherConditions = ['Overcast', 'Clear', 'Partly Cloudy', 'Mostly Cloudy', 'Scattered Clouds'];
+const clearWeatherConditions = [
+    "Overcast",
+    "Clear",
+    "Partly Cloudy",
+    "Mostly Cloudy",
+    "Scattered Clouds",
+];
 
 module.exports = function (context, location) {
     getCurrentConditions(location)
@@ -18,8 +24,8 @@ function getCurrentConditions(location) {
     return new Promise(function (resolve, reject) {
         const options = {
             url: `https://api.wunderground.com/api/${process.env["WeatherUndergroundApiKey"]}/conditions/q/${location.state}/${location.city}.json`,
-            method: 'GET',
-            json: true
+            method: "GET",
+            json: true,
         };
         request(options, function (err, res, body) {
             if (err) {
