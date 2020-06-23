@@ -1,6 +1,6 @@
 const df = require("durable-functions");
 
-module.exports = df.entity(function(context) {
+module.exports = df.entity(function (context) {
     let currentValue = context.df.getState(() => 0);
 
     switch (context.df.operationName) {

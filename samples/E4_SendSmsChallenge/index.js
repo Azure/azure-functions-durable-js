@@ -10,7 +10,7 @@ module.exports = function (context, phoneNumber) {
 
     context.bindings.message = {
         body: `Your verification code is ${challengeCode.toPrecision(4)}`,
-        to: phoneNumber
+        to: phoneNumber,
     };
 
     context.done(null, challengeCode);

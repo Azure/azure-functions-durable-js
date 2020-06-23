@@ -1,6 +1,6 @@
 const df = require("durable-functions");
 
-module.exports = df.orchestrator(function*(context){
+module.exports = df.orchestrator(function* (context) {
     const retryOptions = new df.RetryOptions(1000, 2);
     let returnValue;
 

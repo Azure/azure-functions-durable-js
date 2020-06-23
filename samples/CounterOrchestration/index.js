@@ -1,6 +1,6 @@
 const df = require("durable-functions");
 
-module.exports = df.orchestrator(function*(context){
+module.exports = df.orchestrator(function* (context) {
     const entityId = new df.EntityId("CounterEntity", "myCounter");
 
     currentValue = yield context.df.callEntity(entityId, "get");
