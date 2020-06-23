@@ -4,7 +4,7 @@ import { EntityId } from "./classes";
  * Provides functionality for application code implementing an entity
  * operation.
  */
-export type DurableEntityContext<T> = {
+export type DurableEntityContext<TState> = {
     /**
      * Gets the name of the currently executing entity.
      */
@@ -41,14 +41,14 @@ export type DurableEntityContext<T> = {
      * instead of TState's default.
      * @returns The current state of this entity, or undefined if none has been set yet.
      */
-    getState(initializer?: () => T): T | undefined;
+    getState(initializer?: () => TState): TState | undefined;
 
     /**
      * Sets the current state of this entity.
      *
      * @param state The state of the entity.
      */
-    setState(state: T): void;
+    setState(state: TState): void;
 
     /**
      * Gets the input for this operation.
@@ -58,14 +58,14 @@ export type DurableEntityContext<T> = {
      *
      * @returns The operation input, or undefined if none.
      */
-    getInput<TInput>(): TInput | undefined;
+    getInput<TInput = TState>(): TInput | undefined;
 
     /**
      * Returns the given result to the caller of this operation.
      *
      * @param result The result to return.
      */
-    return<TResult = T>(result: TResult): void;
+    return<TResult = TState>(result: TResult): void;
 
     /**
      * Deletes this entity after this operation completes.
