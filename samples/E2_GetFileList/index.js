@@ -5,7 +5,7 @@ module.exports = function (context, rootDirectory) {
     const allFilePaths = [];
 
     readdirp(
-        {root: rootDirectory, entryType: 'all'},
+        { root: rootDirectory, entryType: "all" },
         function (fileInfo) {
             if (!fileInfo.stat.isDirectory()) {
                 allFilePaths.push(fileInfo.fullPath);
