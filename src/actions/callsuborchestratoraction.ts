@@ -3,12 +3,14 @@ import { ActionType, IAction, Utils } from "../classes";
 /** @hidden */
 export class CallSubOrchestratorAction implements IAction {
     public readonly actionType: ActionType = ActionType.CallSubOrchestrator;
+    public readonly input: unknown;
 
     constructor(
         public readonly functionName: string,
         public readonly instanceId?: string,
-        public readonly input?: unknown
+        input?: unknown
     ) {
+        this.input = JSON.stringify(input);
         Utils.throwIfEmpty(functionName, "functionName");
 
         if (instanceId) {
