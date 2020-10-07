@@ -10,7 +10,7 @@ export class CallActivityAction implements IAction {
         // For instance: "13131" might get interpreted as a number.
         // Somehow this doesn't appear to occur with other datatypes, but we should
         // investigate that further.
-        if (input instanceof String) {
+        if (typeof input === "string") {
             input = JSON.stringify(input);
         }
         this.input = input;
