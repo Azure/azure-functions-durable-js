@@ -10,14 +10,7 @@ export class CallSubOrchestratorAction implements IAction {
         public readonly instanceId?: string,
         input?: unknown
     ) {
-        // If we fail to stringify inputs, they may get deserialized incorrectly.
-        // For instance: "13131" might get interpreted as a number.
-        // Somehow this doesn't appear to occur with other datatypes, but we should
-        // investigate that further.
-        if (typeof input === "string") {
-            input = JSON.stringify(input);
-        }
-        this.input = input;
+        this.input = Utils.processInput(input);
         Utils.throwIfEmpty(functionName, "functionName");
 
         if (instanceId) {
