@@ -1,5 +1,15 @@
 /** @hidden */
 export class Utils {
+    public static processInput<T>(input: string | T): string | T {
+        // If we fail to stringify inputs, they may get deserialized incorrectly.
+        // For instance: "13131" might get interpreted as a number.
+        // Somehow this doesn't appear to occur with other datatypes, but we should
+        // investigate that further.
+        if (typeof input === "string") {
+            input = JSON.stringify(input);
+        }
+        return input;
+    }
     public static getInstancesOf<T>(
         collection: { [index: string]: unknown },
         typeInstance: T
