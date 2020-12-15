@@ -1,6 +1,6 @@
 |Branch|Status|
 |---|---|
-|master|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=master)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=master)|
+|main|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=main)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=main)|
 |dev|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=dev)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=dev)|
 
 # Durable Functions for Node.js
