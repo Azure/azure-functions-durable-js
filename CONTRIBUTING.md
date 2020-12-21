@@ -45,13 +45,13 @@ Create a folder say AzureWebJobsStorage
 `azurite -l ./AzureWebJobsStorage`
 
 ```
- _______                   _             
-(_______)                 (_)  _         
- _______ _____ _   _  ____ _ _| |_ _____ 
+ _______                   _
+(_______)                 (_)  _
+ _______ _____ _   _  ____ _ _| |_ _____
 |  ___  (___  ) | | |/ ___) (_   _) ___ |
 | |   | |/ __/| |_| | |   | | | |_| ____|
 |_|   |_(_____)____/|_|   |_| \__)_____)
-                                         
+
 Azurite, Version 2.7.1
 A lightweight server clone of Azure Storage
 
@@ -99,10 +99,17 @@ Two changes are necessary in your JavaScript sample code to make this work.
 
 - Create an `extensions.csproj` file containing the version of the DurableTask extension that you wish to use. We recommend using the latest version on [nuget.org](https://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions.DurableTask/). To do this, take the sample `extensions.csproj` shown below, update the version of the `Microsoft.Azure.WebJobs.Extensions.DurableTask` dependency, and save it at the root of your sample.
 
-```xml <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator" Version="1.1.0" />
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  <WarningsAsErrors></WarningsAsErrors>
+  <DefaultItemExcludes>**</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.3.9" />
   </ItemGroup>
+</Project>
 ```
 
 - Finally, open a terminal and run `func extensions install`. This will install the dependencies listed in your `extensions.csproj` file.
