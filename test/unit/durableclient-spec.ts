@@ -244,6 +244,49 @@ describe("Durable client RPC endpoint", () => {
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.an("array");
         });
+
+        it("uses continuation header", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableOrchestrationClient(input);
+
+            // The getStatusBy() method should do a GET to http://127.0.0.1:17071/durabletask/instances/?createdTimeFrom=2020-01-01T00:00:00Z&createdTimeTo=2020-01-01T23:59:59Z&runtimeStatus=Pending,Running,Completed,Terminated,Failed
+            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/`);
+            const createdTimeFrom = "2020-01-01T00:00:00.000Z";
+            const createdTimeTo = "2020-01-01T23:59:59.000Z";
+            const runtimeStatus = "Pending,Running,Completed,Terminated,Failed";
+
+            const scopeWithTokenResponse = nock(expectedUrl.origin)
+                .get(expectedUrl.pathname)
+                .query({ createdTimeFrom, createdTimeTo, runtimeStatus })
+                .reply(200, [null, null], { "x-ms-continuation-token": "myToken" });
+
+            const scopeNoTokenResponse = nock(expectedUrl.origin, {
+                reqheaders: {
+                    "x-ms-continuation-token": "myToken",
+                },
+            })
+                .get(expectedUrl.pathname)
+                .query({ createdTimeFrom, createdTimeTo, runtimeStatus })
+                .reply(200, [null]);
+
+            const statusList = runtimeStatus
+                .split(",")
+                .map(
+                    (status) =>
+                        OrchestrationRuntimeStatus[
+                            status as keyof typeof OrchestrationRuntimeStatus
+                        ]
+                );
+            const result = await client.getStatusBy(
+                new Date(createdTimeFrom),
+                new Date(createdTimeTo),
+                statusList
+            );
+            expect(scopeWithTokenResponse.isDone()).to.be.equal(true);
+            expect(scopeNoTokenResponse.isDone()).to.be.equal(true);
+            expect(result).to.be.an("array");
+            expect(result).to.be.of.length(3);
+        });
     });
 
     describe("terminate()", () => {
