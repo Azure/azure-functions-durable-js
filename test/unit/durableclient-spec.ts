@@ -5,6 +5,7 @@ import nock = require("nock");
 import url = require("url");
 import {
     DurableOrchestrationClient,
+    DurableOrchestrationStatus,
     EntityId,
     EntityStateResponse,
     HttpManagementPayload,
@@ -255,10 +256,22 @@ describe("Durable client RPC endpoint", () => {
             const createdTimeTo = "2020-01-01T23:59:59.000Z";
             const runtimeStatus = "Pending,Running,Completed,Terminated,Failed";
 
+            // create dummy orchestration status for response
+            const dummyDate = new Date();
+            const dummyStatus = new DurableOrchestrationStatus(
+                "dummyOrchestrationStatus",
+                "123456",
+                dummyDate,
+                dummyDate,
+                "myInput",
+                "myOutput",
+                OrchestrationRuntimeStatus.Completed
+            );
+
             const scopeWithTokenResponse = nock(expectedUrl.origin)
                 .get(expectedUrl.pathname)
                 .query({ createdTimeFrom, createdTimeTo, runtimeStatus })
-                .reply(200, [null, null], { "x-ms-continuation-token": "myToken" });
+                .reply(200, [dummyStatus, dummyStatus], { "x-ms-continuation-token": "myToken" });
 
             const scopeNoTokenResponse = nock(expectedUrl.origin, {
                 reqheaders: {
@@ -267,7 +280,7 @@ describe("Durable client RPC endpoint", () => {
             })
                 .get(expectedUrl.pathname)
                 .query({ createdTimeFrom, createdTimeTo, runtimeStatus })
-                .reply(200, [null]);
+                .reply(200, [dummyStatus]);
 
             const statusList = runtimeStatus
                 .split(",")
