@@ -267,11 +267,14 @@ describe("Durable client RPC endpoint", () => {
                 "myOutput",
                 OrchestrationRuntimeStatus.Completed
             );
+            const dummyStatusJSON = JSON.stringify(dummyStatus);
 
             const scopeWithTokenResponse = nock(expectedUrl.origin)
                 .get(expectedUrl.pathname)
                 .query({ createdTimeFrom, createdTimeTo, runtimeStatus })
-                .reply(200, [dummyStatus, dummyStatus], { "x-ms-continuation-token": "myToken" });
+                .reply(200, [dummyStatusJSON, dummyStatusJSON], {
+                    "x-ms-continuation-token": "myToken",
+                });
 
             const scopeNoTokenResponse = nock(expectedUrl.origin, {
                 reqheaders: {
@@ -280,7 +283,7 @@ describe("Durable client RPC endpoint", () => {
             })
                 .get(expectedUrl.pathname)
                 .query({ createdTimeFrom, createdTimeTo, runtimeStatus })
-                .reply(200, [dummyStatus]);
+                .reply(200, [dummyStatusJSON]);
 
             const statusList = runtimeStatus
                 .split(",")
