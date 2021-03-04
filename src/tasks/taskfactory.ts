@@ -6,18 +6,18 @@ import { TimerTask } from "./timertask";
 
 /** @hidden */
 export class TaskFactory {
-    public static UncompletedTask<T>(action: IAction): Task<T> {
-        return new Task<T>(false, false, action);
+    public static UncompletedTask(action: IAction): Task {
+        return new Task(false, false, action);
     }
 
-    public static SuccessfulTask<T>(
+    public static SuccessfulTask(
         action: IAction,
-        result: T,
+        result: unknown,
         timestamp: Date,
         id: number,
         completedHistoryEventIndex: number
-    ): Task<T> {
-        return new Task<T>(
+    ): Task {
+        return new Task(
             true,
             false,
             action,
