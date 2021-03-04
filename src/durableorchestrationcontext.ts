@@ -65,7 +65,7 @@ export class DurableOrchestrationContext {
      * @returns A Durable Task that completes when the called activity
      * function completes or fails.
      */
-    public callActivity<T>(name: string, input?: T): Task {
+    public callActivity(name: string, input?: unknown): Task {
         throw new Error("This is a placeholder.");
     }
 
@@ -78,7 +78,7 @@ export class DurableOrchestrationContext {
      * @param input The JSON-serializable input to pass to the activity
      * function.
      */
-    public callActivityWithRetry<T>(name: string, retryOptions: RetryOptions, input?: T): Task {
+    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
         throw new Error("This is a placeholder.");
     }
 
@@ -90,7 +90,7 @@ export class DurableOrchestrationContext {
      * @param operationName The name of the operation.
      * @param operationInput The input for the operation.
      */
-    public callEntity<T>(entityId: EntityId, operationName: string, operationInput?: T): Task {
+    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
         throw new Error("This is a placeholder.");
     }
 
@@ -104,7 +104,7 @@ export class DurableOrchestrationContext {
      * If `instanceId` is not specified, the extension will generate an id in
      * the format `<calling orchestrator instance ID>:<#>`
      */
-    public callSubOrchestrator<T>(name: string, input?: T, instanceId?: string): Task {
+    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
         throw new Error("This is a placeholder.");
     }
 
@@ -118,10 +118,10 @@ export class DurableOrchestrationContext {
      * function.
      * @param instanceId A unique ID to use for the sub-orchestration instance.
      */
-    public callSubOrchestratorWithRetry<T>(
+    public callSubOrchestratorWithRetry(
         name: string,
         retryOptions: RetryOptions,
-        input?: T,
+        input?: unknown,
         instanceId?: string
     ): Task {
         throw new Error("This is a placeholder.");
@@ -147,7 +147,7 @@ export class DurableOrchestrationContext {
      *
      * @param The JSON-serializable data to re-initialize the instance with.
      */
-    public continueAsNew<T>(input: T): Task {
+    public continueAsNew(input: unknown): Task {
         throw new Error("This is a placeholder.");
     }
 
@@ -203,7 +203,7 @@ export class DurableOrchestrationContext {
      * @param customStatusObject The JSON-serializable value to use as the
      * orchestrator function's custom status.
      */
-    public setCustomStatus<T>(customStatusObject: T): void {
+    public setCustomStatus(customStatusObject: unknown): void {
         throw new Error("This is a placeholder.");
     }
 
