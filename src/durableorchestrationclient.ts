@@ -869,7 +869,23 @@ export class DurableOrchestrationClient {
         return origins;
     }
 
-    private async getStatusInternal(options: GetStatusOptions): Promise<AxiosResponse> {
+    /**
+     * Internal method that gets the status of all orchestration instances that
+     * match the specified conditions. It handles pagination automatically by
+     * calling itself recursively until no more continuation tokens are found.
+     * @param options Return orchestration instances which were created
+     *  after this Date.
+     * @param [continuationToken] Continuation token corresponding to the
+     * `x-ms-continuation-token` header, for getting the next batch
+     * of results. Used for recursion.
+     * @param [prevData] Results of a previous request, used internally
+     * to aggregate results during recursion.
+     */
+    private async getStatusInternal(
+        options: GetStatusOptions,
+        continuationToken?: string,
+        prevData?: unknown[]
+    ): Promise<AxiosResponse> {
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
@@ -957,7 +973,34 @@ export class DurableOrchestrationClient {
             }
         }
 
-        return this.axiosInstance.get(requestUrl);
+        // If a continuation token is provided, we add it to the request's header
+        let axiosConfig = undefined;
+        if (continuationToken) {
+            axiosConfig = {
+                headers: {
+                    "x-ms-continuation-token": continuationToken,
+                },
+            };
+        }
+
+        // We call the getStatus endpoint and construct a promise callback to handle the recursion
+        // This assumes that, so long as continuation tokens are found, that the http response status
+        // can be safely ignored (either 200 or 202).
+        const response = this.axiosInstance.get(requestUrl, axiosConfig).then((httpResponse) => {
+            // Aggregate results so far
+            const headers = httpResponse.headers;
+            if (prevData) {
+                httpResponse.data = prevData.concat(httpResponse.data);
+            }
+            // If a new continuation token is found, recurse. Otherwise, return the results
+            const token = headers["x-ms-continuation-token"];
+            if (token) {
+                return this.getStatusInternal(options, token, httpResponse.data);
+            }
+            return httpResponse;
+        });
+
+        return response;
     }
 
     private createGenericError(response: AxiosResponse<any>): Error {
