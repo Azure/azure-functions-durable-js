@@ -70,8 +70,8 @@ export class Task implements TaskBase {
          */
         public readonly timestamp?: Date,
         /**
-         * The ID number of the task. _Internal use only._
          * @hidden
+         * The ID number of the task. _Internal use only._
          */
         public readonly id?: number,
         /**
