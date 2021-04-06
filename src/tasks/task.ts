@@ -36,7 +36,7 @@ import { TaskBase } from "./taskinterfaces";
  * return firstDone.result;
  * ```
  */
-export class Task<T = unknown> implements TaskBase {
+export class Task implements TaskBase {
     /**
      * @hidden
      * Used to keep track of how many times the task has been yielded to avoid
@@ -63,7 +63,7 @@ export class Task<T = unknown> implements TaskBase {
         /**
          * The result of the task, if completed. Otherwise `undefined`.
          */
-        public readonly result?: T,
+        public readonly result?: unknown,
         /**
          * @hidden
          * The timestamp of the task.
