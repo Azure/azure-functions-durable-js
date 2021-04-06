@@ -71,6 +71,7 @@ export class Task<T = unknown> implements TaskBase {
         public readonly timestamp?: Date,
         /**
          * The ID number of the task. _Internal use only._
+         * @hidden
          */
         public readonly id?: number,
         /**
