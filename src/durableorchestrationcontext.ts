@@ -173,7 +173,7 @@ export class DurableOrchestrationContext {
      * Gets the input of the current orchestrator function as a deserialized
      * value.
      */
-    public getInput(): unknown {
+    public getInput<T>(): T {
         throw new Error("This is a placeholder.");
     }
 
