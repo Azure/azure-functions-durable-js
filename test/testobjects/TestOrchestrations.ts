@@ -1,5 +1,4 @@
 import * as df from "../../src";
-import { IOrchestrationFunctionContext } from "../../src/classes";
 
 export class TestOrchestrations {
     public static AnyAOrB: any = df.orchestrator(function* (context: any) {
