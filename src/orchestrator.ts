@@ -51,15 +51,19 @@ export class Orchestrator {
         );
         this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
 
-        // Create durable orchestration context
-        context.df = new DurableOrchestrationContext(
-            state,
-            instanceId,
-            this.currentUtcDateTime,
-            orchestrationBinding.isReplaying,
-            orchestrationBinding.parentInstanceId,
-            input
-        );
+        // Only create durable orchestration context when `context.df` has not been defined
+        // if it has been defined, then we must be in some unit-testing scenario
+        if (context.df === undefined) {
+            // Create durable orchestration context
+            context.df = new DurableOrchestrationContext(
+                state,
+                instanceId,
+                this.currentUtcDateTime,
+                orchestrationBinding.isReplaying,
+                orchestrationBinding.parentInstanceId,
+                input
+            );
+        }
 
         // Setup
         const gen = this.fn(context);

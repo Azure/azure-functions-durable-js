@@ -5,6 +5,7 @@ import {
     EntityStateResponse,
     OrchestrationRuntimeStatus,
     RetryOptions,
+    DummyOrchestrationContext,
 } from "./classes";
 import { getClient } from "./durableorchestrationclient";
 import { entity, orchestrator } from "./shim";
@@ -21,4 +22,5 @@ export {
     orchestrator,
     OrchestrationRuntimeStatus,
     RetryOptions,
+    DummyOrchestrationContext,
 };
