@@ -35,7 +35,7 @@
         "e2etst": "npm run "
     },
     "dependencies": {
-        "@azure/functions": "^1.0.2-beta2",
+        "@azure/functions": "^1.2.3",
         "@types/lodash": "^4.14.119",
         "@types/uuid": "~3.4.4",
         "@types/validator": "^9.4.3",
