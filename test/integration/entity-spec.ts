@@ -1,9 +1,16 @@
 import { expect } from "chai";
 import "mocha";
-import { DurableEntityContext, EntityState } from "../../src/classes";
+import { DurableEntityContext, EntityState, IEntityFunctionContext } from "../../src/classes";
 import { TestEntities } from "../testobjects/testentities";
 import { TestEntityBatches } from "../testobjects/testentitybatches";
 import { StringStoreOperation } from "../testobjects/testentityoperations";
+import {
+    BindingDefinition,
+    ExecutionContext,
+    Logger,
+    HttpRequest,
+    TraceContext,
+} from "@azure/functions";
 
 describe("Entity", () => {
     it("StringStore entity with no initial state.", async () => {
@@ -15,7 +22,7 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
 
         const testData = TestEntityBatches.GetStringStoreBatch(operations, undefined);
-        const mockContext = new MockContext({
+        const mockContext = new MockContext<string>({
             context: testData.input,
         });
         await entity(mockContext);
@@ -33,7 +40,7 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
 
         const testData = TestEntityBatches.GetStringStoreBatch(operations, "Hello world");
-        const mockContext = new MockContext({
+        const mockContext = new MockContext<string>({
             context: testData.input,
         });
         await entity(mockContext);
@@ -54,7 +61,7 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
 
         const testData = TestEntityBatches.GetAsyncStringStoreBatch(operations, undefined);
-        const mockContext = new MockContext({
+        const mockContext = new MockContext<string>({
             context: testData.input,
         });
         await entity(mockContext);
@@ -78,13 +85,21 @@ function entityStateMatchesExpected(actual: EntityState, expected: EntityState):
     }
 }
 
-class MockContext {
+class MockContext<T> implements IEntityFunctionContext<T> {
     constructor(
         public bindings: IBindings,
-        public df?: DurableEntityContext,
         public doneValue?: EntityState,
         public err?: Error | string | null
     ) {}
+    traceContext: TraceContext;
+    public invocationId: string;
+    public executionContext: ExecutionContext;
+    public bindingData: { [key: string]: any };
+    public bindingDefinitions: BindingDefinition[];
+    public log: Logger;
+    public req?: HttpRequest | undefined;
+    public res?: { [key: string]: any } | undefined;
+    public df: DurableEntityContext<T>;
 
     public done(err?: Error | string | null, result?: EntityState): void {
         this.doneValue = result;

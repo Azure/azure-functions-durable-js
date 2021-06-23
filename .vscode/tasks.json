@@ -1,28 +1,85 @@
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
-    "version": "0.1.0",
+    "version": "2.0.0",
     "command": "npm",
-    "isShellCommand": true,
-    "showOutput": "silent",
-    "suppressTaskName": true,
     "tasks": [
         {
-            "taskName": "install",
-            "args": ["install"]
+            "label": "install",
+            "type": "shell",
+            "args": [
+                "install"
+            ],
+            "problemMatcher": []
         },
         {
-            "taskName": "update",
-            "args": ["update"]
+            "label": "update",
+            "type": "shell",
+            "args": [
+                "update"
+            ],
+            "problemMatcher": []
         },
         {
-            "taskName": "test",
-            "args": ["run", "test"]
+            "label": "test",
+            "type": "shell",
+            "args": [
+                "run",
+                "test"
+            ],
+            "problemMatcher": [],
+            "group": "test"
         },
         {
-            "taskName": "build",
-            "isBuildCommand": true,
-            "args": ["run", "build"]
+            "label": "build",
+            "type": "shell",
+            "args": [
+                "run",
+                "build"
+            ],
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "type": "func",
+            "command": "host start",
+            "problemMatcher": "$func-node-watch",
+            "isBackground": true,
+            "dependsOn": "npm build",
+            "options": {
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "shell",
+            "label": "npm build",
+            "command": "npm run build",
+            "dependsOn": [
+                "func: extensions install",
+                "npm install"
+            ],
+            "problemMatcher": "$tsc",
+            "options": {
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "shell",
+            "label": "npm install",
+            "command": "npm install",
+            "options": {
+                "cwd": "${workspaceFolder}/samples"
+            }
+        },
+        {
+            "type": "shell",
+            "label": "npm prune",
+            "command": "npm prune --production",
+            "dependsOn": "npm build",
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}/samples"
+            }
         }
     ]
 }

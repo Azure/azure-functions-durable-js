@@ -1,23 +1,27 @@
 import * as df from "../../src";
-import { IEntityFunctionContext } from "../../src/classes";
 
 export class TestEntities {
-    public static StringStore: any = df.entity((context: IEntityFunctionContext): void => {
+    public static StringStore = df.entity<string>((context): void => {
         switch (context.df.operationName) {
             case "set":
-                context.df.setState(context.df.getInput());
+                context.df.setState(context.df.getInput() || "");
                 break;
             case "get":
-                context.df.return(context.df.getState());
+                context.df.return(context.df.getState() || "");
                 break;
             default:
                 throw new Error("No such operation exists");
         }
     });
 
-    public static Counter: any = df.entity((context: IEntityFunctionContext): void => {
-        const input: number = context.df.getInput() as number;
-        const state: number = context.df.getState() as number;
+    public static Counter = df.entity<number>((context): void => {
+        const input = context.df.getInput();
+        const state = context.df.getState();
+
+        if (input === undefined || state === undefined) {
+            throw new Error("Input or state not set");
+        }
+
         switch (context.df.operationName) {
             case "increment":
                 context.df.setState(input + 1);
@@ -39,14 +43,14 @@ export class TestEntities {
         }
     });
 
-    public static AsyncStringStore: any = df.entity(async (context: IEntityFunctionContext) => {
+    public static AsyncStringStore = df.entity<string>(async (context) => {
         await new Promise((resolve) => setTimeout(() => resolve(), 0)); // force onto the event loop and result in a no-op delay
         switch (context.df.operationName) {
             case "set":
-                context.df.setState(context.df.getInput());
+                context.df.setState(context.df.getInput() || "");
                 break;
             case "get":
-                context.df.return(context.df.getState());
+                context.df.return(context.df.getState() || "");
                 break;
             default:
                 throw new Error("No such operation exists");

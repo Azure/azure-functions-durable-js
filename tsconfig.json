@@ -1,24 +1,19 @@
 {
-  "compilerOptions": {
-    "strictNullChecks": true,
-    "declaration": true,
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "noImplicitAny": true,
-    "outDir": "./lib",
-    "preserveConstEnums": true,
-    "removeComments": false,
-    "target": "es6",
-    "sourceMap": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "strictBindCallApply": true
-  },
-  "include": [
-    "src/**/*",
-    "test/**/*"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+    "compilerOptions": {
+        "strictNullChecks": true,
+        "declaration": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noImplicitAny": true,
+        "outDir": "./lib",
+        "preserveConstEnums": true,
+        "removeComments": false,
+        "target": "es6",
+        "sourceMap": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "strictBindCallApply": true
+    },
+    "include": ["src/**/*", "test/**/*"],
+    "exclude": ["node_modules"]
 }

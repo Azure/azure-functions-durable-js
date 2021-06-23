@@ -1,5 +1,4 @@
 import * as df from "../../src";
-import { IOrchestrationFunctionContext } from "../../src/classes";
 
 export class TestOrchestrations {
     public static AnyAOrB: any = df.orchestrator(function* (context: any) {
@@ -9,7 +8,7 @@ export class TestOrchestrations {
         tasks.push(context.df.callActivity("TaskA", completeInOrder));
         tasks.push(context.df.callActivity("TaskB", completeInOrder));
 
-        const output: any = yield context.df.Task.any(tasks);
+        const output = yield context.df.Task.any(tasks);
         return output.result;
     });
 
@@ -19,7 +18,7 @@ export class TestOrchestrations {
         const tasks = [];
         tasks.push(context.df.callActivity("TaskA", completeInOrder));
         tasks.push(context.df.callActivity("TaskB", completeInOrder));
-        const output: any = yield context.df.Task.any(tasks);
+        const output = yield context.df.Task.any(tasks);
 
         yield tasks[0];
         return output.result;
@@ -32,7 +31,7 @@ export class TestOrchestrations {
         tasks.push(context.df.createTimer(fireAt));
         tasks.push(context.df.callActivity("TaskA"));
 
-        const output: any = yield context.df.Task.any(tasks);
+        const output = yield context.df.Task.any(tasks);
 
         if (output === tasks[1]) {
             yield context.df.callActivity("TaskB");
@@ -102,14 +101,14 @@ export class TestOrchestrations {
 
     public static FanOutFanInDiskUsage: any = df.orchestrator(function* (context: any) {
         const directory = context.df.getInput();
-        const files: any = yield context.df.callActivity("GetFileList", directory);
+        const files = yield context.df.callActivity("GetFileList", directory);
 
         const tasks = [];
         for (const file of files) {
             tasks.push(context.df.callActivity("GetFileSize", file));
         }
 
-        const results: any = yield context.df.Task.all(tasks);
+        const results = yield context.df.Task.all(tasks);
         const totalBytes = results.reduce((prev: any, curr: any) => prev + curr, 0);
 
         return totalBytes;
@@ -285,9 +284,7 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SendHttpRequest: any = df.orchestrator(function* (
-        context: IOrchestrationFunctionContext
-    ) {
+    public static SendHttpRequest: any = df.orchestrator(function* (context) {
         const input = context.df.getInput() as df.DurableHttpRequest;
         const output = yield context.df.callHttp(
             input.method,
@@ -317,7 +314,7 @@ export class TestOrchestrations {
 
         let x = 0;
         do {
-            const result: any = yield context.df.callActivity("CheckIfMerged");
+            const result = yield context.df.callActivity("CheckIfMerged");
             const hasMerged = result.output;
 
             if (hasMerged) {
@@ -346,13 +343,11 @@ export class TestOrchestrations {
         return "Timer fired!";
     });
 
-    public static ThrowsExceptionFromActivity: any = df.orchestrator(function* (context: any) {
+    public static ThrowsExceptionFromActivity = df.orchestrator(function* (context) {
         yield context.df.callActivity("ThrowsErrorActivity");
     });
 
-    public static ThrowsExceptionFromActivityWithCatch: any = df.orchestrator(function* (
-        context: any
-    ) {
+    public static ThrowsExceptionFromActivityWithCatch = df.orchestrator(function* (context) {
         try {
             yield context.df.callActivity("ThrowsErrorActivity");
         } catch (e) {

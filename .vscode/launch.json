@@ -4,8 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
-
         {
             "type": "node",
             "request": "launch",
@@ -17,7 +15,7 @@
                 "${workspaceRoot}/lib/**/*.js"
             ],
             "env": {
-                "DEBUG":"*"
+                "DEBUG": "*"
             },
             "preLaunchTask": "build"
         },
@@ -33,7 +31,8 @@
         {
             "type": "node",
             "request": "attach",
-            "name": "Attach","outFiles": [
+            "name": "Attach",
+            "outFiles": [
                 "${workspaceRoot}/lib/**/*.js"
             ],
             "port": 5858
@@ -75,6 +74,13 @@
                 "${workspaceFolder}/lib/**"
             ],
             "preLaunchTask": "build"
+        },
+        {
+            "name": "Attach to Node Functions",
+            "type": "node",
+            "request": "attach",
+            "port": 9229,
+            "preLaunchTask": "func: host start"
         }
     ]
 }
