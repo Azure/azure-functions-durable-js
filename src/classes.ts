@@ -80,3 +80,4 @@ export { OperationResult } from "./entities/operationresult";
 export { RequestMessage } from "./entities/requestmessage";
 export { ResponseMessage } from "./entities/responsemessage";
 export { Signal } from "./entities/signal";
+export { DummyOrchestrationContext } from "./testingUtils";

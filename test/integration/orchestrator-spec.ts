@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { TraceContext } from "@azure/functions";
 import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
@@ -2168,6 +2169,7 @@ class MockContext implements IOrchestrationFunctionContext {
     public doneValue: IOrchestratorState | undefined;
     public err: string | Error | null | undefined;
     constructor(public bindings: IBindings) {}
+    traceContext: TraceContext;
     df: DurableOrchestrationContext;
     invocationId: string;
     executionContext: import("@azure/functions").ExecutionContext;
