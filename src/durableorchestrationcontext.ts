@@ -333,7 +333,7 @@ export class DurableOrchestrationContext {
      * @param operationName The name of the operation.
      * @param operationInput The input for the operation.
      */
-    public callEntity(entityId: EntityId, operationName: string, operationInput: unknown): Task {
+    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
         const newAction = new CallEntityAction(entityId, operationName, operationInput);
 
         const schedulerId = EntityId.getSchedulerIdFromEntityId(entityId);
