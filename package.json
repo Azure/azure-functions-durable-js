@@ -24,7 +24,8 @@
         "lint:srcfix": "eslint --ext .ts,.json src/ --fix",
         "lint:testfix": "eslint --ext .ts,.json test/ --fix",
         "lint:samplesfix": "eslint --ext .ts,.js samples/ --fix",
-        "build": "npm run clean && npm run lint && npm run lint:test && npx tsc && npm run stripInternalDocs && echo Done",
+        "build": "npm run clean && npm run lint && npm run lint:test && npx tsc && npm run stripInternalDocs && npm run build:samples && echo Done",
+        "build:samples": "npm install --production && npm --prefix samples run-script build",
         "build:nolint": "npm run clean && npm run stripInternalDocs && echo Done",
         "stripInternalDocs": "tsc --pretty -p tsconfig.nocomments",
         "test": "npm run build && mocha --recursive ./lib/test/**/*-spec.js",
@@ -35,6 +36,7 @@
         "e2etst": "npm run "
     },
     "dependencies": {
+        "@azure/functions": "^1.2.3",
         "@types/lodash": "^4.14.119",
         "@types/uuid": "~3.4.4",
         "@types/validator": "^9.4.3",
@@ -48,7 +50,6 @@
         "validator": "~10.8.0"
     },
     "devDependencies": {
-        "@azure/functions": "^1.2.3",
         "@types/chai": "~4.1.6",
         "@types/chai-as-promised": "~7.1.0",
         "@types/chai-string": "~1.4.1",
