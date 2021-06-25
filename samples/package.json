@@ -9,12 +9,15 @@
         "azure-functions"
     ],
     "dependencies": {
+        "@types/mocha": "^8.2.2",
         "azure-storage": "^2.10.2",
+        "chai": "^4.3.4",
         "durable-functions": "file:..",
         "moment": "^2.22.2",
         "readdirp": "^2.2.1",
         "request": "^2.87.0",
-        "seedrandom": "^2.4.3"
+        "seedrandom": "^2.4.3",
+        "sinon": "^11.1.1"
     },
     "scripts": {
         "build": "tsc",
