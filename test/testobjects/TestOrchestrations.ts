@@ -187,14 +187,12 @@ export class TestOrchestrations {
         const retryOptions = new df.RetryOptions(10000, 2);
         const timestamps = [];
         timestamps.push(context.df.currentUtcDateTime);
-        console.log(input);
         try {
             yield context.df.callActivityWithRetry("Hello", retryOptions, input);
         } catch {
             // pass
         }
         timestamps.push(context.df.currentUtcDateTime);
-        console.log("sss");
         return timestamps;
     });
 
