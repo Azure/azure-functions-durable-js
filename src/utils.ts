@@ -17,12 +17,32 @@ export class Utils {
         return collection && typeInstance
             ? (Object.keys(collection)
                   .filter((key: string) => this.hasAllPropertiesOf(collection[key], typeInstance))
-                  .map((key: string) => collection[key]) as T[])
+                  .map((key: string) => this.parseDates(collection[key])) as T[])
             : [];
     }
 
     public static getHrMilliseconds(times: number[]): number {
         return times[0] * 1000 + times[1] / 1e6;
+    }
+
+    public static hasOwnProperty<X extends {}, Y extends PropertyKey>(
+        obj: X,
+        prop: Y
+    ): obj is X & Record<Y, unknown> {
+        // informs TS that an object has a property
+        return obj.hasOwnProperty(prop);
+    }
+
+    public static parseDates(obj: unknown): unknown {
+        if (
+            typeof obj === "object" &&
+            obj !== null &&
+            this.hasOwnProperty(obj, "Timestamp") &&
+            typeof obj.Timestamp === "string"
+        ) {
+            obj.Timestamp = new Date(obj.Timestamp);
+        }
+        return obj;
     }
 
     public static hasAllPropertiesOf<T>(obj: unknown, refInstance: T): boolean {
