@@ -17,7 +17,7 @@ export class Utils {
         return collection && typeInstance
             ? (Object.keys(collection)
                   .filter((key: string) => this.hasAllPropertiesOf(collection[key], typeInstance))
-                  .map((key: string) => this.parseDates(collection[key])) as T[])
+                  .map((key: string) => this.parseTimestampsAsDates(collection[key])) as T[])
             : [];
     }
 
@@ -33,7 +33,7 @@ export class Utils {
         return obj.hasOwnProperty(prop);
     }
 
-    public static parseDates(obj: unknown): unknown {
+    public static parseTimestampsAsDates(obj: unknown): unknown {
         if (
             typeof obj === "object" &&
             obj !== null &&
