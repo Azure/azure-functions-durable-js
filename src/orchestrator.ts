@@ -159,6 +159,9 @@ export class Orchestrator {
                     return;
                 }
 
+                // We want to update the `currentUtcDateTime` to be the timestamp of the
+                // latest (timestamp-wise) OrchestratorStarted event that occurs (position-wise)
+                // before our current completionIndex / our current position in the History.
                 const newDecisionStartedEvent = state
                     .filter(
                         (e, index) =>
