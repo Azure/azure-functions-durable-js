@@ -184,6 +184,9 @@ export class Orchestrator {
                 }
 
                 if (TaskFilter.isFailedTask(partialResult)) {
+                    // We need to check if the generator has a `throw` property merely to satisfy the typechecker.
+                    // At this point, it should be guaranteed that the generator has a `throw` and a `next` property,
+                    // but we have not refined its type yet.
                     if (!gen.throw) {
                         throw new Error(
                             "Cannot properly throw the exception returned by customer code"
