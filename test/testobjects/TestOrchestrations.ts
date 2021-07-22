@@ -180,6 +180,22 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static SayHelloWithActivityRetryAndReturnTimestamps: any = df.orchestrator(function* (
+        context: any
+    ) {
+        const input = context.df.getInput();
+        const retryOptions = new df.RetryOptions(10000, 2);
+        const timestamps = [];
+        timestamps.push(context.df.currentUtcDateTime);
+        try {
+            yield context.df.callActivityWithRetry("Hello", retryOptions, input);
+        } catch {
+            // pass
+        }
+        timestamps.push(context.df.currentUtcDateTime);
+        return timestamps;
+    });
+
     public static SayHelloWithActivityRetryFanout: any = df.orchestrator(function* (context: any) {
         const tasks = [];
         const retryOptions = new df.RetryOptions(100, 5);

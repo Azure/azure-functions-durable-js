@@ -133,21 +133,13 @@ export class Orchestrator {
                     return;
                 }
 
+                const completionIndex = partialResult.completionIndex;
+
                 // The first time a task is marked as complete, the history event that finally marked the task as completed
                 // should not yet have been played by the Durable Task framework, resulting in isReplaying being false.
                 // On replays, the event will have already been processed by the framework, and IsPlayed will be marked as true.
-                if (state[partialResult.completionIndex] !== undefined) {
-                    context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
-                }
-
-                if (TaskFilter.isFailedTask(partialResult)) {
-                    if (!gen.throw) {
-                        throw new Error(
-                            "Cannot properly throw the execption returned by customer code"
-                        );
-                    }
-                    g = gen.throw(partialResult.exception);
-                    continue;
+                if (state[completionIndex] !== undefined) {
+                    context.df.isReplaying = state[completionIndex].IsPlayed;
                 }
 
                 // Handles the case where an orchestration completes with a return value of a
@@ -167,11 +159,17 @@ export class Orchestrator {
                     return;
                 }
 
-                const newDecisionStartedEvent = state.find(
-                    (e) =>
-                        e.EventType === HistoryEventType.OrchestratorStarted &&
-                        e.Timestamp > decisionStartedEvent.Timestamp
-                );
+                // We want to update the `currentUtcDateTime` to be the timestamp of the
+                // latest (timestamp-wise) OrchestratorStarted event that occurs (position-wise)
+                // before our current completionIndex / our current position in the History.
+                const newDecisionStartedEvent = state
+                    .filter(
+                        (e, index) =>
+                            e.EventType === HistoryEventType.OrchestratorStarted &&
+                            e.Timestamp > decisionStartedEvent.Timestamp &&
+                            index < completionIndex
+                    )
+                    .pop();
 
                 decisionStartedEvent = newDecisionStartedEvent || decisionStartedEvent;
                 context.df.currentUtcDateTime = this.currentUtcDateTime = new Date(
@@ -183,6 +181,19 @@ export class Orchestrator {
                 // On replays, the event will have already been processed by the framework, and IsPlayed will be marked as true.
                 if (state[partialResult.completionIndex] !== undefined) {
                     context.df.isReplaying = state[partialResult.completionIndex].IsPlayed;
+                }
+
+                if (TaskFilter.isFailedTask(partialResult)) {
+                    // We need to check if the generator has a `throw` property merely to satisfy the typechecker.
+                    // At this point, it should be guaranteed that the generator has a `throw` and a `next` property,
+                    // but we have not refined its type yet.
+                    if (!gen.throw) {
+                        throw new Error(
+                            "Cannot properly throw the exception returned by customer code"
+                        );
+                    }
+                    g = gen.throw(partialResult.exception);
+                    continue;
                 }
 
                 g = gen.next(partialResult.result as any);
