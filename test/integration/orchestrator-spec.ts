@@ -730,6 +730,34 @@ describe("Orchestrator", () => {
                 })
             );
         });
+
+        it("updates currentUtcDatetime after all retries fail", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithActivityRetryAndReturnTimestamps;
+            const name = "World";
+            const retryInterval = 10000;
+            const retryOptions = new RetryOptions(retryInterval, 2);
+            const startingTime = moment.utc().toDate();
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetSayHelloWithActivityRetryRetryTwo(
+                        startingTime,
+                        name,
+                        retryOptions.firstRetryIntervalInMilliseconds
+                    ),
+                    name
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions: [[new CallActivityWithRetryAction("Hello", retryOptions, "World")]],
+                    output: [startingTime, moment(startingTime).add(1, "m").add(30, "s").toDate()],
+                })
+            );
+        });
     });
 
     describe("callHttp()", () => {
