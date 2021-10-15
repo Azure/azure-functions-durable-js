@@ -14,6 +14,7 @@ import {
 } from "./classes";
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
+import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import { TaskBase } from "./tasks/taskinterfaces";
 
 /** @hidden */
@@ -22,8 +23,11 @@ const log = debug("orchestrator");
 /** @hidden */
 export class Orchestrator {
     private currentUtcDateTime: Date;
+    private taskOrchestrationExecutor: TaskOrchestrationExecutor;
 
-    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {}
+    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {
+        this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
+    }
 
     public listen(): (context: IOrchestrationFunctionContext) => Promise<void> {
         return this.handle.bind(this);
@@ -64,6 +68,9 @@ export class Orchestrator {
                 input
             );
         }
+
+        this.taskOrchestrationExecutor.execute(context, state, this.fn);
+        return;
 
         // Setup
         const gen = this.fn(context);
