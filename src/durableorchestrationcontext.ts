@@ -1,12 +1,8 @@
-import { AggregatedError } from "./aggregatederror";
 import { TokenSource } from "./tokensource";
-import { DurableError } from "./durableerror";
 import {
     EntityId,
-    ITaskMethods,
     RetryOptions,
     Task,
-    TimerTask,
     CallActivityAction,
     CallActivityWithRetryAction,
     CallEntityAction,
@@ -16,30 +12,23 @@ import {
     ContinueAsNewAction,
     CreateTimerAction,
     DurableHttpRequest,
-    EventRaisedEvent,
-    EventSentEvent,
     ExternalEventType,
     GuidManager,
     HistoryEvent,
-    HistoryEventType,
-    RequestMessage,
-    ResponseMessage,
-    SubOrchestrationInstanceCompletedEvent,
-    SubOrchestrationInstanceCreatedEvent,
-    SubOrchestrationInstanceFailedEvent,
-    TaskCompletedEvent,
     TaskFactory,
-    TaskFailedEvent,
-    TaskFilter,
-    TaskScheduledEvent,
-    TimerCreatedEvent,
-    TimerFiredEvent,
     WaitForExternalEventAction,
-    IAction,
 } from "./classes";
-import { CompletedTask } from "./tasks/taskinterfaces";
-import { TaskBase, CompoundTask, AtomicTask, RetryAbleTask } from "./taskorchestrationexecutor";
-import { action } from "commander";
+import {
+    TaskBase,
+    WhenAllTask,
+    AtomicTask,
+    RetryAbleTask,
+    WhenAnyTask,
+    TimerTask,
+    ProperTask,
+} from "./taskorchestrationexecutor";
+import { WhenAllAction } from "./actions/whenallaction";
+import { WhenAnyAction } from "./actions/whenanyaction";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -119,34 +108,16 @@ export class DurableOrchestrationContext {
      * Methods to handle collections of pending actions represented by [[Task]]
      * instances. For use in parallelization operations.
      */
-    public Task: ITaskMethods = {
-        all: (tasks: TaskBase[]) => {},
+    public Task = {
+        //: ITaskMethods = {
+        all: (tasks: ProperTask[]): WhenAllTask => {
+            const action = new WhenAllAction(tasks);
+            return new WhenAllTask(tasks, action);
+        },
 
-        any: (tasks: Task[]) => {
-            if (!tasks || tasks.length === 0) {
-                throw new Error("At least one yieldable task must be provided to wait for.");
-            }
-
-            let firstCompleted: CompletedTask | undefined;
-            for (const task of tasks) {
-                if (TaskFilter.isCompletedTask(task)) {
-                    if (!firstCompleted) {
-                        firstCompleted = task;
-                    } else if (task.completionIndex < firstCompleted.completionIndex) {
-                        firstCompleted = task;
-                    }
-                }
-            }
-
-            if (firstCompleted) {
-                return TaskFactory.SuccessfulTaskSet(
-                    tasks,
-                    firstCompleted.completionIndex,
-                    firstCompleted
-                );
-            } else {
-                return TaskFactory.UncompletedTaskSet(tasks);
-            }
+        any: (tasks: ProperTask[]): WhenAnyTask => {
+            const action = new WhenAnyAction(tasks);
+            return new WhenAnyTask(tasks, action);
         },
     };
 
@@ -161,7 +132,7 @@ export class DurableOrchestrationContext {
      */
     public callActivity(name: string, input?: unknown): TaskBase {
         const newAction = new CallActivityAction(name, input);
-        const task = new AtomicTask(-1, newAction); //TODO: id not -1
+        const task = new AtomicTask("unassigned", newAction);
         return task;
     }
 
@@ -174,10 +145,14 @@ export class DurableOrchestrationContext {
      * @param input The JSON-serializable input to pass to the activity
      * function.
      */
-    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
+    public callActivityWithRetry(
+        name: string,
+        retryOptions: RetryOptions,
+        input?: unknown
+    ): TaskBase {
         const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
-        const innerTask = new AtomicTask(-1, newAction); //TODO: id not -1
-        const task = new RetryAbleTask(task, retryOptions, this);
+        const innerTask = new AtomicTask("unassigned", newAction);
+        const task = new RetryAbleTask(innerTask, retryOptions, this);
         return task; // We'll have to change the interface
     }
 
@@ -195,7 +170,7 @@ export class DurableOrchestrationContext {
         operationInput?: unknown
     ): TaskBase {
         const newAction = new CallEntityAction(entityId, operationName, operationInput);
-        const task = new AtomicTask(-1, newAction); //TODO: id not -1
+        const task = new AtomicTask("unassigned", newAction);
         return task;
     }
 
@@ -217,7 +192,7 @@ export class DurableOrchestrationContext {
         }
 
         const newAction = new CallSubOrchestratorAction(name, instanceId, input);
-        const task = new AtomicTask(-1, newAction); //TODO: id not -1
+        const task = new AtomicTask("unassigned", newAction);
         return task;
     }
 
@@ -236,7 +211,7 @@ export class DurableOrchestrationContext {
         retryOptions: RetryOptions,
         input?: unknown,
         instanceId?: string
-    ): Task {
+    ): TaskBase {
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"
@@ -249,8 +224,8 @@ export class DurableOrchestrationContext {
             input,
             instanceId
         );
-        const innerTask = new AtomicTask(-1, newAction); //TODO: id not -1
-        const task = new RetryAbleTask(task, retryOptions, this);
+        const innerTask = new AtomicTask("unassigned", newAction);
+        const task = new RetryAbleTask(innerTask, retryOptions, this);
         return task; // We'll have to change the interface
     }
 
@@ -265,14 +240,14 @@ export class DurableOrchestrationContext {
         content?: string | object,
         headers?: { [key: string]: string },
         tokenSource?: TokenSource
-    ): Task {
+    ): TaskBase {
         if (content && typeof content !== "string") {
             content = JSON.stringify(content);
         }
 
         const req = new DurableHttpRequest(method, uri, content as string, headers, tokenSource);
         const newAction = new CallHttpAction(req);
-        const task = new AtomicTask(-1, newAction); //TODO: id not -1
+        const task = new AtomicTask("unassigned", newAction);
         return task; // We'll have to change the interface
     }
 
@@ -302,8 +277,9 @@ export class DurableOrchestrationContext {
      * @returns A TimerTask that completes when the durable timer expires.
      */
     public createTimer(fireAt: Date): TimerTask {
+        // TimerTask {
         const newAction = new CreateTimerAction(fireAt);
-        const task = new AtomicTask(-1, newAction); //TODO: id not -1
+        const task = new TimerTask("unassigned", newAction);
         return task; // We'll have to change the interface
     }
 
@@ -356,41 +332,9 @@ export class DurableOrchestrationContext {
      * External clients can raise events to a waiting orchestration instance
      * using [[raiseEvent]].
      */
-    public waitForExternalEvent(name: string): Task {
+    public waitForExternalEvent(name: string): TaskBase {
         const newAction = new WaitForExternalEventAction(name, ExternalEventType.ExternalEvent);
-        const task = new AtomicTask(-1, newAction); //TODO: id not -1
+        const task = new AtomicTask("unassigned", newAction);
         return task; // We'll have to change the interface
-    }
-
-    private setProcessed(events: Array<HistoryEvent | undefined>): void {
-        events.map((val: HistoryEvent | undefined) => {
-            if (val) {
-                val.IsProcessed = true;
-            }
-        });
-    }
-
-    private parseHistoryEvent(directiveResult: HistoryEvent): unknown {
-        let parsedDirectiveResult: unknown;
-
-        switch (directiveResult.EventType) {
-            case HistoryEventType.EventRaised:
-                const eventRaised = directiveResult as EventRaisedEvent;
-                parsedDirectiveResult =
-                    eventRaised && eventRaised.Input ? JSON.parse(eventRaised.Input) : undefined;
-                break;
-            case HistoryEventType.SubOrchestrationInstanceCompleted:
-                parsedDirectiveResult = JSON.parse(
-                    (directiveResult as SubOrchestrationInstanceCompletedEvent).Result
-                );
-                break;
-            case HistoryEventType.TaskCompleted:
-                parsedDirectiveResult = JSON.parse((directiveResult as TaskCompletedEvent).Result);
-                break;
-            default:
-                break;
-        }
-
-        return parsedDirectiveResult;
     }
 }

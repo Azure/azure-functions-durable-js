@@ -17,4 +17,6 @@ export enum ActionType {
     WaitForExternalEvent = 6,
     CallEntity = 7,
     CallHttp = 8,
+    WhenAny = 11,
+    WhenAll = 12,
 }

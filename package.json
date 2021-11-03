@@ -58,7 +58,7 @@
         "@types/chai-string": "~1.4.1",
         "@types/commander": "~2.3.31",
         "@types/debug": "0.0.29",
-        "@types/mocha": "~7.0.2",
+        "@types/mocha": "^7.0.2",
         "@types/nock": "^9.3.0",
         "@types/rimraf": "0.0.28",
         "@types/sinon": "~5.0.5",

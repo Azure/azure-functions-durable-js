@@ -1,11 +1,25 @@
-import internal = require("assert");
-import { time } from "console";
-import { AnyKindOfDictionary, Dictionary, forEach, isError } from "lodash";
-import { cpuUsage } from "process";
-import { Err } from "typedoc/dist/lib/utils/result";
 import { RetryOptions } from ".";
-import { ICompoundAction } from "./actions/iaction";
-import { CreateTimerAction, DurableOrchestrationContext, EventSentEvent, HistoryEvent, HistoryEventType, IAction, RequestMessage, Task } from "./classes";
+import {
+    CreateTimerAction,
+    DurableOrchestrationContext,
+    EventRaisedEvent,
+    EventSentEvent,
+    HistoryEvent,
+    HistoryEventType,
+    IAction,
+    IOrchestrationFunctionContext,
+    RequestMessage,
+    ResponseMessage,
+    SubOrchestrationInstanceCompletedEvent,
+    TaskCompletedEvent,
+} from "./classes";
+import { OrchestrationFailureError } from "./orchestrationfailureerror";
+import { OrchestratorState } from "./orchestratorstate";
+
+export enum ReplaySchema {
+    V1,
+    V2,
+}
 
 enum TaskState {
     Running,
@@ -13,22 +27,21 @@ enum TaskState {
     Completed,
 }
 
-export abstract class TaskBase {
+export type TaskID = number | "unassigned" | "ignorable";
+export type BackingAction = IAction | "bookeepingOnly";
 
-    protected state: TaskState;
-    protected parent: CompoundTask | undefined;
+export abstract class TaskBase {
+    public state: TaskState;
+    public parent: CompoundTask | undefined;
     public apiName: string;
     public isPlayed: boolean;
     public result: unknown;
 
-    constructor(
-        public id: number,
-        protected action: IAction | undefined
-    ){
+    constructor(public id: TaskID, protected action: BackingAction) {
         this.state = TaskState.Running;
     }
 
-    get actionObj(): IAction | undefined {
+    get actionObj(): BackingAction {
         return this.action;
     }
 
@@ -41,29 +54,28 @@ export abstract class TaskBase {
     }
 
     private changeState(state: TaskState): void {
-        if (state === TaskState.Running){
+        if (state === TaskState.Running) {
             throw Error("Cannot change Task to the RUNNING state.");
         }
         this.state = state;
     }
 
-    protected SetValue(isError: boolean, value: unknown): void {
-        let new_state: TaskState;
+    public SetValue(isError: boolean, value: unknown): void {
+        let newState: TaskState;
 
-        if (isError){
-            if (value instanceof Error){
-                if ((value instanceof TaskBase) && (value.result instanceof Error)) {
+        if (isError) {
+            if (value instanceof Error) {
+                if (value instanceof TaskBase && value.result instanceof Error) {
                     const errMessage = `Task ID ${this.id} failed but it's value was not an Exception`;
                     throw new Error(errMessage);
                 }
             }
-            new_state = TaskState.Failed;
-        }
-        else {
-            new_state = TaskState.Completed;
+            newState = TaskState.Failed;
+        } else {
+            newState = TaskState.Completed;
         }
 
-        this.changeState(new_state);
+        this.changeState(newState);
         this.result = value;
         this.propagate();
     }
@@ -74,39 +86,45 @@ export abstract class TaskBase {
             this.parent.handleCompletion(this);
         }
     }
+}
 
+export class InternalOnlyTask extends TaskBase {
+    constructor() {
+        super(-1, "bookeepingOnly");
+    }
 }
 
 export abstract class CompoundTask extends TaskBase {
     protected firstError: Error | undefined;
 
-    constructor(
-        protected children: TaskBase[]
-    ){
-        super(-1, undefined);
+    constructor(public children: TaskBase[], protected action: BackingAction) {
+        super("ignorable", action);
         this.firstError = undefined;
     }
 
     public handleCompletion(child: TaskBase): void {
-
-        if (!this.isPlayed){
+        if (!this.isPlayed) {
             this.isPlayed = child.isPlayed;
         }
         this.trySetValue(child);
     }
 
     abstract trySetValue(child: TaskBase): void;
-
 }
 
-export class AtomicTask extends TaskBase {};
+export class ProperTask extends TaskBase {
+    protected action: IAction;
 
-class TimerTask extends AtomicTask {
+    get actionObj(): IAction {
+        return this.action;
+    }
+}
 
-    constructor(
-        public id: number,
-        public action: CreateTimerAction){
-            super(id, action);
+export class AtomicTask extends ProperTask {}
+
+export class TimerTask extends AtomicTask {
+    constructor(public id: TaskID, public action: CreateTimerAction) {
+        super(id, action);
     }
 
     get isCancelled(): boolean {
@@ -114,39 +132,34 @@ class TimerTask extends AtomicTask {
     }
 
     public cancel(): void {
-        if (this.isCompleted){
+        if (this.isCompleted) {
             throw Error("Cannot cancel a completed task.");
         }
         this.action.isCanceled = true; // TODO: this is a typo :)
     }
-
 }
 
-class WhenAllTask extends CompoundTask {
-
-    constructor(protected children: TaskBase[]) {
-        super(children);
+export class WhenAllTask extends CompoundTask {
+    constructor(public children: TaskBase[], protected action: IAction) {
+        super(children, action);
     }
 
     public trySetValue(child: AtomicTask): void {
         if (child.stateObj === TaskState.Completed) {
-            if (this.children.every(c => c.stateObj === TaskState.Completed)) {
-                const results = this.children.map(c => c.result);
+            if (this.children.every((c) => c.stateObj === TaskState.Completed)) {
+                const results = this.children.map((c) => c.result);
                 this.SetValue(false, results);
             }
-        }
-        else {
+        } else {
             if (this.firstError === undefined) {
                 this.firstError = child.result as Error;
                 this.SetValue(true, this.firstError);
             }
         }
     }
-
 }
 
-class WhenAnyTask extends CompoundTask {
-
+export class WhenAnyTask extends CompoundTask {
     public trySetValue(child: TaskBase): void {
         if (this.state === TaskState.Running) {
             this.SetValue(false, child.result);
@@ -159,91 +172,133 @@ export class RetryAbleTask extends WhenAllTask {
     private numAttempts: number;
 
     constructor(
-        protected children: TaskBase[],
+        public innerTask: ProperTask,
         private retryOptions: RetryOptions,
         private context: DurableOrchestrationContext
-    ){
-        super(children);
+    ) {
+        super([innerTask], innerTask.actionObj);
         this.numAttempts = 1;
         this.isWaitingOnTimer = false;
     }
 
-    public trySetValue(child: TaskBase) {
+    public trySetValue(child: TaskBase): void {
         if (this.isWaitingOnTimer) {
             this.isWaitingOnTimer = false;
 
-            const rescheduledTask = new AtomicTask(-1, undefined); // TODO: fix
+            const rescheduledTask = new InternalOnlyTask();
+            rescheduledTask.parent = this;
             this.children.push(rescheduledTask);
-        }
-        else if (child.stateObj === TaskState.Completed) {
-            if (this.children.every(c => c.stateObj === TaskState.Completed)){
+            // add to open tasks
+        } else if (child.stateObj === TaskState.Completed) {
+            if (this.children.every((c) => c.stateObj === TaskState.Completed)) {
                 this.SetValue(false, child.result);
             }
-        }
-        else {
+        } else {
             if (this.numAttempts >= this.retryOptions.maxNumberOfAttempts) {
                 this.SetValue(true, child.result);
-
-            }
-            else {
-                const rescheduledTask = new AtomicTask(-1, undefined); // TODO: fix
+            } else {
+                const rescheduledTask = new InternalOnlyTask();
                 this.children.push(rescheduledTask);
+                // add to open tasks
                 this.isWaitingOnTimer = true;
             }
 
             this.numAttempts++;
         }
-
     }
 }
 
 export class TaskOrchestrationExecutor {
     private context: DurableOrchestrationContext;
+    private currentTask: TaskBase;
+    private output: unknown;
+    private exception: Error | undefined;
+    private orchestratorReturned: boolean;
+    private generator: Generator<TaskBase, any, any>;
+    private deferredTasks: Record<number | string, () => undefined>;
+    private sequenceNumber: number;
+    private replaySchema: ReplaySchema | undefined;
+    private willContinueAsNew: boolean;
+    private actions: IAction[];
     protected openTasks: Record<number, TaskBase | TaskBase[]>;
-    private eventToTaskValuePayload: { [key in HistoryEventType]? : [boolean, string]};
+    private eventToTaskValuePayload: { [key in HistoryEventType]?: [boolean, string] };
 
-    constructor(){
+    constructor() {
         this.eventToTaskValuePayload = {
-            [HistoryEventType.TaskCompleted] : [true, "TaskScheduledId"],
-            [HistoryEventType.TimerFired] : [true, "TimerId"],
-            [HistoryEventType.SubOrchestrationInstanceCompleted] : [true, "TaskScheduledId"],
-            [HistoryEventType.EventRaised] : [true, "Name"],
-            [HistoryEventType.TaskFailed] : [false, "TaskScheduledId"],
-            [HistoryEventType.SubOrchestrationInstanceFailed] : [false, "TaskScheduledId"],
-        }
-        this.openTasks = {};
+            [HistoryEventType.TaskCompleted]: [true, "TaskScheduledId"],
+            [HistoryEventType.TimerFired]: [true, "TimerId"],
+            [HistoryEventType.SubOrchestrationInstanceCompleted]: [true, "TaskScheduledId"],
+            [HistoryEventType.EventRaised]: [true, "Name"],
+            [HistoryEventType.TaskFailed]: [false, "TaskScheduledId"],
+            [HistoryEventType.SubOrchestrationInstanceFailed]: [false, "TaskScheduledId"],
+        };
+        this.replaySchema = ReplaySchema.V1; // TODO: fix this
         this.initialize();
     }
 
     private initialize(): void {
-        this.currentTask: TaskBase = new AtomicTask(-1, []);
-        this.currentTask.setValue(isError=False, value=None)
+        this.sequenceNumber = 0;
+        this.currentTask = new InternalOnlyTask();
+        this.currentTask.SetValue(false, undefined);
+        this.willContinueAsNew = false;
+        this.openTasks = {};
+        this.actions = [];
+        this.deferredTasks = {};
 
-        this.output;
-        this.exception = None
-        this.orchestratorReturned: bool = False
+        this.output = undefined;
+        this.exception = undefined;
+        this.orchestratorReturned = false;
     }
 
-    public execute(
-        context: DurableOrchestrationContext,
+    public async execute(
+        context: IOrchestrationFunctionContext,
         history: HistoryEvent[],
-        fn: IterableIterator<unknown>
-    ): string {
-        this.context = context;
-        const generator = fn(context); // what happens if code is not a generator?
+        fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>
+    ): Promise<void> {
+        this.context = context.df;
+        this.generator = fn(context) as Generator<TaskBase, any, any>; // what happens if code is not a generator?
+
         for (const historyEvent of history) {
             this.processEvent(historyEvent);
+            if (this.hasExecutionCompleted()) {
+                break;
+            }
         }
 
-        return "";
+        /* if (!this.willContinueAsNew) {
+            this.orchestratorReturned = true;
+            this.output = this.output;
+        }*/
+
+        const orchestratorState = new OrchestratorState({
+            isDone: this.orchestrationInvocationCompleted(),
+            actions: this.getActions(),
+            output: this.output,
+            error: this.exception?.message,
+            customStatus: this.context.customStatus,
+            replaySchema: this.replaySchema,
+        });
+
+        let error = undefined;
+        let result: any = orchestratorState;
+        if (this.exception !== undefined) {
+            error = new OrchestrationFailureError(this.orchestratorReturned, orchestratorState);
+            result = undefined;
+        }
+        context.done(error, result);
+        return;
     }
 
-    private hole<T>(id: string): T {
-        throw new Error(`unfilled ${id}`) // types to bottom
+    private hasExecutionCompleted(): boolean {
+        return this.orchestrationInvocationCompleted() || this.exception !== undefined;
+    }
+
+    private orchestrationInvocationCompleted(): boolean {
+        return this.orchestratorReturned || this.willContinueAsNew;
     }
 
     private processEvent(event: HistoryEvent): void {
-        function processSpecialEvents(event: HistoryEvent): boolean {
+        function processSpecialEventsClosure(event: HistoryEvent): boolean {
             switch (eventType) {
                 case HistoryEventType.OrchestratorStarted: {
                     const timestamp = event.Timestamp;
@@ -262,15 +317,17 @@ export class TaskOrchestrationExecutor {
                 }
                 case HistoryEventType.EventSent: {
                     const key = event.EventId;
-                    if (key in Object.keys(this.openTasks)) {
+                    if (Object.keys(this.openTasks).findIndex((k) => k === key.toString())) {
                         const task = this.openTasks[key];
                         if (task.apiName === "CallEntityAction") {
                             // review all of this :)
                             const eventSent = event as EventSentEvent;
-                            const requestMessage = JSON.parse(eventSent.Input as string) as RequestMessage;
-                            const event_id = Number(requestMessage.id);
+                            const requestMessage = JSON.parse(
+                                eventSent.Input as string
+                            ) as RequestMessage;
+                            const eventId = Number(requestMessage.id);
                             delete this.openTasks[key]; // TODO: make sure this works
-                            this.openTasks[event_id] = task;
+                            this.openTasks[eventId] = task;
                         }
                     }
                     return true;
@@ -279,44 +336,180 @@ export class TaskOrchestrationExecutor {
             return false;
         }
 
+        const processSpecialEvents = processSpecialEventsClosure.bind(this);
+
         const eventType = event.EventType;
         const wasProcessed = processSpecialEvents(event);
-        if (!wasProcessed){
-            if (eventType in Object.keys(this.eventToTaskValuePayload)){
-                var [isSuccess, idKey] = this.eventToTaskValuePayload[eventType] as [boolean, string];
+        if (!wasProcessed) {
+            if (Object.keys(this.eventToTaskValuePayload).find((k) => k === eventType.toString())) {
+                const [isSuccess, idKey] = this.eventToTaskValuePayload[eventType] as [
+                    boolean,
+                    string
+                ];
                 this.setTaskValue(event, isSuccess, idKey);
                 this.resumeUserCode();
-
             }
         }
     }
 
     private setTaskValue(event: HistoryEvent, isSuccess: boolean, idKey: string): void {
-        const key = event[(idKey as keyof typeof event)] as number; // TODO: a bit of magic here
+        function parseHistoryEvent(directiveResult: HistoryEvent): unknown {
+            let parsedDirectiveResult: unknown;
+
+            switch (directiveResult.EventType) {
+                case HistoryEventType.SubOrchestrationInstanceCompleted:
+                    parsedDirectiveResult = JSON.parse(
+                        (directiveResult as SubOrchestrationInstanceCompletedEvent).Result
+                    );
+                    break;
+                case HistoryEventType.TaskCompleted:
+                    parsedDirectiveResult = JSON.parse(
+                        (directiveResult as TaskCompletedEvent).Result
+                    );
+                    break;
+                case HistoryEventType.EventRaised:
+                    const eventRaised = directiveResult as EventRaisedEvent;
+                    parsedDirectiveResult =
+                        eventRaised && eventRaised.Input
+                            ? JSON.parse(eventRaised.Input)
+                            : undefined;
+                    break;
+                default:
+                    break;
+            }
+            return parsedDirectiveResult;
+        }
+
         let task: TaskBase;
+
+        const key = event[idKey as keyof typeof event] as number; // TODO: a bit of magic here
         const taskOrtaskList = this.openTasks[key];
-        if (!(taskOrtaskList instanceof TaskBase)){
+        if (taskOrtaskList instanceof TaskBase) {
+            task = taskOrtaskList;
+        } else {
             const taskList = taskOrtaskList;
             task = taskList.pop() as TaskBase; //ensure the pop is in-place
-            if (taskList.length > 0){
+            if (taskList.length > 0) {
                 this.openTasks[key] = taskList;
             }
         }
 
-        if (isSuccess){
-            newValue = ...
+        let newValue: unknown;
+        if (isSuccess) {
+            newValue = parseHistoryEvent(event);
+            if (task.apiName == "CallEntityAction") {
+                const eventPayload: ResponseMessage = newValue as ResponseMessage;
+                newValue = JSON.parse(eventPayload.result);
+
+                if (eventPayload.exceptionType !== undefined) {
+                    newValue = Error(newValue as string);
+                    isSuccess = false;
+                }
+            }
+        } else {
+            if (
+                this.typeSafeHasOwnProperty(event, "Reason") &&
+                this.typeSafeHasOwnProperty(event, "Details")
+            ) {
+                newValue = new Error(`${event.Reason} \n ${event.Details}`);
+            }
         }
-        else {
-            newValue = Error("....");
-        }
-        Task
+        task.isPlayed = event.IsPlayed;
         task.SetValue(!isSuccess, newValue);
     }
 
-    private resumeUserCode(): void {
-        currentTask = this.currentTask;
-        this.context. ...
-        if (currentTask.state ..)
+    private typeSafeHasOwnProperty<X extends {}, Y extends PropertyKey>(
+        obj: X,
+        prop: Y
+    ): obj is X & Record<Y, unknown> {
+        return obj.hasOwnProperty(prop);
     }
 
+    private resumeUserCode(): void {
+        const currentTask: TaskBase = this.currentTask;
+        this.context.isReplaying = currentTask.isPlayed;
+        if (currentTask.stateObj === TaskState.Running) {
+            return;
+        }
+
+        let newTask: TaskBase | undefined = undefined;
+        try {
+            const taskValue = currentTask.result;
+            const taskSucceeded = currentTask.stateObj === TaskState.Completed;
+
+            const generatorResult = taskSucceeded
+                ? this.generator.next(taskValue)
+                : this.generator.throw(taskValue);
+
+            if (generatorResult.done) {
+                this.orchestratorReturned = true;
+                this.output = generatorResult.value;
+                return;
+            } else if (generatorResult.value instanceof TaskBase) {
+                newTask = generatorResult.value;
+                this.addToOpenTasks(newTask);
+            } else {
+                throw new Error(""); // TODO: throw
+            }
+        } catch (exception) {
+            this.exception = exception;
+        }
+
+        if (newTask !== undefined) {
+            this.currentTask = newTask;
+            if (newTask.state !== TaskState.Running) {
+                this.resumeUserCode();
+            } else {
+                if (this.currentTask instanceof ProperTask) {
+                    this.addToActions(this.currentTask.actionObj);
+                }
+            }
+        }
+    }
+
+    private getActions(): IAction[][] | IAction[] {
+        if (this.replaySchema === ReplaySchema.V1) {
+            const actions = [];
+            for (const action of this.actions) {
+                actions.push([action]);
+            }
+            return actions;
+        } else {
+            return this.actions;
+        }
+    }
+
+    private addToActions(action: IAction): void {
+        if (this.willContinueAsNew) {
+            return;
+        }
+
+        this.actions.push(action);
+    }
+
+    private addToOpenTasks(task: TaskBase): void {
+        if (task instanceof AtomicTask) {
+            if (task.id === "unassigned") {
+                task.id = this.sequenceNumber++;
+                this.openTasks[task.id] = task;
+            } else if (task.id !== "ignorable") {
+                const taskList = this.openTasks[task.id];
+                if (!(taskList instanceof TaskBase)) {
+                    taskList.push(task);
+                    this.openTasks[task.id] = taskList;
+                }
+            }
+
+            if (this.deferredTasks.hasOwnProperty(task.id)) {
+                const taskUpdateAction = this.deferredTasks[task.id];
+                taskUpdateAction();
+            }
+        } else if (task instanceof CompoundTask) {
+            for (const child of task.children) {
+                this.addToOpenTasks(child);
+            }
+        } else {
+            throw Error(""); // TODO: throw some error
+        }
+    }
 }

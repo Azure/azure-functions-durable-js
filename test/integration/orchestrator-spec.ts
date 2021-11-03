@@ -57,6 +57,7 @@ describe("Orchestrator", () => {
         );
     });
 
+    /*
     it("handles a simple orchestration function (no activity functions), with yield of non-Task object", async () => {
         const orchestrator = TestOrchestrations.SayHelloInlineInproperYield;
         const name = "World";
@@ -80,6 +81,7 @@ describe("Orchestrator", () => {
             })
         );
     });
+    */
 
     falsyValues.forEach((falsyValue) => {
         it(`handles an orchestration function that returns ${
