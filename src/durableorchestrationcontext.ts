@@ -26,6 +26,7 @@ import {
     WhenAnyTask,
     TimerTask,
     ProperTask,
+    TaskOrchestrationExecutor,
 } from "./taskorchestrationexecutor";
 import { WhenAllAction } from "./actions/whenallaction";
 import { WhenAnyAction } from "./actions/whenanyaction";
@@ -41,7 +42,8 @@ export class DurableOrchestrationContext {
         currentUtcDateTime: Date,
         isReplaying: boolean,
         parentInstanceId: string | undefined,
-        input: unknown
+        input: unknown,
+        private taskOrchestratorExecutor: TaskOrchestrationExecutor | undefined = undefined
     ) {
         this.state = state;
         this.instanceId = instanceId;
@@ -52,6 +54,7 @@ export class DurableOrchestrationContext {
 
         this.newGuidCounter = 0;
         this.subOrchestratorCounter = 0;
+        this.taskOrchestratorExecutor;
     }
 
     private input: unknown;
@@ -256,10 +259,12 @@ export class DurableOrchestrationContext {
      *
      * @param The JSON-serializable data to re-initialize the instance with.
      */
-    public continueAsNew(input: unknown): Task {
+    public continueAsNew(input: unknown): void {
         const newAction = new ContinueAsNewAction(input);
-
-        return TaskFactory.UncompletedTask(newAction);
+        if (this.taskOrchestratorExecutor !== undefined) {
+            this.taskOrchestratorExecutor.addToActions(newAction);
+            this.taskOrchestratorExecutor.willContinueAsNew = true;
+        }
     }
 
     /**

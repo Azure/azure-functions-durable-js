@@ -1,4 +1,6 @@
 import { RetryOptions } from ".";
+import { WhenAllAction } from "./actions/whenallaction";
+import { WhenAnyAction } from "./actions/whenanyaction";
 import {
     CreateTimerAction,
     DurableOrchestrationContext,
@@ -94,12 +96,25 @@ export class InternalOnlyTask extends TaskBase {
     }
 }
 
-export abstract class CompoundTask extends TaskBase {
+export class ProperTask extends TaskBase {
+    protected action: IAction;
+
+    get actionObj(): IAction {
+        return this.action;
+    }
+}
+
+export abstract class CompoundTask extends ProperTask {
     protected firstError: Error | undefined;
 
-    constructor(public children: TaskBase[], protected action: BackingAction) {
+    constructor(public children: TaskBase[], protected action: IAction) {
         super("ignorable", action);
+        children.map((c) => (c.parent = this));
         this.firstError = undefined;
+
+        if (children.length == 0) {
+            this.state = TaskState.Completed;
+        }
     }
 
     public handleCompletion(child: TaskBase): void {
@@ -110,14 +125,6 @@ export abstract class CompoundTask extends TaskBase {
     }
 
     abstract trySetValue(child: TaskBase): void;
-}
-
-export class ProperTask extends TaskBase {
-    protected action: IAction;
-
-    get actionObj(): IAction {
-        return this.action;
-    }
 }
 
 export class AtomicTask extends ProperTask {}
@@ -218,7 +225,7 @@ export class TaskOrchestrationExecutor {
     private deferredTasks: Record<number | string, () => undefined>;
     private sequenceNumber: number;
     private replaySchema: ReplaySchema | undefined;
-    private willContinueAsNew: boolean;
+    public willContinueAsNew: boolean;
     private actions: IAction[];
     protected openTasks: Record<number, TaskBase | TaskBase[]>;
     private eventToTaskValuePayload: { [key in HistoryEventType]?: [boolean, string] };
@@ -449,6 +456,7 @@ export class TaskOrchestrationExecutor {
                 newTask = generatorResult.value;
                 this.addToOpenTasks(newTask);
             } else {
+                // TODO: add a fire-and-forget handling here. In that case, do not error out
                 throw new Error(""); // TODO: throw
             }
         } catch (exception) {
@@ -471,7 +479,11 @@ export class TaskOrchestrationExecutor {
         if (this.replaySchema === ReplaySchema.V1) {
             const actions = [];
             for (const action of this.actions) {
-                actions.push([action]);
+                if (action instanceof WhenAllAction || action instanceof WhenAnyAction) {
+                    actions.push(action.compoundActions);
+                } else {
+                    actions.push([action]);
+                }
             }
             return actions;
         } else {
@@ -479,7 +491,7 @@ export class TaskOrchestrationExecutor {
         }
     }
 
-    private addToActions(action: IAction): void {
+    public addToActions(action: IAction): void {
         if (this.willContinueAsNew) {
             return;
         }

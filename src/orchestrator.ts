@@ -53,7 +53,8 @@ export class Orchestrator {
                 this.currentUtcDateTime,
                 orchestrationBinding.isReplaying,
                 orchestrationBinding.parentInstanceId,
-                input
+                input,
+                this.taskOrchestrationExecutor
             );
         }
 
