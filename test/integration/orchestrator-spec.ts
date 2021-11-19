@@ -458,7 +458,7 @@ describe("Orchestrator", () => {
             );
         });
 
-        it("handles a completed activity function by returning instead of yielding", async () => {
+        /* it("handles a completed activity function by returning instead of yielding", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithActivityDirectReturn;
             const name = "World";
             const mockContext = new MockContext({
@@ -481,7 +481,7 @@ describe("Orchestrator", () => {
                     output: `Hello, ${name}!`,
                 })
             );
-        });
+        }); */
 
         it("handles a completed series of activity functions", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;

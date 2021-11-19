@@ -43,7 +43,7 @@ export class DurableOrchestrationContext {
         isReplaying: boolean,
         parentInstanceId: string | undefined,
         input: unknown,
-        private taskOrchestratorExecutor: TaskOrchestrationExecutor | undefined = undefined
+        private taskOrchestratorExecutor: TaskOrchestrationExecutor
     ) {
         this.state = state;
         this.instanceId = instanceId;
@@ -54,7 +54,6 @@ export class DurableOrchestrationContext {
 
         this.newGuidCounter = 0;
         this.subOrchestratorCounter = 0;
-        this.taskOrchestratorExecutor;
     }
 
     private input: unknown;
@@ -155,7 +154,7 @@ export class DurableOrchestrationContext {
     ): TaskBase {
         const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
         const innerTask = new AtomicTask("unassigned", newAction);
-        const task = new RetryAbleTask(innerTask, retryOptions, this);
+        const task = new RetryAbleTask(innerTask, retryOptions, this.taskOrchestratorExecutor);
         return task; // We'll have to change the interface
     }
 
@@ -228,7 +227,7 @@ export class DurableOrchestrationContext {
             instanceId
         );
         const innerTask = new AtomicTask("unassigned", newAction);
-        const task = new RetryAbleTask(innerTask, retryOptions, this);
+        const task = new RetryAbleTask(innerTask, retryOptions, this.taskOrchestratorExecutor);
         return task; // We'll have to change the interface
     }
 

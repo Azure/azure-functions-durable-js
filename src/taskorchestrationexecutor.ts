@@ -92,7 +92,7 @@ export abstract class TaskBase {
 
 export class InternalOnlyTask extends TaskBase {
     constructor() {
-        super(-1, "bookeepingOnly");
+        super("unassigned", "bookeepingOnly");
     }
 }
 
@@ -181,7 +181,7 @@ export class RetryAbleTask extends WhenAllTask {
     constructor(
         public innerTask: ProperTask,
         private retryOptions: RetryOptions,
-        private context: DurableOrchestrationContext
+        private executor: TaskOrchestrationExecutor
     ) {
         super([innerTask], innerTask.actionObj);
         this.numAttempts = 1;
@@ -195,17 +195,18 @@ export class RetryAbleTask extends WhenAllTask {
             const rescheduledTask = new InternalOnlyTask();
             rescheduledTask.parent = this;
             this.children.push(rescheduledTask);
+            this.executor.addToOpenTasks(rescheduledTask);
             // add to open tasks
         } else if (child.stateObj === TaskState.Completed) {
-            if (this.children.every((c) => c.stateObj === TaskState.Completed)) {
-                this.SetValue(false, child.result);
-            }
+            this.SetValue(false, child.result);
         } else {
             if (this.numAttempts >= this.retryOptions.maxNumberOfAttempts) {
                 this.SetValue(true, child.result);
             } else {
                 const rescheduledTask = new InternalOnlyTask();
+                rescheduledTask.parent = this;
                 this.children.push(rescheduledTask);
+                this.executor.addToOpenTasks(rescheduledTask);
                 // add to open tasks
                 this.isWaitingOnTimer = true;
             }
@@ -222,7 +223,7 @@ export class TaskOrchestrationExecutor {
     private exception: Error | undefined;
     private orchestratorReturned: boolean;
     private generator: Generator<TaskBase, any, any>;
-    private deferredTasks: Record<number | string, () => undefined>;
+    private deferredTasks: Record<number | string, () => void>;
     private sequenceNumber: number;
     private replaySchema: ReplaySchema | undefined;
     public willContinueAsNew: boolean;
@@ -391,7 +392,14 @@ export class TaskOrchestrationExecutor {
 
         const key = event[idKey as keyof typeof event] as number; // TODO: a bit of magic here
         const taskOrtaskList = this.openTasks[key];
-        if (taskOrtaskList instanceof TaskBase) {
+        delete this.openTasks[key];
+        if (taskOrtaskList === undefined) {
+            this.deferredTasks[key] = function (): void {
+                this.setTaskValue(event, isSuccess, idKey);
+                return;
+            };
+            return;
+        } else if (taskOrtaskList instanceof TaskBase) {
             task = taskOrtaskList;
         } else {
             const taskList = taskOrtaskList;
@@ -499,8 +507,8 @@ export class TaskOrchestrationExecutor {
         this.actions.push(action);
     }
 
-    private addToOpenTasks(task: TaskBase): void {
-        if (task instanceof AtomicTask) {
+    public addToOpenTasks(task: TaskBase): void {
+        if (task instanceof AtomicTask || task instanceof InternalOnlyTask) {
             if (task.id === "unassigned") {
                 task.id = this.sequenceNumber++;
                 this.openTasks[task.id] = task;
@@ -520,8 +528,6 @@ export class TaskOrchestrationExecutor {
             for (const child of task.children) {
                 this.addToOpenTasks(child);
             }
-        } else {
-            throw Error(""); // TODO: throw some error
         }
     }
 }
