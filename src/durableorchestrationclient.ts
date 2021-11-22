@@ -93,9 +93,7 @@ function correctUrls(obj: { [key: string]: string }): { [key: string]: string } 
         if (
             isURL(value, {
                 protocols: ["http", "https"],
-                // eslint-disable-next-line @typescript-eslint/camelcase
                 require_tld: false,
-                // eslint-disable-next-line @typescript-eslint/camelcase
                 require_protocol: true,
             })
         ) {
@@ -136,11 +134,8 @@ export class DurableOrchestrationClient {
 
     private urlValidationOptions: ValidatorJS.IsURLOptions = {
         protocols: ["http", "https"],
-        // eslint-disable-next-line @typescript-eslint/camelcase
         require_tld: false,
-        // eslint-disable-next-line @typescript-eslint/camelcase
         require_protocol: true,
-        // eslint-disable-next-line @typescript-eslint/camelcase
         require_valid_protocol: true,
     };
 
