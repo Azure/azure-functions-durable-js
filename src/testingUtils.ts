@@ -7,7 +7,6 @@ import {
     Logger,
     HttpRequest,
 } from "@azure/functions";
-import { Context } from "mocha";
 import {
     DurableOrchestrationBindingInfo,
     DurableOrchestrationContext,
