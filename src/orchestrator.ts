@@ -13,15 +13,14 @@ export class Orchestrator {
     private currentUtcDateTime: Date;
     private taskOrchestrationExecutor: TaskOrchestrationExecutor;
 
-    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {
-        this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
-    }
+    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {}
 
     public listen(): (context: IOrchestrationFunctionContext) => Promise<void> {
         return this.handle.bind(this);
     }
 
     private async handle(context: IOrchestrationFunctionContext): Promise<void> {
+        this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
             context.bindings,
             new DurableOrchestrationBindingInfo()

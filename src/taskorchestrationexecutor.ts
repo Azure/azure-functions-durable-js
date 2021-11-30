@@ -462,7 +462,6 @@ export class TaskOrchestrationExecutor {
                 return;
             } else if (generatorResult.value instanceof TaskBase) {
                 newTask = generatorResult.value;
-                this.addToOpenTasks(newTask);
             } else {
                 // TODO: add a fire-and-forget handling here. In that case, do not error out
                 throw new Error(""); // TODO: throw
@@ -476,6 +475,7 @@ export class TaskOrchestrationExecutor {
             if (newTask.state !== TaskState.Running) {
                 this.resumeUserCode();
             } else {
+                this.addToOpenTasks(newTask);
                 if (this.currentTask instanceof ProperTask) {
                     this.addToActions(this.currentTask.actionObj);
                 }

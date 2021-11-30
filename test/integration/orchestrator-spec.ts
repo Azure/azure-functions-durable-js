@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { TraceContext } from "@azure/functions";
+import { doesNotReject } from "assert";
 import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
@@ -83,37 +84,38 @@ describe("Orchestrator", () => {
     });
     */
 
-    falsyValues.forEach((falsyValue) => {
-        it(`handles an orchestration function that returns ${
-            falsyValue === "" ? "empty string" : falsyValue
-        }`, async () => {
-            const orchestrator = TestOrchestrations.PassThrough;
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart(
-                        "PassThrough",
-                        moment.utc().toDate(),
+    describe("s", () => {
+        for (const falsyValue of falsyValues) {
+            it(`handles an orchestration function that returns ${
+                falsyValue === "" ? "empty string" : falsyValue
+            }`, async () => {
+                const orchestrator = TestOrchestrations.PassThrough;
+                const mockContext = new MockContext({
+                    context: new DurableOrchestrationBindingInfo(
+                        TestHistories.GetOrchestratorStart(
+                            "PassThrough",
+                            moment.utc().toDate(),
+                            falsyValue
+                        ),
                         falsyValue
                     ),
-                    falsyValue
-                ),
+                });
+                await orchestrator(mockContext);
+                expect(mockContext.doneValue).to.deep.equal(
+                    new OrchestratorState({
+                        isDone: true,
+                        actions: [],
+                        output: falsyValue,
+                    })
+                );
+                if (isNaN(falsyValue as number)) {
+                    expect(isNaN(mockContext.doneValue!.output as number)).to.equal(true);
+                } else {
+                    expect(mockContext.doneValue!.output).to.equal(falsyValue);
+                }
+                expect(mockContext.err).to.equal(undefined);
             });
-            orchestrator(mockContext);
-
-            expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [],
-                    output: falsyValue,
-                })
-            );
-            if (isNaN(falsyValue as number)) {
-                expect(isNaN(mockContext.doneValue!.output as number)).to.equal(true);
-            } else {
-                expect(mockContext.doneValue!.output).to.equal(falsyValue);
-            }
-            expect(mockContext.err).to.equal(undefined);
-        });
+        }
     });
 
     describe("Properties", () => {
@@ -481,7 +483,7 @@ describe("Orchestrator", () => {
                     output: `Hello, ${name}!`,
                 })
             );
-        }); */
+        });*/
 
         it("handles a completed series of activity functions", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
