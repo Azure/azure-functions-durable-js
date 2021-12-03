@@ -10,9 +10,6 @@ jobs:
     - job: UnitTests
       strategy:
           matrix:
-              WINDOWS_NODE8:
-                  IMAGE_TYPE: "vs2017-win2016"
-                  NODE_VERSION: $(NODE_8)
               WINDOWS_NODE10:
                   IMAGE_TYPE: "vs2017-win2016"
                   NODE_VERSION: $(NODE_10)
