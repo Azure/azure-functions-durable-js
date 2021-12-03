@@ -3,8 +3,10 @@ variables:
 name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
 
 trigger:
-    - main
-    - dev
+    branches:
+        include:
+            - main
+            - dev
 
 jobs:
     - job: UnitTests
