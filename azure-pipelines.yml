@@ -2,11 +2,15 @@ variables:
     { MODULE_VERSION: "1.2.2", NODE_10: "10.x", NODE_12: "12.x", NODE_14: "14.x", NODE_16: "16.x" }
 name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
 
-trigger:
+pr:
     branches:
         include:
             - main
             - dev
+
+trigger:
+    - main
+    - dev
 
 jobs:
     - job: UnitTests
