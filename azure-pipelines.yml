@@ -15,6 +15,9 @@ jobs:
               UBUNTU_NODE10:
                   IMAGE_TYPE: "ubuntu-latest"
                   NODE_VERSION: $(NODE_10)
+              UBUNTU_NODE12:
+                  IMAGE_TYPE: "ubuntu-latest"
+                  NODE_VERSION: $(NODE_12)
               UBUNTU_NODE14:
                   IMAGE_TYPE: "ubuntu-latest"
                   NODE_VERSION: $(NODE_14)
@@ -24,6 +27,9 @@ jobs:
               WINDOWS_NODE10:
                   IMAGE_TYPE: "windows-latest"
                   NODE_VERSION: $(NODE_10)
+              WINDOWS_NODE12:
+                  IMAGE_TYPE: "windows-latest"
+                  NODE_VERSION: $(NODE_12)
               WINDOWS_NODE14:
                   IMAGE_TYPE: "windows-latest"
                   NODE_VERSION: $(NODE_14)
@@ -33,6 +39,9 @@ jobs:
               MAC_NODE10:
                   IMAGE_TYPE: "macOS-latest"
                   NODE_VERSION: $(NODE_10)
+              MAC_NODE12:
+                  IMAGE_TYPE: "macOS-latest"
+                  NODE_VERSION: $(NODE_12)
               MAC_NODE14:
                   IMAGE_TYPE: "macOS-latest"
                   NODE_VERSION: $(NODE_14)
@@ -45,9 +54,9 @@ jobs:
           - task: NodeTool@0
             inputs:
                 versionSpec: $(NODE_VERSION)
-            displayName: "Install Node.js"
-          - script: npm install
-            displayName: "npm install"
+            displayName: "Install Node dependencies"
+          - script: npm ci
+            displayName: "npm ci"
           - script: npm run test
             displayName: "npm build and test"
           - script: npm run test:nolint
