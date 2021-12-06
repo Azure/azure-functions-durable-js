@@ -18,7 +18,7 @@
     "typings": "lib/src/index.d.ts",
     "scripts": {
         "clean": "rimraf lib",
-        "lint": "eslint --fix --ext .ts,.json src/",
+        "lint": "eslint --ext .ts,.json src/",
         "lint:test": "eslint --ext .ts,.json test/",
         "lint:samples": "eslint --ext .ts,.js samples/",
         "lint:srcfix": "eslint --ext .ts,.json src/ --fix",
