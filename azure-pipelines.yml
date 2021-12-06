@@ -73,6 +73,8 @@ jobs:
             displayName: "npm ci"
           - script: npm build
             displayName: "npm build"
+          - script: npm prune --production
+            displayName: "npm prune --production" # so that only production dependencies are included in SBOM
           - task: ManifestGeneratorTask@0
             displayName: "SBOM Generation Task"
             inputs:
