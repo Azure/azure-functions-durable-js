@@ -28,4 +28,4 @@ jobs:
                 workingDir: "$(Pipeline.Workspace)/DurableJSCI"
                 verbose: true
                 customCommand: "publish package.tgz --dry-run"
-                publishEndpoint: "npm Publish"
+                publishEndpoint: "NPM Durable Functions JS Publish"
