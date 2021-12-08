@@ -79,6 +79,14 @@ jobs:
             displayName: "npm build"
           - script: npm prune --production
             displayName: "npm prune --production" # so that only production dependencies are included in SBOM
+          - script: npm pack
+            displayName: "pack npm package"
+          - task: CopyFiles@2
+            displayName: 'Copy types package to staging'
+            inputs:
+                SourceFolder: $(System.DefaultWorkingDirectory)
+                Contents: '*.tgz'
+                TargetFolder: $(Build.ArtifactStagingDirectory)
           - task: ManifestGeneratorTask@0
             displayName: "SBOM Generation Task"
             inputs:
