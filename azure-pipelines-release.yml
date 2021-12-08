@@ -6,7 +6,7 @@ resources:
         - pipeline: DurableJSCI
           project: "Azure Functions"
           source: azure-functions-durable-js
-          branch: dev
+          branch: dajusto/pack-azuredevops
 
 jobs:
     - job: Release
