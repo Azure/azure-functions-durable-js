@@ -2,30 +2,30 @@ trigger: none
 pr: none
 
 resources:
-  pipelines:
-  - pipeline: DurableJSCI
-    project: 'Azure Functions'
-    source: Azure.azure-functions-durable-js
-    branch: main
+    pipelines:
+        - pipeline: DurableJSCI
+          project: "Azure Functions"
+          source: Azure.azure-functions-durable-js
+          branch: dev
 
 jobs:
-- job: Release
-  pool:
-    vmImage: 'ubuntu-latest'
-  steps:
-  - task: NodeTool@0
-    displayName: 'Install Node.js'
-    inputs:
-      versionSpec: 14.x
-  - download: DurableJSCI
-  - script: mv *.tgz package.tgz
-    displayName: 'Rename tgz file' # because the publish command below requires an exact path
-    workingDirectory: '$(Pipeline.Workspace)/DurableJSCI'
-  - task: Npm@1
-    displayName: 'npm publish'
-    inputs:
-      command: custom
-      workingDir: '$(Pipeline.Workspace)/DurableJSCI'
-      verbose: true
-      customCommand: 'publish package.tgz --dry-run'
-      publishEndpoint: 'npm Publish'
+    - job: Release
+      pool:
+          vmImage: "ubuntu-latest"
+      steps:
+          - task: NodeTool@0
+            displayName: "Install Node.js"
+            inputs:
+                versionSpec: 14.x
+          - download: DurableJSCI
+          - script: mv *.tgz package.tgz
+            displayName: "Rename tgz file" # because the publish command below requires an exact path
+            workingDirectory: "$(Pipeline.Workspace)/DurableJSCI"
+          - task: Npm@1
+            displayName: "npm publish"
+            inputs:
+                command: custom
+                workingDir: "$(Pipeline.Workspace)/DurableJSCI"
+                verbose: true
+                customCommand: "publish package.tgz --dry-run"
+                publishEndpoint: "npm Publish"
