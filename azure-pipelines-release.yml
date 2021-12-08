@@ -1,94 +1,31 @@
-variables:
-    { MODULE_VERSION: "1.2.2", NODE_10: "10.x", NODE_12: "12.x", NODE_14: "14.x", NODE_16: "16.x" }
-name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
-
-pr: none
 trigger: none
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: DurableJSCI
+    project: 'Azure Functions'
+    source: Azure.azure-functions-durable-js
+    branch: main
 
 jobs:
-    - job: Publish
-      strategy:
-          matrix:
-              UBUNTU_NODE10:
-                  IMAGE_TYPE: "ubuntu-latest"
-                  NODE_VERSION: $(NODE_10)
-              UBUNTU_NODE12:
-                  IMAGE_TYPE: "ubuntu-latest"
-                  NODE_VERSION: $(NODE_12)
-              UBUNTU_NODE14:
-                  IMAGE_TYPE: "ubuntu-latest"
-                  NODE_VERSION: $(NODE_14)
-              UBUNTU_NODE16:
-                  IMAGE_TYPE: "ubuntu-latest"
-                  NODE_VERSION: $(NODE_16)
-              WINDOWS_NODE10:
-                  IMAGE_TYPE: "windows-latest"
-                  NODE_VERSION: $(NODE_10)
-              WINDOWS_NODE12:
-                  IMAGE_TYPE: "windows-latest"
-                  NODE_VERSION: $(NODE_12)
-              WINDOWS_NODE14:
-                  IMAGE_TYPE: "windows-latest"
-                  NODE_VERSION: $(NODE_14)
-              WINDOWS_NODE16:
-                  IMAGE_TYPE: "windows-latest"
-                  NODE_VERSION: $(NODE_16)
-              MAC_NODE10:
-                  IMAGE_TYPE: "macOS-latest"
-                  NODE_VERSION: $(NODE_10)
-              MAC_NODE12:
-                  IMAGE_TYPE: "macOS-latest"
-                  NODE_VERSION: $(NODE_12)
-              MAC_NODE14:
-                  IMAGE_TYPE: "macOS-latest"
-                  NODE_VERSION: $(NODE_14)
-              MAC_NODE16:
-                  IMAGE_TYPE: "macOS-latest"
-                  NODE_VERSION: $(NODE_16)
-      pool:
-          vmImage: $(IMAGE_TYPE)
-      steps:
-          - task: NodeTool@0
-            inputs:
-                versionSpec: $(NODE_VERSION)
-            displayName: "Install Node dependencies"
-          - script: npm ci
-            displayName: "npm ci"
-          - script: npm run test
-            displayName: "npm build and test"
-          - script: npm run test:nolint
-            displayName: "npm build and test (no linting)"
-    - job: BuildArtifacts
-      pool:
-          vmImage: "vs2017-win2016"
-      steps:
-          - task: NodeTool@0
-            inputs:
-                versionSpec: $(NODE_14)
-            displayName: "Install Node.js"
-          - script: npm ci
-            displayName: "npm ci"
-          - script: npm build
-            displayName: "npm build"
-          - script: npm prune --production
-            displayName: "npm prune --production" # so that only production dependencies are included in SBOM
-          - script: npm pack
-            displayName: "pack npm package"
-          - task: CopyFiles@2
-            displayName: 'Copy types package to staging'
-            inputs:
-                SourceFolder: $(System.DefaultWorkingDirectory)
-                Contents: '*.tgz'
-                TargetFolder: $(Build.ArtifactStagingDirectory)
-          - task: ManifestGeneratorTask@0
-            displayName: "SBOM Generation Task"
-            inputs:
-                BuildDropPath: "$(Build.ArtifactStagingDirectory)"
-                Verbosity: "Information"
-          - task: PublishBuildArtifacts@1
-            inputs:
-                PathtoPublish: "$(Build.ArtifactStagingDirectory)"
-                ArtifactName: "drop"
-                publishLocation: "Container"
-          - script: npm publish --dry-run
-            displayName: publish to npm
+- job: Release
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - task: NodeTool@0
+    displayName: 'Install Node.js'
+    inputs:
+      versionSpec: 14.x
+  - download: DurableJSCI
+  - script: mv *.tgz package.tgz
+    displayName: 'Rename tgz file' # because the publish command below requires an exact path
+    workingDirectory: '$(Pipeline.Workspace)/DurableJSCI'
+  - task: Npm@1
+    displayName: 'npm publish'
+    inputs:
+      command: custom
+      workingDir: '$(Pipeline.Workspace)/DurableJSCI'
+      verbose: true
+      customCommand: 'publish package.tgz --dry-run'
+      publishEndpoint: 'npm Publish'
