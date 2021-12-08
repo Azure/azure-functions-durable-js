@@ -5,6 +5,8 @@ import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
 import { ManagedIdentityTokenSource } from "../../src";
+import { WhenAllAction } from "../../src/actions/whenallaction";
+import { WhenAnyAction } from "../../src/actions/whenanyaction";
 import {
     ActionType,
     CallActivityAction,
@@ -30,6 +32,7 @@ import {
     IOrchestrationFunctionContext,
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
+import { UpperSchemaVersion } from "../../src/upperSchemaVersion";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 import { TestUtils } from "../testobjects/testutils";
@@ -53,6 +56,7 @@ describe("Orchestrator", () => {
                 isDone: true,
                 actions: [],
                 output: `Hello, ${name}!`,
+                schemaVersion: UpperSchemaVersion.V1,
             })
         );
     });
@@ -77,6 +81,7 @@ describe("Orchestrator", () => {
                 isDone: true,
                 actions: [],
                 output: `Hello, ${name}!`,
+                schemaVersion: UpperSchemaVersion.V1,
             })
         );
     });
@@ -103,6 +108,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [],
                     output: falsyValue,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
             if (isNaN(falsyValue as number)) {
@@ -304,6 +310,7 @@ describe("Orchestrator", () => {
                         [new CallActivityAction("ThrowsErrorActivity")],
                         [new CallActivityAction("Hello", name)],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -331,6 +338,7 @@ describe("Orchestrator", () => {
                     isDone: false,
                     output: undefined,
                     actions: [[new CallActivityAction("Hello", name)]],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -350,6 +358,7 @@ describe("Orchestrator", () => {
                     isDone: false,
                     output: undefined,
                     actions: [[new CallActivityAction("ReturnsFour")]],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -376,6 +385,7 @@ describe("Orchestrator", () => {
                             isDone: false,
                             output: undefined,
                             actions: [[new CallActivityAction("Hello", falsyValue)]],
+                            schemaVersion: UpperSchemaVersion.V1,
                         })
                     );
                 });
@@ -400,6 +410,7 @@ describe("Orchestrator", () => {
                             isDone: true,
                             actions: [[new CallActivityAction("Hello", falsyValue)]],
                             output: `Hello, ${falsyValue}!`,
+                            schemaVersion: UpperSchemaVersion.V1,
                         })
                     );
                 });
@@ -427,6 +438,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [[new CallActivityAction("Hello", name)]],
                     output: `Hello, ${name}!`,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -452,6 +464,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     output: `Hello, ${name}!`,
                     actions: [[new CallActivityAction("Hello", name)]],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -477,6 +490,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [[new CallActivityAction("Hello", name)]],
                     output: `Hello, ${name}!`,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -503,6 +517,7 @@ describe("Orchestrator", () => {
                         [new CallActivityAction("Hello", "London")],
                     ],
                     output: ["Hello, Tokyo!", "Hello, Seattle!", "Hello, London!"],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -568,6 +583,7 @@ describe("Orchestrator", () => {
                             ),
                         ],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -594,6 +610,7 @@ describe("Orchestrator", () => {
                     isDone: false,
                     output: undefined,
                     actions: [[new CallActivityWithRetryAction("Hello", retryOptions, name)]],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -623,6 +640,7 @@ describe("Orchestrator", () => {
                             ),
                         ],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -656,6 +674,7 @@ describe("Orchestrator", () => {
                 .that.deep.include({
                     isDone: false,
                     actions: [[new CallActivityWithRetryAction("Hello", retryOptions, name)]],
+                    schemaVersion: UpperSchemaVersion.V1,
                 });
             expect(orchestrationState.error).to.include(expectedErr);
         });
@@ -689,6 +708,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: `Hello, ${name}!`,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -727,6 +747,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: ["Hello, Tokyo!", "Hello, Seattle!"],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -755,6 +776,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [[new CallActivityWithRetryAction("Hello", retryOptions, "World")]],
                     output: [startingTime, moment(startingTime).add(1, "m").add(30, "s").toDate()],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -782,6 +804,7 @@ describe("Orchestrator", () => {
                     isDone: false,
                     output: undefined,
                     actions: [[new CallHttpAction(req)]],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -829,6 +852,7 @@ describe("Orchestrator", () => {
                         },
                     ],
                 ],
+                schemaVersion: UpperSchemaVersion.V1,
             });
         });
 
@@ -858,6 +882,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [[new CallHttpAction(req)]],
                     output: res,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -883,6 +908,7 @@ describe("Orchestrator", () => {
                     isDone: false,
                     output: undefined,
                     actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -907,6 +933,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
                     output: "OK",
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -938,6 +965,7 @@ describe("Orchestrator", () => {
                     actions: [
                         [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -966,6 +994,7 @@ describe("Orchestrator", () => {
                     actions: [
                         [new CallSubOrchestratorAction("SayHelloWithActivity", undefined, name)],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1027,6 +1056,7 @@ describe("Orchestrator", () => {
                             ),
                         ],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1128,6 +1158,7 @@ describe("Orchestrator", () => {
                         [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
                     ],
                     output: "Hello, World!",
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1238,6 +1269,7 @@ describe("Orchestrator", () => {
                             ),
                         ],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1277,6 +1309,7 @@ describe("Orchestrator", () => {
                             ),
                         ],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1314,6 +1347,7 @@ describe("Orchestrator", () => {
                             ),
                         ],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1400,6 +1434,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: `Hello, ${name}!`,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1438,6 +1473,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: ["Hello, Tokyo!", "Hello, Seattle!"],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1464,6 +1500,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     output: undefined,
                     actions: [[new ContinueAsNewAction({ value: 6 })]],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1489,6 +1526,7 @@ describe("Orchestrator", () => {
                     isDone: false,
                     output: undefined,
                     actions: [[new CreateTimerAction(fireAt)]],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1512,6 +1550,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [[new CreateTimerAction(fireAt)]],
                     output: "Timer fired!",
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1566,6 +1605,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [],
                     output: expectedLockState,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1630,6 +1670,7 @@ describe("Orchestrator", () => {
                         [new CallActivityAction("Hello", "Seattle")],
                     ],
                     customStatus: "Tokyo",
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1657,6 +1698,7 @@ describe("Orchestrator", () => {
                     actions: [
                         [new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent)],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1685,6 +1727,7 @@ describe("Orchestrator", () => {
                         [new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent)],
                         [new CallActivityAction("Hello", name)],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1712,6 +1755,7 @@ describe("Orchestrator", () => {
                     actions: [
                         [new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent)],
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1741,6 +1785,44 @@ describe("Orchestrator", () => {
                         [new CallActivityAction("GetFileList", "C:\\Dev")],
                         filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
+                })
+            );
+        });
+
+        it("Task.all adheres to V2 replay protocol", async () => {
+            // same test as above, but tests for V2 protocol output
+            const orchestrator = TestOrchestrations.FanOutFanInDiskUsage;
+            const filePaths = ["file1.txt", "file2.png", "file3.csx"];
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetFanOutFanInDiskUsageReplayOne(
+                        moment.utc().toDate(),
+                        filePaths
+                    ),
+                    "C:\\Dev",
+                    undefined,
+                    undefined,
+                    undefined,
+                    UpperSchemaVersion.V2
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: false,
+                    output: undefined,
+                    actions: [
+                        [
+                            new CallActivityAction("GetFileList", "C:\\Dev"),
+                            new WhenAllAction(
+                                filePaths.map((file) => new CallActivityAction("GetFileSize", file))
+                            ),
+                        ],
+                    ],
+                    schemaVersion: UpperSchemaVersion.V2,
                 })
             );
         });
@@ -1768,6 +1850,7 @@ describe("Orchestrator", () => {
                         [new CallActivityAction("GetFileList", "C:\\Dev")],
                         filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                     ],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1792,6 +1875,7 @@ describe("Orchestrator", () => {
                         filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                     ],
                     output: 6,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1853,6 +1937,41 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: "A",
+                    schemaVersion: UpperSchemaVersion.V1,
+                })
+            );
+        });
+
+        it("Task.any adheres to V2 protocol", async () => {
+            // same test as above, but checks for V2 protocol output
+            const orchestrator = TestOrchestrations.AnyAOrB;
+            const completeInOrder = true;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetAnyAOrB(moment.utc().toDate(), completeInOrder),
+                    completeInOrder,
+                    undefined,
+                    undefined,
+                    undefined,
+                    UpperSchemaVersion.V2
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.be.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    actions: [
+                        [
+                            new WhenAnyAction([
+                                new CallActivityAction("TaskA", true),
+                                new CallActivityAction("TaskB", true),
+                            ]),
+                        ],
+                    ],
+                    output: "A",
+                    schemaVersion: UpperSchemaVersion.V2,
                 })
             );
         });
@@ -1879,6 +1998,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: "B",
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1905,6 +2025,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: "A",
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1932,6 +2053,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: undefined,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
 
@@ -1955,6 +2077,7 @@ describe("Orchestrator", () => {
                         [new CallActivityAction("Hello", "Tokyo")],
                     ],
                     output: undefined,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -1982,6 +2105,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: undefined,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
 
@@ -2004,6 +2128,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: ["timeout"],
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -2030,6 +2155,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: "A",
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -2058,6 +2184,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: undefined,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
 
@@ -2082,6 +2209,7 @@ describe("Orchestrator", () => {
                         [new CallActivityAction("TaskB")],
                     ],
                     output: undefined,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
 
@@ -2106,6 +2234,7 @@ describe("Orchestrator", () => {
                         [new CallActivityAction("TaskB")],
                     ],
                     output: undefined,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
 
@@ -2130,6 +2259,7 @@ describe("Orchestrator", () => {
                         [new CallActivityAction("TaskB")],
                     ],
                     output: {},
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });
@@ -2158,6 +2288,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: undefined,
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
 
@@ -2181,6 +2312,7 @@ describe("Orchestrator", () => {
                         ],
                     ],
                     output: "Timer finished",
+                    schemaVersion: UpperSchemaVersion.V1,
                 })
             );
         });

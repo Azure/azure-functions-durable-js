@@ -15,6 +15,7 @@ import {
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
 import { TaskBase } from "./tasks/taskinterfaces";
+import { UpperSchemaVersion } from "./upperSchemaVersion";
 
 /** @hidden */
 const log = debug("orchestrator");
@@ -42,6 +43,10 @@ export class Orchestrator {
         const state: HistoryEvent[] = orchestrationBinding.history;
         const input = orchestrationBinding.input;
         const instanceId: string = orchestrationBinding.instanceId;
+
+        // The upper schema version corresponds to the maximum OOProc protocol version supported by the extension,
+        // we use it to determine the format of the SDK's output
+        const upperSchemaVersion: UpperSchemaVersion = orchestrationBinding.upperSchemaVersion;
         // const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
 
         // Initialize currentUtcDateTime
@@ -61,7 +66,8 @@ export class Orchestrator {
                 this.currentUtcDateTime,
                 orchestrationBinding.isReplaying,
                 orchestrationBinding.parentInstanceId,
-                input
+                input,
+                upperSchemaVersion
             );
         }
 
@@ -91,6 +97,7 @@ export class Orchestrator {
                                 output: g.value,
                                 actions,
                                 customStatus: context.df.customStatus,
+                                schemaVersion: upperSchemaVersion,
                             })
                         );
                         return;
@@ -115,6 +122,7 @@ export class Orchestrator {
                             output: undefined,
                             actions,
                             customStatus: context.df.customStatus,
+                            schemaVersion: upperSchemaVersion,
                         })
                     );
                     return;
@@ -128,6 +136,7 @@ export class Orchestrator {
                             output: undefined,
                             actions,
                             customStatus: context.df.customStatus,
+                            schemaVersion: upperSchemaVersion,
                         })
                     );
                     return;
@@ -154,6 +163,7 @@ export class Orchestrator {
                             actions,
                             output: partialResult.result,
                             customStatus: context.df.customStatus,
+                            schemaVersion: upperSchemaVersion,
                         })
                     );
                     return;
@@ -207,6 +217,7 @@ export class Orchestrator {
                 actions,
                 error: error.message,
                 customStatus: context.df.customStatus,
+                schemaVersion: upperSchemaVersion,
             });
             context.done(new OrchestrationFailureError(error, errorState), undefined);
             return;

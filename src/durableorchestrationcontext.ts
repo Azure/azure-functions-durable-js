@@ -37,6 +37,7 @@ import {
     WaitForExternalEventAction,
 } from "./classes";
 import { CompletedTask, TaskBase } from "./tasks/taskinterfaces";
+import { UpperSchemaVersion } from "./upperSchemaVersion";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -49,7 +50,8 @@ export class DurableOrchestrationContext {
         currentUtcDateTime: Date,
         isReplaying: boolean,
         parentInstanceId: string | undefined,
-        input: unknown
+        input: unknown,
+        private readonly upperSchemaVersion: UpperSchemaVersion = UpperSchemaVersion.V1
     ) {
         this.state = state;
         this.instanceId = instanceId;
@@ -118,12 +120,17 @@ export class DurableOrchestrationContext {
      */
     public Task: ITaskMethods = {
         all: (tasks: TaskBase[]) => {
+            const compoundActionType = "WhenAll";
             let maxCompletionIndex: number | undefined;
             const errors: Error[] = [];
             const results: Array<unknown> = [];
             for (const task of tasks) {
                 if (!TaskFilter.isCompletedTask(task)) {
-                    return TaskFactory.UncompletedTaskSet(tasks);
+                    return TaskFactory.UncompletedTaskSet(
+                        tasks,
+                        compoundActionType,
+                        this.upperSchemaVersion
+                    );
                 }
 
                 if (!maxCompletionIndex) {
@@ -147,14 +154,23 @@ export class DurableOrchestrationContext {
                 return TaskFactory.FailedTaskSet(
                     tasks,
                     completionIndex,
-                    new AggregatedError(errors)
+                    new AggregatedError(errors),
+                    compoundActionType,
+                    this.upperSchemaVersion
                 );
             } else {
-                return TaskFactory.SuccessfulTaskSet(tasks, completionIndex, results);
+                return TaskFactory.SuccessfulTaskSet(
+                    tasks,
+                    completionIndex,
+                    results,
+                    compoundActionType,
+                    this.upperSchemaVersion
+                );
             }
         },
 
         any: (tasks: Task[]) => {
+            const compoundActionType = "WhenAny";
             if (!tasks || tasks.length === 0) {
                 throw new Error("At least one yieldable task must be provided to wait for.");
             }
@@ -174,10 +190,16 @@ export class DurableOrchestrationContext {
                 return TaskFactory.SuccessfulTaskSet(
                     tasks,
                     firstCompleted.completionIndex,
-                    firstCompleted
+                    firstCompleted,
+                    compoundActionType,
+                    this.upperSchemaVersion
                 );
             } else {
-                return TaskFactory.UncompletedTaskSet(tasks);
+                return TaskFactory.UncompletedTaskSet(
+                    tasks,
+                    compoundActionType,
+                    this.upperSchemaVersion
+                );
             }
         },
     };

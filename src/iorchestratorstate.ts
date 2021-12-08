@@ -1,4 +1,5 @@
 import { IAction } from "./classes";
+import { UpperSchemaVersion } from "./upperSchemaVersion";
 
 /** @hidden */
 export interface IOrchestratorState {
@@ -7,4 +8,5 @@ export interface IOrchestratorState {
     output: unknown;
     error?: string;
     customStatus?: unknown;
+    schemaVersion: UpperSchemaVersion;
 }

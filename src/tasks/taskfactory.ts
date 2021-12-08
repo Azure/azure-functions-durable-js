@@ -1,7 +1,8 @@
 import { CreateTimerAction, IAction } from "../classes";
+import { UpperSchemaVersion } from "../upperSchemaVersion";
 import { Task } from "./task";
 import { TaskBase } from "./taskinterfaces";
-import { TaskSet } from "./taskset";
+import { compoundActionType, TaskSet } from "./taskset";
 import { TimerTask } from "./timertask";
 
 /** @hidden */
@@ -65,20 +66,55 @@ export class TaskFactory {
     public static SuccessfulTaskSet(
         tasks: TaskBase[],
         completionIndex: number,
-        result: unknown
+        result: unknown,
+        compoundActionType: compoundActionType,
+        upperSchemaVersion: UpperSchemaVersion
     ): TaskSet {
-        return new TaskSet(true, false, tasks, completionIndex, result, undefined);
+        return new TaskSet(
+            true,
+            false,
+            tasks,
+            compoundActionType,
+            completionIndex,
+            result,
+            undefined,
+            upperSchemaVersion
+        );
     }
 
     public static FailedTaskSet(
         tasks: TaskBase[],
         completionIndex: number,
-        exception: Error
+        exception: Error,
+        compoundActionType: compoundActionType,
+        upperSchemaVersion: UpperSchemaVersion
     ): TaskSet {
-        return new TaskSet(true, true, tasks, completionIndex, undefined, exception);
+        return new TaskSet(
+            true,
+            true,
+            tasks,
+            compoundActionType,
+            completionIndex,
+            undefined,
+            exception,
+            upperSchemaVersion
+        );
     }
 
-    public static UncompletedTaskSet(tasks: TaskBase[]): TaskSet {
-        return new TaskSet(false, false, tasks, undefined, undefined, undefined);
+    public static UncompletedTaskSet(
+        tasks: TaskBase[],
+        compoundActionType: compoundActionType,
+        upperSchemaVersion: UpperSchemaVersion
+    ): TaskSet {
+        return new TaskSet(
+            false,
+            false,
+            tasks,
+            compoundActionType,
+            undefined,
+            undefined,
+            undefined,
+            upperSchemaVersion
+        );
     }
 }
