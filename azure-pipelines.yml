@@ -67,7 +67,8 @@ jobs:
             displayName: "npm build and test (no linting)"
     - job: BuildArtifacts
       pool:
-          vmImage: "vs2017-win2016"
+          name: "1ES-Hosted-AzFunc"
+          vmImage: "MMSUbuntu20.04TLS"
       steps:
           - task: NodeTool@0
             inputs:
@@ -82,10 +83,10 @@ jobs:
           - script: npm pack
             displayName: "pack npm package"
           - task: CopyFiles@2
-            displayName: 'Copy types package to staging'
+            displayName: "Copy types package to staging"
             inputs:
                 SourceFolder: $(System.DefaultWorkingDirectory)
-                Contents: '*.tgz'
+                Contents: "*.tgz"
                 TargetFolder: $(Build.ArtifactStagingDirectory)
           - task: ManifestGeneratorTask@0
             displayName: "SBOM Generation Task"
