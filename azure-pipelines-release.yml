@@ -6,12 +6,13 @@ resources:
         - pipeline: DurableJSCI
           project: "Azure Functions"
           source: azure-functions-durable-js
-          branch: main
+          branch: dev
 
 jobs:
     - job: Release
       pool:
-          vmImage: "ubuntu-latest"
+          name: "1ES-Hosted-AzFunc"
+          vmImage: "MMSUbuntu20.04TLS"
       steps:
           - task: NodeTool@0
             displayName: "Install Node.js"
@@ -27,5 +28,5 @@ jobs:
                 command: custom
                 workingDir: "$(Pipeline.Workspace)/DurableJSCI/drop"
                 verbose: true
-                customCommand: "publish package.tgz"
+                customCommand: "publish package.tgz --dry-run"
                 publishEndpoint: "NPM Durable Functions JS Publish"
