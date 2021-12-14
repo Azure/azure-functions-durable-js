@@ -6,7 +6,7 @@ resources:
         - pipeline: DurableJSCI
           project: "Azure Functions"
           source: azure-functions-durable-js
-          branch: dev
+          branch: main
 
 jobs:
     - job: Release
@@ -28,5 +28,5 @@ jobs:
                 command: custom
                 workingDir: "$(Pipeline.Workspace)/DurableJSCI/drop"
                 verbose: true
-                customCommand: "publish package.tgz --dry-run"
+                customCommand: "publish package.tgz"
                 publishEndpoint: "NPM Durable Functions JS Publish"
