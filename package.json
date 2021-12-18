@@ -30,7 +30,7 @@
         "validate:samples": "npm run build && npm --prefix samples install && npm run build:samples",
         "build:nolint": "npm run clean && npm run stripInternalDocs && echo Done",
         "stripInternalDocs": "tsc --pretty -p tsconfig.nocomments",
-        "test": "npm run validate:samples && npm run build && mocha --recursive ./lib/test/**/*-spec.js",
+        "test": "npm run build && mocha --recursive ./lib/test/**/*-spec.js",
         "test:nolint": "npm run build:nolint && mocha --recursive ./lib/test/**/*-spec.js",
         "watch": "tsc --watch",
         "watch:test": "npm run test -- --watch",

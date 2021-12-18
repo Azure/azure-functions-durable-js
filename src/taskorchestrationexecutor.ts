@@ -2,6 +2,7 @@ import { RetryOptions } from ".";
 import { WhenAllAction } from "./actions/whenallaction";
 import { WhenAnyAction } from "./actions/whenanyaction";
 import {
+    CallEntityAction,
     CreateTimerAction,
     DurableOrchestrationContext,
     EventRaisedEvent,
@@ -13,6 +14,7 @@ import {
     RequestMessage,
     ResponseMessage,
     SubOrchestrationInstanceCompletedEvent,
+    Task,
     TaskCompletedEvent,
 } from "./classes";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
@@ -29,13 +31,12 @@ enum TaskState {
     Completed,
 }
 
-export type TaskID = number | "unassigned" | "ignorable";
+export type TaskID = number | "unassigned" | "ignorable" | string;
 export type BackingAction = IAction | "bookeepingOnly";
 
 export abstract class TaskBase {
     public state: TaskState;
     public parent: CompoundTask | undefined;
-    public apiName: string;
     public isPlayed: boolean;
     public result: unknown;
 
@@ -169,7 +170,7 @@ export class WhenAllTask extends CompoundTask {
 export class WhenAnyTask extends CompoundTask {
     public trySetValue(child: TaskBase): void {
         if (this.state === TaskState.Running) {
-            this.SetValue(false, child.result);
+            this.SetValue(false, child);
         }
     }
 }
@@ -177,6 +178,7 @@ export class WhenAnyTask extends CompoundTask {
 export class RetryAbleTask extends WhenAllTask {
     private isWaitingOnTimer: boolean;
     private numAttempts: number;
+    private error: any;
 
     constructor(
         public innerTask: ProperTask,
@@ -192,26 +194,28 @@ export class RetryAbleTask extends WhenAllTask {
         if (this.isWaitingOnTimer) {
             this.isWaitingOnTimer = false;
 
-            const rescheduledTask = new InternalOnlyTask();
-            rescheduledTask.parent = this;
-            this.children.push(rescheduledTask);
-            this.executor.addToOpenTasks(rescheduledTask);
-            // add to open tasks
-        } else if (child.stateObj === TaskState.Completed) {
-            this.SetValue(false, child.result);
-        } else {
             if (this.numAttempts >= this.retryOptions.maxNumberOfAttempts) {
-                this.SetValue(true, child.result);
+                // we have reached the max number of attempts, set error
+                this.SetValue(true, this.error);
             } else {
+                // re-schedule tasks
                 const rescheduledTask = new InternalOnlyTask();
                 rescheduledTask.parent = this;
                 this.children.push(rescheduledTask);
                 this.executor.addToOpenTasks(rescheduledTask);
-                // add to open tasks
-                this.isWaitingOnTimer = true;
+                this.numAttempts++;
             }
-
-            this.numAttempts++;
+        } else if (child.stateObj === TaskState.Completed) {
+            // task succeeded
+            this.SetValue(false, child.result);
+        } else {
+            // task failed, schedule timer to retry again
+            const rescheduledTask = new InternalOnlyTask();
+            rescheduledTask.parent = this;
+            this.children.push(rescheduledTask);
+            this.executor.addToOpenTasks(rescheduledTask);
+            this.isWaitingOnTimer = true;
+            this.error = child.result;
         }
     }
 }
@@ -228,7 +232,7 @@ export class TaskOrchestrationExecutor {
     private replaySchema: ReplaySchema | undefined;
     public willContinueAsNew: boolean;
     private actions: IAction[];
-    protected openTasks: Record<number, TaskBase | TaskBase[]>;
+    protected openTasks: Record<number | string, TaskBase | TaskBase[]>;
     private eventToTaskValuePayload: { [key in HistoryEventType]?: [boolean, string] };
 
     constructor() {
@@ -325,15 +329,20 @@ export class TaskOrchestrationExecutor {
                 }
                 case HistoryEventType.EventSent: {
                     const key = event.EventId;
-                    if (Object.keys(this.openTasks).findIndex((k) => k === key.toString())) {
-                        const task = this.openTasks[key];
-                        if (task.apiName === "CallEntityAction") {
+                    if (
+                        Object.keys(this.openTasks).findIndex(
+                            (k) => ((k as unknown) as Number) === key
+                        )
+                    ) {
+                        const task = this.openTasks[key] as ProperTask;
+                        const action = task.actionObj;
+                        if (action instanceof CallEntityAction) {
                             // review all of this :)
                             const eventSent = event as EventSentEvent;
                             const requestMessage = JSON.parse(
                                 eventSent.Input as string
                             ) as RequestMessage;
-                            const eventId = Number(requestMessage.id);
+                            const eventId = requestMessage.id;
                             delete this.openTasks[key]; // TODO: make sure this works
                             this.openTasks[eventId] = task;
                         }
@@ -394,10 +403,11 @@ export class TaskOrchestrationExecutor {
         const taskOrtaskList = this.openTasks[key];
         delete this.openTasks[key];
         if (taskOrtaskList === undefined) {
-            this.deferredTasks[key] = function (): void {
+            const updateTask = function (): void {
                 this.setTaskValue(event, isSuccess, idKey);
                 return;
             };
+            this.deferredTasks[key] = updateTask.bind(this);
             return;
         } else if (taskOrtaskList instanceof TaskBase) {
             task = taskOrtaskList;
@@ -412,7 +422,8 @@ export class TaskOrchestrationExecutor {
         let newValue: unknown;
         if (isSuccess) {
             newValue = parseHistoryEvent(event);
-            if (task.apiName == "CallEntityAction") {
+            const action = task.actionObj;
+            if (action instanceof CallEntityAction) {
                 const eventPayload: ResponseMessage = newValue as ResponseMessage;
                 newValue = JSON.parse(eventPayload.result);
 
@@ -462,9 +473,6 @@ export class TaskOrchestrationExecutor {
                 return;
             } else if (generatorResult.value instanceof TaskBase) {
                 newTask = generatorResult.value;
-            } else {
-                // TODO: add a fire-and-forget handling here. In that case, do not error out
-                throw new Error(""); // TODO: throw
             }
         } catch (exception) {
             this.exception = exception;
@@ -513,7 +521,10 @@ export class TaskOrchestrationExecutor {
                 task.id = this.sequenceNumber++;
                 this.openTasks[task.id] = task;
             } else if (task.id !== "ignorable") {
-                const taskList = this.openTasks[task.id];
+                let taskList = this.openTasks[task.id];
+                if (taskList === undefined) {
+                    taskList = [];
+                }
                 if (!(taskList instanceof TaskBase)) {
                     taskList.push(task);
                     this.openTasks[task.id] = taskList;

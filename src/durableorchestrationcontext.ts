@@ -338,7 +338,7 @@ export class DurableOrchestrationContext {
      */
     public waitForExternalEvent(name: string): TaskBase {
         const newAction = new WaitForExternalEventAction(name, ExternalEventType.ExternalEvent);
-        const task = new AtomicTask("unassigned", newAction);
+        const task = new AtomicTask(name, newAction);
         return task; // We'll have to change the interface
     }
 }
