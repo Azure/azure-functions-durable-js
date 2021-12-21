@@ -31,6 +31,7 @@ import {
     IOrchestrationFunctionContext,
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
+import { UpperSchemaVersion } from "../../src/upperSchemaVersion";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 import { TestUtils } from "../testobjects/testutils";
@@ -50,11 +51,15 @@ describe("Orchestrator", () => {
         orchestrator(mockContext);
 
         expect(mockContext.doneValue).to.be.deep.equal(
-            new OrchestratorState({
-                isDone: true,
-                actions: [],
-                output: `Hello, ${name}!`,
-            })
+            new OrchestratorState(
+                {
+                    isDone: true,
+                    actions: [],
+                    output: `Hello, ${name}!`,
+                    schemaVersion: UpperSchemaVersion.V1,
+                },
+                true
+            )
         );
     });
 
@@ -102,11 +107,15 @@ describe("Orchestrator", () => {
                 });
                 await orchestrator(mockContext);
                 expect(mockContext.doneValue).to.deep.equal(
-                    new OrchestratorState({
-                        isDone: true,
-                        actions: [],
-                        output: falsyValue,
-                    })
+                    new OrchestratorState(
+                        {
+                            isDone: true,
+                            actions: [],
+                            output: falsyValue,
+                            schemaVersion: UpperSchemaVersion.V1,
+                        },
+                        true
+                    )
                 );
                 if (isNaN(falsyValue as number)) {
                     expect(isNaN(mockContext.doneValue!.output as number)).to.equal(true);
@@ -301,14 +310,18 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallActivityAction("ThrowsErrorActivity")],
-                        [new CallActivityAction("Hello", name)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallActivityAction("ThrowsErrorActivity")],
+                            [new CallActivityAction("Hello", name)],
+                        ],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -331,11 +344,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CallActivityAction("Hello", name)]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallActivityAction("Hello", name)]],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -350,11 +367,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CallActivityAction("ReturnsFour")]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallActivityAction("ReturnsFour")]],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -376,11 +397,15 @@ describe("Orchestrator", () => {
                     orchestrator(mockContext);
 
                     expect(mockContext.doneValue).to.be.deep.equal(
-                        new OrchestratorState({
-                            isDone: false,
-                            output: undefined,
-                            actions: [[new CallActivityAction("Hello", falsyValue)]],
-                        })
+                        new OrchestratorState(
+                            {
+                                isDone: false,
+                                output: undefined,
+                                actions: [[new CallActivityAction("Hello", falsyValue)]],
+                                schemaVersion: UpperSchemaVersion.V1,
+                            },
+                            true
+                        )
                     );
                 });
 
@@ -400,11 +425,15 @@ describe("Orchestrator", () => {
                     orchestrator(mockContext);
 
                     expect(mockContext.doneValue).to.be.deep.equal(
-                        new OrchestratorState({
-                            isDone: true,
-                            actions: [[new CallActivityAction("Hello", falsyValue)]],
-                            output: `Hello, ${falsyValue}!`,
-                        })
+                        new OrchestratorState(
+                            {
+                                isDone: true,
+                                actions: [[new CallActivityAction("Hello", falsyValue)]],
+                                output: `Hello, ${falsyValue}!`,
+                                schemaVersion: UpperSchemaVersion.V1,
+                            },
+                            true
+                        )
                     );
                 });
             });
@@ -427,11 +456,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CallActivityAction("Hello", name)]],
-                    output: `Hello, ${name}!`,
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [[new CallActivityAction("Hello", name)]],
+                        output: `Hello, ${name}!`,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -452,11 +485,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    output: `Hello, ${name}!`,
-                    actions: [[new CallActivityAction("Hello", name)]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        output: `Hello, ${name}!`,
+                        actions: [[new CallActivityAction("Hello", name)]],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -499,15 +536,19 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [new CallActivityAction("Hello", "Tokyo")],
-                        [new CallActivityAction("Hello", "Seattle")],
-                        [new CallActivityAction("Hello", "London")],
-                    ],
-                    output: ["Hello, Tokyo!", "Hello, Seattle!", "Hello, London!"],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [new CallActivityAction("Hello", "Tokyo")],
+                            [new CallActivityAction("Hello", "Seattle")],
+                            [new CallActivityAction("Hello", "London")],
+                        ],
+                        output: ["Hello, Tokyo!", "Hello, Seattle!", "Hello, London!"],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -560,19 +601,23 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [
-                            new CallActivityWithRetryAction(
-                                "Hello",
-                                new RetryOptions(10000, 2),
-                                name
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallActivityWithRetryAction(
+                                    "Hello",
+                                    new RetryOptions(10000, 2),
+                                    name
+                                ),
+                            ],
                         ],
-                    ],
-                })
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -594,11 +639,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CallActivityWithRetryAction("Hello", retryOptions, name)]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallActivityWithRetryAction("Hello", retryOptions, name)]],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -615,19 +664,23 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [
-                            new CallActivityWithRetryAction(
-                                "Hello",
-                                new RetryOptions(10000, 2),
-                                name
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallActivityWithRetryAction(
+                                    "Hello",
+                                    new RetryOptions(10000, 2),
+                                    name
+                                ),
+                            ],
                         ],
-                    ],
-                })
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -681,19 +734,23 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityWithRetryAction(
-                                "Hello",
-                                new RetryOptions(10000, 2),
-                                name
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityWithRetryAction(
+                                    "Hello",
+                                    new RetryOptions(10000, 2),
+                                    name
+                                ),
+                            ],
                         ],
-                    ],
-                    output: `Hello, ${name}!`,
-                })
+                        output: `Hello, ${name}!`,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -714,24 +771,28 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityWithRetryAction(
-                                "Hello",
-                                new RetryOptions(100, 5),
-                                "Tokyo"
-                            ),
-                            new CallActivityWithRetryAction(
-                                "Hello",
-                                new RetryOptions(100, 5),
-                                "Seattle"
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityWithRetryAction(
+                                    "Hello",
+                                    new RetryOptions(100, 5),
+                                    "Tokyo"
+                                ),
+                                new CallActivityWithRetryAction(
+                                    "Hello",
+                                    new RetryOptions(100, 5),
+                                    "Seattle"
+                                ),
+                            ],
                         ],
-                    ],
-                    output: ["Hello, Tokyo!", "Hello, Seattle!"],
-                })
+                        output: ["Hello, Tokyo!", "Hello, Seattle!"],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -755,11 +816,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CallActivityWithRetryAction("Hello", retryOptions, "World")]],
-                    output: [startingTime, moment(startingTime).add(1, "m").add(30, "s").toDate()],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [new CallActivityWithRetryAction("Hello", retryOptions, "World")],
+                        ],
+                        output: [
+                            startingTime,
+                            moment(startingTime).add(1, "m").add(30, "s").toDate(),
+                        ],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -782,11 +852,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CallHttpAction(req)]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -816,6 +890,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal({
                 isDone: false,
                 output: undefined,
+                schemaVersion: 0,
                 actions: [
                     [
                         {
@@ -858,11 +933,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CallHttpAction(req)]],
-                    output: res,
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [[new CallHttpAction(req)]],
+                        output: res,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -883,11 +962,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -907,11 +990,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
-                    output: "OK",
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
+                        output: "OK",
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -936,13 +1023,17 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
+                        ],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -964,13 +1055,23 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallSubOrchestratorAction("SayHelloWithActivity", undefined, name)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallSubOrchestratorAction(
+                                    "SayHelloWithActivity",
+                                    undefined,
+                                    name
+                                ),
+                            ],
+                        ],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -999,39 +1100,43 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    output: [
-                        `Hello, ${name}_SayHelloWithActivity_0!`,
-                        `Hello, ${name}_SayHelloInline_1!`,
-                        `Hello, ${name}_SayHelloWithActivity_2!`,
-                        `Hello, ${name}_SayHelloInline_3!`,
-                    ],
-                    actions: [
-                        [
-                            new CallSubOrchestratorAction(
-                                "SayHelloWithActivity",
-                                undefined,
-                                `${name}_SayHelloWithActivity_0`
-                            ),
-                            new CallSubOrchestratorAction(
-                                "SayHelloInline",
-                                undefined,
-                                `${name}_SayHelloInline_1`
-                            ),
-                            new CallSubOrchestratorAction(
-                                "SayHelloWithActivity",
-                                undefined,
-                                `${name}_SayHelloWithActivity_2`
-                            ),
-                            new CallSubOrchestratorAction(
-                                "SayHelloInline",
-                                undefined,
-                                `${name}_SayHelloInline_3`
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        output: [
+                            `Hello, ${name}_SayHelloWithActivity_0!`,
+                            `Hello, ${name}_SayHelloInline_1!`,
+                            `Hello, ${name}_SayHelloWithActivity_2!`,
+                            `Hello, ${name}_SayHelloInline_3!`,
                         ],
-                    ],
-                })
+                        actions: [
+                            [
+                                new CallSubOrchestratorAction(
+                                    "SayHelloWithActivity",
+                                    undefined,
+                                    `${name}_SayHelloWithActivity_0`
+                                ),
+                                new CallSubOrchestratorAction(
+                                    "SayHelloInline",
+                                    undefined,
+                                    `${name}_SayHelloInline_1`
+                                ),
+                                new CallSubOrchestratorAction(
+                                    "SayHelloWithActivity",
+                                    undefined,
+                                    `${name}_SayHelloWithActivity_2`
+                                ),
+                                new CallSubOrchestratorAction(
+                                    "SayHelloInline",
+                                    undefined,
+                                    `${name}_SayHelloInline_3`
+                                ),
+                            ],
+                        ],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1057,13 +1162,17 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
-                    ],
-                    output: "Hello, World!",
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
+                        ],
+                        output: "Hello, World!",
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1160,20 +1269,24 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(10000, 2),
-                                name,
-                                childId
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(10000, 2),
+                                    name,
+                                    childId
+                                ),
+                            ],
                         ],
-                    ],
-                })
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1199,20 +1312,24 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                retryOptions,
-                                name,
-                                childId
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    retryOptions,
+                                    name,
+                                    childId
+                                ),
+                            ],
                         ],
-                    ],
-                })
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1236,20 +1353,24 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(10000, 2),
-                                name,
-                                childId
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(10000, 2),
+                                    name,
+                                    childId
+                                ),
+                            ],
                         ],
-                    ],
-                })
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1322,20 +1443,24 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(10000, 2),
-                                name,
-                                childId
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(10000, 2),
+                                    name,
+                                    childId
+                                ),
+                            ],
                         ],
-                    ],
-                    output: `Hello, ${name}!`,
-                })
+                        output: `Hello, ${name}!`,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1356,24 +1481,28 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(100, 5),
-                                "Tokyo"
-                            ),
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(100, 5),
-                                "Seattle"
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(100, 5),
+                                    "Tokyo"
+                                ),
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(100, 5),
+                                    "Seattle"
+                                ),
+                            ],
                         ],
-                    ],
-                    output: ["Hello, Tokyo!", "Hello, Seattle!"],
-                })
+                        output: ["Hello, Tokyo!", "Hello, Seattle!"],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -1394,12 +1523,16 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    // Is Done needs to be marked as true for 1.8.0 and later to properly process continueAsNew
-                    isDone: true,
-                    output: undefined,
-                    actions: [[new ContinueAsNewAction({ value: 6 })]],
-                })
+                new OrchestratorState(
+                    {
+                        // Is Done needs to be marked as true for 1.8.0 and later to properly process continueAsNew
+                        isDone: true,
+                        output: undefined,
+                        actions: [[new ContinueAsNewAction({ value: 6 })]],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -1420,11 +1553,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CreateTimerAction(fireAt)]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CreateTimerAction(fireAt)]],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1443,11 +1580,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CreateTimerAction(fireAt)]],
-                    output: "Timer fired!",
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [[new CreateTimerAction(fireAt)]],
+                        output: "Timer fired!",
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -1497,11 +1638,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [],
-                    output: expectedLockState,
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [],
+                        output: expectedLockState,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1557,15 +1702,19 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.eq(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallActivityAction("Hello", "Tokyo")],
-                        [new CallActivityAction("Hello", "Seattle")],
-                    ],
-                    customStatus: "Tokyo",
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallActivityAction("Hello", "Tokyo")],
+                            [new CallActivityAction("Hello", "Seattle")],
+                        ],
+                        customStatus: "Tokyo",
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -1586,13 +1735,22 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction(
+                                    "start",
+                                    ExternalEventType.ExternalEvent
+                                ),
+                            ],
+                        ],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1613,14 +1771,23 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent)],
-                        [new CallActivityAction("Hello", name)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction(
+                                    "start",
+                                    ExternalEventType.ExternalEvent
+                                ),
+                            ],
+                            [new CallActivityAction("Hello", name)],
+                        ],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1641,13 +1808,22 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction(
+                                    "start",
+                                    ExternalEventType.ExternalEvent
+                                ),
+                            ],
+                        ],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -1669,14 +1845,18 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallActivityAction("GetFileList", "C:\\Dev")],
-                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallActivityAction("GetFileList", "C:\\Dev")],
+                            filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
+                        ],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1696,14 +1876,18 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallActivityAction("GetFileList", "C:\\Dev")],
-                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallActivityAction("GetFileList", "C:\\Dev")],
+                            filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
+                        ],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1720,14 +1904,18 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [new CallActivityAction("GetFileList", "C:\\Dev")],
-                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
-                    ],
-                    output: 6,
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [new CallActivityAction("GetFileList", "C:\\Dev")],
+                            filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
+                        ],
+                        output: 6,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1779,16 +1967,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityAction("TaskA", true),
-                            new CallActivityAction("TaskB", true),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityAction("TaskA", true),
+                                new CallActivityAction("TaskB", true),
+                            ],
                         ],
-                    ],
-                    output: "A",
-                })
+                        output: "A",
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1805,16 +1997,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityAction("TaskA", false),
-                            new CallActivityAction("TaskB", false),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityAction("TaskA", false),
+                                new CallActivityAction("TaskB", false),
+                            ],
                         ],
-                    ],
-                    output: "B",
-                })
+                        output: "B",
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1831,16 +2027,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityAction("TaskA", true),
-                            new CallActivityAction("TaskB", true),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityAction("TaskA", true),
+                                new CallActivityAction("TaskB", true),
+                            ],
                         ],
-                    ],
-                    output: "A",
-                })
+                        output: "A",
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1857,17 +2057,21 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new WaitForExternalEventAction("firstRequiredEvent"),
-                            new WaitForExternalEventAction("secondRequiredEvent"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction("firstRequiredEvent"),
+                                new WaitForExternalEventAction("secondRequiredEvent"),
+                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                            ],
                         ],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
 
             mockContext = new MockContext({
@@ -1879,18 +2083,22 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new WaitForExternalEventAction("firstRequiredEvent"),
-                            new WaitForExternalEventAction("secondRequiredEvent"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction("firstRequiredEvent"),
+                                new WaitForExternalEventAction("secondRequiredEvent"),
+                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                            ],
+                            [new CallActivityAction("Hello", "Tokyo")],
                         ],
-                        [new CallActivityAction("Hello", "Tokyo")],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1907,17 +2115,21 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new WaitForExternalEventAction("firstRequiredEvent"),
-                            new WaitForExternalEventAction("secondRequiredEvent"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction("firstRequiredEvent"),
+                                new WaitForExternalEventAction("secondRequiredEvent"),
+                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                            ],
                         ],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
 
             mockContext = new MockContext({
@@ -1929,17 +2141,21 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new WaitForExternalEventAction("firstRequiredEvent"),
-                            new WaitForExternalEventAction("secondRequiredEvent"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction("firstRequiredEvent"),
+                                new WaitForExternalEventAction("secondRequiredEvent"),
+                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                            ],
                         ],
-                    ],
-                    output: ["timeout"],
-                })
+                        output: ["timeout"],
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1956,16 +2172,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityAction("TaskA", true),
-                            new CallActivityAction("TaskB", true),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityAction("TaskA", true),
+                                new CallActivityAction("TaskB", true),
+                            ],
                         ],
-                    ],
-                    output: "A",
-                })
+                        output: "A",
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1984,16 +2204,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
                         ],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
 
             // second iteration
@@ -2007,17 +2231,21 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
+                            [new CallActivityAction("TaskB")],
                         ],
-                        [new CallActivityAction("TaskB")],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
 
             // third iteration
@@ -2031,17 +2259,21 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
+                            [new CallActivityAction("TaskB")],
                         ],
-                        [new CallActivityAction("TaskB")],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
 
             // final iteration
@@ -2055,17 +2287,21 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
+                            [new CallActivityAction("TaskB")],
                         ],
-                        [new CallActivityAction("TaskB")],
-                    ],
-                    output: {},
-                })
+                        output: {},
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -2084,16 +2320,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
                         ],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
 
             // second iteration
@@ -2107,16 +2347,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
                         ],
-                    ],
-                    output: "Timer finished",
-                })
+                        output: "Timer finished",
+                        schemaVersion: UpperSchemaVersion.V1,
+                    },
+                    true
+                )
             );
         });
     });

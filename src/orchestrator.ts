@@ -7,6 +7,7 @@ import {
 } from "./classes";
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
+import { UpperSchemaVersion } from "./upperSchemaVersion";
 
 /** @hidden */
 export class Orchestrator {
@@ -35,6 +36,10 @@ export class Orchestrator {
         const instanceId: string = orchestrationBinding.instanceId;
         // const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
 
+        // The upper schema version corresponds to the maximum OOProc protocol version supported by the extension,
+        // we use it to determine the format of the SDK's output
+        const upperSchemaVersion: UpperSchemaVersion = orchestrationBinding.upperSchemaVersion;
+
         // Initialize currentUtcDateTime
         const decisionStartedEvent: HistoryEvent = Utils.ensureNonNull(
             state.find((e) => e.EventType === HistoryEventType.OrchestratorStarted),
@@ -58,7 +63,12 @@ export class Orchestrator {
         }
 
         try {
-            await this.taskOrchestrationExecutor.execute(context, state, this.fn);
+            await this.taskOrchestrationExecutor.execute(
+                context,
+                state,
+                upperSchemaVersion,
+                this.fn
+            );
         } catch (error) {
             const b = "";
         }

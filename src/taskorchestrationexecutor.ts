@@ -19,6 +19,7 @@ import {
 } from "./classes";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
 import { OrchestratorState } from "./orchestratorstate";
+import { UpperSchemaVersion } from "./upperSchemaVersion";
 
 export enum ReplaySchema {
     V1,
@@ -229,7 +230,7 @@ export class TaskOrchestrationExecutor {
     private generator: Generator<TaskBase, any, any>;
     private deferredTasks: Record<number | string, () => void>;
     private sequenceNumber: number;
-    private replaySchema: ReplaySchema | undefined;
+    private schemaVersion: UpperSchemaVersion;
     public willContinueAsNew: boolean;
     private actions: IAction[];
     protected openTasks: Record<number | string, TaskBase | TaskBase[]>;
@@ -244,7 +245,6 @@ export class TaskOrchestrationExecutor {
             [HistoryEventType.TaskFailed]: [false, "TaskScheduledId"],
             [HistoryEventType.SubOrchestrationInstanceFailed]: [false, "TaskScheduledId"],
         };
-        this.replaySchema = ReplaySchema.V1; // TODO: fix this
         this.initialize();
     }
 
@@ -265,8 +265,10 @@ export class TaskOrchestrationExecutor {
     public async execute(
         context: IOrchestrationFunctionContext,
         history: HistoryEvent[],
+        schemaVersion: UpperSchemaVersion,
         fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>
     ): Promise<void> {
+        this.schemaVersion = schemaVersion;
         this.context = context.df;
         this.generator = fn(context) as Generator<TaskBase, any, any>; // what happens if code is not a generator?
 
@@ -282,13 +284,14 @@ export class TaskOrchestrationExecutor {
             this.output = this.output;
         }*/
 
+        const actions: IAction[][] = this.actions.length == 0 ? [] : [this.actions];
         const orchestratorState = new OrchestratorState({
             isDone: this.orchestrationInvocationCompleted(),
-            actions: this.getActions(),
+            actions: actions,
             output: this.output,
             error: this.exception?.message,
             customStatus: this.context.customStatus,
-            replaySchema: this.replaySchema,
+            schemaVersion: this.schemaVersion,
         });
 
         let error = undefined;
@@ -488,22 +491,6 @@ export class TaskOrchestrationExecutor {
                     this.addToActions(this.currentTask.actionObj);
                 }
             }
-        }
-    }
-
-    private getActions(): IAction[][] | IAction[] {
-        if (this.replaySchema === ReplaySchema.V1) {
-            const actions = [];
-            for (const action of this.actions) {
-                if (action instanceof WhenAllAction || action instanceof WhenAnyAction) {
-                    actions.push(action.compoundActions);
-                } else {
-                    actions.push([action]);
-                }
-            }
-            return actions;
-        } else {
-            return this.actions;
         }
     }
 
