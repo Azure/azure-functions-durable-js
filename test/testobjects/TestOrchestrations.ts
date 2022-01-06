@@ -165,6 +165,7 @@ export class TestOrchestrations {
         const input = context.df.getInput();
         const task = context.df.callActivity("Hello", input);
         yield task;
+        yield task;
         return yield task;
     });
 

@@ -16,6 +16,7 @@ import {
     OrchestratorStartedEvent,
 } from "./classes";
 import { IOrchestrationFunctionContext } from "./iorchestrationfunctioncontext";
+import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 
 /**
  * An orchestration context with dummy default values to facilitate mocking/stubbing the
@@ -53,7 +54,8 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
             currentUtcDateTime,
             isReplaying,
             parentInstanceId,
-            input
+            input,
+            new TaskOrchestrationExecutor()
         );
     }
     public doneValue: IOrchestratorState | undefined;
