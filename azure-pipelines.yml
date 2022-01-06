@@ -1,44 +1,101 @@
-variables: {
-  MODULE_VERSION: '1.2.2',
-  NODE_8: '8.x',
-  NODE_10: '10.x',
-  NODE_12: '12.x',
-  NODE_14: '14.x'
-}
+variables:
+    { MODULE_VERSION: "1.2.2", NODE_10: "10.x", NODE_12: "12.x", NODE_14: "14.x", NODE_16: "16.x" }
 name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
 
+pr:
+    branches:
+        include:
+            - main
+            - dev
+
 trigger:
-- main
-- dev
+    - main
+    - dev
 
 jobs:
-- job: UnitTests
-  strategy:
-    matrix:
-      WINDOWS_NODE8:
-        IMAGE_TYPE: 'vs2017-win2016'
-        NODE_VERSION: $(NODE_8)
-      WINDOWS_NODE10:
-        IMAGE_TYPE: 'vs2017-win2016'
-        NODE_VERSION: $(NODE_10)
-      WINDOWS_NODE12:
-        IMAGE_TYPE: 'vs2017-win2016'
-        NODE_VERSION: $(NODE_12)
-      WINDOWS_NODE14:
-        IMAGE_TYPE: 'vs2017-win2016'
-        NODE_VERSION: $(NODE_14)
-  pool:
-    vmImage: $(IMAGE_TYPE)
-  steps:
-  - task: NodeTool@0
-    inputs:
-      versionSpec: $(NODE_VERSION)
-    displayName: 'Install Node.js'
-  - script: npm install
-    displayName: 'npm install'
-  - script: npm run test
-    displayName: 'npm build and test'
-    condition: ne(variables['NODE_VERSION'], variables['NODE_8'])
-  - script: npm run test:nolint
-    displayName: 'npm build and test (no linting)'
-    condition: eq(variables['NODE_VERSION'], variables['NODE_8'])
+    - job: UnitTests
+      strategy:
+          matrix:
+              UBUNTU_NODE10:
+                  IMAGE_TYPE: "ubuntu-latest"
+                  NODE_VERSION: $(NODE_10)
+              UBUNTU_NODE12:
+                  IMAGE_TYPE: "ubuntu-latest"
+                  NODE_VERSION: $(NODE_12)
+              UBUNTU_NODE14:
+                  IMAGE_TYPE: "ubuntu-latest"
+                  NODE_VERSION: $(NODE_14)
+              UBUNTU_NODE16:
+                  IMAGE_TYPE: "ubuntu-latest"
+                  NODE_VERSION: $(NODE_16)
+              WINDOWS_NODE10:
+                  IMAGE_TYPE: "windows-latest"
+                  NODE_VERSION: $(NODE_10)
+              WINDOWS_NODE12:
+                  IMAGE_TYPE: "windows-latest"
+                  NODE_VERSION: $(NODE_12)
+              WINDOWS_NODE14:
+                  IMAGE_TYPE: "windows-latest"
+                  NODE_VERSION: $(NODE_14)
+              WINDOWS_NODE16:
+                  IMAGE_TYPE: "windows-latest"
+                  NODE_VERSION: $(NODE_16)
+              MAC_NODE10:
+                  IMAGE_TYPE: "macOS-latest"
+                  NODE_VERSION: $(NODE_10)
+              MAC_NODE12:
+                  IMAGE_TYPE: "macOS-latest"
+                  NODE_VERSION: $(NODE_12)
+              MAC_NODE14:
+                  IMAGE_TYPE: "macOS-latest"
+                  NODE_VERSION: $(NODE_14)
+              MAC_NODE16:
+                  IMAGE_TYPE: "macOS-latest"
+                  NODE_VERSION: $(NODE_16)
+      pool:
+          vmImage: $(IMAGE_TYPE)
+      steps:
+          - task: NodeTool@0
+            inputs:
+                versionSpec: $(NODE_VERSION)
+            displayName: "Install Node dependencies"
+          - script: npm ci
+            displayName: "npm ci"
+          - script: npm run test
+            displayName: "npm build and test"
+          - script: npm run test:nolint
+            displayName: "npm build and test (no linting)"
+    - job: BuildArtifacts
+      pool:
+          name: "1ES-Hosted-AzFunc"
+          demands:
+              - ImageOverride -equals MMSUbuntu20.04TLS
+      steps:
+          - task: NodeTool@0
+            inputs:
+                versionSpec: $(NODE_14)
+            displayName: "Install Node.js"
+          - script: npm ci
+            displayName: "npm ci"
+          - script: npm build
+            displayName: "npm build"
+          - script: npm prune --production
+            displayName: "npm prune --production" # so that only production dependencies are included in SBOM
+          - script: npm pack
+            displayName: "pack npm package"
+          - task: CopyFiles@2
+            displayName: "Copy types package to staging"
+            inputs:
+                SourceFolder: $(System.DefaultWorkingDirectory)
+                Contents: "*.tgz"
+                TargetFolder: $(Build.ArtifactStagingDirectory)
+          - task: ManifestGeneratorTask@0
+            displayName: "SBOM Generation Task"
+            inputs:
+                BuildDropPath: "$(Build.ArtifactStagingDirectory)"
+                Verbosity: "Information"
+          - task: PublishBuildArtifacts@1
+            inputs:
+                PathtoPublish: "$(Build.ArtifactStagingDirectory)"
+                ArtifactName: "drop"
+                publishLocation: "Container"
