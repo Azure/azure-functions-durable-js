@@ -2,7 +2,6 @@ import { TokenSource } from "./tokensource";
 import {
     EntityId,
     RetryOptions,
-    Task,
     CallActivityAction,
     CallActivityWithRetryAction,
     CallEntityAction,
@@ -15,21 +14,19 @@ import {
     ExternalEventType,
     GuidManager,
     HistoryEvent,
-    TaskFactory,
     WaitForExternalEventAction,
 } from "./classes";
-import {
-    TaskBase,
-    WhenAllTask,
-    AtomicTask,
-    RetryAbleTask,
-    WhenAnyTask,
-    TimerTask,
-    ProperTask,
-    TaskOrchestrationExecutor,
-} from "./taskorchestrationexecutor";
+import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import { WhenAllAction } from "./actions/whenallaction";
 import { WhenAnyAction } from "./actions/whenanyaction";
+import {
+    WhenAllTask,
+    WhenAnyTask,
+    AtomicTask,
+    RetryAbleTask,
+    InnerTimerTask,
+} from "./tasks/internalTasks";
+import { Task, TimerTask } from "./tasks/externalTasks";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -51,15 +48,12 @@ export class DurableOrchestrationContext {
         this.currentUtcDateTime = currentUtcDateTime;
         this.parentInstanceId = parentInstanceId;
         this.input = input;
-
         this.newGuidCounter = 0;
-        this.subOrchestratorCounter = 0;
     }
 
     private input: unknown;
     private readonly state: HistoryEvent[];
     private newGuidCounter: number;
-    private subOrchestratorCounter: number;
     public customStatus: unknown;
 
     /**
@@ -111,15 +105,20 @@ export class DurableOrchestrationContext {
      * instances. For use in parallelization operations.
      */
     public Task = {
-        //: ITaskMethods = {
-        all: (tasks: ProperTask[]): WhenAllTask => {
-            const action = new WhenAllAction(tasks);
-            return new WhenAllTask(tasks, action);
+        all: (tasks: Task[]): Task => {
+            const internalTasks = tasks.map((t) => t.internalTask);
+            const action = new WhenAllAction(internalTasks);
+            const innerTask = new WhenAllTask(internalTasks, action);
+            const task = new Task(innerTask);
+            return task;
         },
 
-        any: (tasks: ProperTask[]): WhenAnyTask => {
-            const action = new WhenAnyAction(tasks);
-            return new WhenAnyTask(tasks, action);
+        any: (tasks: Task[]): Task => {
+            const internalTasks = tasks.map((t) => t.internalTask);
+            const action = new WhenAnyAction(internalTasks);
+            const innerTask = new WhenAnyTask(internalTasks, action);
+            const task = new Task(innerTask);
+            return task;
         },
     };
 
@@ -132,9 +131,10 @@ export class DurableOrchestrationContext {
      * @returns A Durable Task that completes when the called activity
      * function completes or fails.
      */
-    public callActivity(name: string, input?: unknown): TaskBase {
+    public callActivity(name: string, input?: unknown): Task {
         const newAction = new CallActivityAction(name, input);
-        const task = new AtomicTask("unassigned", newAction);
+        const innerTask = new AtomicTask(false, newAction);
+        const task = new Task(innerTask);
         return task;
     }
 
@@ -147,14 +147,15 @@ export class DurableOrchestrationContext {
      * @param input The JSON-serializable input to pass to the activity
      * function.
      */
-    public callActivityWithRetry(
-        name: string,
-        retryOptions: RetryOptions,
-        input?: unknown
-    ): TaskBase {
+    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
         const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
-        const innerTask = new AtomicTask("unassigned", newAction);
-        const task = new RetryAbleTask(innerTask, retryOptions, this.taskOrchestratorExecutor);
+        const backingTask = new AtomicTask(false, newAction);
+        const innerTask = new RetryAbleTask(
+            backingTask,
+            retryOptions,
+            this.taskOrchestratorExecutor
+        );
+        const task = new Task(innerTask);
         return task; // We'll have to change the interface
     }
 
@@ -166,13 +167,10 @@ export class DurableOrchestrationContext {
      * @param operationName The name of the operation.
      * @param operationInput The input for the operation.
      */
-    public callEntity(
-        entityId: EntityId,
-        operationName: string,
-        operationInput?: unknown
-    ): TaskBase {
+    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
         const newAction = new CallEntityAction(entityId, operationName, operationInput);
-        const task = new AtomicTask("unassigned", newAction);
+        const innerTask = new AtomicTask(false, newAction);
+        const task = new Task(innerTask);
         return task;
     }
 
@@ -186,7 +184,7 @@ export class DurableOrchestrationContext {
      * If `instanceId` is not specified, the extension will generate an id in
      * the format `<calling orchestrator instance ID>:<#>`
      */
-    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): TaskBase {
+    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"
@@ -194,7 +192,8 @@ export class DurableOrchestrationContext {
         }
 
         const newAction = new CallSubOrchestratorAction(name, instanceId, input);
-        const task = new AtomicTask("unassigned", newAction);
+        const innerTask = new AtomicTask(false, newAction);
+        const task = new Task(innerTask);
         return task;
     }
 
@@ -213,7 +212,7 @@ export class DurableOrchestrationContext {
         retryOptions: RetryOptions,
         input?: unknown,
         instanceId?: string
-    ): TaskBase {
+    ): Task {
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"
@@ -226,9 +225,14 @@ export class DurableOrchestrationContext {
             input,
             instanceId
         );
-        const innerTask = new AtomicTask("unassigned", newAction);
-        const task = new RetryAbleTask(innerTask, retryOptions, this.taskOrchestratorExecutor);
-        return task; // We'll have to change the interface
+        const backingTask = new AtomicTask(false, newAction);
+        const innerTask = new RetryAbleTask(
+            backingTask,
+            retryOptions,
+            this.taskOrchestratorExecutor
+        );
+        const task = new Task(innerTask);
+        return task;
     }
 
     /**
@@ -242,15 +246,16 @@ export class DurableOrchestrationContext {
         content?: string | object,
         headers?: { [key: string]: string },
         tokenSource?: TokenSource
-    ): TaskBase {
+    ): Task {
         if (content && typeof content !== "string") {
             content = JSON.stringify(content);
         }
 
         const req = new DurableHttpRequest(method, uri, content as string, headers, tokenSource);
         const newAction = new CallHttpAction(req);
-        const task = new AtomicTask("unassigned", newAction);
-        return task; // We'll have to change the interface
+        const innerTask = new AtomicTask(false, newAction);
+        const task = new Task(innerTask);
+        return task;
     }
 
     /**
@@ -281,10 +286,10 @@ export class DurableOrchestrationContext {
      * @returns A TimerTask that completes when the durable timer expires.
      */
     public createTimer(fireAt: Date): TimerTask {
-        // TimerTask {
         const newAction = new CreateTimerAction(fireAt);
-        const task = new TimerTask("unassigned", newAction);
-        return task; // We'll have to change the interface
+        const innerTask = new InnerTimerTask(false, newAction);
+        const task = new TimerTask(innerTask);
+        return task;
     }
 
     /**
@@ -336,9 +341,10 @@ export class DurableOrchestrationContext {
      * External clients can raise events to a waiting orchestration instance
      * using [[raiseEvent]].
      */
-    public waitForExternalEvent(name: string): TaskBase {
+    public waitForExternalEvent(name: string): Task {
         const newAction = new WaitForExternalEventAction(name, ExternalEventType.ExternalEvent);
-        const task = new AtomicTask(name, newAction);
-        return task; // We'll have to change the interface
+        const innerTask = new AtomicTask(name, newAction);
+        const task = new Task(innerTask);
+        return task;
     }
 }

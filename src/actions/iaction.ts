@@ -4,7 +4,3 @@ import { ActionType } from "../classes";
 export interface IAction {
     actionType: ActionType;
 }
-
-export interface ICompoundAction extends IAction {
-    children: IAction[];
-}

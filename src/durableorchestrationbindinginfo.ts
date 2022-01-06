@@ -1,5 +1,5 @@
 import { HistoryEvent } from "./classes";
-import { UpperSchemaVersion } from "./upperSchemaVersion";
+import { UpperSchemaVersion } from "./replaySchema";
 
 /** @hidden */
 export class DurableOrchestrationBindingInfo {

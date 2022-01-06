@@ -7,7 +7,7 @@ import {
 } from "./classes";
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
-import { UpperSchemaVersion } from "./upperSchemaVersion";
+import { UpperSchemaVersion } from "./replaySchema";
 
 /** @hidden */
 export class Orchestrator {
@@ -62,16 +62,7 @@ export class Orchestrator {
             );
         }
 
-        try {
-            await this.taskOrchestrationExecutor.execute(
-                context,
-                state,
-                upperSchemaVersion,
-                this.fn
-            );
-        } catch (error) {
-            const b = "";
-        }
+        await this.taskOrchestrationExecutor.execute(context, state, upperSchemaVersion, this.fn);
         return;
     }
 }

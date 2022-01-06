@@ -1,6 +1,5 @@
 import { IAction } from "./classes";
-import { ReplaySchema } from "./taskorchestrationexecutor";
-import { UpperSchemaVersion } from "./upperSchemaVersion";
+import { UpperSchemaVersion, ReplaySchema } from "./replaySchema";
 
 /** @hidden */
 export interface IOrchestratorState {

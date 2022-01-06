@@ -1,5 +1,5 @@
-import { ActionType, IAction, Task, Utils } from "../classes";
-import { BackingAction, ProperTask, TaskBase } from "../taskorchestrationexecutor";
+import { ActionType, IAction } from "../classes";
+import { ProperTask } from "../tasks/internalTasks";
 
 /** @hidden */
 export class WhenAllAction implements IAction {

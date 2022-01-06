@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { TraceContext } from "@azure/functions";
-import { doesNotReject } from "assert";
 import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
@@ -31,7 +30,7 @@ import {
     IOrchestrationFunctionContext,
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
-import { UpperSchemaVersion } from "../../src/upperSchemaVersion";
+import { UpperSchemaVersion } from "../../src/replaySchema";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 import { TestUtils } from "../testobjects/testutils";
@@ -496,31 +495,6 @@ describe("Orchestrator", () => {
                 )
             );
         });
-
-        /* it("handles a completed activity function by returning instead of yielding", async () => {
-            const orchestrator = TestOrchestrations.SayHelloWithActivityDirectReturn;
-            const name = "World";
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetSayHelloWithActivityReplayOne(
-                        "SayHelloWithActivityDirectReturn",
-                        moment.utc().toDate(),
-                        name
-                    ),
-                    name
-                ),
-            });
-
-            orchestrator(mockContext);
-
-            expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CallActivityAction("Hello", name)]],
-                    output: `Hello, ${name}!`,
-                })
-            );
-        });*/
 
         it("handles a completed series of activity functions", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;

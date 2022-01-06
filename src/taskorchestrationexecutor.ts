@@ -1,9 +1,5 @@
-import { RetryOptions } from ".";
-import { WhenAllAction } from "./actions/whenallaction";
-import { WhenAnyAction } from "./actions/whenanyaction";
 import {
     CallEntityAction,
-    CreateTimerAction,
     DurableOrchestrationContext,
     EventRaisedEvent,
     EventSentEvent,
@@ -14,213 +10,26 @@ import {
     RequestMessage,
     ResponseMessage,
     SubOrchestrationInstanceCompletedEvent,
-    Task,
     TaskCompletedEvent,
+    WaitForExternalEventAction,
 } from "./classes";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
 import { OrchestratorState } from "./orchestratorstate";
-import { UpperSchemaVersion } from "./upperSchemaVersion";
+import {
+    TaskBase,
+    InternalOnlyTask,
+    ProperTask,
+    CompoundTask,
+    TaskState,
+} from "./tasks/internalTasks";
+import { UpperSchemaVersion } from "./replaySchema";
+import { Utils } from "./utils";
+import { Task } from "./tasks/externalTasks";
 
-export enum ReplaySchema {
-    V1,
-    V2,
-}
-
-enum TaskState {
-    Running,
-    Failed,
-    Completed,
-}
-
-export type TaskID = number | "unassigned" | "ignorable" | string;
-export type BackingAction = IAction | "bookeepingOnly";
-
-export abstract class TaskBase {
-    public state: TaskState;
-    public parent: CompoundTask | undefined;
-    public isPlayed: boolean;
-    public result: unknown;
-
-    constructor(public id: TaskID, protected action: BackingAction) {
-        this.state = TaskState.Running;
-    }
-
-    get actionObj(): BackingAction {
-        return this.action;
-    }
-
-    get stateObj(): TaskState {
-        return this.state;
-    }
-
-    get isCompleted(): boolean {
-        return this.state !== TaskState.Running;
-    }
-
-    private changeState(state: TaskState): void {
-        if (state === TaskState.Running) {
-            throw Error("Cannot change Task to the RUNNING state.");
-        }
-        this.state = state;
-    }
-
-    public SetValue(isError: boolean, value: unknown): void {
-        let newState: TaskState;
-
-        if (isError) {
-            if (value instanceof Error) {
-                if (value instanceof TaskBase && value.result instanceof Error) {
-                    const errMessage = `Task ID ${this.id} failed but it's value was not an Exception`;
-                    throw new Error(errMessage);
-                }
-            }
-            newState = TaskState.Failed;
-        } else {
-            newState = TaskState.Completed;
-        }
-
-        this.changeState(newState);
-        this.result = value;
-        this.propagate();
-    }
-
-    private propagate(): void {
-        const hasCompleted = this.state !== TaskState.Running;
-        if (hasCompleted && this.parent !== undefined) {
-            this.parent.handleCompletion(this);
-        }
-    }
-}
-
-export class InternalOnlyTask extends TaskBase {
-    constructor() {
-        super("unassigned", "bookeepingOnly");
-    }
-}
-
-export class ProperTask extends TaskBase {
-    protected action: IAction;
-
-    get actionObj(): IAction {
-        return this.action;
-    }
-}
-
-export abstract class CompoundTask extends ProperTask {
-    protected firstError: Error | undefined;
-
-    constructor(public children: TaskBase[], protected action: IAction) {
-        super("ignorable", action);
-        children.map((c) => (c.parent = this));
-        this.firstError = undefined;
-
-        if (children.length == 0) {
-            this.state = TaskState.Completed;
-        }
-    }
-
-    public handleCompletion(child: TaskBase): void {
-        if (!this.isPlayed) {
-            this.isPlayed = child.isPlayed;
-        }
-        this.trySetValue(child);
-    }
-
-    abstract trySetValue(child: TaskBase): void;
-}
-
-export class AtomicTask extends ProperTask {}
-
-export class TimerTask extends AtomicTask {
-    constructor(public id: TaskID, public action: CreateTimerAction) {
-        super(id, action);
-    }
-
-    get isCancelled(): boolean {
-        return this.action.isCanceled;
-    }
-
-    public cancel(): void {
-        if (this.isCompleted) {
-            throw Error("Cannot cancel a completed task.");
-        }
-        this.action.isCanceled = true; // TODO: this is a typo :)
-    }
-}
-
-export class WhenAllTask extends CompoundTask {
-    constructor(public children: TaskBase[], protected action: IAction) {
-        super(children, action);
-    }
-
-    public trySetValue(child: AtomicTask): void {
-        if (child.stateObj === TaskState.Completed) {
-            if (this.children.every((c) => c.stateObj === TaskState.Completed)) {
-                const results = this.children.map((c) => c.result);
-                this.SetValue(false, results);
-            }
-        } else {
-            if (this.firstError === undefined) {
-                this.firstError = child.result as Error;
-                this.SetValue(true, this.firstError);
-            }
-        }
-    }
-}
-
-export class WhenAnyTask extends CompoundTask {
-    public trySetValue(child: TaskBase): void {
-        if (this.state === TaskState.Running) {
-            this.SetValue(false, child);
-        }
-    }
-}
-
-export class RetryAbleTask extends WhenAllTask {
-    private isWaitingOnTimer: boolean;
-    private numAttempts: number;
-    private error: any;
-
-    constructor(
-        public innerTask: ProperTask,
-        private retryOptions: RetryOptions,
-        private executor: TaskOrchestrationExecutor
-    ) {
-        super([innerTask], innerTask.actionObj);
-        this.numAttempts = 1;
-        this.isWaitingOnTimer = false;
-    }
-
-    public trySetValue(child: TaskBase): void {
-        if (this.isWaitingOnTimer) {
-            this.isWaitingOnTimer = false;
-
-            if (this.numAttempts >= this.retryOptions.maxNumberOfAttempts) {
-                // we have reached the max number of attempts, set error
-                this.SetValue(true, this.error);
-            } else {
-                // re-schedule tasks
-                const rescheduledTask = new InternalOnlyTask();
-                rescheduledTask.parent = this;
-                this.children.push(rescheduledTask);
-                this.executor.addToOpenTasks(rescheduledTask);
-                this.numAttempts++;
-            }
-        } else if (child.stateObj === TaskState.Completed) {
-            // task succeeded
-            this.SetValue(false, child.result);
-        } else {
-            // task failed, schedule timer to retry again
-            const rescheduledTask = new InternalOnlyTask();
-            rescheduledTask.parent = this;
-            this.children.push(rescheduledTask);
-            this.executor.addToOpenTasks(rescheduledTask);
-            this.isWaitingOnTimer = true;
-            this.error = child.result;
-        }
-    }
-}
-
+/**
+ * @hidden
+ * Utility class to manage orchestration replay
+ */
 export class TaskOrchestrationExecutor {
     private context: DurableOrchestrationContext;
     private currentTask: TaskBase;
@@ -233,10 +42,14 @@ export class TaskOrchestrationExecutor {
     private schemaVersion: UpperSchemaVersion;
     public willContinueAsNew: boolean;
     private actions: IAction[];
-    protected openTasks: Record<number | string, TaskBase | TaskBase[]>;
+    protected openTasks: Record<number | string, TaskBase>;
+    protected openEvents: Record<number | string, TaskBase[]>;
     private eventToTaskValuePayload: { [key in HistoryEventType]?: [boolean, string] };
 
     constructor() {
+        // Map of task-completion events types to pairs of
+        // (1) whether that event corresponds to a successful task result, and
+        // (2) the field in the event type that would contain the task's ID.
         this.eventToTaskValuePayload = {
             [HistoryEventType.TaskCompleted]: [true, "TaskScheduledId"],
             [HistoryEventType.TimerFired]: [true, "TimerId"],
@@ -248,12 +61,21 @@ export class TaskOrchestrationExecutor {
         this.initialize();
     }
 
+    /**
+     * @hidden
+     *
+     * Initialize the task orchestration executor for a brand new orchestrator invocation.
+     * To be called in ContinueAsNew scenarios as well.
+     */
     private initialize(): void {
-        this.sequenceNumber = 0;
+        // The very first task, to kick-start the generator, is just a dummy/no-op task
         this.currentTask = new InternalOnlyTask();
         this.currentTask.SetValue(false, undefined);
+
+        this.sequenceNumber = 0;
         this.willContinueAsNew = false;
         this.openTasks = {};
+        this.openEvents = {};
         this.actions = [];
         this.deferredTasks = {};
 
@@ -262,6 +84,23 @@ export class TaskOrchestrationExecutor {
         this.orchestratorReturned = false;
     }
 
+    /**
+     * @hidden
+     *
+     * Start an orchestration's execution, replaying based on the currently-available History.
+     *
+     * @param context
+     *  The orchestration context
+     * @param history
+     *  The orchestration history
+     * @param schemaVersion
+     *  The OOProc output schema version expected by the DF extension
+     * @param fn
+     *  The user-code defining the orchestration
+     *
+     * @returns
+     *  Returns void but communicates the resulting orchestrator state via the context object's handler
+     */
     public async execute(
         context: IOrchestrationFunctionContext,
         history: HistoryEvent[],
@@ -270,8 +109,9 @@ export class TaskOrchestrationExecutor {
     ): Promise<void> {
         this.schemaVersion = schemaVersion;
         this.context = context.df;
-        this.generator = fn(context) as Generator<TaskBase, any, any>; // what happens if code is not a generator?
+        this.generator = fn(context) as Generator<TaskBase, any, any>; // TODO: what happens if code is not a generator?
 
+        // Execute the orchestration, using the history for replay
         for (const historyEvent of history) {
             this.processEvent(historyEvent);
             if (this.hasExecutionCompleted()) {
@@ -279,11 +119,7 @@ export class TaskOrchestrationExecutor {
             }
         }
 
-        /* if (!this.willContinueAsNew) {
-            this.orchestratorReturned = true;
-            this.output = this.output;
-        }*/
-
+        // Construct current orchestration state
         const actions: IAction[][] = this.actions.length == 0 ? [] : [this.actions];
         const orchestratorState = new OrchestratorState({
             isDone: this.orchestrationInvocationCompleted(),
@@ -294,102 +130,149 @@ export class TaskOrchestrationExecutor {
             schemaVersion: this.schemaVersion,
         });
 
+        // Record errors, if any
         let error = undefined;
         let result: any = orchestratorState;
         if (this.exception !== undefined) {
             error = new OrchestrationFailureError(this.orchestratorReturned, orchestratorState);
             result = undefined;
         }
+
+        // Communicate the orchestration's current state
         context.done(error, result);
         return;
     }
 
+    /**
+     * @hidden
+     * Determine if the orchestrator should exit, either successfully or through an error.
+     *
+     * @returns
+     *  True if the orchestration's invocation completed, or if an unhandled exception was thrown.
+     *  False otherwise.
+     */
     private hasExecutionCompleted(): boolean {
         return this.orchestrationInvocationCompleted() || this.exception !== undefined;
     }
 
+    /**
+     * @hidden
+     * Determine if the current invocation has finished.
+     *
+     * @returns
+     *  True if the orchestration reached a `return` statement, or a `continueAsNew`.
+     *  False otherwise.
+     */
     private orchestrationInvocationCompleted(): boolean {
         return this.orchestratorReturned || this.willContinueAsNew;
     }
 
+    /**
+     * @hidden
+     * Processes a History event, often by either by updating some deterministic API value, updating
+     * the state of a task, or resuming the user code.
+     *
+     * @param event
+     *  The History event we're currently processing
+     */
     private processEvent(event: HistoryEvent): void {
-        function processSpecialEventsClosure(event: HistoryEvent): boolean {
-            switch (eventType) {
-                case HistoryEventType.OrchestratorStarted: {
-                    const timestamp = event.Timestamp;
-                    if (timestamp > this.context.currentUtcDateTime) {
-                        this.context.currentUtcDateTime = timestamp;
-                    }
-                    return true;
-                }
-                case HistoryEventType.ContinueAsNew: {
-                    this.initialize();
-                    return true;
-                }
-                case HistoryEventType.ExecutionStarted: {
-                    this.resumeUserCode();
-                    return true;
-                }
-                case HistoryEventType.EventSent: {
-                    const key = event.EventId;
-                    if (
-                        Object.keys(this.openTasks).findIndex(
-                            (k) => ((k as unknown) as Number) === key
-                        )
-                    ) {
-                        const task = this.openTasks[key] as ProperTask;
-                        const action = task.actionObj;
-                        if (action instanceof CallEntityAction) {
-                            // review all of this :)
-                            const eventSent = event as EventSentEvent;
-                            const requestMessage = JSON.parse(
-                                eventSent.Input as string
-                            ) as RequestMessage;
-                            const eventId = requestMessage.id;
-                            delete this.openTasks[key]; // TODO: make sure this works
-                            this.openTasks[eventId] = task;
-                        }
-                    }
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        const processSpecialEvents = processSpecialEventsClosure.bind(this);
-
         const eventType = event.EventType;
-        const wasProcessed = processSpecialEvents(event);
-        if (!wasProcessed) {
-            if (Object.keys(this.eventToTaskValuePayload).find((k) => k === eventType.toString())) {
-                const [isSuccess, idKey] = this.eventToTaskValuePayload[eventType] as [
-                    boolean,
-                    string
-                ];
-                this.setTaskValue(event, isSuccess, idKey);
-                this.resumeUserCode();
+        switch (event.EventType) {
+            case HistoryEventType.OrchestratorStarted: {
+                const timestamp = event.Timestamp;
+                if (timestamp > this.context.currentUtcDateTime) {
+                    this.context.currentUtcDateTime = timestamp;
+                }
+                break;
             }
+            case HistoryEventType.ContinueAsNew: {
+                // The clear all state from the orchestration,
+                // as if no processing of History had taken place
+                this.initialize();
+                break;
+            }
+            case HistoryEventType.ExecutionStarted: {
+                this.tryResumingUserCode();
+                break;
+            }
+            case HistoryEventType.EventSent: {
+                // The EventSent event requires careful handling because it is re-used among
+                // CallEntity and WaitForExternalEvent APIs.
+                // For CallEntity, the EventRaised event that contains that API's result will
+                // expect a TaskID that is different from the TaskID found at the root of this
+                // EventSent event. Namely, the TaskID it expects can be found nested in the
+                // "Input" field of the corresponding EventSent event. Here, we handle that
+                // edge-case by correcting the expected TaskID in our openTask list.
+                const key = event.EventId;
+                if (key in this.openTasks) {
+                    const task = this.openTasks[key];
+                    if (task.actionObj instanceof CallEntityAction) {
+                        // extract TaskID from Input field
+                        const eventSent = event as EventSentEvent;
+                        const requestMessage = JSON.parse(
+                            eventSent.Input as string
+                        ) as RequestMessage;
+
+                        // Obtain correct Task ID and update the task to be associated with it
+                        const eventId = requestMessage.id;
+                        delete this.openTasks[key];
+                        this.openTasks[eventId] = task;
+                    }
+                }
+                break;
+            }
+            default:
+                // If the current event contains task-completion data, we resolve that task to a value
+                if (eventType in this.eventToTaskValuePayload) {
+                    const [isSuccess, idKey] = this.eventToTaskValuePayload[eventType] as [
+                        boolean,
+                        string
+                    ];
+                    // We set the corresponding task's value and attempt to resume the orchestration
+                    this.setTaskValue(event, isSuccess, idKey);
+                    this.tryResumingUserCode();
+                }
+                break;
         }
     }
 
+    /**
+     * @hidden
+     * Set a Task's result from a task-completion History event.
+     *
+     * @param event
+     *  The History event containing task-completion information
+     * @param isSuccess
+     *  A flag indicating if the task failed or succeeded
+     * @param idKey
+     *  The property in the History event containing the Task's ID
+     * @returns
+     */
     private setTaskValue(event: HistoryEvent, isSuccess: boolean, idKey: string): void {
-        function parseHistoryEvent(directiveResult: HistoryEvent): unknown {
-            let parsedDirectiveResult: unknown;
+        /**
+         * @hidden
+         *
+         * Extracts a task's result from its corresponding History event
+         * @param completionEvent
+         *  The History event corresponding to the task's completion
+         * @returns
+         *  The task's result
+         */
+        function extractResult(completionEvent: HistoryEvent): unknown {
+            let taskResult: unknown;
 
-            switch (directiveResult.EventType) {
+            switch (completionEvent.EventType) {
                 case HistoryEventType.SubOrchestrationInstanceCompleted:
-                    parsedDirectiveResult = JSON.parse(
-                        (directiveResult as SubOrchestrationInstanceCompletedEvent).Result
+                    taskResult = JSON.parse(
+                        (completionEvent as SubOrchestrationInstanceCompletedEvent).Result
                     );
                     break;
                 case HistoryEventType.TaskCompleted:
-                    parsedDirectiveResult = JSON.parse(
-                        (directiveResult as TaskCompletedEvent).Result
-                    );
+                    taskResult = JSON.parse((completionEvent as TaskCompletedEvent).Result);
                     break;
                 case HistoryEventType.EventRaised:
-                    const eventRaised = directiveResult as EventRaisedEvent;
-                    parsedDirectiveResult =
+                    const eventRaised = completionEvent as EventRaisedEvent;
+                    taskResult =
                         eventRaised && eventRaised.Input
                             ? JSON.parse(eventRaised.Input)
                             : undefined;
@@ -397,96 +280,148 @@ export class TaskOrchestrationExecutor {
                 default:
                     break;
             }
-            return parsedDirectiveResult;
+            return taskResult;
         }
 
+        // First, we attempt to recover the task associated with this history event
         let task: TaskBase;
+        const key = event[idKey as keyof typeof event];
+        if (typeof key === "number" || typeof key === "string") {
+            if (key in this.openTasks) {
+                // Obtain task from open tasks
+                task = this.openTasks[key];
+                delete this.openTasks[key];
+            } else if (key in this.openEvents) {
+                // Obtain task from open events
+                const taskList = this.openEvents[key];
+                delete this.openEvents[key];
+                task = taskList.pop() as TaskBase;
 
-        const key = event[idKey as keyof typeof event] as number; // TODO: a bit of magic here
-        const taskOrtaskList = this.openTasks[key];
-        delete this.openTasks[key];
-        if (taskOrtaskList === undefined) {
-            const updateTask = function (): void {
-                this.setTaskValue(event, isSuccess, idKey);
+                // We ensure openEvents only has an entry for this key if
+                // there's at least 1 task to consume
+                if (taskList.length > 0) {
+                    this.openEvents[key] = taskList;
+                }
+            } else {
+                // If the task is in neither open tasks nor open events, then it must
+                // correspond to the response of an external event that we have yet to wait for.
+                // We track this by deferring the assignment of this task's result until after the task
+                // is scheduled.
+                const updateTask = function (): void {
+                    this.setTaskValue(event, isSuccess, idKey);
+                    return; // we return because the task is yet to be scheduled
+                };
+                this.deferredTasks[key] = updateTask.bind(this);
                 return;
-            };
-            this.deferredTasks[key] = updateTask.bind(this);
-            return;
-        } else if (taskOrtaskList instanceof TaskBase) {
-            task = taskOrtaskList;
-        } else {
-            const taskList = taskOrtaskList;
-            task = taskList.pop() as TaskBase; //ensure the pop is in-place
-            if (taskList.length > 0) {
-                this.openTasks[key] = taskList;
             }
+        } else {
+            throw Error(
+                `Task with ID ${key} could not be retrieved from due to its ID-key being of type ${typeof key}` +
+                    `We expect ID-keys to be of type number or string.` +
+                    `This is probably a replay failure, please file a bug report.`
+            );
         }
 
-        let newValue: unknown;
+        // After obtaining the task, we obtain its result.
+        let taskResult: unknown;
         if (isSuccess) {
-            newValue = parseHistoryEvent(event);
+            // We obtain the task's result value from its corresponding History event.
+            taskResult = extractResult(event);
+
+            // CallEntity tasks need to further de-serialize its value from the
+            // History event, we handle that next.
             const action = task.actionObj;
             if (action instanceof CallEntityAction) {
-                const eventPayload: ResponseMessage = newValue as ResponseMessage;
-                newValue = JSON.parse(eventPayload.result);
+                const eventPayload = new ResponseMessage(taskResult);
+                taskResult = eventPayload.result ? JSON.parse(eventPayload.result) : undefined;
 
+                // Due to how ResponseMessage events are serialized, we can only
+                // determine if they correspond to a failure at this point in
+                // processing. As a result, we flip the "isSuccess" flag here
+                // if an exception is detected.
                 if (eventPayload.exceptionType !== undefined) {
-                    newValue = Error(newValue as string);
+                    taskResult = Error(taskResult as string);
                     isSuccess = false;
                 }
             }
         } else {
+            // The task failed, we attempt to extract the Reason and Details from the event.
             if (
-                this.typeSafeHasOwnProperty(event, "Reason") &&
-                this.typeSafeHasOwnProperty(event, "Details")
+                Utils.hasStringProperty(event, "Reason") &&
+                Utils.hasStringProperty(event, "Details")
             ) {
-                newValue = new Error(`${event.Reason} \n ${event.Details}`);
+                taskResult = new Error(`${event.Reason} \n ${event.Details}`);
+            } else {
+                throw Error(
+                    `Task with ID ${task.id} failed but we could not parse its exception data.` +
+                        `This is probably a replay failure, please file a bug report.`
+                );
             }
         }
+
+        // Set result to the task, and update it's isPlayed flag.
         task.isPlayed = event.IsPlayed;
-        task.SetValue(!isSuccess, newValue);
+        task.SetValue(!isSuccess, taskResult);
     }
 
-    private typeSafeHasOwnProperty<X extends {}, Y extends PropertyKey>(
-        obj: X,
-        prop: Y
-    ): obj is X & Record<Y, unknown> {
-        return obj.hasOwnProperty(prop);
-    }
-
-    private resumeUserCode(): void {
+    /**
+     * @hidden
+     * Attempt to continue executing the orchestrator.
+     */
+    private tryResumingUserCode(): void {
+        // If the current task does not have a result,
+        // then we cannot continue running the user code.
         const currentTask: TaskBase = this.currentTask;
         this.context.isReplaying = currentTask.isPlayed;
         if (currentTask.stateObj === TaskState.Running) {
             return;
         }
 
+        // The feed in the result of the current task to the generator
         let newTask: TaskBase | undefined = undefined;
         try {
-            const taskValue = currentTask.result;
+            // In the WhenAny-case, the result of the current task is another Task.
+            // Here, we make sure not to expose the internal task class by extracting
+            // the user-facing representation of the task.
+            let result = currentTask.result;
+            if (result instanceof ProperTask) {
+                result = result.externalTask;
+            }
+            const taskValue = result;
             const taskSucceeded = currentTask.stateObj === TaskState.Completed;
 
+            // If the task succeeded, we feed the task result as a value;
+            // otherwise, we feed it as an exception.
             const generatorResult = taskSucceeded
                 ? this.generator.next(taskValue)
                 : this.generator.throw(taskValue);
 
             if (generatorResult.done) {
+                // If the generator returned (via a `return` statement),
+                // then we capture the workflow's result result.
                 this.orchestratorReturned = true;
                 this.output = generatorResult.value;
                 return;
-            } else if (generatorResult.value instanceof TaskBase) {
-                newTask = generatorResult.value;
+            } else if (generatorResult.value instanceof Task) {
+                // The generator yielded another task.
+                newTask = generatorResult.value.internalTask;
             }
         } catch (exception) {
+            // The generator threw an exception
             this.exception = exception;
         }
 
         if (newTask !== undefined) {
+            // The generator returned an already-completed task,
+            // so we try to run the user code again.
             this.currentTask = newTask;
             if (newTask.state !== TaskState.Running) {
-                this.resumeUserCode();
+                this.tryResumingUserCode();
             } else {
-                this.addToOpenTasks(newTask);
+                // The task hasn't completed, we add it to the open (incomplete) task list
+                this.trackOpenTask(newTask);
+                // We only keep track of actions from user-declared tasks, not from
+                // tasks generated internally to facilitate history-processing.
                 if (this.currentTask instanceof ProperTask) {
                     this.addToActions(this.currentTask.actionObj);
                 }
@@ -494,37 +429,64 @@ export class TaskOrchestrationExecutor {
         }
     }
 
+    /**
+     * @hidden
+     * Add an action to the user-defined actions list.
+     * It ignores the request if the orchestrator has already
+     * signaled a "ContinueAsNew" operation.
+     *
+     * @param action
+     *  User-defined action to track
+     */
     public addToActions(action: IAction): void {
-        if (this.willContinueAsNew) {
-            return;
+        if (!this.willContinueAsNew) {
+            this.actions.push(action);
         }
-
-        this.actions.push(action);
     }
 
-    public addToOpenTasks(task: TaskBase): void {
-        if (task instanceof AtomicTask || task instanceof InternalOnlyTask) {
-            if (task.id === "unassigned") {
+    /**
+     * @hidden
+     * Tracks this task as waiting for completion.
+     * In the process, it assigns the task an ID if it doesn't have one already.
+     *
+     * @param task
+     *  Task to add to open tasks or open events list
+     */
+    public trackOpenTask(task: InternalOnlyTask | ProperTask): void {
+        // TODO: should there be a check for the task status as RUNNING?
+
+        // The open tasks and open events objects only track singular tasks, not compound ones.
+        // Therefore, for a compound task, we recurse down to its inner sub-tasks add
+        // record all singular tasks.
+        if (task instanceof CompoundTask) {
+            for (const child of task.children) {
+                this.trackOpenTask(child);
+            }
+        } else {
+            if (task.id === false) {
+                // The task needs to be given an ID and then stored.
                 task.id = this.sequenceNumber++;
                 this.openTasks[task.id] = task;
-            } else if (task.id !== "ignorable") {
-                let taskList = this.openTasks[task.id];
-                if (taskList === undefined) {
-                    taskList = [];
-                }
-                if (!(taskList instanceof TaskBase)) {
-                    taskList.push(task);
-                    this.openTasks[task.id] = taskList;
-                }
+            } else if (task.actionObj instanceof WaitForExternalEventAction) {
+                // The ID of `WaitForExternalEvent` tasks is the name of
+                // the external event. Given that multiple `WaitForExternalEvent`
+                // tasks can be led for the same event name at once, we need
+                // to store these tasks as a list.
+
+                // Obtain the current list of tasks for this external event name.
+                // If there's no such list, we initialize it.
+                const eventList = task.id in this.openEvents ? this.openEvents[task.id] : [];
+
+                eventList.push(task);
+                this.openEvents[task.id] = eventList;
             }
 
+            // If the task's ID can be found in deferred tasks, then we have already processed
+            // the history event that contains the result for this task. Therefore, we immediately
+            // assign this task's result so that the user-code may proceed executing.
             if (this.deferredTasks.hasOwnProperty(task.id)) {
                 const taskUpdateAction = this.deferredTasks[task.id];
                 taskUpdateAction();
-            }
-        } else if (task instanceof CompoundTask) {
-            for (const child of task.children) {
-                this.addToOpenTasks(child);
             }
         }
     }

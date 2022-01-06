@@ -25,6 +25,19 @@ export class Utils {
         return times[0] * 1000 + times[1] / 1e6;
     }
 
+    public static hasStringProperty<X extends {}, Y extends PropertyKey>(
+        obj: X,
+        prop: Y
+    ): obj is X & Record<Y, string> {
+        if (Utils.hasOwnProperty(obj, prop)) {
+            const propKey = prop as keyof typeof obj;
+            const property = obj[propKey];
+            const propertyIsString = typeof property === "string";
+            return propertyIsString;
+        }
+        return false;
+    }
+
     public static hasOwnProperty<X extends {}, Y extends PropertyKey>(
         obj: X,
         prop: Y
