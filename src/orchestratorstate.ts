@@ -50,6 +50,7 @@ export class OrchestratorState implements IOrchestratorState {
         return flatActions;
     }
 
+    // literal actions is used exclusively to facilitate testing. If true, the action representation is to be left intact
     constructor(options: IOrchestratorState, _literalActions = false) {
         this.isDone = options.isDone;
         this.actions = options.actions;
