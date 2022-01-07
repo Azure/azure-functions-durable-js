@@ -15,7 +15,8 @@ export class ResponseMessage {
             }
         } else {
             throw Error(
-                "Attempted to construct ResponseMessage event from incompatible History event. This is probably a bug in History-replay."
+                "Attempted to construct ResponseMessage event from incompatible History event. This is probably a bug in History-replay." +
+                    "Please file a bug report."
             );
         }
     }

@@ -13,10 +13,13 @@ export class DurableOrchestrationBindingInfo {
         public readonly parentInstanceId?: string,
         upperSchemaVersion = 0 // TODO: Implement entity locking // public readonly contextLocks?: EntityId[],
     ) {
+        // If the extension-sent upperSchemaVersion is within the range of values
+        // we support, we select it. Otherwise, we conclude it's higher than any
+        // version we support, so we default to our highest version.
         if (Object.values(UpperSchemaVersion).includes(upperSchemaVersion)) {
             this.upperSchemaVersion = upperSchemaVersion;
         } else {
-            this.upperSchemaVersion = UpperSchemaVersion.V1;
+            this.upperSchemaVersion = UpperSchemaVersion.V2;
         }
     }
 }
