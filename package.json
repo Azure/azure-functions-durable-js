@@ -48,7 +48,6 @@
         "debug": "~2.6.9",
         "lodash": "^4.17.15",
         "rimraf": "~2.5.4",
-        "typedoc": "^0.17.1",
         "uuid": "~3.3.2",
         "validator": "~13.7.0"
     },
@@ -76,6 +75,7 @@
         "prettier": "^2.0.5",
         "sinon": "~7.1.1",
         "ts-node": "^10.0.0",
+        "typedoc": "^0.22.11",
         "typescript": "^3.8.3"
     },
     "engines": {
