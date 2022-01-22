@@ -1,0 +1,33 @@
+trigger: none
+pr: none
+
+resources:
+    pipelines:
+        - pipeline: DurableJSCI
+          project: "Azure Functions"
+          source: azure-functions-durable-js
+          branch: main
+
+jobs:
+    - job: Release
+      pool:
+          name: "1ES-Hosted-AzFunc"
+          demands:
+              - ImageOverride -equals MMSUbuntu20.04TLS
+      steps:
+          - task: NodeTool@0
+            displayName: "Install Node.js"
+            inputs:
+                versionSpec: 14.x
+          - download: DurableJSCI
+          - script: mv *.tgz package.tgz
+            displayName: "Rename tgz file" # because the publish command below requires an exact path
+            workingDirectory: "$(Pipeline.Workspace)/DurableJSCI/drop"
+          - task: Npm@1
+            displayName: "npm publish"
+            inputs:
+                command: custom
+                workingDir: "$(Pipeline.Workspace)/DurableJSCI/drop"
+                verbose: true
+                customCommand: "publish package.tgz"
+                publishEndpoint: "NPM Durable Functions JS Publish"
