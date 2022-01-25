@@ -1,7 +1,6 @@
-import { RetryOptions } from "..";
-import { IAction, CreateTimerAction } from "../classes";
-import { TaskOrchestrationExecutor } from "../taskorchestrationexecutor";
-import { Task } from "./externalTasks";
+import { RetryOptions } from ".";
+import { IAction, CreateTimerAction } from "./classes";
+import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 
 /**
  * @hidden
@@ -26,6 +25,76 @@ export type TaskID = number | string | false;
  * A backing action, either a proper action or "noOp" for an internal-only task
  */
 export type BackingAction = IAction | "noOp";
+
+/**
+ * A Durable Functions Task.
+ */
+export interface ITask {
+    /**
+     * Whether the task has completed. Note that completion is not
+     * equivalent to success.
+     */
+    isCompleted: boolean;
+    /**
+     * Whether the task faulted in some way due to error.
+     */
+    isFaulted: boolean;
+    /**
+     * The result of the task, if completed. Otherwise `undefined`.
+     */
+    result?: unknown;
+}
+
+/**
+ * Returned from [[DurableOrchestrationClient]].[[createTimer]] if the call is
+ * not `yield`-ed. Represents a pending timer. See documentation on [[Task]]
+ * for more information.
+ *
+ * All pending timers must be completed or canceled for an orchestration to
+ * complete.
+ *
+ * @example Cancel a timer
+ * ```javascript
+ * // calculate expiration date
+ * const timeoutTask = context.df.createTimer(expirationDate);
+ *
+ * // do some work
+ *
+ * if (!timeoutTask.isCompleted) {
+ *     timeoutTask.cancel();
+ * }
+ * ```
+ *
+ * @example Create a timeout
+ * ```javascript
+ * const now = Date.now();
+ * const expiration = new Date(now.valueOf()).setMinutes(now.getMinutes() + 30);
+ *
+ * const timeoutTask = context.df.createTimer(expirationDate);
+ * const otherTask = context.df.callActivity("DoWork");
+ *
+ * const winner = yield context.df.Task.any([timeoutTask, otherTask]);
+ *
+ * if (winner === otherTask) {
+ *     // do some more work
+ * }
+ *
+ * if (!timeoutTask.isCompleted) {
+ *     timeoutTask.cancel();
+ * }
+ * ```
+ */
+export interface ITimerTask extends ITask {
+    /**
+     * @returns Whether or not the timer has been canceled.
+     */
+    isCancelled: boolean;
+    /**
+     * Indicates the timer should be canceled. This request will execute on the
+     * next `yield` or `return` statement.
+     */
+    cancel: () => void;
+}
 
 /**
  * @hidden
@@ -61,8 +130,16 @@ export abstract class TaskBase {
     }
 
     /** Whether this task is not in the Running state */
-    get isCompleted(): boolean {
+    get hasResult(): boolean {
         return this.state !== TaskState.Running;
+    }
+
+    get isFaulted(): boolean {
+        return this.state === TaskState.Failed;
+    }
+
+    get isCompleted(): boolean {
+        return this.state === TaskState.Completed;
     }
 
     /** Change this task from the Running state to a completed state */
@@ -74,7 +151,7 @@ export abstract class TaskBase {
     }
 
     /** Attempt to set a result for this task, and notifies parents, if any */
-    public SetValue(isError: boolean, value: unknown): void {
+    public setValue(isError: boolean, value: unknown): void {
         let newState: TaskState;
 
         if (isError) {
@@ -116,7 +193,7 @@ export abstract class TaskBase {
  * DF APIs that decompose into smaller DF APIs that the user didn't explicitly
  * schedule.
  */
-export class InternalOnlyTask extends TaskBase {
+export class NoOpTask extends TaskBase {
     constructor() {
         super(false, "noOp");
     }
@@ -126,9 +203,8 @@ export class InternalOnlyTask extends TaskBase {
  * @hidden
  * A task that should result in an Action being communicated to the DF extension.
  */
-export class ProperTask extends TaskBase {
+export class DFTask extends TaskBase implements ITask {
     protected action: IAction;
-    public externalTask: Task | undefined;
 
     /** Get this task's backing action */
     get actionObj(): IAction {
@@ -141,7 +217,7 @@ export class ProperTask extends TaskBase {
  *
  * A task that depends on the completion of other (sub-) tasks.
  */
-export abstract class CompoundTask extends ProperTask {
+export abstract class CompoundTask extends DFTask {
     protected firstError: Error | undefined;
 
     /**
@@ -189,14 +265,14 @@ export abstract class CompoundTask extends ProperTask {
     abstract trySetValue(child: TaskBase): void;
 }
 
-export class AtomicTask extends ProperTask {}
+export class AtomicTask extends DFTask {}
 
 /**
  * @hidden
  * A timer task. This is the internal interface to the user-exposed TimerTask, which
  * has a more restricted API.
  */
-export class InnerTimerTask extends AtomicTask {
+export class TimerTask extends AtomicTask implements ITimerTask {
     /**
      * @hidden
      * Construct a Timer Task.
@@ -221,7 +297,7 @@ export class InnerTimerTask extends AtomicTask {
      * It errors out if the task has already completed.
      */
     public cancel(): void {
-        if (this.isCompleted) {
+        if (this.hasResult) {
             throw Error("Cannot cancel a completed task.");
         }
         this.action.isCancelled = true; // TODO: fix typo
@@ -260,13 +336,13 @@ export class WhenAllTask extends CompoundTask {
             if (this.children.every((c) => c.stateObj === TaskState.Completed)) {
                 // The result is a list of all sub-task's results
                 const results = this.children.map((c) => c.result);
-                this.SetValue(false, results);
+                this.setValue(false, results);
             }
         } else {
             // If any task failed, we fail the entire compound task
             if (this.firstError === undefined) {
                 this.firstError = child.result as Error;
-                this.SetValue(true, this.firstError);
+                this.setValue(true, this.firstError);
             }
         }
     }
@@ -286,8 +362,13 @@ export class WhenAnyTask extends CompoundTask {
      *  The sub-task that just completed
      */
     public trySetValue(child: TaskBase): void {
+        // For a Task to have isError = true, it needs to contain within an Exception/Error datatype.
+        // However, WhenAny only contains Tasks as its result, so technically it "never errors out".
+        // The isError flag is used simply to determine if the result of the task should be fed in
+        // as a value, or as a raised exception to the generator code. For WhenAny, we always feed
+        // in the result as a value.
         if (this.state === TaskState.Running) {
-            this.SetValue(false, child);
+            this.setValue(false, child);
         }
     }
 }
@@ -300,7 +381,7 @@ export class WhenAnyTask extends CompoundTask {
  * into several sub-tasks (a growing sequence of timers and atomic tasks)
  * that all need to complete before this task reaches an end-value.
  */
-export class RetryAbleTask extends WhenAllTask {
+export class RetryableTask extends WhenAllTask {
     private isWaitingOnTimer: boolean;
     private numAttempts: number;
     private error: any;
@@ -318,7 +399,7 @@ export class RetryAbleTask extends WhenAllTask {
      *  we use to to scheduling new tasks (timers and retries)
      */
     constructor(
-        public innerTask: ProperTask,
+        public innerTask: DFTask,
         private retryOptions: RetryOptions,
         private executor: TaskOrchestrationExecutor
     ) {
@@ -341,12 +422,12 @@ export class RetryAbleTask extends WhenAllTask {
             // If we're out of retry attempts, we can set the output value
             // of this task to be that of the last error we encountered
             if (this.numAttempts >= this.retryOptions.maxNumberOfAttempts) {
-                this.SetValue(true, this.error);
+                this.setValue(true, this.error);
             } else {
                 // If we still have more attempts available, we re-schedule the
                 // original task. Since these sub-tasks are not user-managed,
                 // they are declared as internal tasks.
-                const rescheduledTask = new InternalOnlyTask();
+                const rescheduledTask = new NoOpTask();
                 rescheduledTask.parent = this;
                 this.children.push(rescheduledTask);
                 this.executor.trackOpenTask(rescheduledTask);
@@ -354,11 +435,11 @@ export class RetryAbleTask extends WhenAllTask {
             }
         } else if (child.stateObj === TaskState.Completed) {
             // If we have a successful non-timer task, we accept its result
-            this.SetValue(false, child.result);
+            this.setValue(false, child.result);
         } else {
             // If the sub-task failed, schedule timer to retry again.
             // Since these sub-tasks are not user-managed, they are declared as internal tasks.
-            const rescheduledTask = new InternalOnlyTask();
+            const rescheduledTask = new NoOpTask();
             rescheduledTask.parent = this;
             this.children.push(rescheduledTask);
             this.executor.trackOpenTask(rescheduledTask);

@@ -1,5 +1,5 @@
 import { IAction } from "./classes";
-import { UpperSchemaVersion, ReplaySchema } from "./replaySchema";
+import { ReplaySchema } from "./replaySchema";
 
 /** @hidden */
 export interface IOrchestratorState {
@@ -9,5 +9,5 @@ export interface IOrchestratorState {
     error?: string;
     customStatus?: unknown;
     replaySchema?: ReplaySchema | undefined;
-    schemaVersion: UpperSchemaVersion;
+    schemaVersion: ReplaySchema;
 }

@@ -30,7 +30,7 @@ import {
     IOrchestrationFunctionContext,
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
-import { UpperSchemaVersion } from "../../src/replaySchema";
+import { ReplaySchema } from "../../src/replaySchema";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 import { TestUtils } from "../testobjects/testutils";
@@ -55,7 +55,7 @@ describe("Orchestrator", () => {
                     isDone: true,
                     actions: [],
                     output: `Hello, ${name}!`,
-                    schemaVersion: UpperSchemaVersion.V1,
+                    schemaVersion: ReplaySchema.V1,
                 },
                 true
             )
@@ -111,7 +111,7 @@ describe("Orchestrator", () => {
                             isDone: true,
                             actions: [],
                             output: falsyValue,
-                            schemaVersion: UpperSchemaVersion.V1,
+                            schemaVersion: ReplaySchema.V1,
                         },
                         true
                     )
@@ -317,7 +317,7 @@ describe("Orchestrator", () => {
                             [new CallActivityAction("ThrowsErrorActivity")],
                             [new CallActivityAction("Hello", name)],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -348,7 +348,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         output: undefined,
                         actions: [[new CallActivityAction("Hello", name)]],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -371,7 +371,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         output: undefined,
                         actions: [[new CallActivityAction("ReturnsFour")]],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -401,7 +401,7 @@ describe("Orchestrator", () => {
                                 isDone: false,
                                 output: undefined,
                                 actions: [[new CallActivityAction("Hello", falsyValue)]],
-                                schemaVersion: UpperSchemaVersion.V1,
+                                schemaVersion: ReplaySchema.V1,
                             },
                             true
                         )
@@ -429,7 +429,7 @@ describe("Orchestrator", () => {
                                 isDone: true,
                                 actions: [[new CallActivityAction("Hello", falsyValue)]],
                                 output: `Hello, ${falsyValue}!`,
-                                schemaVersion: UpperSchemaVersion.V1,
+                                schemaVersion: ReplaySchema.V1,
                             },
                             true
                         )
@@ -460,7 +460,7 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [[new CallActivityAction("Hello", name)]],
                         output: `Hello, ${name}!`,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -489,7 +489,7 @@ describe("Orchestrator", () => {
                         isDone: true,
                         output: `Hello, ${name}!`,
                         actions: [[new CallActivityAction("Hello", name)]],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -519,7 +519,7 @@ describe("Orchestrator", () => {
                             [new CallActivityAction("Hello", "London")],
                         ],
                         output: ["Hello, Tokyo!", "Hello, Seattle!", "Hello, London!"],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -588,7 +588,7 @@ describe("Orchestrator", () => {
                                 ),
                             ],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -618,7 +618,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         output: undefined,
                         actions: [[new CallActivityWithRetryAction("Hello", retryOptions, name)]],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -651,7 +651,7 @@ describe("Orchestrator", () => {
                                 ),
                             ],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -721,7 +721,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: `Hello, ${name}!`,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -763,7 +763,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: ["Hello, Tokyo!", "Hello, Seattle!"],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -800,7 +800,7 @@ describe("Orchestrator", () => {
                             startingTime,
                             moment(startingTime).add(1, "m").add(30, "s").toDate(),
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -831,7 +831,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         output: undefined,
                         actions: [[new CallHttpAction(req)]],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -912,7 +912,7 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [[new CallHttpAction(req)]],
                         output: res,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -941,7 +941,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         output: undefined,
                         actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -969,7 +969,7 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
                         output: "OK",
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1004,7 +1004,7 @@ describe("Orchestrator", () => {
                         actions: [
                             [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1042,7 +1042,7 @@ describe("Orchestrator", () => {
                                 ),
                             ],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1107,7 +1107,7 @@ describe("Orchestrator", () => {
                                 ),
                             ],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1143,7 +1143,7 @@ describe("Orchestrator", () => {
                             [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
                         ],
                         output: "Hello, World!",
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1257,7 +1257,7 @@ describe("Orchestrator", () => {
                                 ),
                             ],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1300,7 +1300,7 @@ describe("Orchestrator", () => {
                                 ),
                             ],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1341,7 +1341,7 @@ describe("Orchestrator", () => {
                                 ),
                             ],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1431,7 +1431,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: `Hello, ${name}!`,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1473,7 +1473,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: ["Hello, Tokyo!", "Hello, Seattle!"],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1501,9 +1501,9 @@ describe("Orchestrator", () => {
                     {
                         // Is Done needs to be marked as true for 1.8.0 and later to properly process continueAsNew
                         isDone: true,
-                        output: undefined,
+                        output: 6,
                         actions: [[new ContinueAsNewAction({ value: 6 })]],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1532,7 +1532,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         output: undefined,
                         actions: [[new CreateTimerAction(fireAt)]],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1559,7 +1559,7 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [[new CreateTimerAction(fireAt)]],
                         output: "Timer fired!",
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1617,7 +1617,7 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [],
                         output: expectedLockState,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1685,7 +1685,7 @@ describe("Orchestrator", () => {
                             [new CallActivityAction("Hello", "Seattle")],
                         ],
                         customStatus: "Tokyo",
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1721,7 +1721,7 @@ describe("Orchestrator", () => {
                                 ),
                             ],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1758,7 +1758,7 @@ describe("Orchestrator", () => {
                             ],
                             [new CallActivityAction("Hello", name)],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1794,7 +1794,7 @@ describe("Orchestrator", () => {
                                 ),
                             ],
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1827,7 +1827,7 @@ describe("Orchestrator", () => {
                             [new CallActivityAction("GetFileList", "C:\\Dev")],
                             filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1858,7 +1858,7 @@ describe("Orchestrator", () => {
                             [new CallActivityAction("GetFileList", "C:\\Dev")],
                             filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                         ],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1886,7 +1886,7 @@ describe("Orchestrator", () => {
                             filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
                         ],
                         output: 6,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1951,7 +1951,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: "A",
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -1981,7 +1981,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: "B",
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2011,7 +2011,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: "A",
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2042,7 +2042,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: undefined,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2069,7 +2069,7 @@ describe("Orchestrator", () => {
                             [new CallActivityAction("Hello", "Tokyo")],
                         ],
                         output: undefined,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2100,7 +2100,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: undefined,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2126,7 +2126,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: ["timeout"],
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2156,7 +2156,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: "A",
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2188,7 +2188,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: undefined,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2216,7 +2216,7 @@ describe("Orchestrator", () => {
                             [new CallActivityAction("TaskB")],
                         ],
                         output: undefined,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2244,7 +2244,7 @@ describe("Orchestrator", () => {
                             [new CallActivityAction("TaskB")],
                         ],
                         output: undefined,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2272,7 +2272,7 @@ describe("Orchestrator", () => {
                             [new CallActivityAction("TaskB")],
                         ],
                         output: {},
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2304,7 +2304,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: undefined,
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )
@@ -2331,7 +2331,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         output: "Timer finished",
-                        schemaVersion: UpperSchemaVersion.V1,
+                        schemaVersion: ReplaySchema.V1,
                     },
                     true
                 )

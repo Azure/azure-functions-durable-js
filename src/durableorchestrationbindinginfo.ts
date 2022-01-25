@@ -1,9 +1,9 @@
 import { HistoryEvent } from "./classes";
-import { UpperSchemaVersion } from "./replaySchema";
+import { LatestReplaySchema, ReplaySchema } from "./replaySchema";
 
 /** @hidden */
 export class DurableOrchestrationBindingInfo {
-    public readonly upperSchemaVersion: UpperSchemaVersion;
+    public readonly upperSchemaVersion: ReplaySchema;
 
     constructor(
         public readonly history: HistoryEvent[] = [],
@@ -13,13 +13,16 @@ export class DurableOrchestrationBindingInfo {
         public readonly parentInstanceId?: string,
         upperSchemaVersion = 0 // TODO: Implement entity locking // public readonly contextLocks?: EntityId[],
     ) {
-        // If the extension-sent upperSchemaVersion is within the range of values
-        // we support, we select it. Otherwise, we conclude it's higher than any
-        // version we support, so we default to our highest version.
-        if (Object.values(UpperSchemaVersion).includes(upperSchemaVersion)) {
+        // It is assumed that the extension supports all schemas in range [0, upperSchemaVersion].
+        // Similarly, it is assumed that this SDK supports all schemas in range [0, LatestReplaySchema].
+
+        // Therefore, if the extension supplies a upperSchemaVersion included in our ReplaySchema enum, we use it.
+        // But if the extension supplies an upperSchemaVersion not included in our ReplaySchema enum, then we
+        // assume that upperSchemaVersion is larger than LatestReplaySchema and therefore use LatestReplaySchema instead.
+        if (Object.values(ReplaySchema).includes(upperSchemaVersion)) {
             this.upperSchemaVersion = upperSchemaVersion;
         } else {
-            this.upperSchemaVersion = UpperSchemaVersion.V2;
+            this.upperSchemaVersion = LatestReplaySchema;
         }
     }
 }

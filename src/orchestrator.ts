@@ -7,13 +7,17 @@ import {
 } from "./classes";
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
-import { UpperSchemaVersion } from "./replaySchema";
+import { ReplaySchema } from "./replaySchema";
 
 /** @hidden */
 export class Orchestrator {
     private currentUtcDateTime: Date;
     private taskOrchestrationExecutor: TaskOrchestrationExecutor;
 
+    // Our current testing infrastructure depends on static unit testing helpers that don't play
+    // nicely with Orchestrator data being initialized in the constructor: state may preserved
+    // across unit test runs.
+    // As a result, we are currently constrained to initialize all of our data in the `handle` method.
     constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {}
 
     public listen(): (context: IOrchestrationFunctionContext) => Promise<void> {
@@ -38,7 +42,7 @@ export class Orchestrator {
 
         // The upper schema version corresponds to the maximum OOProc protocol version supported by the extension,
         // we use it to determine the format of the SDK's output
-        const upperSchemaVersion: UpperSchemaVersion = orchestrationBinding.upperSchemaVersion;
+        const upperSchemaVersion: ReplaySchema = orchestrationBinding.upperSchemaVersion;
 
         // Initialize currentUtcDateTime
         const decisionStartedEvent: HistoryEvent = Utils.ensureNonNull(

@@ -1,7 +1,7 @@
 import { WhenAllAction } from "./actions/whenallaction";
 import { WhenAnyAction } from "./actions/whenanyaction";
 import { IAction, IOrchestratorState } from "./classes";
-import { UpperSchemaVersion } from "./replaySchema";
+import { ReplaySchema } from "./replaySchema";
 
 /** @hidden */
 export class OrchestratorState implements IOrchestratorState {
@@ -10,7 +10,7 @@ export class OrchestratorState implements IOrchestratorState {
     public readonly output: unknown;
     public readonly error?: string;
     public readonly customStatus?: unknown;
-    public readonly schemaVersion: UpperSchemaVersion;
+    public readonly schemaVersion: ReplaySchema;
 
     /**
      * @hidden
@@ -68,7 +68,7 @@ export class OrchestratorState implements IOrchestratorState {
         // atomic actions are represented as a 1-element lists.
         // For example, given actions list: [Activity, WhenAny(ExternalEvent, WhenAll(Timer, Activity))]
         // The V1 protocol expects: [[Activity], [ExternalEvent, Timer, Activity]]
-        if (options.schemaVersion === UpperSchemaVersion.V1 && !_literalActions) {
+        if (options.schemaVersion === ReplaySchema.V1 && !_literalActions) {
             // We need to transform our V2 action representation to V1.
             // In V2, actions are represented as 2D arrays (for legacy reasons) with a singular element: an array of actions.
             const actions = this.actions[0];

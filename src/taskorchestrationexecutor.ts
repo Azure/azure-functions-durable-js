@@ -15,16 +15,9 @@ import {
 } from "./classes";
 import { OrchestrationFailureError } from "./orchestrationfailureerror";
 import { OrchestratorState } from "./orchestratorstate";
-import {
-    TaskBase,
-    InternalOnlyTask,
-    ProperTask,
-    CompoundTask,
-    TaskState,
-} from "./tasks/internalTasks";
-import { UpperSchemaVersion } from "./replaySchema";
+import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "./task";
+import { ReplaySchema } from "./replaySchema";
 import { Utils } from "./utils";
-import { Task } from "./tasks/externalTasks";
 
 /**
  * @hidden
@@ -39,7 +32,7 @@ export class TaskOrchestrationExecutor {
     private generator: Generator<TaskBase, any, any>;
     private deferredTasks: Record<number | string, () => void>;
     private sequenceNumber: number;
-    private schemaVersion: UpperSchemaVersion;
+    private schemaVersion: ReplaySchema;
     public willContinueAsNew: boolean;
     private actions: IAction[];
     protected openTasks: Record<number | string, TaskBase>;
@@ -69,8 +62,8 @@ export class TaskOrchestrationExecutor {
      */
     private initialize(): void {
         // The very first task, to kick-start the generator, is just a dummy/no-op task
-        this.currentTask = new InternalOnlyTask();
-        this.currentTask.SetValue(false, undefined);
+        this.currentTask = new NoOpTask();
+        this.currentTask.setValue(false, undefined);
 
         this.sequenceNumber = 0;
         this.willContinueAsNew = false;
@@ -104,7 +97,7 @@ export class TaskOrchestrationExecutor {
     public async execute(
         context: IOrchestrationFunctionContext,
         history: HistoryEvent[],
-        schemaVersion: UpperSchemaVersion,
+        schemaVersion: ReplaySchema,
         fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>
     ): Promise<void> {
         this.schemaVersion = schemaVersion;
@@ -114,7 +107,7 @@ export class TaskOrchestrationExecutor {
         // Execute the orchestration, using the history for replay
         for (const historyEvent of history) {
             this.processEvent(historyEvent);
-            if (this.hasExecutionCompleted()) {
+            if (this.isDoneExecuting()) {
                 break;
             }
         }
@@ -122,7 +115,7 @@ export class TaskOrchestrationExecutor {
         // Construct current orchestration state
         const actions: IAction[][] = this.actions.length == 0 ? [] : [this.actions];
         const orchestratorState = new OrchestratorState({
-            isDone: this.orchestrationInvocationCompleted(),
+            isDone: this.hasCompletedSuccessfully(),
             actions: actions,
             output: this.output,
             error: this.exception?.message,
@@ -151,8 +144,8 @@ export class TaskOrchestrationExecutor {
      *  True if the orchestration's invocation completed, or if an unhandled exception was thrown.
      *  False otherwise.
      */
-    private hasExecutionCompleted(): boolean {
-        return this.orchestrationInvocationCompleted() || this.exception !== undefined;
+    private isDoneExecuting(): boolean {
+        return this.hasCompletedSuccessfully() || this.exception !== undefined;
     }
 
     /**
@@ -163,7 +156,7 @@ export class TaskOrchestrationExecutor {
      *  True if the orchestration reached a `return` statement, or a `continueAsNew`.
      *  False otherwise.
      */
-    private orchestrationInvocationCompleted(): boolean {
+    private hasCompletedSuccessfully(): boolean {
         return this.orchestratorReturned || this.willContinueAsNew;
     }
 
@@ -177,7 +170,7 @@ export class TaskOrchestrationExecutor {
      */
     private processEvent(event: HistoryEvent): void {
         const eventType = event.EventType;
-        switch (event.EventType) {
+        switch (eventType) {
             case HistoryEventType.OrchestratorStarted: {
                 const timestamp = event.Timestamp;
                 if (timestamp > this.context.currentUtcDateTime) {
@@ -294,13 +287,12 @@ export class TaskOrchestrationExecutor {
             } else if (key in this.openEvents) {
                 // Obtain task from open events
                 const taskList = this.openEvents[key];
-                delete this.openEvents[key];
                 task = taskList.pop() as TaskBase;
 
                 // We ensure openEvents only has an entry for this key if
                 // there's at least 1 task to consume
-                if (taskList.length > 0) {
-                    this.openEvents[key] = taskList;
+                if (taskList.length == 0) {
+                    delete this.openEvents[key];
                 }
             } else {
                 // If the task is in neither open tasks nor open events, then it must
@@ -317,7 +309,7 @@ export class TaskOrchestrationExecutor {
         } else {
             throw Error(
                 `Task with ID ${key} could not be retrieved from due to its ID-key being of type ${typeof key}` +
-                    `We expect ID-keys to be of type number or string.` +
+                    `We expect ID-keys to be of type number or string. ` +
                     `This is probably a replay failure, please file a bug report.`
             );
         }
@@ -361,7 +353,7 @@ export class TaskOrchestrationExecutor {
 
         // Set result to the task, and update it's isPlayed flag.
         task.isPlayed = event.IsPlayed;
-        task.SetValue(!isSuccess, taskResult);
+        task.setValue(!isSuccess, taskResult);
     }
 
     /**
@@ -377,16 +369,13 @@ export class TaskOrchestrationExecutor {
             return;
         }
 
-        // The feed in the result of the current task to the generator
+        // We feed in the result of the current task to the generator
         let newTask: TaskBase | undefined = undefined;
         try {
             // In the WhenAny-case, the result of the current task is another Task.
             // Here, we make sure not to expose the internal task class by extracting
             // the user-facing representation of the task.
-            let result = currentTask.result;
-            if (result instanceof ProperTask) {
-                result = result.externalTask;
-            }
+            const result = currentTask.result;
             const taskValue = result;
             const taskSucceeded = currentTask.stateObj === TaskState.Completed;
 
@@ -402,9 +391,15 @@ export class TaskOrchestrationExecutor {
                 this.orchestratorReturned = true;
                 this.output = generatorResult.value;
                 return;
-            } else if (generatorResult.value instanceof Task) {
+            } else if (generatorResult.value instanceof DFTask) {
                 // The generator yielded another task.
-                newTask = generatorResult.value.internalTask;
+                newTask = generatorResult.value;
+            } else {
+                // non-task was yielded. This isn't supported
+                throw Error(
+                    `Orchestration yielded data of type ${typeof generatorResult.value}. Only Task types can be yielded.` +
+                        "Please refactor your orchestration to yield only Tasks."
+                );
             }
         } catch (exception) {
             // The generator threw an exception
@@ -422,7 +417,7 @@ export class TaskOrchestrationExecutor {
                 this.trackOpenTask(newTask);
                 // We only keep track of actions from user-declared tasks, not from
                 // tasks generated internally to facilitate history-processing.
-                if (this.currentTask instanceof ProperTask) {
+                if (this.currentTask instanceof DFTask) {
                     this.addToActions(this.currentTask.actionObj);
                 }
             }
@@ -452,9 +447,7 @@ export class TaskOrchestrationExecutor {
      * @param task
      *  Task to add to open tasks or open events list
      */
-    public trackOpenTask(task: InternalOnlyTask | ProperTask): void {
-        // TODO: should there be a check for the task status as RUNNING?
-
+    public trackOpenTask(task: NoOpTask | DFTask): void {
         // The open tasks and open events objects only track singular tasks, not compound ones.
         // Therefore, for a compound task, we recurse down to its inner sub-tasks add
         // record all singular tasks.
@@ -468,9 +461,9 @@ export class TaskOrchestrationExecutor {
                 task.id = this.sequenceNumber++;
                 this.openTasks[task.id] = task;
             } else if (task.actionObj instanceof WaitForExternalEventAction) {
-                // The ID of `WaitForExternalEvent` tasks is the name of
-                // the external event. Given that multiple `WaitForExternalEvent`
-                // tasks can be led for the same event name at once, we need
+                // The ID of a  `WaitForExternalEvent` task is the name of
+                // the external event it awaits. Given that multiple `WaitForExternalEvent`
+                // tasks can await the same event name at once, we need
                 // to store these tasks as a list.
 
                 // Obtain the current list of tasks for this external event name.

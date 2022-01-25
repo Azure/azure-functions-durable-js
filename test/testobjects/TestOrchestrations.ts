@@ -94,7 +94,7 @@ export class TestOrchestrations {
             : 0;
         currentValue++;
 
-        yield context.df.continueAsNew({ value: currentValue });
+        context.df.continueAsNew({ value: currentValue });
 
         return currentValue;
     });
