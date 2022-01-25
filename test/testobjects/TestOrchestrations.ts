@@ -1,6 +1,10 @@
 import * as df from "../../src";
 
 export class TestOrchestrations {
+    public static NotGenerator: any = df.orchestrator(function* (context: any) {
+        return "Hello";
+    });
+
     public static AnyAOrB: any = df.orchestrator(function* (context: any) {
         const completeInOrder = context.df.getInput();
 
@@ -94,7 +98,7 @@ export class TestOrchestrations {
             : 0;
         currentValue++;
 
-        yield context.df.continueAsNew({ value: currentValue });
+        context.df.continueAsNew({ value: currentValue });
 
         return currentValue;
     });
@@ -164,6 +168,7 @@ export class TestOrchestrations {
     public static SayHelloWithActivityYieldTwice: any = df.orchestrator(function* (context: any) {
         const input = context.df.getInput();
         const task = context.df.callActivity("Hello", input);
+        yield task;
         yield task;
         return yield task;
     });

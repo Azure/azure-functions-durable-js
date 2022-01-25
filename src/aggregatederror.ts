@@ -2,7 +2,7 @@
 const separator = "-----------------------------------";
 
 /**
- * A specfic error thrown when context.df.Task.all() fails. Its message
+ * A specific error thrown when context.df.Task.all() fails. Its message
  * contains an aggregation of all the exceptions that failed. It should follow the
  * below format:
  *
