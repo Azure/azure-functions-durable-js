@@ -387,7 +387,7 @@ export class WhenAnyTask extends CompoundTask {
  */
 export class RetryableTask extends WhenAllTask {
     private isWaitingOnTimer: boolean;
-    private numAttempts: number;
+    private attemptNumber: number;
     private error: any;
 
     /**
@@ -408,7 +408,7 @@ export class RetryableTask extends WhenAllTask {
         private executor: TaskOrchestrationExecutor
     ) {
         super([innerTask], innerTask.actionObj);
-        this.numAttempts = 1;
+        this.attemptNumber = 1;
         this.isWaitingOnTimer = false;
     }
 
@@ -420,12 +420,13 @@ export class RetryableTask extends WhenAllTask {
      *  The sub-task that just completed
      */
     public trySetValue(child: TaskBase): void {
+        // Case 1 - child is a timer task
         if (this.isWaitingOnTimer) {
             this.isWaitingOnTimer = false;
 
             // If we're out of retry attempts, we can set the output value
             // of this task to be that of the last error we encountered
-            if (this.numAttempts >= this.retryOptions.maxNumberOfAttempts) {
+            if (this.attemptNumber > this.retryOptions.maxNumberOfAttempts) {
                 this.setValue(true, this.error);
             } else {
                 // If we still have more attempts available, we re-schedule the
@@ -435,12 +436,13 @@ export class RetryableTask extends WhenAllTask {
                 rescheduledTask.parent = this;
                 this.children.push(rescheduledTask);
                 this.executor.trackOpenTask(rescheduledTask);
-                this.numAttempts++;
             }
-        } else if (child.stateObj === TaskState.Completed) {
+        } // Case 2 - child is the API to retry, and it succeeded
+        else if (child.stateObj === TaskState.Completed) {
             // If we have a successful non-timer task, we accept its result
             this.setValue(false, child.result);
-        } else {
+        } // Case 3 - child is the API to retry, and it failed
+        else {
             // If the sub-task failed, schedule timer to retry again.
             // Since these sub-tasks are not user-managed, they are declared as internal tasks.
             const rescheduledTask = new NoOpTask();
@@ -449,6 +451,7 @@ export class RetryableTask extends WhenAllTask {
             this.executor.trackOpenTask(rescheduledTask);
             this.isWaitingOnTimer = true;
             this.error = child.result;
+            this.attemptNumber++;
         }
     }
 }
