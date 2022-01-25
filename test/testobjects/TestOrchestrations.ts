@@ -1,6 +1,10 @@
 import * as df from "../../src";
 
 export class TestOrchestrations {
+    public static NotGenerator: any = df.orchestrator(function* (context: any) {
+        return "Hello";
+    });
+
     public static AnyAOrB: any = df.orchestrator(function* (context: any) {
         const completeInOrder = context.df.getInput();
 

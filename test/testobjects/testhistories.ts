@@ -21,6 +21,23 @@ import {
 } from "../../src/classes";
 
 export class TestHistories {
+    public static StarterHistory(timestamp: Date): HistoryEvent[] {
+        return [
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: timestamp,
+                isPlayed: false,
+            }),
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: timestamp,
+                isPlayed: false,
+                name: "",
+                input: JSON.stringify("input"),
+            }),
+        ];
+    }
+
     public static GetAnyAOrB(firstTimestamp: Date, completeInOrder: boolean): HistoryEvent[] {
         const firstMoment = moment(firstTimestamp);
 

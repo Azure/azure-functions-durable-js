@@ -38,6 +38,28 @@ import { TestUtils } from "../testobjects/testutils";
 describe("Orchestrator", () => {
     const falsyValues = [false, 0, "", null, undefined, NaN];
 
+    it("allows orchestrations with no yield-statements", async () => {
+        const orchestrator = TestOrchestrations.NotGenerator;
+        const mockContext = new MockContext({
+            context: new DurableOrchestrationBindingInfo(
+                TestHistories.StarterHistory(moment.utc().toDate())
+            ),
+        });
+        orchestrator(mockContext);
+
+        expect(mockContext.doneValue).to.be.deep.equal(
+            new OrchestratorState(
+                {
+                    isDone: true,
+                    actions: [],
+                    output: `Hello`,
+                    schemaVersion: ReplaySchema.V1,
+                },
+                true
+            )
+        );
+    });
+
     it("handles a simple orchestration function (no activity functions)", async () => {
         const orchestrator = TestOrchestrations.SayHelloInline;
         const name = "World";
@@ -88,7 +110,7 @@ describe("Orchestrator", () => {
     });
     */
 
-    describe("s", () => {
+    describe("handle falsy values", () => {
         for (const falsyValue of falsyValues) {
             it(`handles an orchestration function that returns ${
                 falsyValue === "" ? "empty string" : falsyValue

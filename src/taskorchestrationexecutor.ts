@@ -102,7 +102,7 @@ export class TaskOrchestrationExecutor {
     ): Promise<void> {
         this.schemaVersion = schemaVersion;
         this.context = context.df;
-        this.generator = fn(context) as Generator<TaskBase, any, any>; // TODO: what happens if code is not a generator?
+        this.generator = fn(context) as Generator<TaskBase, any, any>;
 
         // Execute the orchestration, using the history for replay
         for (const historyEvent of history) {
