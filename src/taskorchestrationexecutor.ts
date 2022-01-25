@@ -197,8 +197,8 @@ export class TaskOrchestrationExecutor {
                 // "Input" field of the corresponding EventSent event. Here, we handle that
                 // edge-case by correcting the expected TaskID in our openTask list.
                 const key = event.EventId;
-                if (key in this.openTasks) {
-                    const task = this.openTasks[key];
+                const task = this.openTasks[key];
+                if (task !== undefined) {
                     if (task.actionObj instanceof CallEntityAction) {
                         // extract TaskID from Input field
                         const eventSent = event as EventSentEvent;
@@ -277,16 +277,15 @@ export class TaskOrchestrationExecutor {
         }
 
         // First, we attempt to recover the task associated with this history event
-        let task: TaskBase;
+        let task: TaskBase | undefined;
         const key = event[idKey as keyof typeof event];
         if (typeof key === "number" || typeof key === "string") {
-            if (key in this.openTasks) {
-                // Obtain task from open tasks
-                task = this.openTasks[key];
+            task = this.openTasks[key];
+            const taskList: TaskBase[] | undefined = this.openEvents[key];
+            if (task !== undefined) {
+                // Remove task from open tasks
                 delete this.openTasks[key];
-            } else if (key in this.openEvents) {
-                // Obtain task from open events
-                const taskList = this.openEvents[key];
+            } else if (taskList !== undefined) {
                 task = taskList.pop() as TaskBase;
 
                 // We ensure openEvents only has an entry for this key if
@@ -468,7 +467,8 @@ export class TaskOrchestrationExecutor {
 
                 // Obtain the current list of tasks for this external event name.
                 // If there's no such list, we initialize it.
-                const eventList = task.id in this.openEvents ? this.openEvents[task.id] : [];
+                const candidateEventList: TaskBase[] | undefined = this.openEvents[task.id];
+                const eventList = candidateEventList !== undefined ? candidateEventList : [];
 
                 eventList.push(task);
                 this.openEvents[task.id] = eventList;

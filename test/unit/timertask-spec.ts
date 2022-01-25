@@ -1,14 +1,14 @@
 import { expect } from "chai";
 import "mocha";
 import { CreateTimerAction } from "../../src/classes";
-import { TimerTask } from "../../src/task";
+import { DFTimerTask } from "../../src/task";
 
 describe("TimerTask", () => {
     it("throws cannot cancel a completed task", async () => {
         const isCancelled = false;
         const date = new Date();
         const action = new CreateTimerAction(date, isCancelled);
-        const task = new TimerTask(0, action);
+        const task = new DFTimerTask(0, action);
         task.setValue(false, undefined); // set value to complete task
 
         expect(() => {
@@ -20,7 +20,7 @@ describe("TimerTask", () => {
         const isCancelled = false;
         const date = new Date();
         const action = new CreateTimerAction(date, isCancelled);
-        const task = new TimerTask(0, action);
+        const task = new DFTimerTask(0, action);
 
         task.cancel();
         expect(task.isCancelled).to.equal(true);
@@ -30,7 +30,7 @@ describe("TimerTask", () => {
         const isCancelled = true;
         const date = new Date();
         const action = new CreateTimerAction(date, isCancelled);
-        const task = new TimerTask(0, action);
+        const task = new DFTimerTask(0, action);
 
         expect(task.isCancelled).to.equal(true);
     });

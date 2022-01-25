@@ -34,14 +34,14 @@ export class OrchestratorState implements IOrchestratorState {
      *  The flattened array of actions.
      */
     private flattenCompoundActions(actions: IAction[]): IAction[] {
-        let flatActions: IAction[] = [];
+        const flatActions: IAction[] = [];
         for (const action of actions) {
             // Given any compound action
             if (action instanceof WhenAllAction || action instanceof WhenAnyAction) {
                 // We obtain its inner actions as a flat array
                 const innerActionArr = this.flattenCompoundActions(action.compoundActions);
                 // we concatenate the inner actions to the flat array we're building
-                flatActions = flatActions.concat(innerActionArr);
+                flatActions.push(...innerActionArr);
             } else {
                 // The action wasn't compound, so it's left intact
                 flatActions.push(action);
@@ -77,10 +77,10 @@ export class OrchestratorState implements IOrchestratorState {
             if (actions !== undefined) {
                 for (const action of actions) {
                     // Each action is represented as an array in V1
-                    let newEntry: IAction[] = [];
+                    const newEntry: IAction[] = [];
                     if (action instanceof WhenAllAction || action instanceof WhenAnyAction) {
                         const innerActionArr = this.flattenCompoundActions(action.compoundActions);
-                        newEntry = newEntry.concat(innerActionArr);
+                        newEntry.push(...innerActionArr);
                     } else {
                         newEntry.push(action);
                     }

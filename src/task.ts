@@ -29,7 +29,7 @@ export type BackingAction = IAction | "noOp";
 /**
  * A Durable Functions Task.
  */
-export interface ITask {
+export interface Task {
     /**
      * Whether the task has completed. Note that completion is not
      * equivalent to success.
@@ -61,6 +61,9 @@ export interface ITask {
  * // do some work
  *
  * if (!timeoutTask.isCompleted) {
+ *     // An orchestration won't get marked as completed until all its scheduled
+ *     // tasks have returned, or been cancelled. Therefore, it is important
+ *     // to cancel timers when they're no longer needed
  *     timeoutTask.cancel();
  * }
  * ```
@@ -80,11 +83,14 @@ export interface ITask {
  * }
  *
  * if (!timeoutTask.isCompleted) {
+ *     // An orchestration won't get marked as completed until all its scheduled
+ *     // tasks have returned, or been cancelled. Therefore, it is important
+ *     // to cancel timers when they're no longer needed
  *     timeoutTask.cancel();
  * }
  * ```
  */
-export interface ITimerTask extends ITask {
+export interface TimerTask extends Task {
     /**
      * @returns Whether or not the timer has been canceled.
      */
@@ -155,11 +161,9 @@ export abstract class TaskBase {
         let newState: TaskState;
 
         if (isError) {
-            if (value instanceof Error) {
-                if (value instanceof TaskBase && value.result instanceof Error) {
-                    const errMessage = `Task ID ${this.id} failed but it's value was not an Exception`;
-                    throw new Error(errMessage);
-                }
+            if (!(value instanceof Error)) {
+                const errMessage = `Task ID ${this.id} failed but it's value was not an Exception`;
+                throw new Error(errMessage);
             }
             newState = TaskState.Failed;
         } else {
@@ -203,7 +207,7 @@ export class NoOpTask extends TaskBase {
  * @hidden
  * A task that should result in an Action being communicated to the DF extension.
  */
-export class DFTask extends TaskBase implements ITask {
+export class DFTask extends TaskBase implements Task {
     protected action: IAction;
 
     /** Get this task's backing action */
@@ -269,10 +273,10 @@ export class AtomicTask extends DFTask {}
 
 /**
  * @hidden
- * A timer task. This is the internal interface to the user-exposed TimerTask, which
+ * A timer task. This is the internal implementation to the user-exposed TimerTask interface, which
  * has a more restricted API.
  */
-export class TimerTask extends AtomicTask implements ITimerTask {
+export class DFTimerTask extends AtomicTask implements TimerTask {
     /**
      * @hidden
      * Construct a Timer Task.

@@ -24,9 +24,9 @@ import {
     WhenAnyTask,
     AtomicTask,
     RetryableTask,
+    DFTimerTask,
+    Task,
     TimerTask,
-    ITask,
-    ITimerTask,
     DFTask,
 } from "./task";
 
@@ -108,7 +108,7 @@ export class DurableOrchestrationContext {
      * preventing the DFTask type from being exported to users.
      * @param tasks
      */
-    private isDFTaskArray(tasks: ITask[]): tasks is DFTask[] {
+    private isDFTaskArray(tasks: Task[]): tasks is DFTask[] {
         return tasks.every((x) => x instanceof DFTask);
     }
 
@@ -118,7 +118,7 @@ export class DurableOrchestrationContext {
      * instances. For use in parallelization operations.
      */
     public Task = {
-        all: (tasks: ITask[]): ITask => {
+        all: (tasks: Task[]): Task => {
             if (this.isDFTaskArray(tasks)) {
                 const action = new WhenAllAction(tasks);
                 const task = new WhenAllTask(tasks, action);
@@ -131,7 +131,7 @@ export class DurableOrchestrationContext {
             );
         },
 
-        any: (tasks: ITask[]): ITask => {
+        any: (tasks: Task[]): Task => {
             if (this.isDFTaskArray(tasks)) {
                 const action = new WhenAnyAction(tasks);
                 const task = new WhenAnyTask(tasks, action);
@@ -154,7 +154,7 @@ export class DurableOrchestrationContext {
      * @returns A Durable Task that completes when the called activity
      * function completes or fails.
      */
-    public callActivity(name: string, input?: unknown): ITask {
+    public callActivity(name: string, input?: unknown): Task {
         const newAction = new CallActivityAction(name, input);
         const task = new AtomicTask(false, newAction);
         return task;
@@ -169,7 +169,7 @@ export class DurableOrchestrationContext {
      * @param input The JSON-serializable input to pass to the activity
      * function.
      */
-    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): ITask {
+    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
         const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
         const backingTask = new AtomicTask(false, newAction);
         const task = new RetryableTask(backingTask, retryOptions, this.taskOrchestratorExecutor);
@@ -184,7 +184,7 @@ export class DurableOrchestrationContext {
      * @param operationName The name of the operation.
      * @param operationInput The input for the operation.
      */
-    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): ITask {
+    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
         const newAction = new CallEntityAction(entityId, operationName, operationInput);
         const task = new AtomicTask(false, newAction);
         return task;
@@ -200,7 +200,7 @@ export class DurableOrchestrationContext {
      * If `instanceId` is not specified, the extension will generate an id in
      * the format `<calling orchestrator instance ID>:<#>`
      */
-    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): ITask {
+    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"
@@ -227,7 +227,7 @@ export class DurableOrchestrationContext {
         retryOptions: RetryOptions,
         input?: unknown,
         instanceId?: string
-    ): ITask {
+    ): Task {
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"
@@ -256,7 +256,7 @@ export class DurableOrchestrationContext {
         content?: string | object,
         headers?: { [key: string]: string },
         tokenSource?: TokenSource
-    ): ITask {
+    ): Task {
         if (content && typeof content !== "string") {
             content = JSON.stringify(content);
         }
@@ -292,9 +292,9 @@ export class DurableOrchestrationContext {
      * @param fireAt The time at which the timer should expire.
      * @returns A TimerTask that completes when the durable timer expires.
      */
-    public createTimer(fireAt: Date): ITimerTask {
+    public createTimer(fireAt: Date): TimerTask {
         const newAction = new CreateTimerAction(fireAt);
-        const task = new TimerTask(false, newAction);
+        const task = new DFTimerTask(false, newAction);
         return task;
     }
 
@@ -347,7 +347,7 @@ export class DurableOrchestrationContext {
      * External clients can raise events to a waiting orchestration instance
      * using [[raiseEvent]].
      */
-    public waitForExternalEvent(name: string): ITask {
+    public waitForExternalEvent(name: string): Task {
         const newAction = new WaitForExternalEventAction(name, ExternalEventType.ExternalEvent);
         const task = new AtomicTask(name, newAction);
         return task;

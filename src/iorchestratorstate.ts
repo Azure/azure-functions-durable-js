@@ -8,6 +8,5 @@ export interface IOrchestratorState {
     output: unknown;
     error?: string;
     customStatus?: unknown;
-    replaySchema?: ReplaySchema | undefined;
     schemaVersion: ReplaySchema;
 }
