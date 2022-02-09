@@ -86,8 +86,6 @@ jobs:
             inputs:
                 BuildDropPath: "$(System.DefaultWorkingDirectory)"
                 Verbosity: "Information"
-          - script: ls
-            displayName: "ls"
           - script: npm pack
             displayName: "pack npm package"
           - task: CopyFiles@2
