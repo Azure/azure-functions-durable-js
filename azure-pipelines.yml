@@ -84,7 +84,7 @@ jobs:
           - task: ManifestGeneratorTask@0
             displayName: "SBOM Generation Task"
             inputs:
-                BuildDropPath: "$(Build.SourcesDirectory)"
+                BuildDropPath: "$(System.DefaultWorkingDirectory)"
                 Verbosity: "Information"
           - script: npm pack
             displayName: "pack npm package"
