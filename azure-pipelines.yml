@@ -81,11 +81,11 @@ jobs:
             displayName: "npm build"
           - script: npm prune --production
             displayName: "npm prune --production" # so that only production dependencies are included in SBOM
-          - task: ManifestGeneratorTask@0
-            displayName: "SBOM Generation Task"
-            inputs:
-                BuildDropPath: "$(System.DefaultWorkingDirectory)"
-                Verbosity: "Information"
+          #- task: ManifestGeneratorTask@0
+          #  displayName: "SBOM Generation Task"
+          #  inputs:
+          #      BuildDropPath: "$(System.DefaultWorkingDirectory)"
+          #      Verbosity: "Information"
           - script: npm pack
             displayName: "pack npm package"
           - task: CopyFiles@2
