@@ -85,8 +85,8 @@ jobs:
             displayName: "ls" # see current dir
           - script: npm ci
             displayName: "npm ci"
-          - script: npm build
-            displayName: "npm build"
+          - script: npm run-script build
+            displayName: "npm run-script build"
           - script: npm prune --production
             displayName: "npm prune --production" # so that only production dependencies are included in SBOM
           #- task: ManifestGeneratorTask@0
@@ -94,8 +94,6 @@ jobs:
           #  inputs:
           #      BuildDropPath: "$(System.DefaultWorkingDirectory)"
           #      Verbosity: "Information"
-          - script: ls
-            displayName: "ls" # see current dir again
           - script: npm pack
             displayName: "pack npm package"
           - task: CopyFiles@2
