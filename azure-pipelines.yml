@@ -75,6 +75,14 @@ jobs:
             inputs:
                 versionSpec: $(NODE_14)
             displayName: "Install Node.js"
+          #- task: CopyFiles@2
+          #  displayName: "Copy package to staging"
+          #  inputs:
+          #      SourceFolder: $(System.DefaultWorkingDirectory)
+          #      Contents: "*."
+          #      TargetFolder: $(Build.ArtifactStagingDirectory)
+          - script: ls
+            displayName: "ls" # see current dir
           - script: npm ci
             displayName: "npm ci"
           - script: npm build
