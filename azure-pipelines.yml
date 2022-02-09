@@ -94,6 +94,8 @@ jobs:
           #  inputs:
           #      BuildDropPath: "$(System.DefaultWorkingDirectory)"
           #      Verbosity: "Information"
+          - script: ls
+            displayName: "ls" # see current dir again
           - script: npm pack
             displayName: "pack npm package"
           - task: CopyFiles@2
