@@ -12,7 +12,8 @@
         "azure-functions"
     ],
     "files": [
-        "lib/src"
+        "lib/src",
+        "_manifest"
     ],
     "main": "lib/src/index.js",
     "typings": "lib/src/index.d.ts",

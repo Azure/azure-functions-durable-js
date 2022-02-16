@@ -77,23 +77,23 @@ jobs:
             displayName: "Install Node.js"
           - script: npm ci
             displayName: "npm ci"
-          - script: npm build
-            displayName: "npm build"
+          - script: npm run-script build
+            displayName: "npm run-script build"
           - script: npm prune --production
             displayName: "npm prune --production" # so that only production dependencies are included in SBOM
+          - task: ManifestGeneratorTask@0
+            displayName: "SBOM Generation Task"
+            inputs:
+                BuildDropPath: "$(System.DefaultWorkingDirectory)"
+                Verbosity: "Information"
           - script: npm pack
             displayName: "pack npm package"
           - task: CopyFiles@2
-            displayName: "Copy types package to staging"
+            displayName: "Copy package to staging"
             inputs:
                 SourceFolder: $(System.DefaultWorkingDirectory)
                 Contents: "*.tgz"
                 TargetFolder: $(Build.ArtifactStagingDirectory)
-          - task: ManifestGeneratorTask@0
-            displayName: "SBOM Generation Task"
-            inputs:
-                BuildDropPath: "$(Build.ArtifactStagingDirectory)"
-                Verbosity: "Information"
           - task: PublishBuildArtifacts@1
             inputs:
                 PathtoPublish: "$(Build.ArtifactStagingDirectory)"
