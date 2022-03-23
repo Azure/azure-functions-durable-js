@@ -388,8 +388,12 @@ export class WhenAnyTask extends CompoundTask {
 export class LongTimerTask extends WhenAllTask implements TimerTask {
     public constructor(
         public action: CreateTimerAction,
-        public longRunningTimerIntervalLength: moment.timer
+        public readonly currentUtcTime: Date,
+        public readonly longRunningTimerIntervalLength: string
     ) {
+        const intervalDuration = moment.duration(longRunningTimerIntervalLength);
+        const currentTime = moment(currentUtcTime);
+        const fireAtTime = moment(action.fireAt);
         const childrenTimers: DFTimerTask[] = [];
         super(childrenTimers, action);
     }
