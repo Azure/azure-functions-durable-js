@@ -400,8 +400,13 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         const currentTime = moment(currentUtcTime);
         const lastFireAtTime = moment(action.fireAt);
         const currentFireAtTime = currentTime;
-        while (moment.duration(lastFireAtTime.diff(currentFireAtTime)) > maximumTimerLength) {
-            currentFireAtTime.add(longRunningTimerIntervalLength);
+        while (currentFireAtTime != lastFireAtTime) {
+            const diffDuration = moment.duration(lastFireAtTime.diff(currentFireAtTime));
+            if (diffDuration > maximumTimerLength) {
+                currentFireAtTime.add(longRunningTimerIntervalLength);
+            } else {
+                currentFireAtTime.add(diffDuration);
+            }
             childrenTimers.push(
                 new DFTimerTask(false, new CreateTimerAction(currentFireAtTime.toDate()))
             );
