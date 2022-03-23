@@ -28,7 +28,9 @@ import {
     Task,
     TimerTask,
     DFTask,
+    LongTimerTask,
 } from "./task";
+import moment = require("moment");
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -41,6 +43,8 @@ export class DurableOrchestrationContext {
         currentUtcDateTime: Date,
         isReplaying: boolean,
         parentInstanceId: string | undefined,
+        longRunningTimerIntervalLength: string | undefined,
+        maximumDelayTime: string | undefined,
         input: unknown,
         private taskOrchestratorExecutor: TaskOrchestrationExecutor
     ) {
@@ -49,6 +53,8 @@ export class DurableOrchestrationContext {
         this.isReplaying = isReplaying;
         this.currentUtcDateTime = currentUtcDateTime;
         this.parentInstanceId = parentInstanceId;
+        this.longRunningTimerIntervalLength = moment.duration(longRunningTimerIntervalLength);
+        this.maximumDelayTime = moment.duration(maximumDelayTime);
         this.input = input;
         this.newGuidCounter = 0;
     }
@@ -100,6 +106,10 @@ export class DurableOrchestrationContext {
      * function code, making it deterministic and safe for replay.
      */
     public currentUtcDateTime: Date;
+
+    public longRunningTimerIntervalLength: moment.Duration;
+
+    public maximumDelayTime: moment.Duration;
 
     /**
      * @hidden
@@ -294,7 +304,21 @@ export class DurableOrchestrationContext {
      */
     public createTimer(fireAt: Date): TimerTask {
         const newAction = new CreateTimerAction(fireAt);
-        const task = new DFTimerTask(false, newAction);
+        let task: TimerTask;
+        if (
+            moment.duration(moment(fireAt).diff(moment(this.currentUtcDateTime))) >
+            this.maximumDelayTime
+        ) {
+            task = new LongTimerTask(
+                false,
+                newAction,
+                this.currentUtcDateTime,
+                this.maximumDelayTime,
+                this.longRunningTimerIntervalLength
+            );
+        } else {
+            task = new DFTimerTask(false, newAction);
+        }
         return task;
     }
 
