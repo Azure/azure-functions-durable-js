@@ -411,7 +411,6 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
                 new DFTimerTask(false, new CreateTimerAction(currentFireAtTime.toDate()))
             );
         }
-        childrenTimers.push(new DFTimerTask(false, new CreateTimerAction(lastFireAtTime.toDate())));
         super(childrenTimers, action);
         this.id = id;
         this.action = action;
