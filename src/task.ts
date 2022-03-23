@@ -1,6 +1,7 @@
 import { RetryOptions } from ".";
 import { IAction, CreateTimerAction } from "./classes";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
+import * as moment from moment;
 
 /**
  * @hidden
@@ -374,6 +375,39 @@ export class WhenAnyTask extends CompoundTask {
         if (this.state === TaskState.Running) {
             this.setValue(false, child);
         }
+    }
+}
+
+/**
+ * @hidden
+ *
+ * A long Timer Task.
+ * It is modeled after a `WhenAllTask` because it decomposes into
+ * several smaller sub-`TimerTask`s
+ */
+export class LongTimerTask extends WhenAllTask implements TimerTask {
+    public constructor(
+        public action: CreateTimerAction,
+        public longRunningTimerIntervalLength: moment.timer
+    ) {
+        const childrenTimers: DFTimerTask[] = [];
+        super(childrenTimers, action);
+    }
+
+    get isCancelled(): boolean {
+        return this.action.isCancelled;
+    }
+
+    /**
+     * @hidden
+     * Cancel this timer task.
+     * It errors out if the task has already completed.
+     */
+    public cancel(): void {
+        if (this.hasResult) {
+            throw Error("Cannot cancel a completed task.");
+        }
+        this.action.isCancelled = true; // TODO: fix typo
     }
 }
 
