@@ -1,7 +1,7 @@
 import { RetryOptions } from ".";
 import { IAction, CreateTimerAction } from "./classes";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
-import * as moment from moment;
+import moment = require("moment");
 
 /**
  * @hidden
@@ -17,7 +17,7 @@ export enum TaskState {
  * @hidden
  * A taskID, either a `string` for external events,
  * or either `false` or a `number` for un-awaited
- * an awaited tasks respectively.
+ * and awaited tasks respectively.
  */
 export type TaskID = number | string | false;
 
@@ -386,16 +386,30 @@ export class WhenAnyTask extends CompoundTask {
  * several smaller sub-`TimerTask`s
  */
 export class LongTimerTask extends WhenAllTask implements TimerTask {
+    public id: TaskID;
+    public action: CreateTimerAction;
+
     public constructor(
-        public action: CreateTimerAction,
-        public readonly currentUtcTime: Date,
-        public readonly longRunningTimerIntervalLength: string
+        id: TaskID,
+        action: CreateTimerAction,
+        currentUtcTime: Date,
+        maximumTimerLength: moment.Duration,
+        longRunningTimerIntervalLength: moment.Duration
     ) {
-        const intervalDuration = moment.duration(longRunningTimerIntervalLength);
-        const currentTime = moment(currentUtcTime);
-        const fireAtTime = moment(action.fireAt);
         const childrenTimers: DFTimerTask[] = [];
+        const currentTime = moment(currentUtcTime);
+        const lastFireAtTime = moment(action.fireAt);
+        const currentFireAtTime = currentTime;
+        while (moment.duration(lastFireAtTime.diff(currentFireAtTime)) > maximumTimerLength) {
+            currentFireAtTime.add(longRunningTimerIntervalLength);
+            childrenTimers.push(
+                new DFTimerTask(false, new CreateTimerAction(currentFireAtTime.toDate()))
+            );
+        }
+        childrenTimers.push(new DFTimerTask(false, new CreateTimerAction(lastFireAtTime.toDate())));
         super(childrenTimers, action);
+        this.id = id;
+        this.action = action;
     }
 
     get isCancelled(): boolean {
@@ -412,6 +426,17 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
             throw Error("Cannot cancel a completed task.");
         }
         this.action.isCancelled = true; // TODO: fix typo
+    }
+
+    /**
+     * @hidden
+     * Attempts to set a value to this timer, given a completed sub-timer
+     *
+     * @param child
+     * The sub-timer that just completed
+     */
+    public trySetValue(child: DFTimerTask): void {
+        super.trySetValue(child);
     }
 }
 
