@@ -33,6 +33,8 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
      * @param input The input to the orchestration
      * @param currentUtcDateTime The deterministic date at the beginning of orchestration replay
      * @param isReplaying Whether the orchestration is to be marked as isReplaying the its first event
+     * @param maximumDelayTime
+     * @param longRunningTimerIntervalLength
      * @param parentInstanceId The instanceId of the orchestration's parent, if this is a sub-orchestration
      */
     constructor(
@@ -40,6 +42,8 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
         history: HistoryEvent[] | undefined = undefined,
         input: any = undefined,
         currentUtcDateTime: Date = new Date(),
+        maximumDelayTime: string,
+        longRunningTimerIntervalLength: string,
         isReplaying = false,
         parentInstanceId = ""
     ) {
@@ -54,6 +58,8 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
             currentUtcDateTime,
             isReplaying,
             parentInstanceId,
+            longRunningTimerIntervalLength,
+            maximumDelayTime,
             input,
             new TaskOrchestrationExecutor()
         );

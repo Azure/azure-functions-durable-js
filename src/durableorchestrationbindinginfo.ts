@@ -11,6 +11,8 @@ export class DurableOrchestrationBindingInfo {
         public readonly instanceId: string = "",
         public readonly isReplaying: boolean = false,
         public readonly parentInstanceId?: string,
+        public readonly maximumDelayTime?: string,
+        public readonly longRunningTimerIntervalLength?: string,
         upperSchemaVersion = 0 // TODO: Implement entity locking // public readonly contextLocks?: EntityId[],
     ) {
         // It is assumed that the extension supports all schemas in range [0, upperSchemaVersion].
