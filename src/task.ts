@@ -2,6 +2,7 @@ import { RetryOptions } from ".";
 import { IAction, CreateTimerAction } from "./classes";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import moment = require("moment");
+import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 
 /**
  * @hidden
@@ -388,32 +389,34 @@ export class WhenAnyTask extends CompoundTask {
 export class LongTimerTask extends WhenAllTask implements TimerTask {
     public id: TaskID;
     public action: CreateTimerAction;
+    private readonly maximumTimerLength: moment.Duration;
+    private readonly orchestrationContext: DurableOrchestrationContext;
+    private readonly longRunningTimerIntervalLength: moment.Duration;
 
     public constructor(
         id: TaskID,
         action: CreateTimerAction,
-        currentUtcTime: Date,
+        orchestrationContext: DurableOrchestrationContext,
         maximumTimerLength: moment.Duration,
         longRunningTimerIntervalLength: moment.Duration
     ) {
         const childrenTimers: DFTimerTask[] = [];
-        const currentTime = moment(currentUtcTime);
-        const lastFireAtTime = moment(action.fireAt);
-        const currentFireAtTime = currentTime;
-        while (currentFireAtTime != lastFireAtTime) {
-            const diffDuration = moment.duration(lastFireAtTime.diff(currentFireAtTime));
-            if (diffDuration > maximumTimerLength) {
-                currentFireAtTime.add(longRunningTimerIntervalLength);
-            } else {
-                currentFireAtTime.add(diffDuration);
-            }
-            childrenTimers.push(
-                new DFTimerTask(false, new CreateTimerAction(currentFireAtTime.toDate()))
-            );
+        const currentTime = moment(orchestrationContext.currentUtcDateTime);
+        const finalTimerFireTime = moment(action.fireAt);
+        const durationTillFire = moment.duration(finalTimerFireTime.diff(currentTime));
+        let nextTimerFireTime: Date;
+        if (durationTillFire > maximumTimerLength) {
+            nextTimerFireTime = currentTime.add(longRunningTimerIntervalLength).toDate();
+        } else {
+            nextTimerFireTime = finalTimerFireTime.toDate();
         }
+        childrenTimers.push(new DFTimerTask(false, new CreateTimerAction(nextTimerFireTime)));
         super(childrenTimers, action);
         this.id = id;
         this.action = action;
+        this.orchestrationContext = orchestrationContext;
+        this.maximumTimerLength = maximumTimerLength;
+        this.longRunningTimerIntervalLength = longRunningTimerIntervalLength;
     }
 
     get isCancelled(): boolean {
@@ -440,7 +443,25 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
      * The sub-timer that just completed
      */
     public trySetValue(child: DFTimerTask): void {
+        const currentTime = this.orchestrationContext.currentUtcDateTime;
+        const finalTimerFireTime = this.action.fireAt;
+        if (finalTimerFireTime > currentTime) {
+            this.children.push(this.getNextTimerTask(finalTimerFireTime, currentTime));
+        }
         super.trySetValue(child);
+    }
+
+    private getNextTimerTask(finalFireTime: Date, currentTime: Date): DFTimerTask {
+        const durationTillFire = moment.duration(moment(finalFireTime).diff(currentTime));
+        let nextTimerFireTime: Date;
+        if (durationTillFire > this.maximumTimerLength) {
+            nextTimerFireTime = moment(currentTime)
+                .add(this.longRunningTimerIntervalLength)
+                .toDate();
+        } else {
+            nextTimerFireTime = finalFireTime;
+        }
+        return new DFTimerTask(false, new CreateTimerAction(nextTimerFireTime));
     }
 }
 

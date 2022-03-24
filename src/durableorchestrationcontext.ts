@@ -43,8 +43,8 @@ export class DurableOrchestrationContext {
         currentUtcDateTime: Date,
         isReplaying: boolean,
         parentInstanceId: string | undefined,
-        longRunningTimerIntervalLength: string | undefined,
-        maximumDelayTime: string | undefined,
+        longRunningTimerIntervalDuration: string | undefined,
+        maximumShortTimerDuration: string | undefined,
         input: unknown,
         private taskOrchestratorExecutor: TaskOrchestrationExecutor
     ) {
@@ -53,8 +53,8 @@ export class DurableOrchestrationContext {
         this.isReplaying = isReplaying;
         this.currentUtcDateTime = currentUtcDateTime;
         this.parentInstanceId = parentInstanceId;
-        this.longRunningTimerIntervalLength = moment.duration(longRunningTimerIntervalLength);
-        this.maximumDelayTime = moment.duration(maximumDelayTime);
+        this.longRunningTimerIntervalDuration = moment.duration(longRunningTimerIntervalDuration);
+        this.maximumShortTimerDuration = moment.duration(maximumShortTimerDuration);
         this.input = input;
         this.newGuidCounter = 0;
     }
@@ -107,9 +107,9 @@ export class DurableOrchestrationContext {
      */
     public currentUtcDateTime: Date;
 
-    public longRunningTimerIntervalLength: moment.Duration;
+    public longRunningTimerIntervalDuration: moment.Duration;
 
-    public maximumDelayTime: moment.Duration;
+    public maximumShortTimerDuration: moment.Duration;
 
     /**
      * @hidden
@@ -307,14 +307,14 @@ export class DurableOrchestrationContext {
         let task: TimerTask;
         if (
             moment.duration(moment(fireAt).diff(moment(this.currentUtcDateTime))) >
-            this.maximumDelayTime
+            this.maximumShortTimerDuration
         ) {
             task = new LongTimerTask(
                 false,
                 newAction,
-                this.currentUtcDateTime,
-                this.maximumDelayTime,
-                this.longRunningTimerIntervalLength
+                this,
+                this.maximumShortTimerDuration,
+                this.longRunningTimerIntervalDuration
             );
         } else {
             task = new DFTimerTask(false, newAction);
