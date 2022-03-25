@@ -313,6 +313,7 @@ export class DurableOrchestrationContext {
                 false,
                 newAction,
                 this,
+                this.taskOrchestratorExecutor,
                 this.maximumShortTimerDuration,
                 this.longRunningTimerIntervalDuration
             );

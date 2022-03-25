@@ -389,6 +389,7 @@ export class WhenAnyTask extends CompoundTask {
 export class LongTimerTask extends WhenAllTask implements TimerTask {
     public id: TaskID;
     public action: CreateTimerAction;
+    private executor: TaskOrchestrationExecutor;
     private readonly maximumTimerLength: moment.Duration;
     private readonly orchestrationContext: DurableOrchestrationContext;
     private readonly longRunningTimerIntervalLength: moment.Duration;
@@ -397,6 +398,7 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         id: TaskID,
         action: CreateTimerAction,
         orchestrationContext: DurableOrchestrationContext,
+        executor: TaskOrchestrationExecutor,
         maximumTimerLength: moment.Duration,
         longRunningTimerIntervalLength: moment.Duration
     ) {
@@ -415,6 +417,7 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         this.id = id;
         this.action = action;
         this.orchestrationContext = orchestrationContext;
+        this.executor = executor;
         this.maximumTimerLength = maximumTimerLength;
         this.longRunningTimerIntervalLength = longRunningTimerIntervalLength;
     }
@@ -446,7 +449,8 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         const currentTime = this.orchestrationContext.currentUtcDateTime;
         const finalTimerFireTime = this.action.fireAt;
         if (finalTimerFireTime > currentTime) {
-            this.children.push(this.getNextTimerTask(finalTimerFireTime, currentTime));
+            const newChild = this.getNextTimerTask(finalTimerFireTime, currentTime);
+            this.addNewChild(newChild);
         }
         super.trySetValue(child);
     }
@@ -462,6 +466,12 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
             nextTimerFireTime = finalFireTime;
         }
         return new DFTimerTask(false, new CreateTimerAction(nextTimerFireTime));
+    }
+
+    private addNewChild(childTimer: DFTimerTask): void {
+        childTimer.parent = this;
+        this.children.push(childTimer);
+        this.executor.trackOpenTask(childTimer);
     }
 }
 
