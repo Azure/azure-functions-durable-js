@@ -14,11 +14,14 @@ export class Utils {
         collection: { [index: string]: unknown },
         typeInstance: T
     ): T[] {
-        return collection && typeInstance
-            ? (Object.keys(collection)
-                  .filter((key: string) => this.hasAllPropertiesOf(collection[key], typeInstance))
-                  .map((key: string) => this.parseTimestampsAsDates(collection[key])) as T[])
-            : [];
+        if (collection && typeInstance) {
+            const candidateObjects = Object.values(collection).filter((value) =>
+                this.hasAllPropertiesOf(value, typeInstance)
+            );
+            this.parseTimestampsAsDates(candidateObjects);
+            return candidateObjects as T[];
+        }
+        return [];
     }
 
     public static getHrMilliseconds(times: number[]): number {
@@ -46,16 +49,15 @@ export class Utils {
         return obj.hasOwnProperty(prop);
     }
 
-    public static parseTimestampsAsDates(obj: unknown): unknown {
-        if (
-            typeof obj === "object" &&
-            obj !== null &&
-            this.hasOwnProperty(obj, "Timestamp") &&
-            typeof obj.Timestamp === "string"
-        ) {
-            obj.Timestamp = new Date(obj.Timestamp);
+    public static parseTimestampsAsDates(obj: unknown): void {
+        if (typeof obj === "object" && obj != null) {
+            if (this.hasOwnProperty(obj, "Timestamp") && typeof obj.Timestamp === "string") {
+                obj.Timestamp = new Date(obj.Timestamp);
+            }
+            Object.values(obj).map((value) => {
+                this.parseTimestampsAsDates(value);
+            });
         }
-        return obj;
     }
 
     public static hasAllPropertiesOf<T>(obj: unknown, refInstance: T): boolean {
