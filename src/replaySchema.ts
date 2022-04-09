@@ -8,4 +8,4 @@ export enum ReplaySchema {
     V3 = 2,
 }
 
-export const LatestReplaySchema: ReplaySchema = ReplaySchema.V2;
+export const LatestReplaySchema: ReplaySchema = ReplaySchema.V3;
