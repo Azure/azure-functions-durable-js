@@ -335,7 +335,6 @@ export class DurableOrchestrationContext {
      */
     public createTimer(fireAt: Date): TimerTask {
         const timerAction = new CreateTimerAction(fireAt);
-        let task: TimerTask;
         const durationUntilFire = moment.duration(moment(fireAt).diff(this.currentUtcDateTime));
         if (
             this.schemaVersion >= ReplaySchema.V3 &&
@@ -343,7 +342,7 @@ export class DurableOrchestrationContext {
             this.longRunningTimerIntervalDuration &&
             durationUntilFire > this.maximumShortTimerDuration
         ) {
-            task = new LongTimerTask(
+            return new LongTimerTask(
                 false,
                 timerAction,
                 this,
@@ -351,10 +350,9 @@ export class DurableOrchestrationContext {
                 this.maximumShortTimerDuration,
                 this.longRunningTimerIntervalDuration
             );
-        } else {
-            task = new DFTimerTask(false, timerAction);
         }
-        return task;
+
+        return new DFTimerTask(false, timerAction);
     }
 
     /**
