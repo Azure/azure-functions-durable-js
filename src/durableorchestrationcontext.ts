@@ -55,8 +55,12 @@ export class DurableOrchestrationContext {
         this.isReplaying = isReplaying;
         this.currentUtcDateTime = currentUtcDateTime;
         this.parentInstanceId = parentInstanceId;
-        this.longRunningTimerIntervalDuration = moment.duration(longRunningTimerIntervalDuration);
-        this.maximumShortTimerDuration = moment.duration(maximumShortTimerDuration);
+        this.longRunningTimerIntervalDuration = longRunningTimerIntervalDuration
+            ? moment.duration(longRunningTimerIntervalDuration)
+            : undefined;
+        this.maximumShortTimerDuration = maximumShortTimerDuration
+            ? moment.duration(maximumShortTimerDuration)
+            : undefined;
         this.schemaVersion = schemaVersion;
         this.input = input;
         this.newGuidCounter = 0;
@@ -110,10 +114,32 @@ export class DurableOrchestrationContext {
      */
     public currentUtcDateTime: Date;
 
-    public longRunningTimerIntervalDuration: moment.Duration;
+    /**
+     * Gets the maximum duration for timers allowed by the
+     * underlying storage infrastructure
+     *
+     * This duration property is determined by the underlying storage
+     * solution and passed to the SDK from the extension.
+     */
+    public maximumShortTimerDuration: moment.Duration | undefined;
 
-    public maximumShortTimerDuration: moment.Duration;
+    /**
+     * A duration property which defines the duration of smaller
+     * timers to break long timers into, in case they are longer
+     * than the maximum supported duration
+     *
+     * This duration property is determined by the underlying
+     * storage solution and passed to the SDK from the extension.
+     */
+    public longRunningTimerIntervalDuration: moment.Duration | undefined;
 
+    /**
+     * Gets the current schema version that this execution is
+     * utilizing, based on negotiation with the extension.
+     *
+     * Different schema versions can allow different behavior.
+     * For example, long timers are only supported in schema version >=3
+     */
     public schemaVersion: ReplaySchema;
 
     /**
@@ -308,23 +334,25 @@ export class DurableOrchestrationContext {
      * @returns A TimerTask that completes when the durable timer expires.
      */
     public createTimer(fireAt: Date): TimerTask {
-        const newAction = new CreateTimerAction(fireAt);
+        const timerAction = new CreateTimerAction(fireAt);
         let task: TimerTask;
+        const durationUntilFire = moment.duration(moment(fireAt).diff(this.currentUtcDateTime));
         if (
             this.schemaVersion >= ReplaySchema.V3 &&
-            moment.duration(moment(fireAt).diff(moment(this.currentUtcDateTime))) >
-                this.maximumShortTimerDuration
+            this.maximumShortTimerDuration &&
+            this.longRunningTimerIntervalDuration &&
+            durationUntilFire > this.maximumShortTimerDuration
         ) {
             task = new LongTimerTask(
                 false,
-                newAction,
+                timerAction,
                 this,
                 this.taskOrchestratorExecutor,
                 this.maximumShortTimerDuration,
                 this.longRunningTimerIntervalDuration
             );
         } else {
-            task = new DFTimerTask(false, newAction);
+            task = new DFTimerTask(false, timerAction);
         }
         return task;
     }
