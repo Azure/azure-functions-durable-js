@@ -31,6 +31,7 @@ import {
     LongTimerTask,
 } from "./task";
 import moment = require("moment");
+import { ReplaySchema } from "./replaySchema";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -45,6 +46,7 @@ export class DurableOrchestrationContext {
         parentInstanceId: string | undefined,
         longRunningTimerIntervalDuration: string | undefined,
         maximumShortTimerDuration: string | undefined,
+        schemaVersion: ReplaySchema,
         input: unknown,
         private taskOrchestratorExecutor: TaskOrchestrationExecutor
     ) {
@@ -55,6 +57,7 @@ export class DurableOrchestrationContext {
         this.parentInstanceId = parentInstanceId;
         this.longRunningTimerIntervalDuration = moment.duration(longRunningTimerIntervalDuration);
         this.maximumShortTimerDuration = moment.duration(maximumShortTimerDuration);
+        this.schemaVersion = schemaVersion;
         this.input = input;
         this.newGuidCounter = 0;
     }
@@ -110,6 +113,8 @@ export class DurableOrchestrationContext {
     public longRunningTimerIntervalDuration: moment.Duration;
 
     public maximumShortTimerDuration: moment.Duration;
+
+    public schemaVersion: ReplaySchema;
 
     /**
      * @hidden
@@ -306,8 +311,9 @@ export class DurableOrchestrationContext {
         const newAction = new CreateTimerAction(fireAt);
         let task: TimerTask;
         if (
+            this.schemaVersion >= ReplaySchema.V3 &&
             moment.duration(moment(fireAt).diff(moment(this.currentUtcDateTime))) >
-            this.maximumShortTimerDuration
+                this.maximumShortTimerDuration
         ) {
             task = new LongTimerTask(
                 false,
