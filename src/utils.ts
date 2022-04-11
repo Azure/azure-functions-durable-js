@@ -19,7 +19,8 @@ export class Utils {
                 this.hasAllPropertiesOf(value, typeInstance)
             );
 
-            // this recursive step ensures _all_ Timestamp properties are converted propertly
+            // this recursive step ensures _all_ Timestamp properties are converted properly
+
             // For example, a payload can contain the history as a property, so if we want to
             // parse each HistoryEvent's Timestamp, we need to traverse the payload recursively
             this.parseTimestampsAsDates(candidateObjects);
