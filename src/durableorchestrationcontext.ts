@@ -336,20 +336,23 @@ export class DurableOrchestrationContext {
     public createTimer(fireAt: Date): TimerTask {
         const timerAction = new CreateTimerAction(fireAt);
         const durationUntilFire = moment.duration(moment(fireAt).diff(this.currentUtcDateTime));
-        if (
-            this.schemaVersion >= ReplaySchema.V3 &&
-            this.maximumShortTimerDuration &&
-            this.longRunningTimerIntervalDuration &&
-            durationUntilFire > this.maximumShortTimerDuration
-        ) {
-            return new LongTimerTask(
-                false,
-                timerAction,
-                this,
-                this.taskOrchestratorExecutor,
-                this.maximumShortTimerDuration,
-                this.longRunningTimerIntervalDuration
-            );
+        if (this.schemaVersion >= ReplaySchema.V3) {
+            if (!this.maximumShortTimerDuration || !this.longRunningTimerIntervalDuration) {
+                throw Error(
+                    "Replay schema version >= V3 is being used, but one or more of the properties `maximumShortTimerDuration` and `longRunningTimerIntervalDuration` are not defined. This is likely an issue with the Extension."
+                );
+            }
+
+            if (durationUntilFire > this.maximumShortTimerDuration) {
+                return new LongTimerTask(
+                    false,
+                    timerAction,
+                    this,
+                    this.taskOrchestratorExecutor,
+                    this.maximumShortTimerDuration,
+                    this.longRunningTimerIntervalDuration
+                );
+            }
         }
 
         return new DFTimerTask(false, timerAction);
