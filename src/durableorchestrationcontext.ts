@@ -121,7 +121,7 @@ export class DurableOrchestrationContext {
      * This duration property is determined by the underlying storage
      * solution and passed to the SDK from the extension.
      */
-    public maximumShortTimerDuration: moment.Duration | undefined;
+    private readonly maximumShortTimerDuration: moment.Duration | undefined;
 
     /**
      * A duration property which defines the duration of smaller
@@ -131,7 +131,7 @@ export class DurableOrchestrationContext {
      * This duration property is determined by the underlying
      * storage solution and passed to the SDK from the extension.
      */
-    public longRunningTimerIntervalDuration: moment.Duration | undefined;
+    private readonly longRunningTimerIntervalDuration: moment.Duration | undefined;
 
     /**
      * Gets the current schema version that this execution is
@@ -140,7 +140,7 @@ export class DurableOrchestrationContext {
      * Different schema versions can allow different behavior.
      * For example, long timers are only supported in schema version >=3
      */
-    public schemaVersion: ReplaySchema;
+    private readonly schemaVersion: ReplaySchema;
 
     /**
      * @hidden
