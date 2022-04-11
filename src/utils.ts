@@ -18,7 +18,12 @@ export class Utils {
             const candidateObjects = Object.values(collection).filter((value) =>
                 this.hasAllPropertiesOf(value, typeInstance)
             );
+
+            // This recursive step ensures _all_ Timestamp properties are converted properly
+            // For example, a payload can contain the history as a property, so if we want to
+            // parse each HistoryEvent's Timestamp, we need to traverse the payload recursively
             this.parseTimestampsAsDates(candidateObjects);
+
             return candidateObjects as T[];
         }
         return [];
