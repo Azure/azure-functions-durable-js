@@ -339,8 +339,12 @@ export class DurableOrchestrationContext {
         if (this.schemaVersion >= ReplaySchema.V3) {
             if (!this.maximumShortTimerDuration || !this.longRunningTimerIntervalDuration) {
                 throw Error(
-                    "A framework-internal error was detected: replay schema version >= V3 is being used, but one or more of the properties `maximumShortTimerDuration` and `longRunningTimerIntervalDuration` are not defined. This is likely an issue with the Durable Functions Extension. Please report this bug here: https://github.com/Azure/azure-functions-durable-js/issues "
-
+                    "A framework-internal error was detected: replay schema version >= V3 is being used, " +
+                        "but one or more of the properties `maximumShortTimerDuration` and `longRunningTimerIntervalDuration` are not defined. " +
+                        "This is likely an issue with the Durable Functions Extension. " +
+                        "Please report this bug here: https://github.com/Azure/azure-functions-durable-js/issues\n" +
+                        `maximumShortTimerDuration: ${this.maximumShortTimerDuration}\n` +
+                        `longRunningTimerIntervalDuration: ${this.longRunningTimerIntervalDuration}`
                 );
             }
 
