@@ -2303,31 +2303,29 @@ export class TestHistories {
         ];
     }
 
-    public static GetWaitOnTimerFired(firstTimestamp: Date, fireAt: Date): HistoryEvent[] {
+    private static TimerCreated(timestamp: Date, fireAt: Date): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstTimestamp,
+                timestamp,
                 isPlayed: false,
-            }),
-            new ExecutionStartedEvent({
-                eventId: -1,
-                timestamp: firstTimestamp,
-                isPlayed: true,
-                name: "WaitOnTimer",
-                input: JSON.stringify(fireAt),
             }),
             new TimerCreatedEvent({
                 eventId: 0,
-                timestamp: firstTimestamp,
+                timestamp,
                 isPlayed: false,
                 fireAt,
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstTimestamp,
+                timestamp,
                 isPlayed: false,
             }),
+        ];
+    }
+
+    private static TimerFired(fireAt: Date): HistoryEvent[] {
+        return [
             new OrchestratorStartedEvent({
                 eventId: -1,
                 timestamp: fireAt,
@@ -2340,6 +2338,69 @@ export class TestHistories {
                 fireAt,
                 timerId: 0,
             }),
+            new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: fireAt,
+                isPlayed: false,
+            }),
         ];
+    }
+
+    public static GetWaitOnTimerFired(
+        firstTimestamp: Date,
+        fireAt: Date,
+        maximumShortTimerDuration: moment.Duration = moment.duration(6, "d"),
+        longRunningTimerIntervalDuration: moment.Duration = moment.duration(3, "d")
+    ): HistoryEvent[] {
+        const history: HistoryEvent[] = [
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: "WaitOnTimer",
+                input: JSON.stringify(fireAt),
+            }),
+        ];
+
+        let previousTimestamp = firstTimestamp;
+        let nextFireAt;
+        while (
+            moment.duration(moment(fireAt).diff(previousTimestamp)) > maximumShortTimerDuration
+        ) {
+            nextFireAt = moment(previousTimestamp).add(longRunningTimerIntervalDuration).toDate();
+            history.push(
+                ...this.TimerCreated(previousTimestamp, nextFireAt),
+                ...this.TimerFired(nextFireAt)
+            );
+            previousTimestamp = nextFireAt;
+        }
+        history.push(...this.TimerCreated(previousTimestamp, fireAt), ...this.TimerFired(fireAt));
+        return history;
+    }
+
+    public static GetWaitOnLongTimerHalfway(
+        firstTimestamp: Date,
+        fireAt: Date,
+        maximumShortTimerDuration: moment.Duration = moment.duration(6, "d"),
+        longRunningTimerIntervalDuration: moment.Duration = moment.duration(3, "d")
+    ): HistoryEvent[] {
+        if (moment.duration(moment(fireAt).diff(firstTimestamp)) < maximumShortTimerDuration) {
+            throw new Error("Not a long timer");
+        }
+
+        const history: HistoryEvent[] = [
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: "WaitOnTimer",
+                input: JSON.stringify(fireAt),
+            }),
+        ];
+
+        const nextFireAt = moment(firstTimestamp).add(longRunningTimerIntervalDuration).toDate();
+        history.push(...this.TimerCreated(firstTimestamp, nextFireAt));
+        history.push(...this.TimerFired(nextFireAt));
+        return history;
     }
 }
