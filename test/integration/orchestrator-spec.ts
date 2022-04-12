@@ -818,10 +818,7 @@ describe("Orchestrator", () => {
                         actions: [
                             [new CallActivityWithRetryAction("Hello", retryOptions, "World")],
                         ],
-                        output: [
-                            startingTime,
-                            moment(startingTime).add(1, "m").add(30, "s").toDate(),
-                        ],
+                        output: [startingTime, moment(startingTime).add(1, "m").toDate()],
                         schemaVersion: ReplaySchema.V1,
                     },
                     true
@@ -1536,12 +1533,12 @@ describe("Orchestrator", () => {
     describe("createTimer()", () => {
         it("schedules a timer", async () => {
             const orchestrator = TestOrchestrations.WaitOnTimer;
-            const startMoment = moment.utc();
-            const fireAt = startMoment.add(5, "m").toDate();
+            const startTime = moment.utc().toDate();
+            const fireAt = moment(startTime).add(5, "m").toDate();
 
             const mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart("WaitOnTimer", startMoment.toDate()),
+                    TestHistories.GetOrchestratorStart("WaitOnTimer", startTime),
                     fireAt
                 ),
             });
@@ -2043,10 +2040,10 @@ describe("Orchestrator", () => {
         it("Task.any called with one TaskSet and one timer where TaskSet wins", async () => {
             const orchestrator = TestOrchestrations.AnyWithTaskSet;
             const eventsWin = true;
-            const initialTime = moment.utc();
+            const initialTime = moment.utc().toDate();
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 1, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 1, eventsWin)
                 ),
             });
 
@@ -2060,7 +2057,7 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
                             ],
                         ],
                         output: undefined,
@@ -2072,7 +2069,7 @@ describe("Orchestrator", () => {
 
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 2, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 2, eventsWin)
                 ),
             });
 
@@ -2086,7 +2083,7 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
                             ],
                             [new CallActivityAction("Hello", "Tokyo")],
                         ],
@@ -2101,10 +2098,10 @@ describe("Orchestrator", () => {
         it("Task.any called with one TaskSet and one timer where timer wins", async () => {
             const orchestrator = TestOrchestrations.AnyWithTaskSet;
             const eventsWin = false;
-            const initialTime = moment.utc();
+            const initialTime = moment.utc().toDate();
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 1, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 1, eventsWin)
                 ),
             });
 
@@ -2118,7 +2115,7 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
                             ],
                         ],
                         output: undefined,
@@ -2130,7 +2127,7 @@ describe("Orchestrator", () => {
 
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 2, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 2, eventsWin)
                 ),
             });
 
@@ -2144,7 +2141,7 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
                             ],
                         ],
                         output: ["timeout"],
@@ -2187,12 +2184,12 @@ describe("Orchestrator", () => {
 
         it("Timer in combination with Task.any() executes deterministically", async () => {
             const orchestrator = TestOrchestrations.TimerActivityRace;
-            const currentTime = moment.utc();
+            const currentTime = moment.utc().toDate();
 
             // first iteration
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 1),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 1),
                     undefined
                 ),
             });
@@ -2205,7 +2202,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                         ],
@@ -2219,7 +2216,7 @@ describe("Orchestrator", () => {
             // second iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 2),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 2),
                     undefined
                 ),
             });
@@ -2232,7 +2229,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                             [new CallActivityAction("TaskB")],
@@ -2247,7 +2244,7 @@ describe("Orchestrator", () => {
             // third iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 3),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 3),
                     undefined
                 ),
             });
@@ -2260,7 +2257,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                             [new CallActivityAction("TaskB")],
@@ -2275,7 +2272,7 @@ describe("Orchestrator", () => {
             // final iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 4),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 4),
                     undefined
                 ),
             });
@@ -2288,7 +2285,7 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                             [new CallActivityAction("TaskB")],
@@ -2303,12 +2300,12 @@ describe("Orchestrator", () => {
 
         it("Timer in combination with Task.any() timer wins", async () => {
             const orchestrator = TestOrchestrations.TimerActivityRace;
-            const currentTime = moment.utc();
+            const currentTime = moment.utc().toDate();
 
             // first iteration
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime.toDate(), 1),
+                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime, 1),
                     null
                 ),
             });
@@ -2321,7 +2318,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                         ],
@@ -2335,7 +2332,7 @@ describe("Orchestrator", () => {
             // second iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime.toDate(), 2),
+                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime, 2),
                     null
                 ),
             });
@@ -2348,7 +2345,7 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                         ],
