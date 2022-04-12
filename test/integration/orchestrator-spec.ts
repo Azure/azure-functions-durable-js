@@ -1566,12 +1566,12 @@ describe("Orchestrator", () => {
         describe("long timers", () => {
             it("schedules long timers", () => {
                 const orchestrator = TestOrchestrations.WaitOnTimer;
-                const startMoment = moment.utc();
-                const fireAt = startMoment.add(10, "d").toDate();
+                const startTime = moment.utc().toDate();
+                const fireAt = moment(startTime).add(10, "d").toDate();
 
                 const mockContext = new MockContext({
                     context: new DurableOrchestrationBindingInfo(
-                        TestHistories.GetOrchestratorStart("WaitOnTimer", startMoment.toDate()),
+                        TestHistories.GetOrchestratorStart("WaitOnTimer", startTime),
                         fireAt
                     ),
                 });
