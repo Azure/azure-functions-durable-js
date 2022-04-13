@@ -1576,8 +1576,8 @@ describe("Orchestrator", () => {
                         "",
                         false,
                         undefined,
-                        "P6D",
-                        "P3D",
+                        "6.00:00:00",
+                        "3.00:00:00",
                         ReplaySchema.V3
                     ),
                 });
@@ -1609,8 +1609,8 @@ describe("Orchestrator", () => {
                         "",
                         false,
                         undefined,
-                        "P6D",
-                        "P3D",
+                        "6.00:00:00",
+                        "3.00:00:00",
                         ReplaySchema.V3
                     ),
                 });
@@ -1642,8 +1642,8 @@ describe("Orchestrator", () => {
                         "",
                         false,
                         undefined,
-                        "P6D",
-                        "P3D",
+                        "6.00:00:00",
+                        "3.00:00:00",
                         ReplaySchema.V3
                     ),
                 });
