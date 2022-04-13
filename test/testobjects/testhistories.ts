@@ -2303,7 +2303,7 @@ export class TestHistories {
         ];
     }
 
-    private static TimerCreated(timestamp: Date, fireAt: Date): HistoryEvent[] {
+    private static TimerCreated(timestamp: Date, fireAt: Date, timerId: number): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -2311,7 +2311,7 @@ export class TestHistories {
                 isPlayed: false,
             }),
             new TimerCreatedEvent({
-                eventId: 0,
+                eventId: timerId,
                 timestamp,
                 isPlayed: false,
                 fireAt,
@@ -2324,7 +2324,7 @@ export class TestHistories {
         ];
     }
 
-    private static TimerFired(fireAt: Date): HistoryEvent[] {
+    private static TimerFired(fireAt: Date, timerId: number): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -2336,7 +2336,7 @@ export class TestHistories {
                 timestamp: fireAt,
                 isPlayed: false,
                 fireAt,
-                timerId: 0,
+                timerId,
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
@@ -2364,17 +2364,22 @@ export class TestHistories {
 
         let previousTimestamp = firstTimestamp;
         let nextFireAt;
+        let timerId = 0;
         while (
             moment.duration(moment(fireAt).diff(previousTimestamp)) > maximumShortTimerDuration
         ) {
             nextFireAt = moment(previousTimestamp).add(longRunningTimerIntervalDuration).toDate();
             history.push(
-                ...this.TimerCreated(previousTimestamp, nextFireAt),
-                ...this.TimerFired(nextFireAt)
+                ...this.TimerCreated(previousTimestamp, nextFireAt, timerId),
+                ...this.TimerFired(nextFireAt, timerId)
             );
             previousTimestamp = nextFireAt;
+            timerId++;
         }
-        history.push(...this.TimerCreated(previousTimestamp, fireAt), ...this.TimerFired(fireAt));
+        history.push(
+            ...this.TimerCreated(previousTimestamp, fireAt, timerId),
+            ...this.TimerFired(fireAt, timerId)
+        );
         return history;
     }
 
@@ -2399,8 +2404,8 @@ export class TestHistories {
         ];
 
         const nextFireAt = moment(firstTimestamp).add(longRunningTimerIntervalDuration).toDate();
-        history.push(...this.TimerCreated(firstTimestamp, nextFireAt));
-        history.push(...this.TimerFired(nextFireAt));
+        history.push(...this.TimerCreated(firstTimestamp, nextFireAt, 0));
+        history.push(...this.TimerFired(nextFireAt, 0));
         return history;
     }
 }

@@ -1572,7 +1572,13 @@ describe("Orchestrator", () => {
                 const mockContext = new MockContext({
                     context: new DurableOrchestrationBindingInfo(
                         TestHistories.GetOrchestratorStart("WaitOnTimer", startTime),
-                        fireAt
+                        fireAt,
+                        "",
+                        false,
+                        undefined,
+                        "P6D",
+                        "P3D",
+                        ReplaySchema.V3
                     ),
                 });
 
@@ -1584,7 +1590,7 @@ describe("Orchestrator", () => {
                             isDone: false,
                             output: undefined,
                             actions: [[new CreateTimerAction(fireAt)]],
-                            schemaVersion: ReplaySchema.V1,
+                            schemaVersion: ReplaySchema.V3,
                         },
                         true
                     )
@@ -1599,7 +1605,13 @@ describe("Orchestrator", () => {
                 const mockContext = new MockContext({
                     context: new DurableOrchestrationBindingInfo(
                         TestHistories.GetWaitOnLongTimerHalfway(startTime, fireAt),
-                        fireAt
+                        fireAt,
+                        "",
+                        false,
+                        undefined,
+                        "P6D",
+                        "P3D",
+                        ReplaySchema.V3
                     ),
                 });
 
@@ -1611,7 +1623,7 @@ describe("Orchestrator", () => {
                             isDone: false,
                             output: undefined,
                             actions: [[new CreateTimerAction(fireAt)]],
-                            schemaVersion: ReplaySchema.V1,
+                            schemaVersion: ReplaySchema.V3,
                         },
                         true
                     )
@@ -1626,7 +1638,13 @@ describe("Orchestrator", () => {
                 const mockContext = new MockContext({
                     context: new DurableOrchestrationBindingInfo(
                         TestHistories.GetWaitOnTimerFired(startTimestamp, fireAt),
-                        fireAt
+                        fireAt,
+                        "",
+                        false,
+                        undefined,
+                        "P6D",
+                        "P3D",
+                        ReplaySchema.V3
                     ),
                 });
 
@@ -1638,7 +1656,7 @@ describe("Orchestrator", () => {
                             isDone: true,
                             actions: [[new CreateTimerAction(fireAt)]],
                             output: "Timer fired!",
-                            schemaVersion: ReplaySchema.V1,
+                            schemaVersion: ReplaySchema.V3,
                         },
                         true
                     )
