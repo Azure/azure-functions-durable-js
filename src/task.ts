@@ -96,7 +96,7 @@ export interface TimerTask extends Task {
     /**
      * @returns Whether or not the timer has been canceled.
      */
-    isCancelled: boolean;
+    isCanceled: boolean;
     /**
      * Indicates the timer should be canceled. This request will execute on the
      * next `yield` or `return` statement.
@@ -293,8 +293,8 @@ export class DFTimerTask extends AtomicTask implements TimerTask {
     }
 
     /** Whether this timer task is cancelled */
-    get isCancelled(): boolean {
-        return this.action.isCancelled;
+    get isCanceled(): boolean {
+        return this.action.isCanceled;
     }
 
     /**
@@ -306,7 +306,7 @@ export class DFTimerTask extends AtomicTask implements TimerTask {
         if (this.hasResult) {
             throw Error("Cannot cancel a completed task.");
         }
-        this.action.isCancelled = true; // TODO: fix typo
+        this.action.isCanceled = true;
     }
 }
 
@@ -429,8 +429,8 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         this.longRunningTimerIntervalDuration = longRunningTimerIntervalDuration;
     }
 
-    get isCancelled(): boolean {
-        return this.action.isCancelled;
+    get isCanceled(): boolean {
+        return this.action.isCanceled;
     }
 
     /**
@@ -442,7 +442,7 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         if (this.hasResult) {
             throw Error("Cannot cancel a completed task.");
         }
-        this.action.isCancelled = true; // TODO: fix typo
+        this.action.isCanceled = true;
     }
 
     /**
