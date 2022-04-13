@@ -410,12 +410,10 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         const finalFireTime = action.fireAt;
         const durationUntilFire = moment.duration(moment(finalFireTime).diff(currentTime));
 
-        let nextFireTime: Date;
-        if (durationUntilFire > maximumTimerLength) {
-            nextFireTime = moment(currentTime).add(longRunningTimerIntervalDuration).toDate();
-        } else {
-            nextFireTime = finalFireTime;
-        }
+        const nextFireTime: Date =
+            durationUntilFire > maximumTimerLength
+                ? moment(currentTime).add(longRunningTimerIntervalDuration).toDate()
+                : finalFireTime;
 
         const nextTimerAction = new CreateTimerAction(nextFireTime);
         const nextTimerTask = new DFTimerTask(false, nextTimerAction);
@@ -464,12 +462,10 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
 
     private getNextTimerTask(finalFireTime: Date, currentTime: Date): DFTimerTask {
         const durationUntilFire = moment.duration(moment(finalFireTime).diff(currentTime));
-        let nextFireTime: Date;
-        if (durationUntilFire > this.maximumTimerLength) {
-            nextFireTime = moment(currentTime).add(this.longRunningTimerIntervalDuration).toDate();
-        } else {
-            nextFireTime = finalFireTime;
-        }
+        const nextFireTime: Date =
+            durationUntilFire > this.maximumTimerLength
+                ? moment(currentTime).add(this.longRunningTimerIntervalDuration).toDate()
+                : finalFireTime;
         return new DFTimerTask(false, new CreateTimerAction(nextFireTime));
     }
 
