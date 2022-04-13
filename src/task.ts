@@ -304,7 +304,7 @@ export class DFTimerTask extends AtomicTask implements TimerTask {
         if (this.hasResult) {
             throw Error("Cannot cancel a completed task.");
         }
-        this.action.isCanceled = true; // TODO: fix typo
+        this.action.isCanceled = true;
     }
 }
 
