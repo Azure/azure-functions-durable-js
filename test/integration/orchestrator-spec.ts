@@ -3,6 +3,7 @@ import { TraceContext } from "@azure/functions";
 import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
+import { start } from "repl";
 import * as uuidv1 from "uuid/v1";
 import { ManagedIdentityTokenSource } from "../../src";
 import {
@@ -83,32 +84,6 @@ describe("Orchestrator", () => {
             )
         );
     });
-
-    /*
-    it("handles a simple orchestration function (no activity functions), with yield of non-Task object", async () => {
-        const orchestrator = TestOrchestrations.SayHelloInlineInproperYield;
-        const name = "World";
-        const mockContext = new MockContext({
-            context: new DurableOrchestrationBindingInfo(
-                TestHistories.GetOrchestratorStart(
-                    "SayHelloInlineInproperYield",
-                    moment.utc().toDate(),
-                    name
-                ),
-                name
-            ),
-        });
-        orchestrator(mockContext);
-
-        expect(mockContext.doneValue).to.be.deep.equal(
-            new OrchestratorState({
-                isDone: true,
-                actions: [],
-                output: `Hello, ${name}!`,
-            })
-        );
-    });
-    */
 
     describe("handle falsy values", () => {
         for (const falsyValue of falsyValues) {
@@ -1586,6 +1561,107 @@ describe("Orchestrator", () => {
                     true
                 )
             );
+        });
+
+        describe("long timers", () => {
+            it("schedules long timers", () => {
+                const orchestrator = TestOrchestrations.WaitOnTimer;
+                const startTime = moment.utc().toDate();
+                const fireAt = moment(startTime).add(10, "d").toDate();
+
+                const mockContext = new MockContext({
+                    context: new DurableOrchestrationBindingInfo(
+                        TestHistories.GetOrchestratorStart("WaitOnTimer", startTime),
+                        fireAt,
+                        "",
+                        false,
+                        undefined,
+                        "6.00:00:00",
+                        "3.00:00:00",
+                        ReplaySchema.V3
+                    ),
+                });
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState(
+                        {
+                            isDone: false,
+                            output: undefined,
+                            actions: [[new CreateTimerAction(fireAt)]],
+                            schemaVersion: ReplaySchema.V3,
+                        },
+                        true
+                    )
+                );
+            });
+
+            it("waits for sub-timers of long timer", () => {
+                const orchestrator = TestOrchestrations.WaitOnTimer;
+                const startTime = moment.utc().toDate();
+                const fireAt = moment(startTime).add(10, "days").toDate();
+
+                const mockContext = new MockContext({
+                    context: new DurableOrchestrationBindingInfo(
+                        TestHistories.GetWaitOnLongTimerHalfway(startTime, fireAt),
+                        fireAt,
+                        "",
+                        false,
+                        undefined,
+                        "6.00:00:00",
+                        "3.00:00:00",
+                        ReplaySchema.V3
+                    ),
+                });
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState(
+                        {
+                            isDone: false,
+                            output: undefined,
+                            actions: [[new CreateTimerAction(fireAt)]],
+                            schemaVersion: ReplaySchema.V3,
+                        },
+                        true
+                    )
+                );
+            });
+
+            it("proceeds after long timer fires", () => {
+                const orchestrator = TestOrchestrations.WaitOnTimer;
+                const startTimestamp = moment.utc().toDate();
+                const fireAt = moment(startTimestamp).add(10, "d").toDate();
+
+                const mockContext = new MockContext({
+                    context: new DurableOrchestrationBindingInfo(
+                        TestHistories.GetWaitOnTimerFired(startTimestamp, fireAt),
+                        fireAt,
+                        "",
+                        false,
+                        undefined,
+                        "6.00:00:00",
+                        "3.00:00:00",
+                        ReplaySchema.V3
+                    ),
+                });
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.deep.equal(
+                    new OrchestratorState(
+                        {
+                            isDone: true,
+                            actions: [[new CreateTimerAction(fireAt)]],
+                            output: "Timer fired!",
+                            schemaVersion: ReplaySchema.V3,
+                        },
+                        true
+                    )
+                );
+            });
         });
     });
 

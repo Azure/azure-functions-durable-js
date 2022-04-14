@@ -28,7 +28,10 @@ import {
     Task,
     TimerTask,
     DFTask,
+    LongTimerTask,
 } from "./task";
+import moment = require("moment");
+import { ReplaySchema } from "./replaySchema";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -41,6 +44,9 @@ export class DurableOrchestrationContext {
         currentUtcDateTime: Date,
         isReplaying: boolean,
         parentInstanceId: string | undefined,
+        longRunningTimerIntervalDuration: string | undefined,
+        maximumShortTimerDuration: string | undefined,
+        schemaVersion: ReplaySchema,
         input: unknown,
         private taskOrchestratorExecutor: TaskOrchestrationExecutor
     ) {
@@ -49,6 +55,13 @@ export class DurableOrchestrationContext {
         this.isReplaying = isReplaying;
         this.currentUtcDateTime = currentUtcDateTime;
         this.parentInstanceId = parentInstanceId;
+        this.longRunningTimerIntervalDuration = longRunningTimerIntervalDuration
+            ? moment.duration(longRunningTimerIntervalDuration)
+            : undefined;
+        this.maximumShortTimerDuration = maximumShortTimerDuration
+            ? moment.duration(maximumShortTimerDuration)
+            : undefined;
+        this.schemaVersion = schemaVersion;
         this.input = input;
         this.newGuidCounter = 0;
     }
@@ -100,6 +113,34 @@ export class DurableOrchestrationContext {
      * function code, making it deterministic and safe for replay.
      */
     public currentUtcDateTime: Date;
+
+    /**
+     * Gets the maximum duration for timers allowed by the
+     * underlying storage infrastructure
+     *
+     * This duration property is determined by the underlying storage
+     * solution and passed to the SDK from the extension.
+     */
+    private readonly maximumShortTimerDuration: moment.Duration | undefined;
+
+    /**
+     * A duration property which defines the duration of smaller
+     * timers to break long timers into, in case they are longer
+     * than the maximum supported duration
+     *
+     * This duration property is determined by the underlying
+     * storage solution and passed to the SDK from the extension.
+     */
+    private readonly longRunningTimerIntervalDuration: moment.Duration | undefined;
+
+    /**
+     * Gets the current schema version that this execution is
+     * utilizing, based on negotiation with the extension.
+     *
+     * Different schema versions can allow different behavior.
+     * For example, long timers are only supported in schema version >=3
+     */
+    private readonly schemaVersion: ReplaySchema;
 
     /**
      * @hidden
@@ -293,9 +334,33 @@ export class DurableOrchestrationContext {
      * @returns A TimerTask that completes when the durable timer expires.
      */
     public createTimer(fireAt: Date): TimerTask {
-        const newAction = new CreateTimerAction(fireAt);
-        const task = new DFTimerTask(false, newAction);
-        return task;
+        const timerAction = new CreateTimerAction(fireAt);
+        const durationUntilFire = moment.duration(moment(fireAt).diff(this.currentUtcDateTime));
+        if (this.schemaVersion >= ReplaySchema.V3) {
+            if (!this.maximumShortTimerDuration || !this.longRunningTimerIntervalDuration) {
+                throw Error(
+                    "A framework-internal error was detected: replay schema version >= V3 is being used, " +
+                        "but one or more of the properties `maximumShortTimerDuration` and `longRunningTimerIntervalDuration` are not defined. " +
+                        "This is likely an issue with the Durable Functions Extension. " +
+                        "Please report this bug here: https://github.com/Azure/azure-functions-durable-js/issues\n" +
+                        `maximumShortTimerDuration: ${this.maximumShortTimerDuration}\n` +
+                        `longRunningTimerIntervalDuration: ${this.longRunningTimerIntervalDuration}`
+                );
+            }
+
+            if (durationUntilFire > this.maximumShortTimerDuration) {
+                return new LongTimerTask(
+                    false,
+                    timerAction,
+                    this,
+                    this.taskOrchestratorExecutor,
+                    this.maximumShortTimerDuration,
+                    this.longRunningTimerIntervalDuration
+                );
+            }
+        }
+
+        return new DFTimerTask(false, timerAction);
     }
 
     /**

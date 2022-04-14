@@ -16,6 +16,7 @@ import {
     OrchestratorStartedEvent,
 } from "./classes";
 import { IOrchestrationFunctionContext } from "./iorchestrationfunctioncontext";
+import { ReplaySchema } from "./replaySchema";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 
 /**
@@ -33,6 +34,9 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
      * @param input The input to the orchestration
      * @param currentUtcDateTime The deterministic date at the beginning of orchestration replay
      * @param isReplaying Whether the orchestration is to be marked as isReplaying the its first event
+     * @param longRunningTimerIntervalDuration The duration to break smaller timers into if a long timer exceeds the maximum allowed duration
+     * @param maximumShortTimerDuration The maximum duration for a timer allowed by the underlying storage infrastructure
+     * @param schemaVersion The schema version currently used after being negotiated with the extension
      * @param parentInstanceId The instanceId of the orchestration's parent, if this is a sub-orchestration
      */
     constructor(
@@ -40,6 +44,9 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
         history: HistoryEvent[] | undefined = undefined,
         input: any = undefined,
         currentUtcDateTime: Date = new Date(),
+        longRunningTimerIntervalDuration: string,
+        maximumShortTimerDuration: string,
+        schemaVersion: ReplaySchema,
         isReplaying = false,
         parentInstanceId = ""
     ) {
@@ -54,6 +61,9 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
             currentUtcDateTime,
             isReplaying,
             parentInstanceId,
+            longRunningTimerIntervalDuration,
+            maximumShortTimerDuration,
+            schemaVersion,
             input,
             new TaskOrchestrationExecutor()
         );

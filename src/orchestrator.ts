@@ -61,6 +61,9 @@ export class Orchestrator {
                 this.currentUtcDateTime,
                 orchestrationBinding.isReplaying,
                 orchestrationBinding.parentInstanceId,
+                orchestrationBinding.longRunningTimerIntervalDuration,
+                orchestrationBinding.maximumShortTimerDuration,
+                upperSchemaVersion,
                 input,
                 this.taskOrchestrationExecutor
             );
