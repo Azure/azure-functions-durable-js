@@ -292,7 +292,7 @@ export class DFTimerTask extends AtomicTask implements TimerTask {
         super(id, action);
     }
 
-    /** Whether this timer task is cancelled */
+    /** Whether this timer task is canceled */
     get isCanceled(): boolean {
         return this.action.isCanceled;
     }
