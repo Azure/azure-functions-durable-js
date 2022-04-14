@@ -5,9 +5,9 @@ import { DFTimerTask } from "../../src/task";
 
 describe("TimerTask", () => {
     it("throws cannot cancel a completed task", async () => {
-        const isCancelled = false;
+        const isCanceled = false;
         const date = new Date();
-        const action = new CreateTimerAction(date, isCancelled);
+        const action = new CreateTimerAction(date, isCanceled);
         const task = new DFTimerTask(0, action);
         task.setValue(false, undefined); // set value to complete task
 
@@ -17,21 +17,21 @@ describe("TimerTask", () => {
     });
 
     it("cancels an incomplete task", async () => {
-        const isCancelled = false;
+        const isCanceled = false;
         const date = new Date();
-        const action = new CreateTimerAction(date, isCancelled);
+        const action = new CreateTimerAction(date, isCanceled);
         const task = new DFTimerTask(0, action);
 
         task.cancel();
-        expect(task.isCancelled).to.equal(true);
+        expect(task.isCanceled).to.equal(true);
     });
 
     it("is canceled when its action is canceled", async () => {
-        const isCancelled = true;
+        const isCanceled = true;
         const date = new Date();
-        const action = new CreateTimerAction(date, isCancelled);
+        const action = new CreateTimerAction(date, isCanceled);
         const task = new DFTimerTask(0, action);
 
-        expect(task.isCancelled).to.equal(true);
+        expect(task.isCanceled).to.equal(true);
     });
 });
