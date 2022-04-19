@@ -13,6 +13,7 @@ export class DurableHttpRequest {
      * @param content The HTTP request content.
      * @param headers The HTTP request headers.
      * @param tokenSource The source of OAuth tokens to add to the request.
+     * @param asynchronousPatternEnabled Specifies whether the DurableHttpRequest should handle the asynchronous pattern.
      */
     constructor(
         /** The HTTP request method. */
@@ -26,6 +27,8 @@ export class DurableHttpRequest {
             [key: string]: string;
         },
         /** The source of OAuth token to add to the request. */
-        public readonly tokenSource?: TokenSource
+        public readonly tokenSource?: TokenSource,
+        /**  Whether the DurableHttpRequest should handle the asynchronous pattern. **/
+        public readonly asynchronousPatternEnabled?: boolean
     ) {}
 }

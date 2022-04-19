@@ -63,6 +63,7 @@ export class Orchestrator {
                 orchestrationBinding.parentInstanceId,
                 orchestrationBinding.longRunningTimerIntervalDuration,
                 orchestrationBinding.maximumShortTimerDuration,
+                orchestrationBinding.defaultHttpAsyncRequestSleepTimeMillseconds,
                 upperSchemaVersion,
                 input,
                 this.taskOrchestrationExecutor

@@ -36,6 +36,7 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
      * @param isReplaying Whether the orchestration is to be marked as isReplaying the its first event
      * @param longRunningTimerIntervalDuration The duration to break smaller timers into if a long timer exceeds the maximum allowed duration
      * @param maximumShortTimerDuration The maximum duration for a timer allowed by the underlying storage infrastructure
+     * @param defaultHttpAsyncRequestSleepDurationInMillseconds The default amount of time to wait between sending requests in a callHttp polling scenario
      * @param schemaVersion The schema version currently used after being negotiated with the extension
      * @param parentInstanceId The instanceId of the orchestration's parent, if this is a sub-orchestration
      */
@@ -46,6 +47,7 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
         currentUtcDateTime: Date = new Date(),
         longRunningTimerIntervalDuration = "3.00:00:00",
         maximumShortTimerDuration = "6.00:00:00",
+        defaultHttpAsyncRequestSleepDurationInMillseconds = 30000,
         schemaVersion: ReplaySchema = ReplaySchema.V1,
         isReplaying = false,
         parentInstanceId = ""
@@ -63,6 +65,7 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
             parentInstanceId,
             longRunningTimerIntervalDuration,
             maximumShortTimerDuration,
+            defaultHttpAsyncRequestSleepDurationInMillseconds,
             schemaVersion,
             input,
             new TaskOrchestrationExecutor()

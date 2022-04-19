@@ -871,6 +871,7 @@ describe("Orchestrator", () => {
                                 uri: req.uri,
                                 content: req.content,
                                 headers: req.headers,
+                                asynchronousPatternEnabled: req.asynchronousPatternEnabled,
                                 tokenSource: {
                                     resource: "https://management.core.windows.net",
                                     kind: "AzureManagedIdentity",
@@ -1578,6 +1579,7 @@ describe("Orchestrator", () => {
                         undefined,
                         "6.00:00:00",
                         "3.00:00:00",
+                        30000,
                         ReplaySchema.V3
                     ),
                 });
@@ -1611,6 +1613,7 @@ describe("Orchestrator", () => {
                         undefined,
                         "6.00:00:00",
                         "3.00:00:00",
+                        30000,
                         ReplaySchema.V3
                     ),
                 });
@@ -1644,6 +1647,7 @@ describe("Orchestrator", () => {
                         undefined,
                         "6.00:00:00",
                         "3.00:00:00",
+                        300000,
                         ReplaySchema.V3
                     ),
                 });
