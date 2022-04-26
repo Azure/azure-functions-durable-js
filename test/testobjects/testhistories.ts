@@ -1323,7 +1323,7 @@ export class TestHistories {
             })
         );
 
-        timestamp = moment(firstTimestamp).add(20, "s").toDate();
+        timestamp = moment(firstTimestamp).add(30, "s").toDate();
 
         history.push(
             new OrchestratorStartedEvent({
@@ -1352,7 +1352,8 @@ export class TestHistories {
             })
         );
 
-        timestamp = moment(timestamp).add(retryInterval, "ms").toDate();
+        let fireAt = moment(timestamp).add(retryInterval, "ms").toDate();
+        timestamp = moment(fireAt).add(10, "s").toDate();
 
         history.push(
             new OrchestratorStartedEvent({
@@ -1364,7 +1365,7 @@ export class TestHistories {
                 eventId: -1,
                 timestamp,
                 isPlayed: false,
-                fireAt: timestamp,
+                fireAt,
                 timerId: 1,
             }),
             new TaskScheduledEvent({
@@ -1410,7 +1411,8 @@ export class TestHistories {
             })
         );
 
-        timestamp = moment(timestamp).add(retryInterval, "ms").toDate();
+        fireAt = moment(timestamp).add(retryInterval, "ms").toDate();
+        timestamp = moment(fireAt).add(10, "s").toDate();
 
         history.push(
             new OrchestratorStartedEvent({
@@ -1422,7 +1424,7 @@ export class TestHistories {
                 eventId: -1,
                 timestamp,
                 isPlayed: false,
-                fireAt: timestamp,
+                fireAt,
                 timerId: 3,
             })
         );

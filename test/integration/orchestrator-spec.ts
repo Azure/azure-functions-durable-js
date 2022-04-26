@@ -818,7 +818,10 @@ describe("Orchestrator", () => {
                         actions: [
                             [new CallActivityWithRetryAction("Hello", retryOptions, "World")],
                         ],
-                        output: [startingTime, moment(startingTime).add(1, "m").toDate()],
+                        output: [
+                            startingTime,
+                            moment(startingTime).add(1, "m").add(30, "s").toDate(),
+                        ],
                         schemaVersion: ReplaySchema.V1,
                     },
                     true
