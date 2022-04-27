@@ -84,8 +84,8 @@ export class Utils {
         return argument;
     }
 
-    public static sleep(delayInMilliseconds: number): Promise<NodeJS.Timer> {
-        return new Promise((resolve) => setTimeout(resolve, delayInMilliseconds));
+    public static async sleep(delayInMilliseconds: number): Promise<void> {
+        await new Promise((resolve) => setTimeout(resolve, delayInMilliseconds));
     }
 
     public static throwIfNotInstanceOf<T>(
