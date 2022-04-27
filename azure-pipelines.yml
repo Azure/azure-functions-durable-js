@@ -65,6 +65,32 @@ jobs:
             displayName: "npm build and test"
           - script: npm run test:nolint
             displayName: "npm build and test (no linting)"
+    - job: TestExportedTypes
+      pool:
+          name: "1ES-Hosted-AzFunc"
+          demands:
+              - ImageOverride -equals MMSUbuntu20.04TLS
+      steps:
+          - task: NodeTool@0
+            inputs:
+                versionSpec: $(NODE_14)
+            displayName: "Install Node.js"
+          - script: npm install
+            displayName: "Install Node.js Dependencies"
+          - script: npm run build
+            displayName: "Build project"
+          - script: npm pack
+            displayName: "Pack npm package"
+          - task: Bash@3
+            displayName: "Create test app"
+            inputs:
+                targetType: "inline"
+                script: "cd $(System.DefaultWorkingDirectory)/.. && mkdir test-app && cp -r $(System.DefaultWorkingDirectory)/samples/UnitTesting test-app"
+          - task: Bash@3
+            displayName: "Build test app"
+            inputs:
+                targetType: "inline"
+                script: "cd $(System.DefaultWorkingDirectory)/../test-app/UnitTesting && pckg=$(ls $(System.DefaultWorkingDirectory)/*.tgz) && npm i $pckg && npm run build"
     - job: BuildArtifacts
       pool:
           name: "1ES-Hosted-AzFunc"
