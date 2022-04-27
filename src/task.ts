@@ -394,7 +394,7 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
     public id: TaskID;
     public action: CreateTimerAction;
     private readonly executor: TaskOrchestrationExecutor;
-    private readonly maximumTimerLength: moment.Duration;
+    private readonly maximumTimerDuration: moment.Duration;
     private readonly orchestrationContext: DurableOrchestrationContext;
     private readonly longRunningTimerIntervalDuration: moment.Duration;
 
@@ -403,15 +403,17 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         action: CreateTimerAction,
         orchestrationContext: DurableOrchestrationContext,
         executor: TaskOrchestrationExecutor,
-        maximumTimerLength: moment.Duration,
-        longRunningTimerIntervalDuration: moment.Duration
+        maximumTimerLength: string,
+        longRunningTimerIntervalLength: string
     ) {
+        const maximumTimerDuration = moment.duration(maximumTimerLength);
+        const longRunningTimerIntervalDuration = moment.duration(longRunningTimerIntervalLength);
         const currentTime = orchestrationContext.currentUtcDateTime;
         const finalFireTime = action.fireAt;
         const durationUntilFire = moment.duration(moment(finalFireTime).diff(currentTime));
 
         const nextFireTime: Date =
-            durationUntilFire > maximumTimerLength
+            durationUntilFire > maximumTimerDuration
                 ? moment(currentTime).add(longRunningTimerIntervalDuration).toDate()
                 : finalFireTime;
 
@@ -423,7 +425,7 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         this.action = action;
         this.orchestrationContext = orchestrationContext;
         this.executor = executor;
-        this.maximumTimerLength = maximumTimerLength;
+        this.maximumTimerDuration = maximumTimerDuration;
         this.longRunningTimerIntervalDuration = longRunningTimerIntervalDuration;
     }
 
@@ -463,7 +465,7 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
     private getNextTimerTask(finalFireTime: Date, currentTime: Date): DFTimerTask {
         const durationUntilFire = moment.duration(moment(finalFireTime).diff(currentTime));
         const nextFireTime: Date =
-            durationUntilFire > this.maximumTimerLength
+            durationUntilFire > this.maximumTimerDuration
                 ? moment(currentTime).add(this.longRunningTimerIntervalDuration).toDate()
                 : finalFireTime;
         return new DFTimerTask(false, new CreateTimerAction(nextFireTime));
