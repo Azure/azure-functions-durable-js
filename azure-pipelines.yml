@@ -90,7 +90,7 @@ jobs:
             displayName: "Build test app"
             inputs:
                 targetType: "inline"
-                script: "cd $(System.DefaultWorkingDirectory)/../test-app/UnitTesting && pckg=$(ls $(System.DefaultWorkingDirectory)/*.tgz) && npm i $pckg && npm run build"
+                script: "cd $(System.DefaultWorkingDirectory)/../test-app/UnitTesting && npm install && npm uninstall durable-functions && pckg=$(ls $(System.DefaultWorkingDirectory)/*.tgz) && npm install $pckg && npm run build"
     - job: BuildArtifacts
       pool:
           name: "1ES-Hosted-AzFunc"
