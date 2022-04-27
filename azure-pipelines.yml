@@ -64,7 +64,7 @@ jobs:
           - script: npm run test
             displayName: "npm build and test"
           - script: npm run test:nolint
-            displayName: "npm build and test (no linting) HELLO I AM HERE"
+            displayName: "npm build and test (no linting)"
     - job: TestExportedTypes
       pool:
           name: "1ES-Hosted-AzFunc"
