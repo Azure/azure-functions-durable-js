@@ -9,7 +9,7 @@
  *    function app in Kudu
  */
 
-import * as df from "../../../";
+import * as df from "durable-functions";
 
 const orchestrator = df.orchestrator(function* (context) {
     const outputs = [];
