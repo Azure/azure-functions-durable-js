@@ -85,7 +85,7 @@ jobs:
             displayName: "Create test app"
             inputs:
                 targetType: "inline"
-                script: "cd $(System.DefaultWorkingDirectory)/.. && mkdir test-app && cp -r $(System.DefaultWorkingDirectory)/samples/UnitTesting test-app"
+                script: "mkdir $(System.DefaultWorkingDirectory)/../test-app && cp -r $(System.DefaultWorkingDirectory)/samples/UnitTesting $(System.DefaultWorkingDirectory)/../test-app"
           - task: Bash@3
             displayName: "Build test app"
             inputs:
