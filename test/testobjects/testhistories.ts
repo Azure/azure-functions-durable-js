@@ -1352,6 +1352,8 @@ export class TestHistories {
             })
         );
 
+        // These artificial delays between fireAt and timestamp is because
+        // in reality, timers don't fire exactly at their fireAt time
         let fireAt = moment(timestamp).add(retryInterval, "ms").toDate();
         timestamp = moment(fireAt).add(10, "s").toDate();
 
