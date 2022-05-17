@@ -13,7 +13,7 @@ trigger:
     - dev
 
 jobs:
-    - job: UnitTests
+    - job: Tests
       strategy:
           matrix:
               UBUNTU_NODE10:
@@ -65,6 +65,9 @@ jobs:
             displayName: "npm build and test"
           - script: npm run test:nolint
             displayName: "npm build and test (no linting)"
+          - script: npm pack
+            displayName: "npm pack"
+          - script:
     - job: SmokeTest
       pool:
           name: "1ES-Hosted-AzFunc"
