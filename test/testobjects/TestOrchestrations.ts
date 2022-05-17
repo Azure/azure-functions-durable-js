@@ -312,7 +312,8 @@ export class TestOrchestrations {
             input.uri,
             input.content,
             input.headers,
-            input.tokenSource
+            input.tokenSource,
+            input.asynchronousPatternEnabled
         );
         return output;
     });

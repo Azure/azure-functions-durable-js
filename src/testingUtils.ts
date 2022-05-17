@@ -17,7 +17,6 @@ import {
 } from "./classes";
 import { IOrchestrationFunctionContext } from "./iorchestrationfunctioncontext";
 import { ReplaySchema } from "./replaySchema";
-import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 
 /**
  * An orchestration context with dummy default values to facilitate mocking/stubbing the
@@ -44,10 +43,9 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
         instanceId = "",
         history: HistoryEvent[] | undefined = undefined,
         input: any = undefined,
-        currentUtcDateTime: Date = new Date(),
         longRunningTimerIntervalDuration = "3.00:00:00",
         maximumShortTimerDuration = "6.00:00:00",
-        defaultHttpAsyncRequestSleepDurationInMillseconds = 30000,
+        defaultHttpAsyncRequestSleepTimeMillseconds = 30000,
         schemaVersion: ReplaySchema = ReplaySchema.V1,
         isReplaying = false,
         parentInstanceId = ""
@@ -56,20 +54,22 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
             const opts = new HistoryEventOptions(0, new Date());
             history = [new OrchestratorStartedEvent(opts)];
         }
-        this.bindings = [new DurableOrchestrationBindingInfo(history)];
-        this.df = new DurableOrchestrationContext(
-            history,
-            instanceId,
-            currentUtcDateTime,
-            isReplaying,
-            parentInstanceId,
-            longRunningTimerIntervalDuration,
-            maximumShortTimerDuration,
-            defaultHttpAsyncRequestSleepDurationInMillseconds,
-            schemaVersion,
-            input,
-            new TaskOrchestrationExecutor()
-        );
+        this.bindings = [
+            new DurableOrchestrationBindingInfo(
+                history,
+                input,
+                instanceId,
+                isReplaying,
+                parentInstanceId,
+                maximumShortTimerDuration,
+                longRunningTimerIntervalDuration,
+                defaultHttpAsyncRequestSleepTimeMillseconds,
+                schemaVersion
+            ),
+        ];
+
+        // Set this as undefined, let it be initialized by the orchestrator
+        this.df = (undefined as unknown) as DurableOrchestrationContext;
     }
     public doneValue: IOrchestratorState | undefined;
     public err: string | Error | null | undefined;
