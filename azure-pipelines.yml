@@ -67,33 +67,35 @@ jobs:
             displayName: "npm build and test (no linting)"
           - script: npm pack
             displayName: "npm pack"
-          - script:
-    - job: SmokeTest
-      pool:
-          name: "1ES-Hosted-AzFunc"
-          demands:
-              - ImageOverride -equals MMSUbuntu20.04TLS
-      steps:
-          - task: NodeTool@0
-            inputs:
-                versionSpec: $(NODE_14)
-            displayName: "Install Node.js"
-          - script: npm install
-            displayName: "Install Node.js Dependencies"
-          - script: npm run build
-            displayName: "Build project"
-          - script: npm pack
-            displayName: "Pack npm package"
-          - task: Bash@3
+          - task: CopyFiles@2
             displayName: "Create test app"
             inputs:
-                targetType: "inline"
-                script: "mkdir $(System.DefaultWorkingDirectory)/../test-app && cp -r $(System.DefaultWorkingDirectory)/samples/UnitTesting $(System.DefaultWorkingDirectory)/../test-app"
+                SourceFolder: "$(System.DefaultWorkingDirectory)/test/test-app"
+                Contents: "**"
+                TargetFolder: "$(System.DefaultWorkingDirectory)/../test-app"
+                CleanTargetFolder: true
+          - task: Npm@1
+            displayName: "npm install (test app)"
+            inputs:
+                command: "install"
+                workingDir: "$(System.DefaultWorkingDirectory)/../test-app"
+          - task: Npm@1
+            displayName: "uninstall durable-functions (test app)"
+            inputs:
+                command: "custom"
+                workingDir: "$(System.DefaultWorkingDirectory)/../test-app"
+                customCommand: "uninstall durable-functions"
           - task: Bash@3
-            displayName: "Build test app"
+            displayName: "Installed packed durable-functions module in test app"
             inputs:
                 targetType: "inline"
-                script: "cd $(System.DefaultWorkingDirectory)/../test-app/UnitTesting && npm install && npm uninstall durable-functions && pckg=$(ls $(System.DefaultWorkingDirectory)/durable-functions-*.tgz) && npm install $pckg && npm run build"
+                script: "cd $(System.DefaultWorkingDirectory)/../test-app/ && pckg=$(ls $(System.DefaultWorkingDirectory)/durable-functions-*.tgz) && npm install $pckg"
+          - task: Npm@1
+            displayName: "build test app"
+            inputs:
+                command: "custom"
+                workingDir: "$(System.DefaultWorkingDirectory)/../test-app"
+                customCommand: "run build"
     - job: BuildArtifacts
       pool:
           name: "1ES-Hosted-AzFunc"
