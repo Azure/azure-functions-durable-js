@@ -93,7 +93,7 @@ jobs:
             inputs:
                 command: "custom"
                 workingDir: "$(Agent.BuildDirectory)/test-app"
-                customCommand: "install $pckg"
+                customCommand: "install $(pckg)"
           - task: Npm@1
             displayName: "Build smoke test app"
             inputs:
