@@ -13,7 +13,7 @@ trigger:
     - dev
 
 jobs:
-    - job: Tests
+    - job: Test
       strategy:
           matrix:
               UBUNTU_NODE10:

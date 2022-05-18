@@ -1,10 +1,10 @@
 {
-  "bindings": [
-    {
-      "name": "name",
-      "type": "activityTrigger",
-      "direction": "in"
-    }
-  ],
-  "scriptFile": "../dist/Hello/index.js"
+    "bindings": [
+        {
+            "name": "name",
+            "type": "activityTrigger",
+            "direction": "in"
+        }
+    ],
+    "scriptFile": "../dist/Hello/index.js"
 }
