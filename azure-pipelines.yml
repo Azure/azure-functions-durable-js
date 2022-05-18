@@ -85,21 +85,14 @@ jobs:
                 command: "custom"
                 workingDir: "$(Agent.BuildDirectory)/test-app"
                 customCommand: "uninstall durable-functions"
-          - task: PowerShell@2
-            displayName: "Set package variable"
-            inputs:
-                targetType: "inline"
-                script: |
-                    cd $(System.DefaultWorkingDirectory)
-                    $pckg = (ls durable-functions-*.tgz).FullName
-                    echo "##vso[task.setvariable variable=pckg]$pckg"
-                    echo "package is $pckg"
+          - script: mv durable-functions-*.tgz package.tgz
+            displayName: "Rename package file"
           - task: Npm@1
             displayName: "Install packed durable-functions module (test app)"
             inputs:
                 command: "custom"
                 workingDir: "$(Agent.BuildDirectory)/test-app"
-                customCommand: "install $(pckg)"
+                customCommand: "install $(System.DefaultWorkingDirectory)/package.tgz"
           - task: Npm@1
             displayName: "Build smoke test app"
             inputs:
