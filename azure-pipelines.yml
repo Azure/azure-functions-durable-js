@@ -91,7 +91,7 @@ jobs:
                 targetType: "inline"
                 script: |
                     cd $(System.DefaultWorkingDirectory)
-                    $pckg = (ls durable-functions-*.tgz).Name
+                    $pckg = (ls durable-functions-*.tgz)
                     echo "##vso[task.setvariable variable=pckg]$pckg"
           - task: Npm@1
             displayName: "Install packed durable-functions module (test app)"
