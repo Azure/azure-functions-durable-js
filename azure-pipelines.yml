@@ -86,12 +86,12 @@ jobs:
                 workingDir: "$(System.DefaultWorkingDirectory)/../test-app"
                 customCommand: "uninstall durable-functions"
           - task: Bash@3
-            displayName: "Installed packed durable-functions module in test app"
+            displayName: "Install packed durable-functions module in test app"
             inputs:
                 targetType: "inline"
                 script: "cd $(System.DefaultWorkingDirectory)/../test-app/ && pckg=$(ls $(System.DefaultWorkingDirectory)/durable-functions-*.tgz) && npm install $pckg"
           - task: Npm@1
-            displayName: "build test app"
+            displayName: "Build test app"
             inputs:
                 command: "custom"
                 workingDir: "$(System.DefaultWorkingDirectory)/../test-app"
