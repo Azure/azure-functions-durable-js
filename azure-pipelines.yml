@@ -78,7 +78,7 @@ jobs:
             displayName: "npm install (test app)"
             inputs:
                 command: "install"
-                workingDir: "$(Agent.BuildDirectory/test-app"
+                workingDir: "$(Agent.BuildDirectory)/test-app"
           - task: Npm@1
             displayName: "uninstall durable-functions (test app)"
             inputs:
