@@ -85,8 +85,10 @@ jobs:
                 command: "custom"
                 workingDir: "$(Agent.BuildDirectory)/test-app"
                 customCommand: "uninstall durable-functions"
-          - bash: |
-                echo "##vso[task.setvariable variable=pckg]$(ls $(System.DefaultWorkingDirectory)/durable-functions-*.tgz)"
+          - script: |
+                cd $(System.DefaultWorkingDirectory)
+                $pckg = ls durable-functions-*.tgz
+                echo "##vso[task.setvariable variable=pckg]$pckg.Name"
             displayName: "Set package variable"
           - task: Npm@1
             displayName: "Install packed durable-functions module (test app)"
