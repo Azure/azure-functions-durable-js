@@ -63,9 +63,7 @@ export class DurableOrchestrationContext {
         this.maximumShortTimerDuration = maximumShortTimerDuration
             ? moment.duration(maximumShortTimerDuration)
             : undefined;
-        this.defaultHttpAsyncRequestSleepDuration = defaultHttpAsyncRequestSleepTimeMillseconds
-            ? moment.duration(defaultHttpAsyncRequestSleepTimeMillseconds, "ms")
-            : undefined;
+        this.defaultHttpAsyncRequestSleepTimeMillseconds = defaultHttpAsyncRequestSleepTimeMillseconds;
         this.schemaVersion = schemaVersion;
         this.input = input;
         this.newGuidCounter = 0;
@@ -81,7 +79,7 @@ export class DurableOrchestrationContext {
      * This duration is used unless a different value (in seconds) is specified in the
      * 'Retry-After' header of the 202 response.
      */
-    private readonly defaultHttpAsyncRequestSleepDuration?: moment.Duration;
+    private readonly defaultHttpAsyncRequestSleepTimeMillseconds?: number;
 
     /**
      * The ID of the current orchestration instance.
@@ -309,7 +307,7 @@ export class DurableOrchestrationContext {
         content?: string | object,
         headers?: { [key: string]: string },
         tokenSource?: TokenSource,
-        asynchronousPatternEnabled?: boolean
+        asynchronousPatternEnabled = true
     ): Task {
         if (content && typeof content !== "string") {
             content = JSON.stringify(content);
@@ -325,7 +323,7 @@ export class DurableOrchestrationContext {
         );
         const newAction = new CallHttpAction(req);
         if (this.schemaVersion >= ReplaySchema.V3 && req.asynchronousPatternEnabled) {
-            if (!this.defaultHttpAsyncRequestSleepDuration) {
+            if (!this.defaultHttpAsyncRequestSleepTimeMillseconds) {
                 throw Error(
                     "A framework-internal error was detected: replay schema version >= V3 is being used, " +
                         "but `defaultHttpAsyncRequestSleepDuration` property is not defined. " +
@@ -338,7 +336,7 @@ export class DurableOrchestrationContext {
                 newAction,
                 this,
                 this.taskOrchestratorExecutor,
-                this.defaultHttpAsyncRequestSleepDuration.toISOString()
+                this.defaultHttpAsyncRequestSleepTimeMillseconds
             );
         }
         return new AtomicTask(false, newAction);

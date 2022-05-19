@@ -403,18 +403,26 @@ export class CallHttpWithPollingTask extends CompoundTask {
         action: CallHttpAction,
         private readonly orchestrationContext: DurableOrchestrationContext,
         private readonly executor: TaskOrchestrationExecutor,
-        defaultAsyncSleepRequestTime: string
+        defaultHttpAsyncRequestSleepTimeMillseconds: number
     ) {
         super([new AtomicTask(id, action)], action);
         this.id = id;
         this.action = action;
-        this.defaultHttpAsyncRequestSleepDuration = moment.duration(defaultAsyncSleepRequestTime);
+        this.defaultHttpAsyncRequestSleepDuration = moment.duration(
+            defaultHttpAsyncRequestSleepTimeMillseconds,
+            "ms"
+        );
     }
 
     public trySetValue(child: TaskBase): void {
         if (child.stateObj === TaskState.Completed) {
             if (child.actionObj instanceof CallHttpAction) {
-                const result = child.result as DurableHttpResponse;
+                const resultObj = child.result as DurableHttpResponse;
+                const result = new DurableHttpResponse(
+                    resultObj.statusCode,
+                    resultObj.content,
+                    resultObj.headers
+                );
                 if (result.statusCode === 202 && result.getHeader("Location")) {
                     const retryAfterHeaderValue = result.getHeader("Retry-After");
                     const delay: moment.Duration = retryAfterHeaderValue
