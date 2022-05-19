@@ -93,12 +93,10 @@ jobs:
                 command: "custom"
                 workingDir: "$(Agent.BuildDirectory)/test-app"
                 customCommand: "install $(System.DefaultWorkingDirectory)/package.tgz"
-          - task: Npm@1
+          - script: |
+                cd $(Agent.BuildDirectory)/test-app
+                npm run build
             displayName: "Build smoke test app"
-            inputs:
-                command: "custom"
-                workingDir: "$(Agent.BuildDirectory)/test-app"
-                customCommand: "run build"
     - job: BuildArtifacts
       pool:
           name: "1ES-Hosted-AzFunc"
