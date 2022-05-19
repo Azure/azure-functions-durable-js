@@ -87,8 +87,10 @@ jobs:
             inputs:
                 command: "install"
                 workingDir: "$(Agent.TempDirectory)/test-app"
-          - script: cd $(Agent.TempDirectory)/test-app && npm run build
-            displayName: "Build smoke test app"
+          - task: Bash@3
+            inputs:
+                targetType: "inline"
+                script: "cd $(Agent.TempDirectory)/test-app && npm run build"
     - job: BuildArtifacts
       pool:
           name: "1ES-Hosted-AzFunc"
