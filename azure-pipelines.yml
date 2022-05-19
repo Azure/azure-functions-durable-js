@@ -90,7 +90,8 @@ jobs:
           - task: Bash@3
             inputs:
                 targetType: "inline"
-                script: "cd $(Agent.TempDirectory)/test-app && npm run build"
+                script: "ls . && npm run build"
+                workingDirectory: "$(Agent.TempDirectory)/test-app"
     - job: BuildArtifacts
       pool:
           name: "1ES-Hosted-AzFunc"
