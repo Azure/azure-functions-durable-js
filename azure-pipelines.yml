@@ -67,6 +67,8 @@ jobs:
             displayName: "npm build and test (no linting)"
           - script: npm pack
             displayName: "npm pack"
+          - script: mv durable-functions-*.tgz package.tgz
+            displayName: "Rename package file"
           - task: CopyFiles@2
             displayName: "Create smoke test app"
             inputs:
@@ -75,24 +77,16 @@ jobs:
                 TargetFolder: "$(Agent.BuildDirectory)/test-app"
                 CleanTargetFolder: true
           - task: Npm@1
-            displayName: "npm install (test app)"
-            inputs:
-                command: "install"
-                workingDir: "$(Agent.BuildDirectory)/test-app"
-          - task: Npm@1
-            displayName: "uninstall durable-functions (test app)"
-            inputs:
-                command: "custom"
-                workingDir: "$(Agent.BuildDirectory)/test-app"
-                customCommand: "uninstall durable-functions"
-          - script: mv durable-functions-*.tgz package.tgz
-            displayName: "Rename package file"
-          - task: Npm@1
             displayName: "Install packed durable-functions module (test app)"
             inputs:
                 command: "custom"
                 workingDir: "$(Agent.BuildDirectory)/test-app"
                 customCommand: "install $(System.DefaultWorkingDirectory)/package.tgz"
+          - task: Npm@1
+            displayName: "npm install (test app)"
+            inputs:
+                command: "install"
+                workingDir: "$(Agent.BuildDirectory)/test-app"
           - script: |
                 cd $(Agent.BuildDirectory)/test-app
                 npm run build
