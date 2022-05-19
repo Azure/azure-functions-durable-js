@@ -415,9 +415,10 @@ export class CallHttpWithPollingTask extends CompoundTask {
         if (child.stateObj === TaskState.Completed) {
             if (child.actionObj instanceof CallHttpAction) {
                 const result = child.result as DurableHttpResponse;
-                if (result.statusCode === 202 && result.headers && result.headers.Location) {
-                    const delay: moment.Duration = result.headers["Retry-After"]
-                        ? moment.duration(result.headers["Retry-After"], "s")
+                if (result.statusCode === 202 && result.getHeader("Location")) {
+                    const retryAfterHeaderValue = result.getHeader("Retry-After");
+                    const delay: moment.Duration = retryAfterHeaderValue
+                        ? moment.duration(retryAfterHeaderValue, "s")
                         : this.defaultHttpAsyncRequestSleepDuration;
 
                     const currentTime = this.orchestrationContext.currentUtcDateTime;
