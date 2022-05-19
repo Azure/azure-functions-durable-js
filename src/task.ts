@@ -403,8 +403,8 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         action: CreateTimerAction,
         orchestrationContext: DurableOrchestrationContext,
         executor: TaskOrchestrationExecutor,
-        maximumTimerLength: string,
-        longRunningTimerIntervalLength: string
+        maximumTimerLength: moment.Duration,
+        longRunningTimerIntervalLength: moment.Duration
     ) {
         const maximumTimerDuration = moment.duration(maximumTimerLength);
         const longRunningTimerIntervalDuration = moment.duration(longRunningTimerIntervalLength);
