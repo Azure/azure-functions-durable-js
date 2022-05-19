@@ -87,9 +87,7 @@ jobs:
             inputs:
                 command: "install"
                 workingDir: "$(Agent.TempDirectory)/test-app"
-          - script: |
-                cd $(Agent.TempDirectory)/test-app
-                npm run build
+          - script: cd $(Agent.TempDirectory)/test-app && npm run build
             displayName: "Build smoke test app"
     - job: BuildArtifacts
       pool:
