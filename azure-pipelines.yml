@@ -92,6 +92,7 @@ jobs:
                 targetType: "inline"
                 script: "ls . && cat Hello/index.ts && npm run build"
                 workingDirectory: "$(Agent.TempDirectory)/test-app"
+                failOnStderr: true
     - job: BuildArtifacts
       pool:
           name: "1ES-Hosted-AzFunc"
