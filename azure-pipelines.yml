@@ -60,7 +60,11 @@ jobs:
                 versionSpec: $(NODE_VERSION)
             displayName: "Install Node dependencies"
           - script: npm ci
-          - script: npm run build
+            displayName: "npm ci"
+          - script: npm run test
+            displayName: "npm build and test"
+          - script: npm run test:nolint
+            displayName: "npm build and test (no linting)"
           - script: npm prune --production
           - script: npm pack
           - script: mv durable-functions-*.tgz package.tgz
