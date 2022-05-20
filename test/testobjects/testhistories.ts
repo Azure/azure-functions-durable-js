@@ -1607,7 +1607,8 @@ export class TestHistories {
         name: string,
         firstTimestamp: Date,
         request: DurableHttpRequest,
-        response: DurableHttpResponse
+        response: DurableHttpResponse,
+        taskId = 0
     ): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent({
@@ -1623,7 +1624,7 @@ export class TestHistories {
                 input: JSON.stringify(request),
             }),
             new TaskScheduledEvent({
-                eventId: 0,
+                eventId: taskId,
                 timestamp: firstTimestamp,
                 isPlayed: false,
                 name: "BuiltIn::HttpActivity",
@@ -1644,9 +1645,179 @@ export class TestHistories {
                 timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 result: JSON.stringify(response),
-                taskScheduledId: 0,
+                taskScheduledId: taskId,
             }),
         ];
+    }
+
+    public static GetPendingHttpPollingRequest(
+        firstTimestamp: Date,
+        request: DurableHttpRequest,
+        defaultHttpAsyncRequestSleepTimeMillseconds: number
+    ): HistoryEvent[] {
+        let timestamp = firstTimestamp;
+        const redirectResponse = new DurableHttpResponse(202, undefined, { Location: request.uri });
+        const history: HistoryEvent[] = [];
+        history.push(
+            ...this.GetSendHttpRequestReplayOne(
+                "SendHttpRequest",
+                timestamp,
+                request,
+                redirectResponse
+            )
+        );
+
+        timestamp = moment(timestamp).add(1, "s").toDate();
+
+        history.push(
+            ...this.TimerCreated(
+                timestamp,
+                moment(timestamp).add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms").toDate(),
+                1
+            )
+        );
+
+        timestamp = moment(timestamp)
+            .add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms")
+            .toDate();
+
+        history.push(...this.TimerFired(timestamp, 1));
+
+        timestamp = moment(timestamp).add(1, "s").toDate();
+
+        history.push(
+            ...this.GetSendHttpRequestReplayOne(
+                "SendHttpRequest",
+                timestamp,
+                request,
+                redirectResponse,
+                2
+            )
+        );
+        return history;
+    }
+
+    public static GetCompletedHttpRequestWithPolling(
+        firstTimestamp: Date,
+        request: DurableHttpRequest,
+        finalResponse: DurableHttpResponse,
+        defaultHttpAsyncRequestSleepTimeMillseconds: number
+    ): HistoryEvent[] {
+        let timestamp = firstTimestamp;
+        const redirectResponse = new DurableHttpResponse(202, undefined, { Location: request.uri });
+        const history = [];
+        history.push(
+            ...this.GetSendHttpRequestReplayOne(
+                "SendHttpRequest",
+                timestamp,
+                request,
+                redirectResponse
+            )
+        );
+        timestamp = moment(timestamp).add(1, "s").toDate();
+
+        history.push(
+            ...this.TimerCreated(
+                timestamp,
+                moment(timestamp).add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms").toDate(),
+                1
+            )
+        );
+
+        timestamp = moment(timestamp)
+            .add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms")
+            .toDate();
+
+        history.push(...this.TimerFired(timestamp, 1));
+
+        history.push(
+            ...this.GetSendHttpRequestReplayOne(
+                "SendHttpRequest",
+                timestamp,
+                request,
+                finalResponse,
+                2
+            )
+        );
+
+        return history;
+    }
+
+    public static GetCallHttpWithPollingFailedRequest(
+        firstTimestamp: Date,
+        request: DurableHttpRequest,
+        defaultHttpAsyncRequestSleepTimeMillseconds: number
+    ): HistoryEvent[] {
+        let timestamp = firstTimestamp;
+        const redirectResponse = new DurableHttpResponse(202, undefined, { Location: request.uri });
+        const history: HistoryEvent[] = [];
+        history.push(
+            ...this.GetSendHttpRequestReplayOne(
+                "SendHttpRequest",
+                timestamp,
+                request,
+                redirectResponse
+            )
+        );
+
+        timestamp = moment(timestamp).add(1, "s").toDate();
+
+        history.push(
+            ...this.TimerCreated(
+                timestamp,
+                moment(timestamp).add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms").toDate(),
+                1
+            )
+        );
+
+        timestamp = moment(timestamp)
+            .add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms")
+            .toDate();
+
+        history.push(...this.TimerFired(timestamp, 1));
+
+        timestamp = moment(timestamp).add(1, "s").toDate();
+
+        history.push(
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp,
+                isPlayed: false,
+            }),
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp,
+                isPlayed: true,
+                name: "HttpSendRequest",
+                input: JSON.stringify(request),
+            }),
+            new TaskScheduledEvent({
+                eventId: 2,
+                timestamp,
+                isPlayed: false,
+                name: "BuiltIn::HttpActivity",
+                input: JSON.stringify(request),
+            }),
+            new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp,
+                isPlayed: false,
+            }),
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: moment(timestamp).add(1, "s").toDate(),
+                isPlayed: false,
+            }),
+            new TaskFailedEvent({
+                eventId: -1,
+                timestamp: moment(timestamp).add(1, "s").toDate(),
+                isPlayed: false,
+                taskScheduledId: 2,
+                details: "Big stack trace here",
+                reason: "Activity function 'BuiltIn::HttpActivity' failed: Result: Failure",
+            })
+        );
+        return history;
     }
 
     public static GetSayHelloWithSubOrchestratorReplayOne(

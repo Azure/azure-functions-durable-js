@@ -29,6 +29,7 @@ import {
     TimerTask,
     DFTask,
     LongTimerTask,
+    CallHttpWithPollingTask,
 } from "./task";
 import moment = require("moment");
 import { ReplaySchema } from "./replaySchema";
@@ -46,6 +47,7 @@ export class DurableOrchestrationContext {
         parentInstanceId: string | undefined,
         longRunningTimerIntervalDuration: string | undefined,
         maximumShortTimerDuration: string | undefined,
+        defaultHttpAsyncRequestSleepTimeMillseconds: number | undefined,
         schemaVersion: ReplaySchema,
         input: unknown,
         private taskOrchestratorExecutor: TaskOrchestrationExecutor
@@ -61,6 +63,7 @@ export class DurableOrchestrationContext {
         this.maximumShortTimerDuration = maximumShortTimerDuration
             ? moment.duration(maximumShortTimerDuration)
             : undefined;
+        this.defaultHttpAsyncRequestSleepTimeMillseconds = defaultHttpAsyncRequestSleepTimeMillseconds;
         this.schemaVersion = schemaVersion;
         this.input = input;
         this.newGuidCounter = 0;
@@ -70,6 +73,13 @@ export class DurableOrchestrationContext {
     private readonly state: HistoryEvent[];
     private newGuidCounter: number;
     public customStatus: unknown;
+
+    /**
+     * The default time to wait between attempts when making HTTP polling requests
+     * This duration is used unless a different value (in seconds) is specified in the
+     * 'Retry-After' header of the 202 response.
+     */
+    private readonly defaultHttpAsyncRequestSleepTimeMillseconds?: number;
 
     /**
      * The ID of the current orchestration instance.
@@ -296,16 +306,40 @@ export class DurableOrchestrationContext {
         uri: string,
         content?: string | object,
         headers?: { [key: string]: string },
-        tokenSource?: TokenSource
+        tokenSource?: TokenSource,
+        asynchronousPatternEnabled = true
     ): Task {
         if (content && typeof content !== "string") {
             content = JSON.stringify(content);
         }
 
-        const req = new DurableHttpRequest(method, uri, content as string, headers, tokenSource);
+        const req = new DurableHttpRequest(
+            method,
+            uri,
+            content as string,
+            headers,
+            tokenSource,
+            asynchronousPatternEnabled
+        );
         const newAction = new CallHttpAction(req);
-        const task = new AtomicTask(false, newAction);
-        return task;
+        if (this.schemaVersion >= ReplaySchema.V3 && req.asynchronousPatternEnabled) {
+            if (!this.defaultHttpAsyncRequestSleepTimeMillseconds) {
+                throw Error(
+                    "A framework-internal error was detected: replay schema version >= V3 is being used, " +
+                        "but `defaultHttpAsyncRequestSleepDuration` property is not defined. " +
+                        "This is likely an issue with the Durable Functions Extension. " +
+                        "Please report this bug here: https://github.com/Azure/azure-functions-durable-js/issues"
+                );
+            }
+            return new CallHttpWithPollingTask(
+                false,
+                newAction,
+                this,
+                this.taskOrchestratorExecutor,
+                this.defaultHttpAsyncRequestSleepTimeMillseconds
+            );
+        }
+        return new AtomicTask(false, newAction);
     }
 
     /**

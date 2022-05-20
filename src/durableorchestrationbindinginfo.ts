@@ -13,6 +13,7 @@ export class DurableOrchestrationBindingInfo {
         public readonly parentInstanceId?: string,
         public readonly maximumShortTimerDuration?: string,
         public readonly longRunningTimerIntervalDuration?: string,
+        public readonly defaultHttpAsyncRequestSleepTimeMillseconds?: number,
         upperSchemaVersion = 0 // TODO: Implement entity locking // public readonly contextLocks?: EntityId[],
     ) {
         // It is assumed that the extension supports all schemas in range [0, upperSchemaVersion].
