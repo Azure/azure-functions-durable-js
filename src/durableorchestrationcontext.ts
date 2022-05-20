@@ -354,8 +354,8 @@ export class DurableOrchestrationContext {
                     timerAction,
                     this,
                     this.taskOrchestratorExecutor,
-                    this.maximumShortTimerDuration.toISOString(),
-                    this.longRunningTimerIntervalDuration.toISOString()
+                    this.maximumShortTimerDuration,
+                    this.longRunningTimerIntervalDuration
                 );
             }
         }
