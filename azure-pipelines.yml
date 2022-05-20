@@ -65,6 +65,8 @@ jobs:
             displayName: "npm build and test"
           - script: npm run test:nolint
             displayName: "npm build and test (no linting)"
+          - script: npm run build
+            displayName: "npm run build"
           - script: npm pack
             displayName: "npm pack"
           - task: CopyFiles@2
