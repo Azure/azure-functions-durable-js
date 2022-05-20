@@ -44,9 +44,9 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
         history: HistoryEvent[] | undefined = undefined,
         input: any = undefined,
         currentUtcDateTime: Date = new Date(),
-        longRunningTimerIntervalDuration: string,
-        maximumShortTimerDuration: string,
-        schemaVersion: ReplaySchema,
+        longRunningTimerIntervalDuration = "3.00:00:00",
+        maximumShortTimerDuration = "6.00:00:00",
+        schemaVersion: ReplaySchema = ReplaySchema.V1,
         isReplaying = false,
         parentInstanceId = ""
     ) {
