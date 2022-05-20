@@ -65,6 +65,7 @@ jobs:
             displayName: "npm build and test"
           - script: npm run test:nolint
             displayName: "npm build and test (no linting)"
+          - script: npm prune --production
           - script: npm pack
             displayName: "npm pack"
           - script: mv durable-functions-*.tgz package.tgz
