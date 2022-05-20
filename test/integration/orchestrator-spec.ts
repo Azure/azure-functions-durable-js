@@ -925,7 +925,7 @@ describe("Orchestrator", () => {
         });
 
         describe("callHttp with polling", () => {
-            it("returns the result of the first non-redirect response if success", () => {
+            it("returns the result of the first success non-redirect response", () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest(
                     "GET",
@@ -970,7 +970,7 @@ describe("Orchestrator", () => {
                     })
                 );
             });
-            it("returns the result of the first non-redirect response if failure", () => {
+            it("returns the result of the first failure non-redirect response", () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest(
                     "GET",
@@ -1044,49 +1044,12 @@ describe("Orchestrator", () => {
                     })
                 );
             });
-            it("treats headers case insensitively", () => {
+            it("treats headers case-insensitively", () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest("GET", "https://bing.com");
 
                 const fakeRedirectResponse = new DurableHttpResponse(202, "redirect", {
                     LoCaTiOn: "https://bing.com",
-                });
-
-                const mockContext = new DummyOrchestrationContext(
-                    "",
-                    TestHistories.GetSendHttpRequestReplayOne(
-                        "SendHttpRequest",
-                        moment.utc().toDate(),
-                        req,
-                        fakeRedirectResponse
-                    ),
-                    req,
-                    undefined,
-                    undefined,
-                    30000,
-                    ReplaySchema.V3
-                );
-
-                orchestrator(mockContext);
-
-                expect(mockContext.doneValue).to.be.deep.equal(
-                    new OrchestratorState({
-                        isDone: false,
-                        output: undefined,
-                        actions: [[new CallHttpAction(req)]],
-                        schemaVersion: ReplaySchema.V3,
-                    })
-                );
-            });
-            it("respects retry-after header and long timer scenario", () => {
-                const orchestrator = TestOrchestrations.SendHttpRequest;
-                const req = new DurableHttpRequest("GET", "https://bing.com");
-
-                const retryAfter = moment.duration(10, "d").seconds();
-
-                const fakeRedirectResponse = new DurableHttpResponse(202, "redirect", {
-                    "Retry-After": retryAfter.toString(),
-                    Location: "https://bing.com",
                 });
 
                 const mockContext = new DummyOrchestrationContext(
@@ -1222,7 +1185,7 @@ describe("Orchestrator", () => {
                     })
                 );
             });
-            it("fails if a sub HTTP request fails", () => {
+            it("fails if a sub-HTTP request task fails", () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest(
                     "GET",
