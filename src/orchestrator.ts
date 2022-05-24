@@ -7,7 +7,7 @@ import {
 } from "./classes";
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
-import { ReplaySchema } from "./replaySchema";
+import { LatestReplaySchema, ReplaySchema } from "./replaySchema";
 
 /** @hidden */
 export class Orchestrator {
@@ -42,7 +42,23 @@ export class Orchestrator {
 
         // The upper schema version corresponds to the maximum OOProc protocol version supported by the extension,
         // we use it to determine the format of the SDK's output
-        const upperSchemaVersion: ReplaySchema = orchestrationBinding.upperSchemaVersion;
+        let upperSchemaVersion: ReplaySchema;
+
+        // represents the upper schema version suported by the extension
+        const extensionUpperSchemaVersion: ReplaySchema = orchestrationBinding.upperSchemaVersionNew
+            ? orchestrationBinding.upperSchemaVersionNew
+            : orchestrationBinding.upperSchemaVersion;
+
+        // It is assumed that the extension supports all schemas in range [0, upperSchemaVersion].
+        // Similarly, it is assumed that this SDK supports all schemas in range [0, LatestReplaySchema].
+        // Therefore, if the extension supplies a upperSchemaVersion included in our ReplaySchema enum, we use it.
+        // But if the extension supplies an upperSchemaVersion not included in our ReplaySchema enum, then we
+        // assume that upperSchemaVersion is larger than LatestReplaySchema and therefore use LatestReplaySchema instead.
+        if (Object.values(ReplaySchema).includes(extensionUpperSchemaVersion)) {
+            upperSchemaVersion = extensionUpperSchemaVersion;
+        } else {
+            upperSchemaVersion = LatestReplaySchema;
+        }
 
         // Initialize currentUtcDateTime
         const decisionStartedEvent: HistoryEvent = Utils.ensureNonNull(
