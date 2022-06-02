@@ -14,15 +14,33 @@ export class Utils {
         collection: { [index: string]: unknown },
         typeInstance: T
     ): T[] {
-        return collection && typeInstance
-            ? (Object.keys(collection)
-                  .filter((key: string) => this.hasAllPropertiesOf(collection[key], typeInstance))
-                  .map((key: string) => this.parseTimestampsAsDates(collection[key])) as T[])
-            : [];
+        if (collection && typeInstance) {
+            const candidateObjects = Object.values(collection).filter((value) =>
+                this.hasAllPropertiesOf(value, typeInstance)
+            );
+
+            this.parseTimestampsAsDates(candidateObjects);
+
+            return candidateObjects as T[];
+        }
+        return [];
     }
 
     public static getHrMilliseconds(times: number[]): number {
         return times[0] * 1000 + times[1] / 1e6;
+    }
+
+    public static hasStringProperty<X extends {}, Y extends PropertyKey>(
+        obj: X,
+        prop: Y
+    ): obj is X & Record<Y, string> {
+        if (Utils.hasOwnProperty(obj, prop)) {
+            const propKey = prop as keyof typeof obj;
+            const property = obj[propKey];
+            const propertyIsString = typeof property === "string";
+            return propertyIsString;
+        }
+        return false;
     }
 
     public static hasOwnProperty<X extends {}, Y extends PropertyKey>(
@@ -33,16 +51,18 @@ export class Utils {
         return obj.hasOwnProperty(prop);
     }
 
-    public static parseTimestampsAsDates(obj: unknown): unknown {
-        if (
-            typeof obj === "object" &&
-            obj !== null &&
-            this.hasOwnProperty(obj, "Timestamp") &&
-            typeof obj.Timestamp === "string"
-        ) {
-            obj.Timestamp = new Date(obj.Timestamp);
+    public static parseTimestampsAsDates(obj: unknown): void {
+        if (typeof obj === "object" && obj != null) {
+            if (this.hasOwnProperty(obj, "Timestamp") && typeof obj.Timestamp === "string") {
+                obj.Timestamp = new Date(obj.Timestamp);
+            }
+            Object.values(obj).map((value) => {
+                // This recursive step ensures _all_ Timestamp properties are converted properly
+                // For example, a payload can contain the history as a property, so if we want to
+                // parse each HistoryEvent's Timestamp, we need to traverse the payload recursively
+                this.parseTimestampsAsDates(value);
+            });
         }
-        return obj;
     }
 
     public static hasAllPropertiesOf<T>(obj: unknown, refInstance: T): boolean {
@@ -64,8 +84,8 @@ export class Utils {
         return argument;
     }
 
-    public static sleep(delayInMilliseconds: number): Promise<NodeJS.Timer> {
-        return new Promise((resolve) => setTimeout(resolve, delayInMilliseconds));
+    public static async sleep(delayInMilliseconds: number): Promise<void> {
+        await new Promise((resolve) => setTimeout(resolve, delayInMilliseconds));
     }
 
     public static throwIfNotInstanceOf<T>(

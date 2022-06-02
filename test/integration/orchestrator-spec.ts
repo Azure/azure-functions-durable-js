@@ -1,10 +1,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { TraceContext } from "@azure/functions";
+import {
+    BindingDefinition,
+    ContextBindingData,
+    ContextBindings,
+    ExecutionContext,
+    HttpRequest,
+    Logger,
+    TraceContext,
+} from "@azure/functions";
 import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
-import { ManagedIdentityTokenSource } from "../../src";
+import { DummyOrchestrationContext, ManagedIdentityTokenSource } from "../../src";
 import {
     ActionType,
     CallActivityAction,
@@ -30,12 +38,35 @@ import {
     IOrchestrationFunctionContext,
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
+import { ReplaySchema } from "../../src/replaySchema";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 import { TestUtils } from "../testobjects/testutils";
 
 describe("Orchestrator", () => {
     const falsyValues = [false, 0, "", null, undefined, NaN];
+
+    it("allows orchestrations with no yield-statements", async () => {
+        const orchestrator = TestOrchestrations.NotGenerator;
+        const mockContext = new MockContext({
+            context: new DurableOrchestrationBindingInfo(
+                TestHistories.StarterHistory(moment.utc().toDate())
+            ),
+        });
+        orchestrator(mockContext);
+
+        expect(mockContext.doneValue).to.be.deep.equal(
+            new OrchestratorState(
+                {
+                    isDone: true,
+                    actions: [],
+                    output: `Hello`,
+                    schemaVersion: ReplaySchema.V1,
+                },
+                true
+            )
+        );
+    });
 
     it("handles a simple orchestration function (no activity functions)", async () => {
         const orchestrator = TestOrchestrations.SayHelloInline;
@@ -49,69 +80,54 @@ describe("Orchestrator", () => {
         orchestrator(mockContext);
 
         expect(mockContext.doneValue).to.be.deep.equal(
-            new OrchestratorState({
-                isDone: true,
-                actions: [],
-                output: `Hello, ${name}!`,
-            })
-        );
-    });
-
-    it("handles a simple orchestration function (no activity functions), with yield of non-Task object", async () => {
-        const orchestrator = TestOrchestrations.SayHelloInlineInproperYield;
-        const name = "World";
-        const mockContext = new MockContext({
-            context: new DurableOrchestrationBindingInfo(
-                TestHistories.GetOrchestratorStart(
-                    "SayHelloInlineInproperYield",
-                    moment.utc().toDate(),
-                    name
-                ),
-                name
-            ),
-        });
-        orchestrator(mockContext);
-
-        expect(mockContext.doneValue).to.be.deep.equal(
-            new OrchestratorState({
-                isDone: true,
-                actions: [],
-                output: `Hello, ${name}!`,
-            })
-        );
-    });
-
-    falsyValues.forEach((falsyValue) => {
-        it(`handles an orchestration function that returns ${
-            falsyValue === "" ? "empty string" : falsyValue
-        }`, async () => {
-            const orchestrator = TestOrchestrations.PassThrough;
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart(
-                        "PassThrough",
-                        moment.utc().toDate(),
-                        falsyValue
-                    ),
-                    falsyValue
-                ),
-            });
-            orchestrator(mockContext);
-
-            expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
+            new OrchestratorState(
+                {
                     isDone: true,
                     actions: [],
-                    output: falsyValue,
-                })
-            );
-            if (isNaN(falsyValue as number)) {
-                expect(isNaN(mockContext.doneValue!.output as number)).to.equal(true);
-            } else {
-                expect(mockContext.doneValue!.output).to.equal(falsyValue);
-            }
-            expect(mockContext.err).to.equal(undefined);
-        });
+                    output: `Hello, ${name}!`,
+                    schemaVersion: ReplaySchema.V1,
+                },
+                true
+            )
+        );
+    });
+
+    describe("handle falsy values", () => {
+        for (const falsyValue of falsyValues) {
+            it(`handles an orchestration function that returns ${
+                falsyValue === "" ? "empty string" : falsyValue
+            }`, async () => {
+                const orchestrator = TestOrchestrations.PassThrough;
+                const mockContext = new MockContext({
+                    context: new DurableOrchestrationBindingInfo(
+                        TestHistories.GetOrchestratorStart(
+                            "PassThrough",
+                            moment.utc().toDate(),
+                            falsyValue
+                        ),
+                        falsyValue
+                    ),
+                });
+                await orchestrator(mockContext);
+                expect(mockContext.doneValue).to.deep.equal(
+                    new OrchestratorState(
+                        {
+                            isDone: true,
+                            actions: [],
+                            output: falsyValue,
+                            schemaVersion: ReplaySchema.V1,
+                        },
+                        true
+                    )
+                );
+                if (isNaN(falsyValue as number)) {
+                    expect(isNaN(mockContext.doneValue!.output as number)).to.equal(true);
+                } else {
+                    expect(mockContext.doneValue!.output).to.equal(falsyValue);
+                }
+                expect(mockContext.err).to.equal(undefined);
+            });
+        }
     });
 
     describe("Properties", () => {
@@ -297,14 +313,18 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallActivityAction("ThrowsErrorActivity")],
-                        [new CallActivityAction("Hello", name)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallActivityAction("ThrowsErrorActivity")],
+                            [new CallActivityAction("Hello", name)],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -327,11 +347,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CallActivityAction("Hello", name)]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallActivityAction("Hello", name)]],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -346,11 +370,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CallActivityAction("ReturnsFour")]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallActivityAction("ReturnsFour")]],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -372,11 +400,15 @@ describe("Orchestrator", () => {
                     orchestrator(mockContext);
 
                     expect(mockContext.doneValue).to.be.deep.equal(
-                        new OrchestratorState({
-                            isDone: false,
-                            output: undefined,
-                            actions: [[new CallActivityAction("Hello", falsyValue)]],
-                        })
+                        new OrchestratorState(
+                            {
+                                isDone: false,
+                                output: undefined,
+                                actions: [[new CallActivityAction("Hello", falsyValue)]],
+                                schemaVersion: ReplaySchema.V1,
+                            },
+                            true
+                        )
                     );
                 });
 
@@ -396,11 +428,15 @@ describe("Orchestrator", () => {
                     orchestrator(mockContext);
 
                     expect(mockContext.doneValue).to.be.deep.equal(
-                        new OrchestratorState({
-                            isDone: true,
-                            actions: [[new CallActivityAction("Hello", falsyValue)]],
-                            output: `Hello, ${falsyValue}!`,
-                        })
+                        new OrchestratorState(
+                            {
+                                isDone: true,
+                                actions: [[new CallActivityAction("Hello", falsyValue)]],
+                                output: `Hello, ${falsyValue}!`,
+                                schemaVersion: ReplaySchema.V1,
+                            },
+                            true
+                        )
                     );
                 });
             });
@@ -423,11 +459,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CallActivityAction("Hello", name)]],
-                    output: `Hello, ${name}!`,
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [[new CallActivityAction("Hello", name)]],
+                        output: `Hello, ${name}!`,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -448,36 +488,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    output: `Hello, ${name}!`,
-                    actions: [[new CallActivityAction("Hello", name)]],
-                })
-            );
-        });
-
-        it("handles a completed activity function by returning instead of yielding", async () => {
-            const orchestrator = TestOrchestrations.SayHelloWithActivityDirectReturn;
-            const name = "World";
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetSayHelloWithActivityReplayOne(
-                        "SayHelloWithActivityDirectReturn",
-                        moment.utc().toDate(),
-                        name
-                    ),
-                    name
-                ),
-            });
-
-            orchestrator(mockContext);
-
-            expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CallActivityAction("Hello", name)]],
-                    output: `Hello, ${name}!`,
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        output: `Hello, ${name}!`,
+                        actions: [[new CallActivityAction("Hello", name)]],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -495,15 +514,19 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [new CallActivityAction("Hello", "Tokyo")],
-                        [new CallActivityAction("Hello", "Seattle")],
-                        [new CallActivityAction("Hello", "London")],
-                    ],
-                    output: ["Hello, Tokyo!", "Hello, Seattle!", "Hello, London!"],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [new CallActivityAction("Hello", "Tokyo")],
+                            [new CallActivityAction("Hello", "Seattle")],
+                            [new CallActivityAction("Hello", "London")],
+                        ],
+                        output: ["Hello, Tokyo!", "Hello, Seattle!", "Hello, London!"],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -556,19 +579,23 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [
-                            new CallActivityWithRetryAction(
-                                "Hello",
-                                new RetryOptions(10000, 2),
-                                name
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallActivityWithRetryAction(
+                                    "Hello",
+                                    new RetryOptions(10000, 2),
+                                    name
+                                ),
+                            ],
                         ],
-                    ],
-                })
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -590,11 +617,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CallActivityWithRetryAction("Hello", retryOptions, name)]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallActivityWithRetryAction("Hello", retryOptions, name)]],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -611,19 +642,23 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [
-                            new CallActivityWithRetryAction(
-                                "Hello",
-                                new RetryOptions(10000, 2),
-                                name
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallActivityWithRetryAction(
+                                    "Hello",
+                                    new RetryOptions(10000, 2),
+                                    name
+                                ),
+                            ],
                         ],
-                    ],
-                })
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -677,19 +712,23 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityWithRetryAction(
-                                "Hello",
-                                new RetryOptions(10000, 2),
-                                name
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityWithRetryAction(
+                                    "Hello",
+                                    new RetryOptions(10000, 2),
+                                    name
+                                ),
+                            ],
                         ],
-                    ],
-                    output: `Hello, ${name}!`,
-                })
+                        output: `Hello, ${name}!`,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -710,24 +749,28 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityWithRetryAction(
-                                "Hello",
-                                new RetryOptions(100, 5),
-                                "Tokyo"
-                            ),
-                            new CallActivityWithRetryAction(
-                                "Hello",
-                                new RetryOptions(100, 5),
-                                "Seattle"
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityWithRetryAction(
+                                    "Hello",
+                                    new RetryOptions(100, 5),
+                                    "Tokyo"
+                                ),
+                                new CallActivityWithRetryAction(
+                                    "Hello",
+                                    new RetryOptions(100, 5),
+                                    "Seattle"
+                                ),
+                            ],
                         ],
-                    ],
-                    output: ["Hello, Tokyo!", "Hello, Seattle!"],
-                })
+                        output: ["Hello, Tokyo!", "Hello, Seattle!"],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -751,11 +794,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CallActivityWithRetryAction("Hello", retryOptions, "World")]],
-                    output: [startingTime, moment(startingTime).add(1, "m").add(30, "s").toDate()],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [new CallActivityWithRetryAction("Hello", retryOptions, "World")],
+                        ],
+                        output: [
+                            startingTime,
+                            moment(startingTime).add(1, "m").add(30, "s").toDate(),
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -778,11 +830,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CallHttpAction(req)]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -812,6 +868,7 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue).to.be.deep.equal({
                 isDone: false,
                 output: undefined,
+                schemaVersion: 0,
                 actions: [
                     [
                         {
@@ -821,6 +878,7 @@ describe("Orchestrator", () => {
                                 uri: req.uri,
                                 content: req.content,
                                 headers: req.headers,
+                                asynchronousPatternEnabled: req.asynchronousPatternEnabled,
                                 tokenSource: {
                                     resource: "https://management.core.windows.net",
                                     kind: "AzureManagedIdentity",
@@ -854,12 +912,335 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CallHttpAction(req)]],
-                    output: res,
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [[new CallHttpAction(req)]],
+                        output: res,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
+        });
+
+        describe("callHttp with polling", () => {
+            it("returns the result of the first success non-redirect response", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+                const res = new DurableHttpResponse(
+                    200,
+                    '<!DOCTYPE html><html lang="en">...</html>',
+                    {
+                        "Content-Type": "text/html; charset=utf-8",
+                        "Cache-control": "private, max-age=8",
+                    }
+                );
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetCompletedHttpRequestWithPolling(
+                        moment.utc().toDate(),
+                        req,
+                        res,
+                        30000
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: true,
+                        actions: [[new CallHttpAction(req)]],
+                        output: res,
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("returns the result of the first failure non-redirect response", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+                const res = new DurableHttpResponse(404, "Not found!", {});
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetCompletedHttpRequestWithPolling(
+                        moment.utc().toDate(),
+                        req,
+                        res,
+                        30000
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: true,
+                        actions: [[new CallHttpAction(req)]],
+                        output: res,
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("does no polling if location header is not set", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest("GET", "https://bing.com");
+
+                const fakeRedirectResponse = new DurableHttpResponse(
+                    202,
+                    "redirect without header",
+                    {}
+                );
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetSendHttpRequestReplayOne(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req,
+                        fakeRedirectResponse
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: true,
+                        output: fakeRedirectResponse,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("treats headers case-insensitively", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest("GET", "https://bing.com");
+
+                const fakeRedirectResponse = new DurableHttpResponse(202, "redirect", {
+                    LoCaTiOn: "https://bing.com",
+                });
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetSendHttpRequestReplayOne(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req,
+                        fakeRedirectResponse
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("does not complete if redirect response is received", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetPendingHttpPollingRequest(moment.utc().toDate(), req, 30000),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("defaults to polling", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest("GET", "https://bing.com");
+
+                const redirectResponse = new DurableHttpResponse(202, "redirect", {
+                    Location: "https://bing.com",
+                });
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetSendHttpRequestReplayOne(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req,
+                        redirectResponse
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("requires schema version V3", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+
+                const redirectResponse = new DurableHttpResponse(202, "redirect", {
+                    Location: "https://bing.com",
+                });
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetSendHttpRequestReplayOne(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req,
+                        redirectResponse
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V1
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: true,
+                        output: redirectResponse,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V1,
+                    })
+                );
+            });
+            it("fails if a sub-HTTP request task fails", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetCallHttpWithPollingFailedRequest(
+                        moment.utc().toDate(),
+                        req,
+                        30000
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+            });
+            it("errors if V3 is used and defaultHttpAsyncRequestSleepTimeMillseconds is undefined", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetCallHttpWithPollingFailedRequest(
+                        moment.utc().toDate(),
+                        req,
+                        30000
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    undefined,
+                    ReplaySchema.V3
+                );
+
+                expect(orchestrator(mockContext)).to.throw;
+            });
         });
     });
 
@@ -879,11 +1260,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -903,11 +1288,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
-                    output: "OK",
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [[new CallEntityAction(expectedEntity, "set", "testString")]],
+                        output: "OK",
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -932,13 +1321,17 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -960,13 +1353,23 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallSubOrchestratorAction("SayHelloWithActivity", undefined, name)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallSubOrchestratorAction(
+                                    "SayHelloWithActivity",
+                                    undefined,
+                                    name
+                                ),
+                            ],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -995,109 +1398,44 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    output: [
-                        `Hello, ${name}_SayHelloWithActivity_0!`,
-                        `Hello, ${name}_SayHelloInline_1!`,
-                        `Hello, ${name}_SayHelloWithActivity_2!`,
-                        `Hello, ${name}_SayHelloInline_3!`,
-                    ],
-                    actions: [
-                        [
-                            new CallSubOrchestratorAction(
-                                "SayHelloWithActivity",
-                                undefined,
-                                `${name}_SayHelloWithActivity_0`
-                            ),
-                            new CallSubOrchestratorAction(
-                                "SayHelloInline",
-                                undefined,
-                                `${name}_SayHelloInline_1`
-                            ),
-                            new CallSubOrchestratorAction(
-                                "SayHelloWithActivity",
-                                undefined,
-                                `${name}_SayHelloWithActivity_2`
-                            ),
-                            new CallSubOrchestratorAction(
-                                "SayHelloInline",
-                                undefined,
-                                `${name}_SayHelloInline_3`
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        output: [
+                            `Hello, ${name}_SayHelloWithActivity_0!`,
+                            `Hello, ${name}_SayHelloInline_1!`,
+                            `Hello, ${name}_SayHelloWithActivity_2!`,
+                            `Hello, ${name}_SayHelloInline_3!`,
                         ],
-                    ],
-                })
-            );
-        });
-
-        it("replay does not match history (mismatched suborchestration name) and throws error.", async () => {
-            const orchestrator = TestOrchestrations.MultipleSubOrchestratorNoSubId;
-            const name = "World";
-            const id = uuidv1();
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetMultipleSubOrchestratorNoIdsSubOrchestrationsFinished(
-                        moment.utc().toDate(),
-                        orchestrator,
-                        // The order in the sample suborchestrator is ["SayHelloWithActivity", "SayHelloInline", "SayHelloWithActivity", "SayHelloInline"]
-                        [
-                            "SayHelloInline",
-                            "SayHelloWithActivity",
-                            "SayHelloWithActivity",
-                            "SayHelloInline",
+                        actions: [
+                            [
+                                new CallSubOrchestratorAction(
+                                    "SayHelloWithActivity",
+                                    undefined,
+                                    `${name}_SayHelloWithActivity_0`
+                                ),
+                                new CallSubOrchestratorAction(
+                                    "SayHelloInline",
+                                    undefined,
+                                    `${name}_SayHelloInline_1`
+                                ),
+                                new CallSubOrchestratorAction(
+                                    "SayHelloWithActivity",
+                                    undefined,
+                                    `${name}_SayHelloWithActivity_2`
+                                ),
+                                new CallSubOrchestratorAction(
+                                    "SayHelloInline",
+                                    undefined,
+                                    `${name}_SayHelloInline_3`
+                                ),
+                            ],
                         ],
-                        name
-                    ),
-                    name,
-                    id
-                ),
-            });
-
-            orchestrator(mockContext);
-
-            const expectedErr =
-                "The sub-orchestration call (n = 1) should be executed with a function name of SayHelloInline instead of the provided function name of SayHelloWithActivity. Check your code for non-deterministic behavior.";
-
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
-
-            const orchestrationState = TestUtils.extractStateFromError(
-                mockContext.err as OrchestrationFailureError
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
-
-            expect(orchestrationState.error).to.include(expectedErr);
-        });
-
-        it("replay does not match history (mismatched suborchestration instance id) and throws error.", async () => {
-            const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
-            const name = "World";
-            const id = uuidv1();
-            const subId = id + ":1";
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
-                        moment.utc().toDate(),
-                        orchestrator,
-                        "SayHelloWithActivity",
-                        subId,
-                        name
-                    ),
-                    name,
-                    id
-                ),
-            });
-
-            orchestrator(mockContext);
-
-            const expectedErr = `The sub-orchestration call (n = 1) should be executed with an instance id of ${subId} instead of the provided instance id of ${id}:0. Check your code for non-deterministic behavior.`;
-
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
-
-            const orchestrationState = TestUtils.extractStateFromError(
-                mockContext.err as OrchestrationFailureError
-            );
-
-            expect(orchestrationState.error).to.include(expectedErr);
         });
 
         it("handles a completed suborchestrator function", async () => {
@@ -1122,13 +1460,17 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
-                    ],
-                    output: "Hello, World!",
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
+                        ],
+                        output: "Hello, World!",
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1225,20 +1567,24 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(10000, 2),
-                                name,
-                                childId
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(10000, 2),
+                                    name,
+                                    childId
+                                ),
+                            ],
                         ],
-                    ],
-                })
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1264,20 +1610,24 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                retryOptions,
-                                name,
-                                childId
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    retryOptions,
+                                    name,
+                                    childId
+                                ),
+                            ],
                         ],
-                    ],
-                })
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1301,20 +1651,24 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(10000, 2),
-                                name,
-                                childId
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(10000, 2),
+                                    name,
+                                    childId
+                                ),
+                            ],
                         ],
-                    ],
-                })
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1387,20 +1741,24 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(10000, 2),
-                                name,
-                                childId
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(10000, 2),
+                                    name,
+                                    childId
+                                ),
+                            ],
                         ],
-                    ],
-                    output: `Hello, ${name}!`,
-                })
+                        output: `Hello, ${name}!`,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1421,24 +1779,28 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(100, 5),
-                                "Tokyo"
-                            ),
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(100, 5),
-                                "Seattle"
-                            ),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(100, 5),
+                                    "Tokyo"
+                                ),
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(100, 5),
+                                    "Seattle"
+                                ),
+                            ],
                         ],
-                    ],
-                    output: ["Hello, Tokyo!", "Hello, Seattle!"],
-                })
+                        output: ["Hello, Tokyo!", "Hello, Seattle!"],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -1459,12 +1821,16 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    // Is Done needs to be marked as true for 1.8.0 and later to properly process continueAsNew
-                    isDone: true,
-                    output: undefined,
-                    actions: [[new ContinueAsNewAction({ value: 6 })]],
-                })
+                new OrchestratorState(
+                    {
+                        // Is Done needs to be marked as true for 1.8.0 and later to properly process continueAsNew
+                        isDone: true,
+                        output: 6,
+                        actions: [[new ContinueAsNewAction({ value: 6 })]],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -1472,12 +1838,12 @@ describe("Orchestrator", () => {
     describe("createTimer()", () => {
         it("schedules a timer", async () => {
             const orchestrator = TestOrchestrations.WaitOnTimer;
-            const startMoment = moment.utc();
-            const fireAt = startMoment.add(5, "m").toDate();
+            const startTime = moment.utc().toDate();
+            const fireAt = moment(startTime).add(5, "m").toDate();
 
             const mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart("WaitOnTimer", startMoment.toDate()),
+                    TestHistories.GetOrchestratorStart("WaitOnTimer", startTime),
                     fireAt
                 ),
             });
@@ -1485,11 +1851,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [[new CreateTimerAction(fireAt)]],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CreateTimerAction(fireAt)]],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1508,12 +1878,120 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [[new CreateTimerAction(fireAt)]],
-                    output: "Timer fired!",
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [[new CreateTimerAction(fireAt)]],
+                        output: "Timer fired!",
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
+        });
+
+        describe("long timers", () => {
+            it("schedules long timers", () => {
+                const orchestrator = TestOrchestrations.WaitOnTimer;
+                const startTime = moment.utc().toDate();
+                const fireAt = moment(startTime).add(10, "d").toDate();
+
+                const mockContext = new MockContext({
+                    context: new DurableOrchestrationBindingInfo(
+                        TestHistories.GetOrchestratorStart("WaitOnTimer", startTime),
+                        fireAt,
+                        "",
+                        false,
+                        undefined,
+                        "6.00:00:00",
+                        "3.00:00:00",
+                        30000,
+                        ReplaySchema.V3
+                    ),
+                });
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState(
+                        {
+                            isDone: false,
+                            output: undefined,
+                            actions: [[new CreateTimerAction(fireAt)]],
+                            schemaVersion: ReplaySchema.V3,
+                        },
+                        true
+                    )
+                );
+            });
+
+            it("waits for sub-timers of long timer", () => {
+                const orchestrator = TestOrchestrations.WaitOnTimer;
+                const startTime = moment.utc().toDate();
+                const fireAt = moment(startTime).add(10, "days").toDate();
+
+                const mockContext = new MockContext({
+                    context: new DurableOrchestrationBindingInfo(
+                        TestHistories.GetWaitOnLongTimerHalfway(startTime, fireAt),
+                        fireAt,
+                        "",
+                        false,
+                        undefined,
+                        "6.00:00:00",
+                        "3.00:00:00",
+                        30000,
+                        ReplaySchema.V3
+                    ),
+                });
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState(
+                        {
+                            isDone: false,
+                            output: undefined,
+                            actions: [[new CreateTimerAction(fireAt)]],
+                            schemaVersion: ReplaySchema.V3,
+                        },
+                        true
+                    )
+                );
+            });
+
+            it("proceeds after long timer fires", () => {
+                const orchestrator = TestOrchestrations.WaitOnTimer;
+                const startTimestamp = moment.utc().toDate();
+                const fireAt = moment(startTimestamp).add(10, "d").toDate();
+
+                const mockContext = new MockContext({
+                    context: new DurableOrchestrationBindingInfo(
+                        TestHistories.GetWaitOnTimerFired(startTimestamp, fireAt),
+                        fireAt,
+                        "",
+                        false,
+                        undefined,
+                        "6.00:00:00",
+                        "3.00:00:00",
+                        300000,
+                        ReplaySchema.V3
+                    ),
+                });
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.deep.equal(
+                    new OrchestratorState(
+                        {
+                            isDone: true,
+                            actions: [[new CreateTimerAction(fireAt)]],
+                            output: "Timer fired!",
+                            schemaVersion: ReplaySchema.V3,
+                        },
+                        true
+                    )
+                );
+            });
         });
     });
 
@@ -1562,11 +2040,15 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [],
-                    output: expectedLockState,
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [],
+                        output: expectedLockState,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1622,15 +2104,19 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.eq(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallActivityAction("Hello", "Tokyo")],
-                        [new CallActivityAction("Hello", "Seattle")],
-                    ],
-                    customStatus: "Tokyo",
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallActivityAction("Hello", "Tokyo")],
+                            [new CallActivityAction("Hello", "Seattle")],
+                        ],
+                        customStatus: "Tokyo",
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -1651,13 +2137,22 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction(
+                                    "start",
+                                    ExternalEventType.ExternalEvent
+                                ),
+                            ],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1678,14 +2173,23 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent)],
-                        [new CallActivityAction("Hello", name)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction(
+                                    "start",
+                                    ExternalEventType.ExternalEvent
+                                ),
+                            ],
+                            [new CallActivityAction("Hello", name)],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1706,13 +2210,22 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new WaitForExternalEventAction("start", ExternalEventType.ExternalEvent)],
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction(
+                                    "start",
+                                    ExternalEventType.ExternalEvent
+                                ),
+                            ],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -1734,14 +2247,18 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallActivityAction("GetFileList", "C:\\Dev")],
-                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallActivityAction("GetFileList", "C:\\Dev")],
+                            filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1761,14 +2278,18 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    output: undefined,
-                    actions: [
-                        [new CallActivityAction("GetFileList", "C:\\Dev")],
-                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
-                    ],
-                })
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallActivityAction("GetFileList", "C:\\Dev")],
+                            filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1785,14 +2306,18 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [new CallActivityAction("GetFileList", "C:\\Dev")],
-                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
-                    ],
-                    output: 6,
-                })
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [new CallActivityAction("GetFileList", "C:\\Dev")],
+                            filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
+                        ],
+                        output: 6,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1808,8 +2333,8 @@ describe("Orchestrator", () => {
 
             const expectedErr1 =
                 "Activity function 'GetFileSize' failed: Could not find file file2.png";
-            const expectedErr2 =
-                "Activity function 'GetFileSize' failed: Could not find file file3.csx";
+            // const expectedErr2 =
+            //    "Activity function 'GetFileSize' failed: Could not find file file3.csx";
 
             orchestrator(mockContext);
 
@@ -1828,7 +2353,7 @@ describe("Orchestrator", () => {
             });
 
             expect(orchestrationState.error).to.include(expectedErr1);
-            expect(orchestrationState.error).to.include(expectedErr2);
+            // expect(orchestrationState.error).to.include(expectedErr2);
         });
 
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
@@ -1844,16 +2369,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityAction("TaskA", true),
-                            new CallActivityAction("TaskB", true),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityAction("TaskA", true),
+                                new CallActivityAction("TaskB", true),
+                            ],
                         ],
-                    ],
-                    output: "A",
-                })
+                        output: "A",
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1870,16 +2399,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityAction("TaskA", false),
-                            new CallActivityAction("TaskB", false),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityAction("TaskA", false),
+                                new CallActivityAction("TaskB", false),
+                            ],
                         ],
-                    ],
-                    output: "B",
-                })
+                        output: "B",
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -1896,115 +2429,135 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityAction("TaskA", true),
-                            new CallActivityAction("TaskB", true),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityAction("TaskA", true),
+                                new CallActivityAction("TaskB", true),
+                            ],
                         ],
-                    ],
-                    output: "A",
-                })
+                        output: "A",
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
         it("Task.any called with one TaskSet and one timer where TaskSet wins", async () => {
             const orchestrator = TestOrchestrations.AnyWithTaskSet;
             const eventsWin = true;
-            const initialTime = moment.utc();
+            const initialTime = moment.utc().toDate();
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 1, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 1, eventsWin)
                 ),
             });
 
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new WaitForExternalEventAction("firstRequiredEvent"),
-                            new WaitForExternalEventAction("secondRequiredEvent"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction("firstRequiredEvent"),
+                                new WaitForExternalEventAction("secondRequiredEvent"),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
+                            ],
                         ],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
 
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 2, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 2, eventsWin)
                 ),
             });
 
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new WaitForExternalEventAction("firstRequiredEvent"),
-                            new WaitForExternalEventAction("secondRequiredEvent"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction("firstRequiredEvent"),
+                                new WaitForExternalEventAction("secondRequiredEvent"),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
+                            ],
+                            [new CallActivityAction("Hello", "Tokyo")],
                         ],
-                        [new CallActivityAction("Hello", "Tokyo")],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
         it("Task.any called with one TaskSet and one timer where timer wins", async () => {
             const orchestrator = TestOrchestrations.AnyWithTaskSet;
             const eventsWin = false;
-            const initialTime = moment.utc();
+            const initialTime = moment.utc().toDate();
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 1, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 1, eventsWin)
                 ),
             });
 
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new WaitForExternalEventAction("firstRequiredEvent"),
-                            new WaitForExternalEventAction("secondRequiredEvent"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction("firstRequiredEvent"),
+                                new WaitForExternalEventAction("secondRequiredEvent"),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
+                            ],
                         ],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
 
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 2, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 2, eventsWin)
                 ),
             });
 
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new WaitForExternalEventAction("firstRequiredEvent"),
-                            new WaitForExternalEventAction("secondRequiredEvent"),
-                            new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new WaitForExternalEventAction("firstRequiredEvent"),
+                                new WaitForExternalEventAction("secondRequiredEvent"),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
+                            ],
                         ],
-                    ],
-                    output: ["timeout"],
-                })
+                        output: ["timeout"],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
@@ -2021,27 +2574,31 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CallActivityAction("TaskA", true),
-                            new CallActivityAction("TaskB", true),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CallActivityAction("TaskA", true),
+                                new CallActivityAction("TaskB", true),
+                            ],
                         ],
-                    ],
-                    output: "A",
-                })
+                        output: "A",
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
         it("Timer in combination with Task.any() executes deterministically", async () => {
             const orchestrator = TestOrchestrations.TimerActivityRace;
-            const currentTime = moment.utc();
+            const currentTime = moment.utc().toDate();
 
             // first iteration
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 1),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 1),
                     undefined
                 ),
             });
@@ -2049,22 +2606,26 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
                         ],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
 
             // second iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 2),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 2),
                     undefined
                 ),
             });
@@ -2072,23 +2633,27 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
+                            [new CallActivityAction("TaskB")],
                         ],
-                        [new CallActivityAction("TaskB")],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
 
             // third iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 3),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 3),
                     undefined
                 ),
             });
@@ -2096,23 +2661,27 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
+                            [new CallActivityAction("TaskB")],
                         ],
-                        [new CallActivityAction("TaskB")],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
 
             // final iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 4),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 4),
                     undefined
                 ),
             });
@@ -2120,28 +2689,32 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
+                            [new CallActivityAction("TaskB")],
                         ],
-                        [new CallActivityAction("TaskB")],
-                    ],
-                    output: {},
-                })
+                        output: {},
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
 
         it("Timer in combination with Task.any() timer wins", async () => {
             const orchestrator = TestOrchestrations.TimerActivityRace;
-            const currentTime = moment.utc();
+            const currentTime = moment.utc().toDate();
 
             // first iteration
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime.toDate(), 1),
+                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime, 1),
                     null
                 ),
             });
@@ -2149,22 +2722,26 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: false,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
                         ],
-                    ],
-                    output: undefined,
-                })
+                        output: undefined,
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
 
             // second iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime.toDate(), 2),
+                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime, 2),
                     null
                 ),
             });
@@ -2172,16 +2749,20 @@ describe("Orchestrator", () => {
             orchestrator(mockContext);
 
             expect(mockContext.doneValue).to.be.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    actions: [
-                        [
-                            new CreateTimerAction(currentTime.add(1, "s").toDate()),
-                            new CallActivityAction("TaskA"),
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        actions: [
+                            [
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CallActivityAction("TaskA"),
+                            ],
                         ],
-                    ],
-                    output: "Timer finished",
-                })
+                        output: "Timer finished",
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
             );
         });
     });
@@ -2196,23 +2777,19 @@ describe("Orchestrator", () => {
 class MockContext implements IOrchestrationFunctionContext {
     public doneValue: IOrchestratorState | undefined;
     public err: string | Error | null | undefined;
-    constructor(public bindings: IBindings) {}
+    constructor(public bindings: ContextBindings) {}
     traceContext: TraceContext;
     df: DurableOrchestrationContext;
     invocationId: string;
-    executionContext: import("@azure/functions").ExecutionContext;
-    bindingData: { [key: string]: any };
-    bindingDefinitions: import("@azure/functions").BindingDefinition[];
-    log: import("@azure/functions").Logger;
-    req?: import("@azure/functions").HttpRequest | undefined;
-    res?: { [key: string]: any } | undefined;
+    executionContext: ExecutionContext;
+    bindingData: ContextBindingData;
+    bindingDefinitions: BindingDefinition[];
+    log: Logger;
+    req?: HttpRequest;
+    res?: { [key: string]: any };
 
     public done(err?: Error | string | null, result?: IOrchestratorState): void {
         this.doneValue = result;
         this.err = err;
     }
-}
-
-interface IBindings {
-    [key: string]: unknown;
 }

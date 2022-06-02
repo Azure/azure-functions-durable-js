@@ -17,4 +17,8 @@ export enum ActionType {
     WaitForExternalEvent = 6,
     CallEntity = 7,
     CallHttp = 8,
+    // ActionType 9 and 10 correspond to SignalEntity and ScheduledSignalEntity
+    // Those two are not supported yet.
+    WhenAny = 11,
+    WhenAll = 12,
 }

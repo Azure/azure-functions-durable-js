@@ -11,5 +11,7 @@
     "azureFunctions.projectLanguage": "TypeScript",
     "azureFunctions.projectRuntime": "~3",
     "debug.internalConsoleOptions": "neverOpen",
-    "azureFunctions.preDeployTask": "npm prune"
+    "azureFunctions.preDeployTask": "npm prune",
+    "mochaExplorer.require": "ts-node/register",
+    "mochaExplorer.files": "test/**/*.ts"
 }

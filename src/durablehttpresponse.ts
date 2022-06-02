@@ -22,4 +22,19 @@ export class DurableHttpResponse {
             [key: string]: string;
         }
     ) {}
+
+    // returns the specified header, case insensitively
+    // returns undefined if the header is not set
+    public getHeader(name: string): string | undefined {
+        if (this.headers) {
+            const lowerCaseName = name.toLowerCase();
+            const foundKey = Object.keys(this.headers).find(
+                (key) => key.toLowerCase() === lowerCaseName
+            );
+            if (foundKey) {
+                return this.headers[foundKey];
+            }
+        }
+        return undefined;
+    }
 }
