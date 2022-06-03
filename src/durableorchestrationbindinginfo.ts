@@ -1,9 +1,9 @@
 import { HistoryEvent } from "./classes";
-import { LatestReplaySchema, ReplaySchema } from "./replaySchema";
+import { ReplaySchema } from "./replaySchema";
 
 /** @hidden */
 export class DurableOrchestrationBindingInfoReqFields {
-   constructor(
+    constructor(
         public readonly history: HistoryEvent[] = [],
         public readonly instanceId: string = "",
         public readonly isReplaying: boolean = false,

@@ -8,6 +8,7 @@ import {
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import { LatestReplaySchema, ReplaySchema } from "./replaySchema";
+import { DurableOrchestrationBindingInfoReqFields } from "./durableorchestrationbindinginfo";
 
 /** @hidden */
 export class Orchestrator {
@@ -28,7 +29,7 @@ export class Orchestrator {
         this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
             context.bindings,
-            new (DurableOrchestrationBindingInfoReqFields() as DurableOrchestrationBindingInfo)
+            new DurableOrchestrationBindingInfoReqFields() as DurableOrchestrationBindingInfo
         )[0];
 
         if (!orchestrationBinding) {

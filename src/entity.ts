@@ -10,6 +10,7 @@ import {
     Signal,
     Utils,
 } from "./classes";
+import { DurableEntityBindingInfoReqFields } from "./durableentitybindinginfo";
 
 /** @hidden */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -26,7 +27,11 @@ export class Entity<T> {
     private async handle(context: IEntityFunctionContext<T>): Promise<void> {
         const entityBinding = Utils.getInstancesOf<DurableEntityBindingInfo>(
             context.bindings,
-            (new DurableEntityBindingInfoReqFields(new EntityId("samplename", "samplekey"), true, []) as DurableEntityBindingInfo)
+            new DurableEntityBindingInfoReqFields(
+                new EntityId("samplename", "samplekey"),
+                true,
+                []
+            ) as DurableEntityBindingInfo
         )[0];
 
         if (entityBinding === undefined) {
