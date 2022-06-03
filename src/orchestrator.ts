@@ -28,7 +28,7 @@ export class Orchestrator {
         this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
             context.bindings,
-            new DurableOrchestrationBindingInfo()
+            new (DurableOrchestrationBindingInfoReqFields() as DurableOrchestrationBindingInfo)
         )[0];
 
         if (!orchestrationBinding) {

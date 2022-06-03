@@ -26,7 +26,7 @@ export class Entity<T> {
     private async handle(context: IEntityFunctionContext<T>): Promise<void> {
         const entityBinding = Utils.getInstancesOf<DurableEntityBindingInfo>(
             context.bindings,
-            new DurableEntityBindingInfo(new EntityId("samplename", "samplekey"), true, "", [])
+            (new DurableEntityBindingInfoReqFields(new EntityId("samplename", "samplekey"), true, []) as DurableEntityBindingInfo)
         )[0];
 
         if (entityBinding === undefined) {

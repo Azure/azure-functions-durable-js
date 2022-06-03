@@ -1,6 +1,15 @@
 import { EntityId, RequestMessage } from "./classes";
 
 /** @hidden */
+export class DurableEntityBindingInfoReqFields {
+    constructor(
+        public readonly self: EntityId,
+        public readonly exists: boolean,
+        public readonly batch: RequestMessage[]
+    ) {}
+}
+
+/** @hidden */
 export class DurableEntityBindingInfo {
     constructor(
         public readonly self: EntityId,

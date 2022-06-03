@@ -2,6 +2,16 @@ import { HistoryEvent } from "./classes";
 import { LatestReplaySchema, ReplaySchema } from "./replaySchema";
 
 /** @hidden */
+export class DurableOrchestrationBindingInfoReqFields {
+   constructor(
+        public readonly history: HistoryEvent[] = [],
+        public readonly instanceId: string = "",
+        public readonly isReplaying: boolean = false,
+        public readonly upperSchemaVersion: ReplaySchema = ReplaySchema.V1 // TODO: Implement entity locking // public readonly contextLocks?: EntityId[],
+    ) {}
+}
+
+/** @hidden */
 export class DurableOrchestrationBindingInfo {
     public readonly upperSchemaVersionNew?: ReplaySchema;
 
