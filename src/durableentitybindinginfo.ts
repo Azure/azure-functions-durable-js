@@ -10,11 +10,13 @@ export class DurableEntityBindingInfoReqFields {
 }
 
 /** @hidden */
-export class DurableEntityBindingInfo {
+export class DurableEntityBindingInfo extends DurableEntityBindingInfoReqFields {
     constructor(
         public readonly self: EntityId,
         public readonly exists: boolean,
         public readonly state: string | undefined,
         public readonly batch: RequestMessage[]
-    ) {}
+    ) {
+        super(self, exists, batch);
+    }
 }
