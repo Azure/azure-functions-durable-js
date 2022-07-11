@@ -443,6 +443,13 @@ export class TaskOrchestrationExecutor {
         }
     }
 
+    public recordFireAndForgetAction(action: IAction): void {
+        if (!this.willContinueAsNew) {
+            this.addToActions(action);
+            this.sequenceNumber++;
+        }
+    }
+
     /**
      * @hidden
      * Tracks this task as waiting for completion.
