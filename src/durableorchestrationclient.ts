@@ -729,6 +729,74 @@ export class DurableOrchestrationClient {
     }
 
     /**
+     * Suspends a running orchestration instance.
+     * @param instanceId The ID of the orchestration instance to suspend.
+     * @param reason The reason for suspending the orchestration instance.
+     * @returns A promise that resolves when the suspend message is enqueued.
+     */
+    public async suspend(instanceId: string, reason: string): Promise<void> {
+        const idPlaceholder = this.clientData.managementUrls.id;
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            requestUrl = new URL(
+                `instances/${instanceId}/suspend?reason=${reason}`,
+                this.clientData.rpcBaseUrl
+            ).href;
+        } else {
+            // Legacy app frontend path
+            requestUrl = this.clientData.managementUrls.suspendPostUri
+                .replace(idPlaceholder, instanceId)
+                .replace(this.reasonPlaceholder, reason);
+        }
+
+        const response = await this.axiosInstance.post(requestUrl);
+        switch (response.status) {
+            case 202: // suspend accepted
+            case 410: // instance completed or failed
+                return;
+            case 404:
+                return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
+            default:
+                return Promise.reject(this.createGenericError(response));
+        }
+    }
+
+    /**
+     * Resumes a running orchestration instance.
+     * @param instanceId The ID of the orchestration instance to resume.
+     * @param reason The reason for resuming the orchestration instance.
+     * @returns A promise that resolves when the resume message is enqueued.
+     */
+     public async resume(instanceId: string, reason: string): Promise<void> {
+        const idPlaceholder = this.clientData.managementUrls.id;
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            requestUrl = new URL(
+                `instances/${instanceId}/resume?reason=${reason}`,
+                this.clientData.rpcBaseUrl
+            ).href;
+        } else {
+            // Legacy app frontend path
+            requestUrl = this.clientData.managementUrls.resumePostUri
+                .replace(idPlaceholder, instanceId)
+                .replace(this.reasonPlaceholder, reason);
+        }
+
+        const response = await this.axiosInstance.post(requestUrl);
+        switch (response.status) {
+            case 202: // resume accepted
+            case 410: // instance completed or failed
+                return;
+            case 404:
+                return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
+            default:
+                return Promise.reject(this.createGenericError(response));
+        }
+    }
+
+    /**
      * Creates an HTTP response which either contains a payload of management
      * URLs for a non-completed instance or contains the payload containing
      * the output of the completed orchestration.

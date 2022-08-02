@@ -1386,6 +1386,160 @@ describe("Orchestration Client", () => {
             scope.persist(false);
         });
     });
+
+    describe("suspend()", () => {
+        beforeEach(async () => {
+            nock.cleanAll();
+        });
+
+        afterEach(async () => {
+            nock.cleanAll();
+        });
+
+        it("calls expected webhook and completes for valid instance", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.suspendPostUri
+                    .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                    .replace(TestConstants.reasonPlaceholder, testReason)
+            );
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(202);
+
+            const result = await client.suspend(defaultInstanceId, testReason);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal(undefined);
+        });
+
+        it(`throws when webhook returns invalid status code 404`, async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const id = "badId";
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.suspendPostUri
+                    .replace(TestConstants.idPlaceholder, id)
+                    .replace(TestConstants.reasonPlaceholder, testReason)
+            );
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(404);
+
+            await expect(client.suspend(id, testReason)).to.be.rejectedWith(
+                `No instance with ID '${id}' found.`
+            );
+            expect(scope.isDone()).to.be.equal(true);
+        });
+
+        it(`throws when webhook returns invalid status code 500`, async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const id = "badId";
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.suspendPostUri
+                    .replace(TestConstants.idPlaceholder, id)
+                    .replace(TestConstants.reasonPlaceholder, testReason)
+            );
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(500, "Kah-BOOOM!!");
+
+            await expect(client.suspend(id, testReason)).to.be.rejectedWith(
+                `The operation failed with an unexpected status code: 500. Details: "Kah-BOOOM!!"`
+            );
+            expect(scope.isDone()).to.be.equal(true);
+        });
+    });
+
+    describe("resume()", () => {
+        beforeEach(async () => {
+            nock.cleanAll();
+        });
+
+        afterEach(async () => {
+            nock.cleanAll();
+        });
+
+        it("calls expected webhook and completes for valid instance", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.resumePostUri
+                    .replace(TestConstants.idPlaceholder, defaultInstanceId)
+                    .replace(TestConstants.reasonPlaceholder, testReason)
+            );
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(202);
+
+            const result = await client.suspend(defaultInstanceId, testReason);
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal(undefined);
+        });
+
+        it(`throws when webhook returns invalid status code 404`, async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const id = "badId";
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.resumePostUri
+                    .replace(TestConstants.idPlaceholder, id)
+                    .replace(TestConstants.reasonPlaceholder, testReason)
+            );
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(404);
+
+            await expect(client.resume(id, testReason)).to.be.rejectedWith(
+                `No instance with ID '${id}' found.`
+            );
+            expect(scope.isDone()).to.be.equal(true);
+        });
+
+        it(`throws when webhook returns invalid status code 500`, async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const id = "badId";
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.resumePostUri
+                    .replace(TestConstants.idPlaceholder, id)
+                    .replace(TestConstants.reasonPlaceholder, testReason)
+            );
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(500, "Kah-BOOOM!!");
+
+            await expect(client.resume(id, testReason)).to.be.rejectedWith(
+                `The operation failed with an unexpected status code: 500. Details: "Kah-BOOOM!!"`
+            );
+            expect(scope.isDone()).to.be.equal(true);
+        });
+    });
 });
 
 function createInstanceWebhookUrl(
