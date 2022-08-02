@@ -39,8 +39,6 @@ export class TestHistories {
     }
 
     public static GetAnyAOrB(firstTimestamp: Date, completeInOrder: boolean): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -75,12 +73,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 result: JSON.stringify(completeInOrder ? "A" : "B"),
                 taskScheduledId: completeInOrder ? 0 : 1,
@@ -92,11 +90,10 @@ export class TestHistories {
         firstTimestamp: Date,
         iteration: number
     ): HistoryEvent[] {
-        const firstIteration = moment(firstTimestamp);
-        const fireAt = firstIteration.add(1, "s").toDate();
-        const secondIteration = firstIteration.add(500, "ms").toDate();
-        const thirdIteration = firstIteration.add(1100, "ms").toDate();
-        const finalIteration = firstIteration.add(2, "s").toDate();
+        const fireAt = moment(firstTimestamp).add(1, "s").toDate();
+        const secondIteration = moment(firstTimestamp).add(500, "ms").toDate();
+        const thirdIteration = moment(firstTimestamp).add(1100, "ms").toDate();
+        const finalIteration = moment(firstTimestamp).add(2, "s").toDate();
 
         const history = [];
 
@@ -234,9 +231,8 @@ export class TestHistories {
         firstTimestamp: Date,
         iteration: number
     ): HistoryEvent[] {
-        const firstIteration = moment(firstTimestamp);
-        const fireAt = firstIteration.add(1, "s").toDate();
-        const secondIteration = firstIteration.add(1100, "ms").toDate();
+        const fireAt = moment(firstTimestamp).add(1, "s").toDate();
+        const secondIteration = moment(firstTimestamp).add(1100, "ms").toDate();
 
         const history = [];
         if (iteration >= 1) {
@@ -307,8 +303,7 @@ export class TestHistories {
         iteration: number,
         eventsBeatTimer: boolean
     ): HistoryEvent[] {
-        const firstIteration = moment(firstTimestamp);
-        const fireAt = firstIteration.add(300, "s").toDate();
+        const fireAt = moment(firstTimestamp).add(300, "s").toDate();
 
         const history = [];
 
@@ -347,8 +342,8 @@ export class TestHistories {
 
         if (iteration >= 2) {
             const secondIteration: Date = eventsBeatTimer
-                ? firstIteration.add(2500, "ms").toDate()
-                : firstIteration.add(31500, "ms").toDate();
+                ? moment(firstTimestamp).add(2500, "ms").toDate()
+                : moment(firstTimestamp).add(31500, "ms").toDate();
 
             history.push(
                 new OrchestratorStartedEvent({
@@ -360,7 +355,7 @@ export class TestHistories {
             history.push(
                 new EventRaisedEvent({
                     eventId: -1,
-                    timestamp: firstIteration.add(2, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                     isPlayed: false,
                     name: "firstRequiredEvent",
                 })
@@ -369,7 +364,7 @@ export class TestHistories {
                 history.push(
                     new EventRaisedEvent({
                         eventId: -1,
-                        timestamp: firstIteration.add(2, "s").toDate(),
+                        timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                         isPlayed: false,
                         name: "secondRequiredEvent",
                     })
@@ -396,7 +391,7 @@ export class TestHistories {
                 history.push(
                     new EventRaisedEvent({
                         eventId: -1,
-                        timestamp: firstIteration.add(3, "s").toDate(),
+                        timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                         isPlayed: false,
                         name: "secondRequiredEvent",
                     })
@@ -408,7 +403,6 @@ export class TestHistories {
     }
 
     public static GetCallEntitySet(firstTimestamp: Date, entityId: EntityId): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
         const orchestratorId = uuidv1();
         const messageId = uuidv1();
 
@@ -420,37 +414,37 @@ export class TestHistories {
             }),
             new ExecutionStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: true,
                 name: orchestratorId,
                 input: JSON.stringify(entityId),
             }),
             new EventSentEvent({
                 eventId: 0,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: true,
                 name: "op",
                 input: JSON.stringify({
                     id: messageId,
                     op: "set",
                     parent: orchestratorId,
-                    timestamp: firstMoment.add(1, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 }),
                 instanceId: EntityId.getSchedulerIdFromEntityId(entityId),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: true,
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                 isPlayed: false,
             }),
             new EventRaisedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                 isPlayed: false,
                 name: messageId,
                 input: JSON.stringify({
@@ -464,8 +458,6 @@ export class TestHistories {
         firstTimestamp: Date,
         files: string[]
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -493,12 +485,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 result: JSON.stringify(files),
                 taskScheduledId: 0,
@@ -510,7 +502,7 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                 isPlayed: false,
             }),
         ]
@@ -519,7 +511,7 @@ export class TestHistories {
                     (file, index) =>
                         new TaskScheduledEvent({
                             eventId: index + 1,
-                            timestamp: firstMoment.add(2, "s").toDate(),
+                            timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                             isPlayed: false,
                             name: "GetFileSize",
                             input: file,
@@ -534,19 +526,19 @@ export class TestHistories {
                 }),
                 new OrchestratorStartedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(2, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                     isPlayed: false,
                 }),
                 new TaskCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(3, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                     isPlayed: false,
                     result: JSON.stringify(1),
                     taskScheduledId: 1,
                 }),
                 new TaskCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(3, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                     isPlayed: false,
                     result: JSON.stringify(2),
                     taskScheduledId: 2,
@@ -558,12 +550,12 @@ export class TestHistories {
                 }),
                 new OrchestratorStartedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(4, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(4, "s").toDate(),
                     isPlayed: false,
                 }),
                 new TaskCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(4, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(4, "s").toDate(),
                     isPlayed: false,
                     result: JSON.stringify(3),
                     taskScheduledId: 3,
@@ -575,8 +567,6 @@ export class TestHistories {
         firstTimestamp: Date,
         files: string[]
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -604,12 +594,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 result: JSON.stringify(files),
                 taskScheduledId: 0,
@@ -621,7 +611,7 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                 isPlayed: false,
             }),
         ]
@@ -630,7 +620,7 @@ export class TestHistories {
                     (file, index) =>
                         new TaskScheduledEvent({
                             eventId: index + 1,
-                            timestamp: firstMoment.add(2, "s").toDate(),
+                            timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                             isPlayed: false,
                             name: "GetFileSize",
                             input: file,
@@ -645,19 +635,19 @@ export class TestHistories {
                 }),
                 new OrchestratorStartedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(4, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(4, "s").toDate(),
                     isPlayed: false,
                 }),
                 new TaskCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(3, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                     isPlayed: false,
                     result: JSON.stringify(1),
                     taskScheduledId: 1,
                 }),
                 new TaskFailedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(3, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                     isPlayed: false,
                     result: JSON.stringify(2),
                     taskScheduledId: 2,
@@ -666,7 +656,7 @@ export class TestHistories {
                 }),
                 new TaskFailedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(4, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(4, "s").toDate(),
                     isPlayed: false,
                     taskScheduledId: 3,
                     reason: `Activity function 'GetFileSize' failed: Could not find file ${files[2]}`,
@@ -679,8 +669,6 @@ export class TestHistories {
         firstTimestamp: Date,
         files: string[]
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -708,12 +696,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 result: JSON.stringify(files),
                 taskScheduledId: 0,
@@ -725,7 +713,7 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                 isPlayed: false,
             }),
         ]
@@ -734,7 +722,7 @@ export class TestHistories {
                     (file, index) =>
                         new TaskScheduledEvent({
                             eventId: index + 1,
-                            timestamp: firstMoment.add(2, "s").toDate(),
+                            timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                             isPlayed: false,
                             name: "GetFileSize",
                             input: file,
@@ -749,12 +737,12 @@ export class TestHistories {
                 }),
                 new OrchestratorStartedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(3, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                     isPlayed: false,
                 }),
                 new TaskCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(3, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                     isPlayed: false,
                     result: JSON.stringify(2),
                     taskScheduledId: 2,
@@ -766,8 +754,6 @@ export class TestHistories {
         firstTimestamp: Date,
         files: string[]
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -795,12 +781,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 result: JSON.stringify(files),
                 taskScheduledId: 0,
@@ -809,8 +795,6 @@ export class TestHistories {
     }
 
     public static GetHelloSequenceReplayFinal(name: string, firstTimestamp: Date): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -837,58 +821,58 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: true,
                 result: JSON.stringify("Hello, Tokyo!"),
                 taskScheduledId: 0,
             }),
             new TaskScheduledEvent({
                 eventId: 1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 name: "Hello",
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                 isPlayed: true,
                 result: JSON.stringify("Hello, Seattle!"),
                 taskScheduledId: 1,
             }),
             new TaskScheduledEvent({
                 eventId: 2,
-                timestamp: firstMoment.add(2, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                 isPlayed: false,
                 name: "Hello",
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").toDate(),
                 isPlayed: false,
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(3, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                 isPlayed: true,
                 result: JSON.stringify("Hello, London!"),
                 taskScheduledId: 2,
@@ -1150,8 +1134,6 @@ export class TestHistories {
         firstTimestamp: Date,
         input: unknown
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -1179,12 +1161,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 result: JSON.stringify(`Hello, ${input}!`),
                 taskScheduledId: 0,
@@ -1242,8 +1224,6 @@ export class TestHistories {
         input: unknown,
         retryInterval: number
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -1271,12 +1251,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskFailedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 taskScheduledId: 0,
                 details: "Big stack trace here",
@@ -1284,25 +1264,25 @@ export class TestHistories {
             }),
             new TimerCreatedEvent({
                 eventId: 1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                fireAt: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                fireAt: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
                 timerId: 1,
             }),
         ];
@@ -1313,41 +1293,47 @@ export class TestHistories {
         input: unknown,
         retryInterval: number
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
+        const history: HistoryEvent[] = [];
+        let timestamp = firstTimestamp;
 
-        return [
+        history.push(
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstTimestamp,
+                timestamp,
                 isPlayed: false,
             }),
             new ExecutionStartedEvent({
                 eventId: -1,
-                timestamp: firstTimestamp,
+                timestamp,
                 isPlayed: true,
                 name: "SayHelloWithActivityRetry",
                 input: JSON.stringify(input),
             }),
             new TaskScheduledEvent({
                 eventId: 0,
-                timestamp: firstTimestamp,
+                timestamp,
                 isPlayed: false,
                 name: "Hello",
                 input: undefined,
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstTimestamp,
+                timestamp,
                 isPlayed: false,
-            }),
+            })
+        );
+
+        timestamp = moment(firstTimestamp).add(30, "s").toDate();
+
+        history.push(
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp,
                 isPlayed: false,
             }),
             new TaskFailedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp,
                 isPlayed: false,
                 taskScheduledId: 0,
                 details: "Big stack trace here",
@@ -1355,47 +1341,60 @@ export class TestHistories {
             }),
             new TimerCreatedEvent({
                 eventId: 1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp,
                 isPlayed: false,
-                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                fireAt: moment(timestamp).add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp,
                 isPlayed: false,
-            }),
+            })
+        );
+
+        // These artificial delays between fireAt and timestamp is because
+        // in reality, timers don't fire exactly at their fireAt time
+        let fireAt = moment(timestamp).add(retryInterval, "ms").toDate();
+        timestamp = moment(fireAt).add(10, "s").toDate();
+
+        history.push(
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                timestamp,
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                timestamp,
                 isPlayed: false,
-                fireAt: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                fireAt,
                 timerId: 1,
             }),
             new TaskScheduledEvent({
                 eventId: 2,
-                timestamp: firstTimestamp,
+                timestamp,
                 isPlayed: false,
                 name: "Hello",
                 input: undefined,
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstTimestamp,
+                timestamp,
                 isPlayed: false,
-            }),
+            })
+        );
+
+        timestamp = moment(timestamp).add(20, "s").toDate();
+
+        history.push(
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(3, "s").toDate(),
+                timestamp,
                 isPlayed: false,
             }),
             new TaskFailedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(3, "s").toDate(),
+                timestamp,
                 isPlayed: false,
                 taskScheduledId: 2,
                 details: "Big stack trace here",
@@ -1403,28 +1402,36 @@ export class TestHistories {
             }),
             new TimerCreatedEvent({
                 eventId: 3,
-                timestamp: firstMoment.add(3, "s").toDate(),
+                timestamp,
                 isPlayed: false,
-                fireAt: firstMoment.add(3, "s").add(retryInterval, "ms").toDate(),
+                fireAt: moment(timestamp).add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(3, "s").toDate(),
+                timestamp,
                 isPlayed: false,
-            }),
+            })
+        );
+
+        fireAt = moment(timestamp).add(retryInterval, "ms").toDate();
+        timestamp = moment(fireAt).add(10, "s").toDate();
+
+        history.push(
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                timestamp,
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                timestamp,
                 isPlayed: false,
-                fireAt: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                fireAt,
                 timerId: 3,
-            }),
-        ];
+            })
+        );
+
+        return history;
     }
 
     public static GetSayHelloWithActivityRetryFanout(
@@ -1432,8 +1439,6 @@ export class TestHistories {
         retryInterval: number,
         iteration: number
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         const historyEvents: HistoryEvent[] = [];
         if (iteration >= 1) {
             historyEvents.push(
@@ -1483,14 +1488,14 @@ export class TestHistories {
             historyEvents.push(
                 new OrchestratorStartedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(110, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(110, "ms").toDate(),
                     isPlayed: iteration > 2,
                 })
             );
             historyEvents.push(
                 new TaskFailedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(100, "ms").toDate(),
                     isPlayed: iteration > 2,
                     taskScheduledId: 0,
                     details: "Big stack trace here",
@@ -1500,15 +1505,15 @@ export class TestHistories {
             historyEvents.push(
                 new TimerCreatedEvent({
                     eventId: 2,
-                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(100, "ms").toDate(),
                     isPlayed: iteration > 2,
-                    fireAt: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                    fireAt: moment(firstTimestamp).add(100, "ms").add(retryInterval, "ms").toDate(),
                 })
             );
             historyEvents.push(
                 new TaskCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment
+                    timestamp: moment(firstTimestamp)
                         .add(100, "s")
                         .add(retryInterval, "ms")
                         .add(100, "ms")
@@ -1521,7 +1526,7 @@ export class TestHistories {
             historyEvents.push(
                 new OrchestratorCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(100, "ms").toDate(),
                     isPlayed: iteration > 2,
                 })
             );
@@ -1531,23 +1536,29 @@ export class TestHistories {
             historyEvents.push(
                 new OrchestratorStartedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
                     isPlayed: iteration > 3,
                 })
             );
             historyEvents.push(
                 new TimerFiredEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                    timestamp: moment(firstTimestamp)
+                        .add(100, "ms")
+                        .add(retryInterval, "ms")
+                        .toDate(),
                     isPlayed: iteration > 3,
-                    fireAt: firstMoment.add(100, "s").add(retryInterval, "ms").toDate(),
+                    fireAt: moment(firstTimestamp).add(100, "s").add(retryInterval, "ms").toDate(),
                     timerId: 2,
                 })
             );
             historyEvents.push(
                 new TaskScheduledEvent({
                     eventId: 3,
-                    timestamp: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                    timestamp: moment(firstTimestamp)
+                        .add(100, "ms")
+                        .add(retryInterval, "ms")
+                        .toDate(),
                     isPlayed: iteration > 3,
                     name: "Hello",
                     input: "Tokyo",
@@ -1556,7 +1567,7 @@ export class TestHistories {
             historyEvents.push(
                 new OrchestratorCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(100, "ms").toDate(),
                     isPlayed: iteration > 3,
                 })
             );
@@ -1566,7 +1577,7 @@ export class TestHistories {
             historyEvents.push(
                 new OrchestratorStartedEvent({
                     eventId: -1,
-                    timestamp: firstMoment
+                    timestamp: moment(firstTimestamp)
                         .add(100, "s")
                         .add(retryInterval, "ms")
                         .add(100, "ms")
@@ -1577,7 +1588,7 @@ export class TestHistories {
             historyEvents.push(
                 new TaskCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment
+                    timestamp: moment(firstTimestamp)
                         .add(100, "s")
                         .add(retryInterval, "ms")
                         .add(100, "ms")
@@ -1596,10 +1607,9 @@ export class TestHistories {
         name: string,
         firstTimestamp: Date,
         request: DurableHttpRequest,
-        response: DurableHttpResponse
+        response: DurableHttpResponse,
+        taskId = 0
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -1614,7 +1624,7 @@ export class TestHistories {
                 input: JSON.stringify(request),
             }),
             new TaskScheduledEvent({
-                eventId: 0,
+                eventId: taskId,
                 timestamp: firstTimestamp,
                 isPlayed: false,
                 name: "BuiltIn::HttpActivity",
@@ -1627,17 +1637,187 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new TaskCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 result: JSON.stringify(response),
-                taskScheduledId: 0,
+                taskScheduledId: taskId,
             }),
         ];
+    }
+
+    public static GetPendingHttpPollingRequest(
+        firstTimestamp: Date,
+        request: DurableHttpRequest,
+        defaultHttpAsyncRequestSleepTimeMillseconds: number
+    ): HistoryEvent[] {
+        let timestamp = firstTimestamp;
+        const redirectResponse = new DurableHttpResponse(202, undefined, { Location: request.uri });
+        const history: HistoryEvent[] = [];
+        history.push(
+            ...this.GetSendHttpRequestReplayOne(
+                "SendHttpRequest",
+                timestamp,
+                request,
+                redirectResponse
+            )
+        );
+
+        timestamp = moment(timestamp).add(1, "s").toDate();
+
+        history.push(
+            ...this.TimerCreated(
+                timestamp,
+                moment(timestamp).add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms").toDate(),
+                1
+            )
+        );
+
+        timestamp = moment(timestamp)
+            .add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms")
+            .toDate();
+
+        history.push(...this.TimerFired(timestamp, 1));
+
+        timestamp = moment(timestamp).add(1, "s").toDate();
+
+        history.push(
+            ...this.GetSendHttpRequestReplayOne(
+                "SendHttpRequest",
+                timestamp,
+                request,
+                redirectResponse,
+                2
+            )
+        );
+        return history;
+    }
+
+    public static GetCompletedHttpRequestWithPolling(
+        firstTimestamp: Date,
+        request: DurableHttpRequest,
+        finalResponse: DurableHttpResponse,
+        defaultHttpAsyncRequestSleepTimeMillseconds: number
+    ): HistoryEvent[] {
+        let timestamp = firstTimestamp;
+        const redirectResponse = new DurableHttpResponse(202, undefined, { Location: request.uri });
+        const history = [];
+        history.push(
+            ...this.GetSendHttpRequestReplayOne(
+                "SendHttpRequest",
+                timestamp,
+                request,
+                redirectResponse
+            )
+        );
+        timestamp = moment(timestamp).add(1, "s").toDate();
+
+        history.push(
+            ...this.TimerCreated(
+                timestamp,
+                moment(timestamp).add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms").toDate(),
+                1
+            )
+        );
+
+        timestamp = moment(timestamp)
+            .add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms")
+            .toDate();
+
+        history.push(...this.TimerFired(timestamp, 1));
+
+        history.push(
+            ...this.GetSendHttpRequestReplayOne(
+                "SendHttpRequest",
+                timestamp,
+                request,
+                finalResponse,
+                2
+            )
+        );
+
+        return history;
+    }
+
+    public static GetCallHttpWithPollingFailedRequest(
+        firstTimestamp: Date,
+        request: DurableHttpRequest,
+        defaultHttpAsyncRequestSleepTimeMillseconds: number
+    ): HistoryEvent[] {
+        let timestamp = firstTimestamp;
+        const redirectResponse = new DurableHttpResponse(202, undefined, { Location: request.uri });
+        const history: HistoryEvent[] = [];
+        history.push(
+            ...this.GetSendHttpRequestReplayOne(
+                "SendHttpRequest",
+                timestamp,
+                request,
+                redirectResponse
+            )
+        );
+
+        timestamp = moment(timestamp).add(1, "s").toDate();
+
+        history.push(
+            ...this.TimerCreated(
+                timestamp,
+                moment(timestamp).add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms").toDate(),
+                1
+            )
+        );
+
+        timestamp = moment(timestamp)
+            .add(defaultHttpAsyncRequestSleepTimeMillseconds, "ms")
+            .toDate();
+
+        history.push(...this.TimerFired(timestamp, 1));
+
+        timestamp = moment(timestamp).add(1, "s").toDate();
+
+        history.push(
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp,
+                isPlayed: false,
+            }),
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp,
+                isPlayed: true,
+                name: "HttpSendRequest",
+                input: JSON.stringify(request),
+            }),
+            new TaskScheduledEvent({
+                eventId: 2,
+                timestamp,
+                isPlayed: false,
+                name: "BuiltIn::HttpActivity",
+                input: JSON.stringify(request),
+            }),
+            new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp,
+                isPlayed: false,
+            }),
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: moment(timestamp).add(1, "s").toDate(),
+                isPlayed: false,
+            }),
+            new TaskFailedEvent({
+                eventId: -1,
+                timestamp: moment(timestamp).add(1, "s").toDate(),
+                isPlayed: false,
+                taskScheduledId: 2,
+                details: "Big stack trace here",
+                reason: "Activity function 'BuiltIn::HttpActivity' failed: Result: Failure",
+            })
+        );
+        return history;
     }
 
     public static GetSayHelloWithSubOrchestratorReplayOne(
@@ -1647,8 +1827,6 @@ export class TestHistories {
         subInstanceId: string,
         input?: string
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -1677,12 +1855,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new SubOrchestrationInstanceCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 result: JSON.stringify(`Hello, ${input}!`),
                 taskScheduledId: 0,
@@ -1699,8 +1877,6 @@ export class TestHistories {
         subOrchestratorNames: string[],
         input: string
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         const baseSubInstanceId = "dummy-unique-id";
         const historyEvents = [
             new OrchestratorStartedEvent({
@@ -1736,7 +1912,7 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             })
         );
@@ -1745,7 +1921,7 @@ export class TestHistories {
             historyEvents.push(
                 new SubOrchestrationInstanceCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(1, "s").toDate(),
+                    timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                     isPlayed: false,
                     result: JSON.stringify(`Hello, ${input}_${subOrchestratorNames[i]}_${i}!`),
                     taskScheduledId: i,
@@ -1763,8 +1939,6 @@ export class TestHistories {
         subInstanceId: string,
         input?: string
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -1793,12 +1967,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new SubOrchestrationInstanceFailedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 details: "Big stack trace here",
                 reason: "Sub orchestrator function 'SayHelloInline' failed: Result: Failure",
@@ -1860,8 +2034,6 @@ export class TestHistories {
         input: string,
         retryInterval: number
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -1903,25 +2075,25 @@ export class TestHistories {
             }),
             new TimerCreatedEvent({
                 eventId: 1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                fireAt: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                fireAt: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
                 timerId: 1,
             }),
         ];
@@ -1933,8 +2105,6 @@ export class TestHistories {
         input: string,
         retryInterval: number
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -1976,25 +2146,25 @@ export class TestHistories {
             }),
             new TimerCreatedEvent({
                 eventId: 1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                fireAt: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                timestamp: moment(firstTimestamp).add(2, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment.add(2, "s").add(retryInterval, "ms").toDate(),
+                fireAt: moment(firstTimestamp).add(2, "s").add(retryInterval, "ms").toDate(),
                 timerId: 1,
             }),
             new SubOrchestrationInstanceCreatedEvent({
@@ -2025,25 +2195,25 @@ export class TestHistories {
             }),
             new TimerCreatedEvent({
                 eventId: 3,
-                timestamp: firstMoment.add(3, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment.add(3, "s").add(retryInterval, "ms").toDate(),
+                fireAt: moment(firstTimestamp).add(3, "s").add(retryInterval, "ms").toDate(),
             }),
             new OrchestratorCompletedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(3, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(3, "s").toDate(),
                 isPlayed: false,
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                timestamp: moment(firstTimestamp).add(4, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
             }),
             new TimerFiredEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                timestamp: moment(firstTimestamp).add(4, "s").add(retryInterval, "ms").toDate(),
                 isPlayed: false,
-                fireAt: firstMoment.add(4, "s").add(retryInterval, "ms").toDate(),
+                fireAt: moment(firstTimestamp).add(4, "s").add(retryInterval, "ms").toDate(),
                 timerId: 3,
             }),
         ];
@@ -2054,7 +2224,6 @@ export class TestHistories {
         retryInterval: number,
         iteration: number
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
         const instanceIds = [uuidv1(), uuidv1(), uuidv1()];
 
         const historyEvents: HistoryEvent[] = [];
@@ -2108,14 +2277,14 @@ export class TestHistories {
             historyEvents.push(
                 new OrchestratorStartedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(110, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(110, "ms").toDate(),
                     isPlayed: iteration > 2,
                 })
             );
             historyEvents.push(
                 new SubOrchestrationInstanceFailedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(100, "ms").toDate(),
                     isPlayed: iteration > 2,
                     taskScheduledId: 0,
                     details: "Big stack trace here",
@@ -2126,7 +2295,7 @@ export class TestHistories {
             historyEvents.push(
                 new SubOrchestrationInstanceCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment
+                    timestamp: moment(firstTimestamp)
                         .add(100, "s")
                         .add(retryInterval, "ms")
                         .add(100, "ms")
@@ -2140,15 +2309,15 @@ export class TestHistories {
             historyEvents.push(
                 new TimerCreatedEvent({
                     eventId: 2,
-                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(100, "ms").toDate(),
                     isPlayed: iteration > 2,
-                    fireAt: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                    fireAt: moment(firstTimestamp).add(100, "ms").add(retryInterval, "ms").toDate(),
                 })
             );
             historyEvents.push(
                 new OrchestratorCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(100, "ms").toDate(),
                     isPlayed: iteration > 2,
                 })
             );
@@ -2158,23 +2327,29 @@ export class TestHistories {
             historyEvents.push(
                 new OrchestratorStartedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(1, "s").add(retryInterval, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(1, "s").add(retryInterval, "ms").toDate(),
                     isPlayed: iteration > 3,
                 })
             );
             historyEvents.push(
                 new TimerFiredEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                    timestamp: moment(firstTimestamp)
+                        .add(100, "ms")
+                        .add(retryInterval, "ms")
+                        .toDate(),
                     isPlayed: iteration > 3,
-                    fireAt: firstMoment.add(100, "s").add(retryInterval, "ms").toDate(),
+                    fireAt: moment(firstTimestamp).add(100, "s").add(retryInterval, "ms").toDate(),
                     timerId: 2,
                 })
             );
             historyEvents.push(
                 new SubOrchestrationInstanceCreatedEvent({
                     eventId: 3,
-                    timestamp: firstMoment.add(100, "ms").add(retryInterval, "ms").toDate(),
+                    timestamp: moment(firstTimestamp)
+                        .add(100, "ms")
+                        .add(retryInterval, "ms")
+                        .toDate(),
                     isPlayed: iteration > 3,
                     name: "SayHelloInline",
                     input: "Tokyo",
@@ -2184,7 +2359,7 @@ export class TestHistories {
             historyEvents.push(
                 new OrchestratorCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment.add(100, "ms").toDate(),
+                    timestamp: moment(firstTimestamp).add(100, "ms").toDate(),
                     isPlayed: iteration > 3,
                 })
             );
@@ -2194,7 +2369,7 @@ export class TestHistories {
             historyEvents.push(
                 new OrchestratorStartedEvent({
                     eventId: -1,
-                    timestamp: firstMoment
+                    timestamp: moment(firstTimestamp)
                         .add(100, "s")
                         .add(retryInterval, "ms")
                         .add(100, "ms")
@@ -2205,7 +2380,7 @@ export class TestHistories {
             historyEvents.push(
                 new SubOrchestrationInstanceCompletedEvent({
                     eventId: -1,
-                    timestamp: firstMoment
+                    timestamp: moment(firstTimestamp)
                         .add(100, "s")
                         .add(retryInterval, "ms")
                         .add(100, "ms")
@@ -2268,8 +2443,6 @@ export class TestHistories {
         eventName: string,
         input?: unknown
     ): HistoryEvent[] {
-        const firstMoment = moment(firstTimestamp);
-
         return [
             new OrchestratorStartedEvent({
                 eventId: -1,
@@ -2290,12 +2463,12 @@ export class TestHistories {
             }),
             new OrchestratorStartedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
             }),
             new EventRaisedEvent({
                 eventId: -1,
-                timestamp: firstMoment.add(1, "s").toDate(),
+                timestamp: moment(firstTimestamp).add(1, "s").toDate(),
                 isPlayed: false,
                 input: JSON.stringify(input),
                 name: eventName,

@@ -1,11 +1,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { TraceContext } from "@azure/functions";
+import {
+    BindingDefinition,
+    ContextBindingData,
+    ContextBindings,
+    ExecutionContext,
+    HttpRequest,
+    Logger,
+    TraceContext,
+} from "@azure/functions";
 import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
-import { start } from "repl";
 import * as uuidv1 from "uuid/v1";
-import { ManagedIdentityTokenSource } from "../../src";
+import { DummyOrchestrationContext, ManagedIdentityTokenSource } from "../../src";
 import {
     ActionType,
     CallActivityAction,
@@ -871,6 +878,7 @@ describe("Orchestrator", () => {
                                 uri: req.uri,
                                 content: req.content,
                                 headers: req.headers,
+                                asynchronousPatternEnabled: req.asynchronousPatternEnabled,
                                 tokenSource: {
                                     resource: "https://management.core.windows.net",
                                     kind: "AzureManagedIdentity",
@@ -914,6 +922,325 @@ describe("Orchestrator", () => {
                     true
                 )
             );
+        });
+
+        describe("callHttp with polling", () => {
+            it("returns the result of the first success non-redirect response", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+                const res = new DurableHttpResponse(
+                    200,
+                    '<!DOCTYPE html><html lang="en">...</html>',
+                    {
+                        "Content-Type": "text/html; charset=utf-8",
+                        "Cache-control": "private, max-age=8",
+                    }
+                );
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetCompletedHttpRequestWithPolling(
+                        moment.utc().toDate(),
+                        req,
+                        res,
+                        30000
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: true,
+                        actions: [[new CallHttpAction(req)]],
+                        output: res,
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("returns the result of the first failure non-redirect response", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+                const res = new DurableHttpResponse(404, "Not found!", {});
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetCompletedHttpRequestWithPolling(
+                        moment.utc().toDate(),
+                        req,
+                        res,
+                        30000
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: true,
+                        actions: [[new CallHttpAction(req)]],
+                        output: res,
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("does no polling if location header is not set", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest("GET", "https://bing.com");
+
+                const fakeRedirectResponse = new DurableHttpResponse(
+                    202,
+                    "redirect without header",
+                    {}
+                );
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetSendHttpRequestReplayOne(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req,
+                        fakeRedirectResponse
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: true,
+                        output: fakeRedirectResponse,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("treats headers case-insensitively", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest("GET", "https://bing.com");
+
+                const fakeRedirectResponse = new DurableHttpResponse(202, "redirect", {
+                    LoCaTiOn: "https://bing.com",
+                });
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetSendHttpRequestReplayOne(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req,
+                        fakeRedirectResponse
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("does not complete if redirect response is received", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetPendingHttpPollingRequest(moment.utc().toDate(), req, 30000),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("defaults to polling", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest("GET", "https://bing.com");
+
+                const redirectResponse = new DurableHttpResponse(202, "redirect", {
+                    Location: "https://bing.com",
+                });
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetSendHttpRequestReplayOne(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req,
+                        redirectResponse
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: false,
+                        output: undefined,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V3,
+                    })
+                );
+            });
+            it("requires schema version V3", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+
+                const redirectResponse = new DurableHttpResponse(202, "redirect", {
+                    Location: "https://bing.com",
+                });
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetSendHttpRequestReplayOne(
+                        "SendHttpRequest",
+                        moment.utc().toDate(),
+                        req,
+                        redirectResponse
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V1
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.doneValue).to.be.deep.equal(
+                    new OrchestratorState({
+                        isDone: true,
+                        output: redirectResponse,
+                        actions: [[new CallHttpAction(req)]],
+                        schemaVersion: ReplaySchema.V1,
+                    })
+                );
+            });
+            it("fails if a sub-HTTP request task fails", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetCallHttpWithPollingFailedRequest(
+                        moment.utc().toDate(),
+                        req,
+                        30000
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    30000,
+                    ReplaySchema.V3
+                );
+
+                orchestrator(mockContext);
+
+                expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+            });
+            it("errors if V3 is used and defaultHttpAsyncRequestSleepTimeMillseconds is undefined", () => {
+                const orchestrator = TestOrchestrations.SendHttpRequest;
+                const req = new DurableHttpRequest(
+                    "GET",
+                    "https://bing.com",
+                    undefined,
+                    undefined,
+                    undefined,
+                    true
+                );
+
+                const mockContext = new DummyOrchestrationContext(
+                    "",
+                    TestHistories.GetCallHttpWithPollingFailedRequest(
+                        moment.utc().toDate(),
+                        req,
+                        30000
+                    ),
+                    req,
+                    undefined,
+                    undefined,
+                    undefined,
+                    ReplaySchema.V3
+                );
+
+                expect(orchestrator(mockContext)).to.throw;
+            });
         });
     });
 
@@ -1511,12 +1838,12 @@ describe("Orchestrator", () => {
     describe("createTimer()", () => {
         it("schedules a timer", async () => {
             const orchestrator = TestOrchestrations.WaitOnTimer;
-            const startMoment = moment.utc();
-            const fireAt = startMoment.add(5, "m").toDate();
+            const startTime = moment.utc().toDate();
+            const fireAt = moment(startTime).add(5, "m").toDate();
 
             const mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart("WaitOnTimer", startMoment.toDate()),
+                    TestHistories.GetOrchestratorStart("WaitOnTimer", startTime),
                     fireAt
                 ),
             });
@@ -1578,6 +1905,7 @@ describe("Orchestrator", () => {
                         undefined,
                         "6.00:00:00",
                         "3.00:00:00",
+                        30000,
                         ReplaySchema.V3
                     ),
                 });
@@ -1611,6 +1939,7 @@ describe("Orchestrator", () => {
                         undefined,
                         "6.00:00:00",
                         "3.00:00:00",
+                        30000,
                         ReplaySchema.V3
                     ),
                 });
@@ -1644,6 +1973,7 @@ describe("Orchestrator", () => {
                         undefined,
                         "6.00:00:00",
                         "3.00:00:00",
+                        300000,
                         ReplaySchema.V3
                     ),
                 });
@@ -2119,10 +2449,10 @@ describe("Orchestrator", () => {
         it("Task.any called with one TaskSet and one timer where TaskSet wins", async () => {
             const orchestrator = TestOrchestrations.AnyWithTaskSet;
             const eventsWin = true;
-            const initialTime = moment.utc();
+            const initialTime = moment.utc().toDate();
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 1, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 1, eventsWin)
                 ),
             });
 
@@ -2136,7 +2466,7 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
                             ],
                         ],
                         output: undefined,
@@ -2148,7 +2478,7 @@ describe("Orchestrator", () => {
 
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 2, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 2, eventsWin)
                 ),
             });
 
@@ -2162,7 +2492,7 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
                             ],
                             [new CallActivityAction("Hello", "Tokyo")],
                         ],
@@ -2177,10 +2507,10 @@ describe("Orchestrator", () => {
         it("Task.any called with one TaskSet and one timer where timer wins", async () => {
             const orchestrator = TestOrchestrations.AnyWithTaskSet;
             const eventsWin = false;
-            const initialTime = moment.utc();
+            const initialTime = moment.utc().toDate();
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 1, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 1, eventsWin)
                 ),
             });
 
@@ -2194,7 +2524,7 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
                             ],
                         ],
                         output: undefined,
@@ -2206,7 +2536,7 @@ describe("Orchestrator", () => {
 
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetAnyWithTaskSet(initialTime.toDate(), 2, eventsWin)
+                    TestHistories.GetAnyWithTaskSet(initialTime, 2, eventsWin)
                 ),
             });
 
@@ -2220,7 +2550,7 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(initialTime.add(300, "s").toDate()),
+                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
                             ],
                         ],
                         output: ["timeout"],
@@ -2263,12 +2593,12 @@ describe("Orchestrator", () => {
 
         it("Timer in combination with Task.any() executes deterministically", async () => {
             const orchestrator = TestOrchestrations.TimerActivityRace;
-            const currentTime = moment.utc();
+            const currentTime = moment.utc().toDate();
 
             // first iteration
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 1),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 1),
                     undefined
                 ),
             });
@@ -2281,7 +2611,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                         ],
@@ -2295,7 +2625,7 @@ describe("Orchestrator", () => {
             // second iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 2),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 2),
                     undefined
                 ),
             });
@@ -2308,7 +2638,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                             [new CallActivityAction("TaskB")],
@@ -2323,7 +2653,7 @@ describe("Orchestrator", () => {
             // third iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 3),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 3),
                     undefined
                 ),
             });
@@ -2336,7 +2666,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                             [new CallActivityAction("TaskB")],
@@ -2351,7 +2681,7 @@ describe("Orchestrator", () => {
             // final iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime.toDate(), 4),
+                    TestHistories.GetTimerActivityRaceActivityWinsHistory(currentTime, 4),
                     undefined
                 ),
             });
@@ -2364,7 +2694,7 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                             [new CallActivityAction("TaskB")],
@@ -2379,12 +2709,12 @@ describe("Orchestrator", () => {
 
         it("Timer in combination with Task.any() timer wins", async () => {
             const orchestrator = TestOrchestrations.TimerActivityRace;
-            const currentTime = moment.utc();
+            const currentTime = moment.utc().toDate();
 
             // first iteration
             let mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime.toDate(), 1),
+                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime, 1),
                     null
                 ),
             });
@@ -2397,7 +2727,7 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                         ],
@@ -2411,7 +2741,7 @@ describe("Orchestrator", () => {
             // second iteration
             mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime.toDate(), 2),
+                    TestHistories.GetTimerActivityRaceTimerWinsHistory(currentTime, 2),
                     null
                 ),
             });
@@ -2424,7 +2754,7 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [
                             [
-                                new CreateTimerAction(currentTime.add(1, "s").toDate()),
+                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
                                 new CallActivityAction("TaskA"),
                             ],
                         ],
@@ -2447,23 +2777,19 @@ describe("Orchestrator", () => {
 class MockContext implements IOrchestrationFunctionContext {
     public doneValue: IOrchestratorState | undefined;
     public err: string | Error | null | undefined;
-    constructor(public bindings: IBindings) {}
+    constructor(public bindings: ContextBindings) {}
     traceContext: TraceContext;
     df: DurableOrchestrationContext;
     invocationId: string;
-    executionContext: import("@azure/functions").ExecutionContext;
-    bindingData: { [key: string]: any };
-    bindingDefinitions: import("@azure/functions").BindingDefinition[];
-    log: import("@azure/functions").Logger;
-    req?: import("@azure/functions").HttpRequest | undefined;
-    res?: { [key: string]: any } | undefined;
+    executionContext: ExecutionContext;
+    bindingData: ContextBindingData;
+    bindingDefinitions: BindingDefinition[];
+    log: Logger;
+    req?: HttpRequest;
+    res?: { [key: string]: any };
 
     public done(err?: Error | string | null, result?: IOrchestratorState): void {
         this.doneValue = result;
         this.err = err;
     }
-}
-
-interface IBindings {
-    [key: string]: unknown;
 }

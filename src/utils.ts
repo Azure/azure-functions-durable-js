@@ -12,11 +12,11 @@ export class Utils {
     }
     public static getInstancesOf<T>(
         collection: { [index: string]: unknown },
-        typeInstance: T
+        abstractClass: T // this should be an abstract class that contains only the _required_ properties
     ): T[] {
-        if (collection && typeInstance) {
+        if (collection && abstractClass) {
             const candidateObjects = Object.values(collection).filter((value) =>
-                this.hasAllPropertiesOf(value, typeInstance)
+                this.hasAllPropertiesOf(value, abstractClass)
             );
 
             this.parseTimestampsAsDates(candidateObjects);
@@ -84,8 +84,8 @@ export class Utils {
         return argument;
     }
 
-    public static sleep(delayInMilliseconds: number): Promise<NodeJS.Timer> {
-        return new Promise((resolve) => setTimeout(resolve, delayInMilliseconds));
+    public static async sleep(delayInMilliseconds: number): Promise<void> {
+        await new Promise((resolve) => setTimeout(resolve, delayInMilliseconds));
     }
 
     public static throwIfNotInstanceOf<T>(
