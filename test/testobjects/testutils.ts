@@ -96,7 +96,7 @@ export class TestUtils {
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
-                .replace(TestConstants.connectionPlaceholder, connection),
+                .replace(TestConstants.connectionPlaceholder, connection)
         );
     }
 
