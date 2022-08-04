@@ -22,6 +22,6 @@ export class HttpManagementPayload {
         /** The HTTP POST instance suspension endpoint. */
         public readonly suspendPostUri: string,
         /** The HTTP POST instance resumption endpoint. */
-        public readonly resumePostUri: string,
+        public readonly resumePostUri: string
     ) {}
 }

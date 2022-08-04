@@ -768,7 +768,7 @@ export class DurableOrchestrationClient {
      * @param reason The reason for resuming the orchestration instance.
      * @returns A promise that resolves when the resume message is enqueued.
      */
-     public async resume(instanceId: string, reason: string): Promise<void> {
+    public async resume(instanceId: string, reason: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {

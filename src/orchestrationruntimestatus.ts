@@ -42,5 +42,5 @@ export enum OrchestrationRuntimeStatus {
     /**
      * The orchestration instance was suspended.
      */
-    Suspended = "Suspended"
+    Suspended = "Suspended",
 }
