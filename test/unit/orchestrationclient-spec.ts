@@ -1495,7 +1495,7 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.suspend(defaultInstanceId, testReason);
+            const result = await client.resume(defaultInstanceId, testReason);
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
