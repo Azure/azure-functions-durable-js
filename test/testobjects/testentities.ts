@@ -44,7 +44,7 @@ export class TestEntities {
     });
 
     public static AsyncStringStore = df.entity<string>(async (context) => {
-        await new Promise((resolve) => setTimeout(() => resolve(), 0)); // force onto the event loop and result in a no-op delay
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 0)); // force onto the event loop and result in a no-op delay
         switch (context.df.operationName) {
             case "set":
                 context.df.setState(context.df.getInput() || "");
