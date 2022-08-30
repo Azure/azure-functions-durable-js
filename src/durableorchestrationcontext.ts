@@ -251,11 +251,9 @@ export class DurableOrchestrationContext {
      * @param operationName The name of the operation.
      * @param operationInput (optional) input for the operation.
      */
-    public signalEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
+    public signalEntity(entityId: EntityId, operationName: string, operationInput?: unknown): void {
         const action = new SignalEntityAction(entityId, operationName, operationInput);
-        const task = new AtomicTask(false, action);
         this.taskOrchestratorExecutor.recordFireAndForgetAction(action);
-        return task;
     }
 
     /**
