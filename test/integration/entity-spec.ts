@@ -4,13 +4,7 @@ import { DurableEntityContext, EntityState, IEntityFunctionContext } from "../..
 import { TestEntities } from "../testobjects/testentities";
 import { TestEntityBatches } from "../testobjects/testentitybatches";
 import { StringStoreOperation } from "../testobjects/testentityoperations";
-import {
-    BindingDefinition,
-    ExecutionContext,
-    Logger,
-    HttpRequest,
-    TraceContext,
-} from "@azure/functions";
+import { HttpRequest, TraceContext } from "@azure/functions";
 
 describe("Entity", () => {
     it("StringStore entity with no initial state.", async () => {
@@ -89,10 +83,7 @@ class MockContext<T> implements IEntityFunctionContext<T> {
     constructor(public bindings: IBindings) {}
     traceContext: TraceContext;
     public invocationId: string;
-    public executionContext: ExecutionContext;
     public bindingData: { [key: string]: any };
-    public bindingDefinitions: BindingDefinition[];
-    public log: Logger;
     public req?: HttpRequest | undefined;
     public res?: { [key: string]: any } | undefined;
     public df: DurableEntityContext<T>;
