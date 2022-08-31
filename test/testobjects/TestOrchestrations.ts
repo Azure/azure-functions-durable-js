@@ -103,6 +103,13 @@ export class TestOrchestrations {
         return currentValue;
     });
 
+    public static signalEntity: any = df.orchestrator(function* (context: any) {
+        const { id, entityName } = context.df.getInput();
+        const entityId = new df.EntityId(entityName, id);
+        context.df.signalEntity(entityId, "add", 1);
+        return;
+    });
+
     public static FanOutFanInDiskUsage: any = df.orchestrator(function* (context: any) {
         const directory = context.df.getInput();
         const files = yield context.df.callActivity("GetFileList", directory);

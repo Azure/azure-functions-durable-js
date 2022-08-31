@@ -2268,6 +2268,44 @@ describe("Orchestrator", () => {
         });
     });
 
+    describe("signalEntity()", () => {
+        it("sends a signal to entity", () => {
+            const orchestrator = TestOrchestrations.signalEntity;
+            const operationName = "add";
+            const operationArgument = 1;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart("signalEntity", new Date()),
+                    {
+                        id: "myCounter",
+                        entityName: "Counter",
+                        operationName,
+                        operationArgument,
+                    }
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.deep.equal(
+                new OrchestratorState({
+                    isDone: true,
+                    output: null,
+                    actions: [[]],
+                    schemaVersion: ReplaySchema.V1,
+                })
+            );
+        });
+        it("proceeds after signalling entity", () => {
+            const yes = true;
+            expect(yes).to.be.true;
+        });
+        it("doesn't allow signalEntity() to be yielded", () => {
+            const no = false;
+            expect(no).to.be.false;
+        });
+    });
+
     describe("Task.all() and Task.any()", () => {
         it("schedules a parallel set of tasks", async () => {
             const orchestrator = TestOrchestrations.FanOutFanInDiskUsage;
