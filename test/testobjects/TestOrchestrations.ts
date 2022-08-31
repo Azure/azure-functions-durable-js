@@ -104,9 +104,16 @@ export class TestOrchestrations {
     });
 
     public static signalEntity: any = df.orchestrator(function* (context: any) {
-        const { id, entityName } = context.df.getInput();
+        const { id, entityName, operationName, operationArgument } = context.df.getInput();
         const entityId = new df.EntityId(entityName, id);
-        context.df.signalEntity(entityId, "add", 1);
+        context.df.signalEntity(entityId, operationName, operationArgument);
+        return;
+    });
+
+    public static signalEntityYield: any = df.orchestrator(function* (context: any) {
+        const { id, entityName, operationName, operationArgument } = context.df.getInput();
+        const entityId = new df.EntityId(entityName, id);
+        yield context.df.signalEntity(entityId, operationName, operationArgument);
         return;
     });
 

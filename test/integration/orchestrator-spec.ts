@@ -13,6 +13,7 @@ import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
 import { DummyOrchestrationContext, ManagedIdentityTokenSource } from "../../src";
+import { SignalEntityAction } from "../../src/actions/signalentityaction";
 import {
     ActionType,
     CallActivityAction,
@@ -1339,6 +1340,84 @@ describe("Orchestrator", () => {
         });
     });
 
+    describe("signalEntity()", () => {
+        it("scheduled a SignalEntity action", () => {
+            const orchestrator = TestOrchestrations.signalEntity;
+            const entityName = "Counter";
+            const id = "1234";
+            const expectedEntity = new EntityId(entityName, id);
+            const operationName = "add";
+            const operationArgument = 1;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart("signalEntity", new Date()),
+                    {
+                        id,
+                        entityName,
+                        operationName,
+                        operationArgument,
+                    }
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.deep.equal(
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        output: undefined,
+                        actions: [
+                            [
+                                new SignalEntityAction(
+                                    expectedEntity,
+                                    operationName,
+                                    operationArgument
+                                ),
+                            ],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
+            );
+        });
+
+        it("doesn't allow signalEntity() to be yielded", () => {
+            const orchestrator = TestOrchestrations.signalEntityYield;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart("signalEntity", new Date()),
+                    {
+                        id: "1234",
+                        entityName: "Counter",
+                        operationName: "add",
+                        operationArgument: 1,
+                    }
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.err).to.deep.equal(
+                new OrchestrationFailureError(
+                    false,
+                    new OrchestratorState(
+                        {
+                            isDone: false,
+                            output: undefined,
+                            error:
+                                "Orchestration yielded data of type undefined. Only Task types can be yielded.Please refactor your orchestration to yield only Tasks",
+                            actions: [[]],
+                            schemaVersion: ReplaySchema.V1,
+                        },
+                        true
+                    )
+                )
+            );
+        });
+    });
+
     describe("callSubOrchestrator()", () => {
         it("schedules a suborchestrator function", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestrator;
@@ -2265,44 +2344,6 @@ describe("Orchestrator", () => {
                     true
                 )
             );
-        });
-    });
-
-    describe("signalEntity()", () => {
-        it("sends a signal to entity", () => {
-            const orchestrator = TestOrchestrations.signalEntity;
-            const operationName = "add";
-            const operationArgument = 1;
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart("signalEntity", new Date()),
-                    {
-                        id: "myCounter",
-                        entityName: "Counter",
-                        operationName,
-                        operationArgument,
-                    }
-                ),
-            });
-
-            orchestrator(mockContext);
-
-            expect(mockContext.doneValue).to.deep.equal(
-                new OrchestratorState({
-                    isDone: true,
-                    output: null,
-                    actions: [[]],
-                    schemaVersion: ReplaySchema.V1,
-                })
-            );
-        });
-        it("proceeds after signalling entity", () => {
-            const yes = true;
-            expect(yes).to.be.true;
-        });
-        it("doesn't allow signalEntity() to be yielded", () => {
-            const no = false;
-            expect(no).to.be.false;
         });
     });
 
