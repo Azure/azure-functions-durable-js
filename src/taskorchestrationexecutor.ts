@@ -113,7 +113,7 @@ export class TaskOrchestrationExecutor {
         }
 
         // Construct current orchestration state
-        const actions: IAction[][] = this.actions.length == 0 ? [] : [this.actions];
+        const actions: IAction[][] = this.actions.length == 0 ? [[]] : [this.actions];
         const orchestratorState = new OrchestratorState({
             isDone: this.hasCompletedSuccessfully(),
             actions: actions,
