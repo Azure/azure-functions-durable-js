@@ -1385,36 +1385,50 @@ describe("Orchestrator", () => {
 
         it("doesn't allow signalEntity() to be yielded", () => {
             const orchestrator = TestOrchestrations.signalEntityYield;
+            const entityName = "Counter";
+            const id = "1234";
+            const expectedEntity = new EntityId(entityName, id);
+            const operationName = "add";
+            const operationArgument = 1;
             const mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
                     TestHistories.GetOrchestratorStart("signalEntity", new Date()),
                     {
-                        id: "1234",
-                        entityName: "Counter",
-                        operationName: "add",
-                        operationArgument: 1,
+                        id,
+                        entityName,
+                        operationName,
+                        operationArgument,
                     }
                 ),
             });
 
             orchestrator(mockContext);
 
-            expect(mockContext.err).to.deep.equal(
-                new OrchestrationFailureError(
-                    false,
-                    new OrchestratorState(
-                        {
-                            isDone: false,
-                            output: undefined,
-                            error:
-                                "Orchestration yielded data of type undefined. Only Task types can be yielded.Please refactor your orchestration to yield only Tasks",
-                            actions: [[]],
-                            schemaVersion: ReplaySchema.V1,
-                        },
-                        true
-                    )
+            const expectedErr = new OrchestrationFailureError(
+                false,
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new SignalEntityAction(
+                                    expectedEntity,
+                                    operationName,
+                                    operationArgument
+                                ),
+                            ],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                        error:
+                            "Orchestration yielded data of type undefined. Only Task types can be yielded.Please refactor your orchestration to yield only Tasks.",
+                        output: undefined,
+                    },
+                    true
                 )
             );
+
+            expect(mockContext.doneValue).to.be.undefined;
+            expect(JSON.stringify(mockContext.err)).to.equal(JSON.stringify(expectedErr));
         });
     });
 
