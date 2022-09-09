@@ -99,7 +99,7 @@ export class TaskOrchestrationExecutor {
         history: HistoryEvent[],
         schemaVersion: ReplaySchema,
         fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>
-    ): Promise<void> {
+    ): Promise<OrchestratorState> {
         this.schemaVersion = schemaVersion;
         this.context = context.df;
         this.generator = fn(context) as Generator<TaskBase, any, any>;
@@ -123,17 +123,12 @@ export class TaskOrchestrationExecutor {
             schemaVersion: this.schemaVersion,
         });
 
-        // Record errors, if any
-        let error = undefined;
-        let result: any = orchestratorState;
+        // Throw errors, if any
         if (this.exception !== undefined) {
-            error = new OrchestrationFailureError(this.orchestratorReturned, orchestratorState);
-            result = undefined;
+            throw new OrchestrationFailureError(this.orchestratorReturned, orchestratorState);
         }
 
-        // Communicate the orchestration's current state
-        context.done(error, result);
-        return;
+        return orchestratorState;
     }
 
     /**
