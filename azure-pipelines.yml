@@ -7,12 +7,12 @@ pr:
         include:
             - main
             - dev
-            - v*.x
+            - v3.x
 
 trigger:
     - main
     - dev
-    - v*.x
+    - v3.x
 
 jobs:
     - job: Test
