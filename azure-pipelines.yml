@@ -7,6 +7,7 @@ pr:
         include:
             - main
             - dev
+            - v*.x
 
 trigger:
     - main
