@@ -94,11 +94,13 @@ export class Orchestrator {
             );
         }
 
-        return await this.taskOrchestrationExecutor.execute(
+        const orchestratorState = await this.taskOrchestrationExecutor.execute(
             context,
             state,
             upperSchemaVersion,
             this.fn
         );
+
+        return orchestratorState;
     }
 }
