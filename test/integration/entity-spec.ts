@@ -11,7 +11,6 @@ import {
     HttpRequest,
     TraceContext,
 } from "@azure/functions";
-import sinon = require("sinon");
 
 describe("Entity", () => {
     it("StringStore entity with no initial state.", async () => {
@@ -28,7 +27,6 @@ describe("Entity", () => {
         });
         const result = await entity(mockContext);
 
-        expect(mockContext.done.callCount).to.equal(0);
         expect(result).to.not.be.undefined;
 
         if (result) {
@@ -47,7 +45,6 @@ describe("Entity", () => {
         });
         const result = await entity(mockContext);
 
-        expect(mockContext.done.callCount).to.equal(0);
         expect(result).to.not.be.undefined;
 
         if (result) {
@@ -69,7 +66,6 @@ describe("Entity", () => {
         });
         const result = await entity(mockContext);
 
-        expect(mockContext.done.callCount).to.equal(0);
         expect(result).to.not.be.undefined;
 
         if (result) {
@@ -90,13 +86,7 @@ function entityStateMatchesExpected(actual: EntityState, expected: EntityState):
 }
 
 class MockContext<T> implements IEntityFunctionContext<T> {
-    constructor(
-        public bindings: IBindings,
-        public doneValue?: EntityState,
-        public err?: Error | string | null
-    ) {
-        this.done = sinon.spy();
-    }
+    constructor(public bindings: IBindings) {}
     traceContext: TraceContext;
     public invocationId: string;
     public executionContext: ExecutionContext;
@@ -107,7 +97,7 @@ class MockContext<T> implements IEntityFunctionContext<T> {
     public res?: { [key: string]: any } | undefined;
     public df: DurableEntityContext<T>;
 
-    public done: sinon.SinonSpy & ((err?: Error | string | null, result?: EntityState) => void);
+    public done: (err?: Error | string | null, result?: EntityState) => void;
 }
 
 interface IBindings {
