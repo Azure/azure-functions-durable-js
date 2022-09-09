@@ -1,8 +1,7 @@
 import * as df from "../../src";
 
 export class TestOrchestrations {
-    public static NotGenerator: any = df.orchestrator(function* (_context: any) {
-        void _context;
+    public static NotGenerator: any = df.orchestrator(function* () {
         return "Hello";
     });
 
