@@ -12,7 +12,6 @@ import {
     DurableOrchestrationContext,
     HistoryEvent,
     HistoryEventOptions,
-    IOrchestratorState,
     OrchestratorStartedEvent,
 } from "./classes";
 import { IOrchestrationFunctionContext } from "./iorchestrationfunctioncontext";
@@ -71,8 +70,6 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
         // Set this as undefined, let it be initialized by the orchestrator
         this.df = (undefined as unknown) as DurableOrchestrationContext;
     }
-    public doneValue: IOrchestratorState | undefined;
-    public err: string | Error | null | undefined;
     df: DurableOrchestrationContext;
     invocationId: string;
     executionContext: ExecutionContext;
@@ -81,10 +78,7 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
     traceContext: TraceContext;
     bindingDefinitions: BindingDefinition[];
     log: Logger;
-    done(err?: string | Error, result?: any): void {
-        this.doneValue = result;
-        this.err = err;
-    }
+    done: (err?: string | Error, result?: any) => void;
     req?: HttpRequest;
     res?: { [key: string]: any };
 }

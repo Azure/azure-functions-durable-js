@@ -53,9 +53,9 @@ describe("Orchestrator", () => {
                 TestHistories.StarterHistory(moment.utc().toDate())
             ),
         });
-        orchestrator(mockContext);
+        const result = await orchestrator(mockContext);
 
-        expect(mockContext.doneValue).to.be.deep.equal(
+        expect(result).to.be.deep.equal(
             new OrchestratorState(
                 {
                     isDone: true,
@@ -77,9 +77,9 @@ describe("Orchestrator", () => {
                 name
             ),
         });
-        orchestrator(mockContext);
+        const result = await orchestrator(mockContext);
 
-        expect(mockContext.doneValue).to.be.deep.equal(
+        expect(result).to.be.deep.equal(
             new OrchestratorState(
                 {
                     isDone: true,
@@ -108,8 +108,8 @@ describe("Orchestrator", () => {
                         falsyValue
                     ),
                 });
-                await orchestrator(mockContext);
-                expect(mockContext.doneValue).to.deep.equal(
+                const result = await orchestrator(mockContext);
+                expect(result).to.deep.equal(
                     new OrchestratorState(
                         {
                             isDone: true,
@@ -121,11 +121,10 @@ describe("Orchestrator", () => {
                     )
                 );
                 if (isNaN(falsyValue as number)) {
-                    expect(isNaN(mockContext.doneValue!.output as number)).to.equal(true);
+                    expect(isNaN(result!.output as number)).to.equal(true);
                 } else {
-                    expect(mockContext.doneValue!.output).to.equal(falsyValue);
+                    expect(result!.output).to.equal(falsyValue);
                 }
-                expect(mockContext.err).to.equal(undefined);
             });
         }
     });
@@ -146,7 +145,7 @@ describe("Orchestrator", () => {
                     id
                 ),
             });
-            orchestrator(mockContext);
+            await orchestrator(mockContext);
 
             expect(mockContext.df!.instanceId).to.be.equal(id);
         });
@@ -165,7 +164,7 @@ describe("Orchestrator", () => {
                 context: new DurableOrchestrationBindingInfo(mockHistory, name),
             });
 
-            orchestrator(mockContext);
+            await orchestrator(mockContext);
 
             const lastEvent = mockHistory.pop() as HistoryEvent;
 
@@ -191,7 +190,7 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            await orchestrator(mockContext);
 
             expect(mockContext.df!.parentInstanceId).to.be.equal(id);
         });
@@ -213,7 +212,7 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            await orchestrator(mockContext);
 
             expect(mockContext.df!.currentUtcDateTime).to.be.deep.equal(nextTimestamp);
         });
@@ -231,11 +230,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue!.error).to.equal(undefined);
-
-            expect(mockContext.err).to.equal(undefined);
+            expect(result!.error).to.equal(undefined);
         });
     });
 
@@ -252,19 +249,26 @@ describe("Orchestrator", () => {
             });
             const expectedErr = "Exception from Orchestrator";
 
-            orchestrator(mockContext);
+            let errored = false;
 
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+            try {
+                await orchestrator(mockContext);
+            } catch (err) {
+                errored = true;
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
 
-            const orchestrationState = TestUtils.extractStateFromError(
-                mockContext.err as OrchestrationFailureError
-            );
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
 
-            expect(orchestrationState).to.be.an("object").that.deep.include({
-                isDone: false,
-                actions: [],
-            });
-            expect(orchestrationState.error).to.include(expectedErr);
+                expect(orchestrationState).to.be.an("object").that.deep.include({
+                    isDone: false,
+                    actions: [],
+                });
+                expect(orchestrationState.error).to.include(expectedErr);
+            }
+
+            expect(errored).to.be.true;
         });
 
         it("reports an unhandled exception from activity passed through orchestrator", async () => {
@@ -276,28 +280,35 @@ describe("Orchestrator", () => {
             });
             const expectedErr = "Activity function 'ThrowsErrorActivity' failed.";
 
-            orchestrator(mockContext);
+            let errored = false;
+            try {
+                await orchestrator(mockContext);
+            } catch (err) {
+                errored = true;
 
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
 
-            const orchestrationState = TestUtils.extractStateFromError(
-                mockContext.err as OrchestrationFailureError
-            );
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
 
-            expect(orchestrationState)
-                .to.be.an("object")
-                .that.deep.include({
-                    isDone: false,
-                    actions: [
-                        [
-                            {
-                                actionType: ActionType.CallActivity,
-                                functionName: "ThrowsErrorActivity",
-                            },
+                expect(orchestrationState)
+                    .to.be.an("object")
+                    .that.deep.include({
+                        isDone: false,
+                        actions: [
+                            [
+                                {
+                                    actionType: ActionType.CallActivity,
+                                    functionName: "ThrowsErrorActivity",
+                                },
+                            ],
                         ],
-                    ],
-                });
-            expect(orchestrationState.error).to.include(expectedErr);
+                    });
+                expect(orchestrationState.error).to.include(expectedErr);
+            }
+
+            expect(errored).to.be.true;
         });
 
         it("schedules an activity function after orchestrator catches an exception", async () => {
@@ -310,9 +321,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -344,9 +355,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -367,9 +378,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -397,9 +408,9 @@ describe("Orchestrator", () => {
                         ),
                     });
 
-                    orchestrator(mockContext);
+                    const result = await orchestrator(mockContext);
 
-                    expect(mockContext.doneValue).to.be.deep.equal(
+                    expect(result).to.be.deep.equal(
                         new OrchestratorState(
                             {
                                 isDone: false,
@@ -425,9 +436,9 @@ describe("Orchestrator", () => {
                         ),
                     });
 
-                    orchestrator(mockContext);
+                    const result = await orchestrator(mockContext);
 
-                    expect(mockContext.doneValue).to.be.deep.equal(
+                    expect(result).to.be.deep.equal(
                         new OrchestratorState(
                             {
                                 isDone: true,
@@ -456,9 +467,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -485,9 +496,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -511,9 +522,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -545,21 +556,24 @@ describe("Orchestrator", () => {
             const expectedErr =
                 "retryOptions: Expected object of type RetryOptions but got undefined; are you missing properties?";
 
-            orchestrator(mockContext);
+            let errored = false;
+            try {
+                await orchestrator(mockContext);
+            } catch (err) {
+                errored = true;
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
 
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
 
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
-
-            const orchestrationState = TestUtils.extractStateFromError(
-                mockContext.err as OrchestrationFailureError
-            );
-
-            expect(orchestrationState).to.be.an("object").that.deep.include({
-                isDone: false,
-                actions: [],
-            });
-            expect(orchestrationState.error).to.include(expectedErr);
+                expect(orchestrationState).to.be.an("object").that.deep.include({
+                    isDone: false,
+                    actions: [],
+                });
+                expect(orchestrationState.error).to.include(expectedErr);
+            }
+            expect(errored).to.be.true;
         });
 
         it("schedules an activity function", async () => {
@@ -576,9 +590,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -614,9 +628,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -639,9 +653,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -678,21 +692,26 @@ describe("Orchestrator", () => {
             });
             const expectedErr = "Activity function 'Hello' failed: Result: Failure";
 
-            orchestrator(mockContext);
+            let errored = false;
+            try {
+                await orchestrator(mockContext);
+            } catch (err) {
+                errored = true;
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
 
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
 
-            const orchestrationState = TestUtils.extractStateFromError(
-                mockContext.err as OrchestrationFailureError
-            );
-
-            expect(orchestrationState)
-                .to.be.an("object")
-                .that.deep.include({
-                    isDone: false,
-                    actions: [[new CallActivityWithRetryAction("Hello", retryOptions, name)]],
-                });
-            expect(orchestrationState.error).to.include(expectedErr);
+                expect(orchestrationState)
+                    .to.be.an("object")
+                    .that.deep.include({
+                        isDone: false,
+                        actions: [[new CallActivityWithRetryAction("Hello", retryOptions, name)]],
+                    });
+                expect(orchestrationState.error).to.include(expectedErr);
+            }
+            expect(errored).to.be.true;
         });
 
         it("handles a completed activity function", async () => {
@@ -709,9 +728,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -746,9 +765,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -791,9 +810,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -827,9 +846,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -862,10 +881,10 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
             // This is the exact protocol expected by the durable extension
-            expect(mockContext.doneValue).to.be.deep.equal({
+            expect(result).to.be.deep.equal({
                 isDone: false,
                 output: undefined,
                 schemaVersion: 0,
@@ -909,9 +928,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -925,7 +944,7 @@ describe("Orchestrator", () => {
         });
 
         describe("callHttp with polling", () => {
-            it("returns the result of the first success non-redirect response", () => {
+            it("returns the result of the first success non-redirect response", async () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest(
                     "GET",
@@ -959,9 +978,9 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                orchestrator(mockContext);
+                const result = await orchestrator(mockContext);
 
-                expect(mockContext.doneValue).to.be.deep.equal(
+                expect(result).to.be.deep.equal(
                     new OrchestratorState({
                         isDone: true,
                         actions: [[new CallHttpAction(req)]],
@@ -970,7 +989,7 @@ describe("Orchestrator", () => {
                     })
                 );
             });
-            it("returns the result of the first failure non-redirect response", () => {
+            it("returns the result of the first failure non-redirect response", async () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest(
                     "GET",
@@ -997,9 +1016,9 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                orchestrator(mockContext);
+                const result = await orchestrator(mockContext);
 
-                expect(mockContext.doneValue).to.be.deep.equal(
+                expect(result).to.be.deep.equal(
                     new OrchestratorState({
                         isDone: true,
                         actions: [[new CallHttpAction(req)]],
@@ -1008,7 +1027,7 @@ describe("Orchestrator", () => {
                     })
                 );
             });
-            it("does no polling if location header is not set", () => {
+            it("does no polling if location header is not set", async () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest("GET", "https://bing.com");
 
@@ -1033,9 +1052,9 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                orchestrator(mockContext);
+                const result = await orchestrator(mockContext);
 
-                expect(mockContext.doneValue).to.be.deep.equal(
+                expect(result).to.be.deep.equal(
                     new OrchestratorState({
                         isDone: true,
                         output: fakeRedirectResponse,
@@ -1044,7 +1063,7 @@ describe("Orchestrator", () => {
                     })
                 );
             });
-            it("treats headers case-insensitively", () => {
+            it("treats headers case-insensitively", async () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest("GET", "https://bing.com");
 
@@ -1067,9 +1086,9 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                orchestrator(mockContext);
+                const result = await orchestrator(mockContext);
 
-                expect(mockContext.doneValue).to.be.deep.equal(
+                expect(result).to.be.deep.equal(
                     new OrchestratorState({
                         isDone: false,
                         output: undefined,
@@ -1078,7 +1097,7 @@ describe("Orchestrator", () => {
                     })
                 );
             });
-            it("does not complete if redirect response is received", () => {
+            it("does not complete if redirect response is received", async () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest(
                     "GET",
@@ -1099,9 +1118,9 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                orchestrator(mockContext);
+                const result = await orchestrator(mockContext);
 
-                expect(mockContext.doneValue).to.be.deep.equal(
+                expect(result).to.be.deep.equal(
                     new OrchestratorState({
                         isDone: false,
                         output: undefined,
@@ -1110,7 +1129,7 @@ describe("Orchestrator", () => {
                     })
                 );
             });
-            it("defaults to polling", () => {
+            it("defaults to polling", async () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest("GET", "https://bing.com");
 
@@ -1133,9 +1152,9 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                orchestrator(mockContext);
+                const result = await orchestrator(mockContext);
 
-                expect(mockContext.doneValue).to.be.deep.equal(
+                expect(result).to.be.deep.equal(
                     new OrchestratorState({
                         isDone: false,
                         output: undefined,
@@ -1144,7 +1163,7 @@ describe("Orchestrator", () => {
                     })
                 );
             });
-            it("requires schema version V3", () => {
+            it("requires schema version V3", async () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest(
                     "GET",
@@ -1174,9 +1193,9 @@ describe("Orchestrator", () => {
                     ReplaySchema.V1
                 );
 
-                orchestrator(mockContext);
+                const result = await orchestrator(mockContext);
 
-                expect(mockContext.doneValue).to.be.deep.equal(
+                expect(result).to.be.deep.equal(
                     new OrchestratorState({
                         isDone: true,
                         output: redirectResponse,
@@ -1185,7 +1204,7 @@ describe("Orchestrator", () => {
                     })
                 );
             });
-            it("fails if a sub-HTTP request task fails", () => {
+            it("fails if a sub-HTTP request task fails", async () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
                 const req = new DurableHttpRequest(
                     "GET",
@@ -1210,9 +1229,14 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                orchestrator(mockContext);
-
-                expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+                let errored = false;
+                try {
+                    await orchestrator(mockContext);
+                } catch (err) {
+                    errored = true;
+                    expect(err).to.be.an.instanceOf(OrchestrationFailureError);
+                }
+                expect(errored).to.be.true;
             });
             it("errors if V3 is used and defaultHttpAsyncRequestSleepTimeMillseconds is undefined", () => {
                 const orchestrator = TestOrchestrations.SendHttpRequest;
@@ -1257,9 +1281,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -1285,9 +1309,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -1318,9 +1342,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -1350,9 +1374,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -1395,9 +1419,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -1457,9 +1481,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -1495,23 +1519,28 @@ describe("Orchestrator", () => {
             const expectedErr =
                 "Sub orchestrator function 'SayHelloInline' failed: Result: Failure";
 
-            orchestrator(mockContext);
+            let errored = false;
+            try {
+                await orchestrator(mockContext);
+            } catch (err) {
+                errored = true;
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
 
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
 
-            const orchestrationState = TestUtils.extractStateFromError(
-                mockContext.err as OrchestrationFailureError
-            );
-
-            expect(orchestrationState)
-                .to.be.an("object")
-                .that.deep.include({
-                    isDone: false,
-                    actions: [
-                        [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
-                    ],
-                });
-            expect(orchestrationState.error).to.include(expectedErr);
+                expect(orchestrationState)
+                    .to.be.an("object")
+                    .that.deep.include({
+                        isDone: false,
+                        actions: [
+                            [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
+                        ],
+                    });
+                expect(orchestrationState.error).to.include(expectedErr);
+            }
+            expect(errored).to.be.true;
         });
     });
 
@@ -1532,19 +1561,24 @@ describe("Orchestrator", () => {
             const expectedErr =
                 "retryOptions: Expected object of type RetryOptions but got undefined; are you missing properties?";
 
-            orchestrator(mockContext);
+            let errored = false;
+            try {
+                await orchestrator(mockContext);
+            } catch (err) {
+                errored = true;
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
 
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
 
-            const orchestrationState = TestUtils.extractStateFromError(
-                mockContext.err as OrchestrationFailureError
-            );
-
-            expect(orchestrationState).to.be.an("object").that.deep.include({
-                isDone: false,
-                actions: [],
-            });
-            expect(orchestrationState.error).to.include(expectedErr);
+                expect(orchestrationState).to.be.an("object").that.deep.include({
+                    isDone: false,
+                    actions: [],
+                });
+                expect(orchestrationState.error).to.include(expectedErr);
+            }
+            expect(errored).to.be.true;
         });
 
         it("schedules a suborchestrator function", async () => {
@@ -1564,9 +1598,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -1607,9 +1641,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -1648,9 +1682,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -1693,30 +1727,35 @@ describe("Orchestrator", () => {
             const expectedErr =
                 "Sub orchestrator function 'SayHelloInline' failed: Result: Failure";
 
-            orchestrator(mockContext);
+            let errored = false;
+            try {
+                await orchestrator(mockContext);
+            } catch (err) {
+                errored = true;
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
 
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
 
-            const orchestrationState = TestUtils.extractStateFromError(
-                mockContext.err as OrchestrationFailureError
-            );
-
-            expect(orchestrationState)
-                .to.be.an("object")
-                .that.deep.include({
-                    isDone: false,
-                    actions: [
-                        [
-                            new CallSubOrchestratorWithRetryAction(
-                                "SayHelloInline",
-                                new RetryOptions(10000, 2),
-                                name,
-                                childId
-                            ),
+                expect(orchestrationState)
+                    .to.be.an("object")
+                    .that.deep.include({
+                        isDone: false,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(10000, 2),
+                                    name,
+                                    childId
+                                ),
+                            ],
                         ],
-                    ],
-                });
-            expect(orchestrationState.error).to.include(expectedErr);
+                    });
+                expect(orchestrationState.error).to.include(expectedErr);
+            }
+            expect(errored).to.be.true;
         });
 
         it("handles a completed suborchestrator function", async () => {
@@ -1738,9 +1777,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -1776,9 +1815,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -1806,7 +1845,7 @@ describe("Orchestrator", () => {
     });
 
     describe("continueAsNew()", () => {
-        it("schedules a continueAsNew request", () => {
+        it("schedules a continueAsNew request", async () => {
             const orchestrator = TestOrchestrations.ContinueAsNewCounter;
             const mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
@@ -1818,9 +1857,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         // Is Done needs to be marked as true for 1.8.0 and later to properly process continueAsNew
@@ -1848,9 +1887,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -1875,9 +1914,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -1891,7 +1930,7 @@ describe("Orchestrator", () => {
         });
 
         describe("long timers", () => {
-            it("schedules long timers", () => {
+            it("schedules long timers", async () => {
                 const orchestrator = TestOrchestrations.WaitOnTimer;
                 const startTime = moment.utc().toDate();
                 const fireAt = moment(startTime).add(10, "d").toDate();
@@ -1910,9 +1949,9 @@ describe("Orchestrator", () => {
                     ),
                 });
 
-                orchestrator(mockContext);
+                const result = await orchestrator(mockContext);
 
-                expect(mockContext.doneValue).to.be.deep.equal(
+                expect(result).to.be.deep.equal(
                     new OrchestratorState(
                         {
                             isDone: false,
@@ -1925,7 +1964,7 @@ describe("Orchestrator", () => {
                 );
             });
 
-            it("waits for sub-timers of long timer", () => {
+            it("waits for sub-timers of long timer", async () => {
                 const orchestrator = TestOrchestrations.WaitOnTimer;
                 const startTime = moment.utc().toDate();
                 const fireAt = moment(startTime).add(10, "days").toDate();
@@ -1944,9 +1983,9 @@ describe("Orchestrator", () => {
                     ),
                 });
 
-                orchestrator(mockContext);
+                const result = await orchestrator(mockContext);
 
-                expect(mockContext.doneValue).to.be.deep.equal(
+                expect(result).to.be.deep.equal(
                     new OrchestratorState(
                         {
                             isDone: false,
@@ -1959,7 +1998,7 @@ describe("Orchestrator", () => {
                 );
             });
 
-            it("proceeds after long timer fires", () => {
+            it("proceeds after long timer fires", async () => {
                 const orchestrator = TestOrchestrations.WaitOnTimer;
                 const startTimestamp = moment.utc().toDate();
                 const fireAt = moment(startTimestamp).add(10, "d").toDate();
@@ -1978,9 +2017,9 @@ describe("Orchestrator", () => {
                     ),
                 });
 
-                orchestrator(mockContext);
+                const result = await orchestrator(mockContext);
 
-                expect(mockContext.doneValue).to.deep.equal(
+                expect(result).to.deep.equal(
                     new OrchestratorState(
                         {
                             isDone: true,
@@ -1996,7 +2035,7 @@ describe("Orchestrator", () => {
     });
 
     describe("newGuid()", () => {
-        it("generates consistent GUIDs", () => {
+        it("generates consistent GUIDs", async () => {
             const orchestrator = TestOrchestrations.GuidGenerator;
             const currentUtcDateTime = moment.utc().toDate();
             const instanceId = uuidv1();
@@ -2016,16 +2055,16 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext1);
-            orchestrator(mockContext2);
+            const result1 = await orchestrator(mockContext1);
+            const result2 = await orchestrator(mockContext2);
 
-            expect(mockContext1.doneValue!.isDone).to.equal(true);
-            expect(mockContext1.doneValue).to.deep.equal(mockContext2.doneValue);
+            expect(result1.isDone).to.equal(true);
+            expect(result1).to.deep.equal(result2);
         });
     });
 
     describe.skip("isLocked()", () => {
-        it("returns correct state when no locks are owned", () => {
+        it("returns correct state when no locks are owned", async () => {
             const orchestrator = TestOrchestrations.CheckForLocksNone;
             const mockContext = new MockContext({
                 context: new DurableOrchestrationBindingInfo(
@@ -2037,9 +2076,9 @@ describe("Orchestrator", () => {
                 new EntityId("samplename", "samplekey"),
             ]);
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.deep.equal(
+            expect(result).to.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -2054,35 +2093,6 @@ describe("Orchestrator", () => {
 
         it.skip("returns correct state when locks are owned", () => {
             // TODO: fill in
-        });
-    });
-
-    describe("newGuid()", () => {
-        it("generates consistent GUIDs", () => {
-            const orchestrator = TestOrchestrations.GuidGenerator;
-            const currentUtcDateTime = moment.utc().toDate();
-            const instanceId = uuidv1();
-
-            const mockContext1 = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart("GuidGenerator", currentUtcDateTime),
-                    undefined,
-                    instanceId
-                ),
-            });
-            const mockContext2 = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart("GuidGenerator", currentUtcDateTime),
-                    undefined,
-                    instanceId
-                ),
-            });
-
-            orchestrator(mockContext1);
-            orchestrator(mockContext2);
-
-            expect(mockContext1.doneValue!.isDone).to.equal(true);
-            expect(mockContext1.doneValue).to.deep.equal(mockContext2.doneValue);
         });
     });
 
@@ -2101,9 +2111,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.deep.eq(
+            expect(result).to.deep.eq(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2134,9 +2144,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.deep.equal(
+            expect(result).to.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2170,9 +2180,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.deep.equal(
+            expect(result).to.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2207,9 +2217,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.deep.equal(
+            expect(result).to.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2244,9 +2254,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2275,9 +2285,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2303,9 +2313,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -2333,27 +2343,30 @@ describe("Orchestrator", () => {
 
             const expectedErr1 =
                 "Activity function 'GetFileSize' failed: Could not find file file2.png";
-            // const expectedErr2 =
-            //    "Activity function 'GetFileSize' failed: Could not find file file3.csx";
 
-            orchestrator(mockContext);
+            let errored = false;
 
-            expect(mockContext.err).to.be.an.instanceOf(OrchestrationFailureError);
+            try {
+                await orchestrator(mockContext);
+            } catch (err) {
+                errored = true;
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
 
-            const orchestrationState = TestUtils.extractStateFromError(
-                mockContext.err as OrchestrationFailureError
-            );
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
 
-            expect(orchestrationState).to.be.deep.include({
-                isDone: false,
-                actions: [
-                    [new CallActivityAction("GetFileList", "C:\\Dev")],
-                    filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
-                ],
-            });
+                expect(orchestrationState).to.be.deep.include({
+                    isDone: false,
+                    actions: [
+                        [new CallActivityAction("GetFileList", "C:\\Dev")],
+                        filePaths.map((file) => new CallActivityAction("GetFileSize", file)),
+                    ],
+                });
 
-            expect(orchestrationState.error).to.include(expectedErr1);
-            // expect(orchestrationState.error).to.include(expectedErr2);
+                expect(orchestrationState.error).to.include(expectedErr1);
+            }
+            expect(errored).to.be.true;
         });
 
         it("Task.any proceeds if a scheduled parallel task completes in order", async () => {
@@ -2366,9 +2379,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -2396,9 +2409,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -2426,9 +2439,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -2456,9 +2469,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            let result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2482,9 +2495,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2514,9 +2527,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            let result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2540,9 +2553,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -2571,9 +2584,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            const result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -2603,9 +2616,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            let result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2630,9 +2643,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2658,9 +2671,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2686,9 +2699,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -2719,9 +2732,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            let result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: false,
@@ -2746,9 +2759,9 @@ describe("Orchestrator", () => {
                 ),
             });
 
-            orchestrator(mockContext);
+            result = await orchestrator(mockContext);
 
-            expect(mockContext.doneValue).to.be.deep.equal(
+            expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -2775,8 +2788,6 @@ describe("Orchestrator", () => {
 });
 
 class MockContext implements IOrchestrationFunctionContext {
-    public doneValue: IOrchestratorState | undefined;
-    public err: string | Error | null | undefined;
     constructor(public bindings: ContextBindings) {}
     traceContext: TraceContext;
     df: DurableOrchestrationContext;
@@ -2788,8 +2799,5 @@ class MockContext implements IOrchestrationFunctionContext {
     req?: HttpRequest;
     res?: { [key: string]: any };
 
-    public done(err?: Error | string | null, result?: IOrchestratorState): void {
-        this.doneValue = result;
-        this.err = err;
-    }
+    public done: (_err?: Error | string | null, _result?: IOrchestratorState) => void;
 }
