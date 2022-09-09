@@ -12,6 +12,7 @@ pr:
 trigger:
     - main
     - dev
+    - v*.x
 
 jobs:
     - job: Test
