@@ -5,6 +5,7 @@ import {
     IOrchestrationFunctionContext,
     Orchestrator,
 } from "./classes";
+import { OrchestratorState } from "./orchestratorstate";
 
 /**
  * Enables a generator function to act as an orchestrator function.
@@ -22,10 +23,10 @@ import {
  */
 export function orchestrator(
     fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>
-): (context: IOrchestrationFunctionContext) => void {
+): (context: IOrchestrationFunctionContext) => Promise<OrchestratorState> {
     const listener = new Orchestrator(fn).listen();
-    return (context): void => {
-        listener(context);
+    return async (context): Promise<OrchestratorState> => {
+        return await listener(context);
     };
 }
 
