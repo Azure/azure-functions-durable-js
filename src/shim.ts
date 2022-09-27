@@ -31,8 +31,7 @@ export function orchestrator(
 ) => Promise<OrchestratorState> {
     const listener = new Orchestrator(fn).listen();
     return async (context, orchestrationTrigger): Promise<OrchestratorState> => {
-        const orchestratorState = await listener(context, orchestrationTrigger);
-        return orchestratorState;
+        return await listener(context, orchestrationTrigger);
     };
 }
 
@@ -44,7 +43,6 @@ export function entity<T = unknown>(
 ) => Promise<EntityState> {
     const listener = new Entity<T>(fn).listen();
     return async (context, entityTrigger): Promise<EntityState> => {
-        const entityState = await listener(context, entityTrigger);
-        return entityState;
+        return await listener(context, entityTrigger);
     };
 }

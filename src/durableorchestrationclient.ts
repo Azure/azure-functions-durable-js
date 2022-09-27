@@ -1,6 +1,6 @@
 // tslint:disable:member-access
 
-import { FunctionInput, HttpRequest } from "@azure/functions";
+import { HttpRequest, InvocationContext } from "@azure/functions";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 /** @hidden */
 import cloneDeep = require("lodash/cloneDeep");
@@ -25,6 +25,7 @@ import {
     PurgeHistoryResult,
     Utils,
 } from "./classes";
+import { ClientInput } from "../types";
 import { WebhookUtils } from "./webhookutils";
 
 /** @hidden */
@@ -48,12 +49,12 @@ const URL = url.URL;
  */
 export function getClient(
     context: IOrchestrationFunctionContext,
-    clientInputOptions: FunctionInput
+    clientInputOptions: ClientInput
 ): DurableOrchestrationClient {
-    let clientData = getClientData(
-        context as IOrchestrationFunctionContext,
-        clientInputOptions as FunctionInput
-    );
+    if (!(context instanceof InvocationContext)) {
+        throw new Error("The first argument to getClient must be the function invocation context");
+    }
+    let clientData = getClientData(context as InvocationContext, clientInputOptions);
 
     if (!process.env.WEBSITE_HOSTNAME || process.env.WEBSITE_HOSTNAME.includes("0.0.0.0")) {
         clientData = correctClientData(clientData);
@@ -64,16 +65,30 @@ export function getClient(
 
 /** @hidden */
 function getClientData(
-    context: IOrchestrationFunctionContext,
-    clientInputOptions: FunctionInput
+    context: InvocationContext,
+    clientInput: ClientInput
 ): OrchestrationClientInputData {
-    const clientData = context.extraInputs.get(clientInputOptions);
+    if (!isClientInput(clientInput)) {
+        throw new Error(
+            "The second argument to getClientData must be the function input for a durable client"
+        );
+    }
+    const clientData: unknown = context.extraInputs.get(clientInput);
     if (clientData && OrchestrationClientInputData.isOrchestrationClientInputData(clientData)) {
-        return (clientData as unknown) as OrchestrationClientInputData;
+        return clientData as OrchestrationClientInputData;
     }
 
     throw new Error(
-        "An orchestration client function must have an orchestrationClient input binding. Check your extra inputs definition."
+        "The specified input is not a valid orchestration client input. Check your extra inputs definition."
+    );
+}
+
+/** @hidden */
+function isClientInput(clientInput: any): boolean {
+    return (
+        typeof clientInput === "object" &&
+        typeof clientInput.name === "string" &&
+        clientInput.type === "orchestrationClient"
     );
 }
 
