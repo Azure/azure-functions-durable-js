@@ -26,8 +26,7 @@ export function orchestrator(
 ): (context: IOrchestrationFunctionContext) => Promise<OrchestratorState> {
     const listener = new Orchestrator(fn).listen();
     return async (context): Promise<OrchestratorState> => {
-        const orchestratorState = await listener(context);
-        return orchestratorState;
+        return await listener(context);
     };
 }
 
@@ -36,7 +35,6 @@ export function entity<T = unknown>(
 ): (context: IEntityFunctionContext<T>) => Promise<EntityState> {
     const listener = new Entity<T>(fn).listen();
     return async (context): Promise<EntityState> => {
-        const entityState = await listener(context);
-        return entityState;
+        return await listener(context);
     };
 }
