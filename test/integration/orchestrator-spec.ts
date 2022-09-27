@@ -236,93 +236,87 @@ describe("Orchestrator", () => {
     });
 
     describe("Error Handling", () => {
-        // it("reports an unhandled exception from orchestrator", async () => {
-        //     const orchestrator = TestOrchestrations.ThrowsExceptionInline;
-        //     const mockContext = new MockContext({
-        //         context: new DurableOrchestrationBindingInfo(
-        //             TestHistories.GetOrchestratorStart(
-        //                 "ThrowsExceptionInline",
-        //                 moment.utc().toDate()
-        //             )
-        //         ),
-        //     });
-        //     const expectedErr = "Exception from Orchestrator";
-        //     let errored = false;
-        //     try {
-        //         await orchestrator(mockContext);
-        //     } catch (err) {
-        //         errored = true;
-        //         expect(err).to.be.an.instanceOf(OrchestrationFailureError);
-        //         const orchestrationState = TestUtils.extractStateFromError(
-        //             err as OrchestrationFailureError
-        //         );
-        //         expect(orchestrationState).to.be.an("object").that.deep.include({
-        //             isDone: false,
-        //             actions: [],
-        //         });
-        //         expect(orchestrationState.error).to.include(expectedErr);
-        //     }
-        //     expect(errored).to.be.true;
-        // });
-        // it("reports an unhandled exception from activity passed through orchestrator", async () => {
-        //     const orchestrator = TestOrchestrations.ThrowsExceptionFromActivity;
-        //     const mockContext = new MockContext({
-        //         context: new DurableOrchestrationBindingInfo(
-        //             TestHistories.GetThrowsExceptionFromActivityReplayOne(moment.utc().toDate())
-        //         ),
-        //     });
-        //     const expectedErr = "Activity function 'ThrowsErrorActivity' failed.";
-        //     let errored = false;
-        //     try {
-        //         await orchestrator(mockContext);
-        //     } catch (err) {
-        //         errored = true;
-        //         expect(err).to.be.an.instanceOf(OrchestrationFailureError);
-        //         const orchestrationState = TestUtils.extractStateFromError(
-        //             err as OrchestrationFailureError
-        //         );
-        //         expect(orchestrationState)
-        //             .to.be.an("object")
-        //             .that.deep.include({
-        //                 isDone: false,
-        //                 actions: [
-        //                     [
-        //                         {
-        //                             actionType: ActionType.CallActivity,
-        //                             functionName: "ThrowsErrorActivity",
-        //                         },
-        //                     ],
-        //                 ],
-        //             });
-        //         expect(orchestrationState.error).to.include(expectedErr);
-        //     }
-        //     expect(errored).to.be.true;
-        // });
-        // it("schedules an activity function after orchestrator catches an exception", async () => {
-        //     const orchestrator = TestOrchestrations.ThrowsExceptionFromActivityWithCatch;
-        //     const name = "World";
-        //     const mockContext = new MockContext({
-        //         context: new DurableOrchestrationBindingInfo(
-        //             TestHistories.GetThrowsExceptionFromActivityReplayOne(moment.utc().toDate()),
-        //             name
-        //         ),
-        //     });
-        //     const result = await orchestrator(mockContext);
-        //     expect(result).to.be.deep.equal(
-        //         new OrchestratorState(
-        //             {
-        //                 isDone: false,
-        //                 output: undefined,
-        //                 actions: [
-        //                     [new CallActivityAction("ThrowsErrorActivity")],
-        //                     [new CallActivityAction("Hello", name)],
-        //                 ],
-        //                 schemaVersion: ReplaySchema.V1,
-        //             },
-        //             true
-        //         )
-        //     );
-        // });
+        it("reports an unhandled exception from orchestrator", async () => {
+            const orchestrator = TestOrchestrations.ThrowsExceptionInline;
+            const mockContext = new MockContext({});
+            const orchestrationInput = new DurableOrchestrationBindingInfo(
+                TestHistories.GetOrchestratorStart("ThrowsExceptionInline", moment.utc().toDate())
+            );
+            const expectedErr = "Exception from Orchestrator";
+            let errored = false;
+            try {
+                await orchestrator(mockContext, orchestrationInput);
+            } catch (err) {
+                errored = true;
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
+                expect(orchestrationState).to.be.an("object").that.deep.include({
+                    isDone: false,
+                    actions: [],
+                });
+                expect(orchestrationState.error).to.include(expectedErr);
+            }
+            expect(errored).to.be.true;
+        });
+        it("reports an unhandled exception from activity passed through orchestrator", async () => {
+            const orchestrator = TestOrchestrations.ThrowsExceptionFromActivity;
+            const mockContext = new MockContext({});
+            const orchestrationTrigger = new DurableOrchestrationBindingInfo(
+                TestHistories.GetThrowsExceptionFromActivityReplayOne(moment.utc().toDate())
+            );
+            const expectedErr = "Activity function 'ThrowsErrorActivity' failed.";
+            let errored = false;
+            try {
+                await orchestrator(mockContext, orchestrationTrigger);
+            } catch (err) {
+                errored = true;
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
+                expect(orchestrationState)
+                    .to.be.an("object")
+                    .that.deep.include({
+                        isDone: false,
+                        actions: [
+                            [
+                                {
+                                    actionType: ActionType.CallActivity,
+                                    functionName: "ThrowsErrorActivity",
+                                },
+                            ],
+                        ],
+                    });
+                expect(orchestrationState.error).to.include(expectedErr);
+            }
+            expect(errored).to.be.true;
+        });
+        it("schedules an activity function after orchestrator catches an exception", async () => {
+            const orchestrator = TestOrchestrations.ThrowsExceptionFromActivityWithCatch;
+            const name = "World";
+            const mockContext = new MockContext({});
+            const orchestrationTrigger = new DurableOrchestrationBindingInfo(
+                TestHistories.GetThrowsExceptionFromActivityReplayOne(moment.utc().toDate()),
+                name
+            );
+            const result = await orchestrator(mockContext, orchestrationTrigger);
+            expect(result).to.be.deep.equal(
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [new CallActivityAction("ThrowsErrorActivity")],
+                            [new CallActivityAction("Hello", name)],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
+            );
+        });
     });
 
     describe("callActivity()", () => {

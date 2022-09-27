@@ -14,54 +14,48 @@ import {
 } from "@azure/functions";
 
 describe("Entity", () => {
-    // it("StringStore entity with no initial state.", async () => {
-    //     const entity = TestEntities.StringStore;
-    //     const operations: StringStoreOperation[] = [];
-    //     operations.push({ kind: "set", value: "hello" });
-    //     operations.push({ kind: "get" });
-    //     operations.push({ kind: "set", value: "hello world" });
-    //     operations.push({ kind: "get" });
-    //     const testData = TestEntityBatches.GetStringStoreBatch(operations, undefined);
-    //     const mockContext = new MockContext<string>({
-    //         context: testData.input,
-    //     });
-    //     const result = await entity(mockContext);
-    //     expect(result).to.not.be.undefined;
-    //     if (result) {
-    //         entityStateMatchesExpected(result, testData.output);
-    //     }
-    // });
-    // it("StringStore entity with initial state.", async () => {
-    //     const entity = TestEntities.StringStore;
-    //     const operations: StringStoreOperation[] = [];
-    //     operations.push({ kind: "get" });
-    //     const testData = TestEntityBatches.GetStringStoreBatch(operations, "Hello world");
-    //     const mockContext = new MockContext<string>({
-    //         context: testData.input,
-    //     });
-    //     const result = await entity(mockContext);
-    //     expect(result).to.not.be.undefined;
-    //     if (result) {
-    //         entityStateMatchesExpected(result, testData.output);
-    //     }
-    // });
-    // it("AsyncStringStore entity with no initial state.", async () => {
-    //     const entity = TestEntities.AsyncStringStore;
-    //     const operations: StringStoreOperation[] = [];
-    //     operations.push({ kind: "set", value: "set 1" });
-    //     operations.push({ kind: "get" });
-    //     operations.push({ kind: "set", value: "set 2" });
-    //     operations.push({ kind: "get" });
-    //     const testData = TestEntityBatches.GetAsyncStringStoreBatch(operations, undefined);
-    //     const mockContext = new MockContext<string>({
-    //         context: testData.input,
-    //     });
-    //     const result = await entity(mockContext);
-    //     expect(result).to.not.be.undefined;
-    //     if (result) {
-    //         entityStateMatchesExpected(result, testData.output);
-    //     }
-    // });
+    it("StringStore entity with no initial state.", async () => {
+        const entity = TestEntities.StringStore;
+        const operations: StringStoreOperation[] = [];
+        operations.push({ kind: "set", value: "hello" });
+        operations.push({ kind: "get" });
+        operations.push({ kind: "set", value: "hello world" });
+        operations.push({ kind: "get" });
+        const testData = TestEntityBatches.GetStringStoreBatch(operations, undefined);
+        const mockContext = new MockContext<string>({});
+        const result = await entity(mockContext, testData.input);
+        expect(result).to.not.be.undefined;
+        if (result) {
+            entityStateMatchesExpected(result, testData.output);
+        }
+    });
+    it("StringStore entity with initial state.", async () => {
+        const entity = TestEntities.StringStore;
+        const operations: StringStoreOperation[] = [];
+        operations.push({ kind: "get" });
+        const testData = TestEntityBatches.GetStringStoreBatch(operations, "Hello world");
+        const mockContext = new MockContext<string>({});
+        const result = await entity(mockContext, testData.input);
+        expect(result).to.not.be.undefined;
+        if (result) {
+            entityStateMatchesExpected(result, testData.output);
+        }
+    });
+    it("AsyncStringStore entity with no initial state.", async () => {
+        const entity = TestEntities.AsyncStringStore;
+        const operations: StringStoreOperation[] = [];
+        operations.push({ kind: "set", value: "set 1" });
+        operations.push({ kind: "get" });
+        operations.push({ kind: "set", value: "set 2" });
+        operations.push({ kind: "get" });
+        const testData = TestEntityBatches.GetAsyncStringStoreBatch(operations, undefined);
+        const mockContext = new MockContext<string>({});
+        const result = await entity(mockContext, testData.input);
+        expect(result).to.not.be.undefined;
+        if (result) {
+            entityStateMatchesExpected(result, testData.output);
+        }
+    });
 });
 
 // Have to compare on an element by element basis as elapsed time is not deterministic.
