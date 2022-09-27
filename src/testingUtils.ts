@@ -1,11 +1,10 @@
 import {
-    ExecutionContext,
-    ContextBindings,
-    ContextBindingData,
     TraceContext,
-    BindingDefinition,
-    Logger,
     HttpRequest,
+    InvocationContextExtraInputs,
+    InvocationContextExtraOutputs,
+    RetryContext,
+    TriggerMetadata,
 } from "@azure/functions";
 import {
     DurableOrchestrationBindingInfo,
@@ -70,15 +69,21 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
         // Set this as undefined, let it be initialized by the orchestrator
         this.df = (undefined as unknown) as DurableOrchestrationContext;
     }
+    functionName: string;
+    extraInputs: InvocationContextExtraInputs;
+    extraOutputs: InvocationContextExtraOutputs;
+    trace: (...args: any[]) => void;
+    debug: (...args: any[]) => void;
+    info: (...args: any[]) => void;
+    warn: (...args: any[]) => void;
+    error: (...args: any[]) => void;
+    log: (...args: any[]) => void;
+    retryContext?: RetryContext | undefined;
+    triggerMetadata?: TriggerMetadata | undefined;
     df: DurableOrchestrationContext;
     invocationId: string;
-    executionContext: ExecutionContext;
-    bindings: ContextBindings;
-    bindingData: ContextBindingData;
+    bindings: any;
     traceContext: TraceContext;
-    bindingDefinitions: BindingDefinition[];
-    log: Logger;
-    done: (err?: string | Error, result?: any) => void;
     req?: HttpRequest;
     res?: { [key: string]: any };
 }

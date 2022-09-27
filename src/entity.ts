@@ -20,13 +20,19 @@ const log = debug("orchestrator");
 export class Entity<T> {
     constructor(public fn: (context: IEntityFunctionContext<T>) => void) {}
 
-    public listen(): (context: IEntityFunctionContext<T>) => Promise<EntityState> {
+    public listen(): (
+        context: IEntityFunctionContext<T>,
+        entityTrigger: DurableEntityBindingInfo
+    ) => Promise<EntityState> {
         return this.handle.bind(this);
     }
 
-    private async handle(context: IEntityFunctionContext<T>): Promise<EntityState> {
+    private async handle(
+        context: IEntityFunctionContext<T>,
+        entityTrigger: DurableEntityBindingInfo
+    ): Promise<EntityState> {
         const entityBinding = Utils.getInstancesOf<DurableEntityBindingInfo>(
-            context.bindings,
+            { trigger: entityTrigger },
             new DurableEntityBindingInfoReqFields(
                 new EntityId("samplename", "samplekey"),
                 true,
