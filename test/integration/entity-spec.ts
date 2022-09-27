@@ -25,12 +25,12 @@ describe("Entity", () => {
         const mockContext = new MockContext<string>({
             context: testData.input,
         });
-        await entity(mockContext);
+        const result = await entity(mockContext);
 
-        expect(mockContext.doneValue).to.not.equal(undefined);
+        expect(result).to.not.be.undefined;
 
-        if (mockContext.doneValue) {
-            entityStateMatchesExpected(mockContext.doneValue, testData.output);
+        if (result) {
+            entityStateMatchesExpected(result, testData.output);
         }
     });
 
@@ -43,12 +43,12 @@ describe("Entity", () => {
         const mockContext = new MockContext<string>({
             context: testData.input,
         });
-        await entity(mockContext);
+        const result = await entity(mockContext);
 
-        expect(mockContext.doneValue).to.not.equal(undefined);
+        expect(result).to.not.be.undefined;
 
-        if (mockContext.doneValue) {
-            entityStateMatchesExpected(mockContext.doneValue, testData.output);
+        if (result) {
+            entityStateMatchesExpected(result, testData.output);
         }
     });
 
@@ -64,12 +64,12 @@ describe("Entity", () => {
         const mockContext = new MockContext<string>({
             context: testData.input,
         });
-        await entity(mockContext);
+        const result = await entity(mockContext);
 
-        expect(mockContext.doneValue).to.not.equal(undefined);
+        expect(result).to.not.be.undefined;
 
-        if (mockContext.doneValue) {
-            entityStateMatchesExpected(mockContext.doneValue, testData.output);
+        if (result) {
+            entityStateMatchesExpected(result, testData.output);
         }
     });
 });
@@ -86,11 +86,7 @@ function entityStateMatchesExpected(actual: EntityState, expected: EntityState):
 }
 
 class MockContext<T> implements IEntityFunctionContext<T> {
-    constructor(
-        public bindings: IBindings,
-        public doneValue?: EntityState,
-        public err?: Error | string | null
-    ) {}
+    constructor(public bindings: IBindings) {}
     traceContext: TraceContext;
     public invocationId: string;
     public executionContext: ExecutionContext;
@@ -101,10 +97,7 @@ class MockContext<T> implements IEntityFunctionContext<T> {
     public res?: { [key: string]: any } | undefined;
     public df: DurableEntityContext<T>;
 
-    public done(err?: Error | string | null, result?: EntityState): void {
-        this.doneValue = result;
-        this.err = err;
-    }
+    public done: (err?: Error | string | null, result?: EntityState) => void;
 }
 
 interface IBindings {

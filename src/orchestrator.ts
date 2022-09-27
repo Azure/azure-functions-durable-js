@@ -3,6 +3,7 @@ import {
     HistoryEvent,
     HistoryEventType,
     IOrchestrationFunctionContext,
+    OrchestratorState,
     Utils,
 } from "./classes";
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
@@ -21,11 +22,11 @@ export class Orchestrator {
     // As a result, we are currently constrained to initialize all of our data in the `handle` method.
     constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {}
 
-    public listen(): (context: IOrchestrationFunctionContext) => Promise<void> {
+    public listen(): (context: IOrchestrationFunctionContext) => Promise<OrchestratorState> {
         return this.handle.bind(this);
     }
 
-    private async handle(context: IOrchestrationFunctionContext): Promise<void> {
+    private async handle(context: IOrchestrationFunctionContext): Promise<OrchestratorState> {
         this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
             context.bindings,
@@ -87,7 +88,11 @@ export class Orchestrator {
             );
         }
 
-        await this.taskOrchestrationExecutor.execute(context, state, upperSchemaVersion, this.fn);
-        return;
+        return await this.taskOrchestrationExecutor.execute(
+            context,
+            state,
+            upperSchemaVersion,
+            this.fn
+        );
     }
 }
