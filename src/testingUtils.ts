@@ -65,6 +65,26 @@ export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
      * @param parentInstanceId The instanceId of the orchestration's parent, if this is a sub-orchestration
      */
     constructor(
+        functionName = "dummyContextFunctionName",
+        invocationId: string = uuidv1(),
+        logHandler: LogHandler = (_level, ...args) => console.log(...args)
+    ) {
+        const invocationContextInit: InvocationContextInit = {
+            functionName,
+            invocationId,
+            logHandler,
+        };
+        super(invocationContextInit);
+
+        // Set this as undefined, let it be initialized by the orchestrator
+        this.df = (undefined as unknown) as DurableOrchestrationContext;
+    }
+
+    df: DurableOrchestrationContext;
+}
+
+export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
+    constructor(
         instanceId = "",
         history: HistoryEvent[] | undefined = undefined,
         input: any = undefined,
