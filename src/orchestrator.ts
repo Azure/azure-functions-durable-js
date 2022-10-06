@@ -40,7 +40,7 @@ export class Orchestrator {
         )[0];
 
         if (!orchestrationBinding) {
-            throw new Error("Could not finding an orchestrationClient binding on context.");
+            throw new Error("Could not find an orchestrationClient binding on context.");
         }
 
         const state: HistoryEvent[] = orchestrationBinding.history;
