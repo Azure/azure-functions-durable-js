@@ -39,7 +39,7 @@
         "e2etst": "npm run "
     },
     "dependencies": {
-        "@azure/functions": "file:../../nodejs-worker/library",
+        "@azure/functions": "4.0.0-alpha.3",
         "axios": "^0.21.1",
         "debug": "~2.6.9",
         "lodash": "^4.17.15",
