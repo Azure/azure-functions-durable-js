@@ -9,6 +9,8 @@ import {
 import { IOrchestrationFunctionContext } from "./iorchestrationfunctioncontext";
 import { ReplaySchema } from "./replaySchema";
 import * as uuidv1 from "uuid/v1";
+import { IEntityFunctionContext } from "./ientityfunctioncontext";
+import { DurableEntityContext } from "./durableentitycontext";
 
 /**
  * An orchestration context with dummy default values to facilitate mocking/stubbing the
@@ -90,4 +92,33 @@ export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
             schemaVersion
         );
     }
+}
+
+export class DummyEntityContext<T> extends InvocationContext implements IEntityFunctionContext<T> {
+    /**
+     * Creates a new instance of a dummy entity context.
+     * All parameters are optional but are exposed to enable flexibility
+     * in the testing process.
+     *
+     * @param functionName The name of the entity function
+     * @param invocationId The ID of this particular invocation of the entity function
+     * @param logHandler A handler to emit logs coming from the entity function
+     */
+    constructor(
+        functionName = "dummyContextFunctionName",
+        invocationId: string = uuidv1(),
+        logHandler: LogHandler = (_level, ...args) => console.log(...args)
+    ) {
+        const invocationContextInit: InvocationContextInit = {
+            functionName,
+            invocationId,
+            logHandler,
+        };
+        super(invocationContextInit);
+
+        // Set this as undefined, let it be initialized by the entity
+        this.df = (undefined as unknown) as DurableEntityContext<T>;
+    }
+
+    df: DurableEntityContext<T>;
 }

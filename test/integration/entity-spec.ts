@@ -1,17 +1,10 @@
 import { expect } from "chai";
 import "mocha";
-import { DurableEntityContext, EntityState, IEntityFunctionContext } from "../../src/classes";
+import { EntityState } from "../../src/classes";
+import { DummyEntityContext } from "../../src/testingUtils";
 import { TestEntities } from "../testobjects/testentities";
 import { TestEntityBatches } from "../testobjects/testentitybatches";
 import { StringStoreOperation } from "../testobjects/testentityoperations";
-import {
-    HttpRequest,
-    InvocationContextExtraInputs,
-    InvocationContextExtraOutputs,
-    RetryContext,
-    TraceContext,
-    TriggerMetadata,
-} from "@azure/functions";
 
 describe("Entity", () => {
     it("StringStore entity with no initial state.", async () => {
@@ -22,7 +15,7 @@ describe("Entity", () => {
         operations.push({ kind: "set", value: "hello world" });
         operations.push({ kind: "get" });
         const testData = TestEntityBatches.GetStringStoreBatch(operations, undefined);
-        const mockContext = new MockContext<string>({});
+        const mockContext = new DummyEntityContext<string>();
         const result = await entity(mockContext, testData.input);
         expect(result).to.not.be.undefined;
         if (result) {
@@ -34,7 +27,7 @@ describe("Entity", () => {
         const operations: StringStoreOperation[] = [];
         operations.push({ kind: "get" });
         const testData = TestEntityBatches.GetStringStoreBatch(operations, "Hello world");
-        const mockContext = new MockContext<string>({});
+        const mockContext = new DummyEntityContext<string>();
         const result = await entity(mockContext, testData.input);
         expect(result).to.not.be.undefined;
         if (result) {
@@ -49,7 +42,7 @@ describe("Entity", () => {
         operations.push({ kind: "set", value: "set 2" });
         operations.push({ kind: "get" });
         const testData = TestEntityBatches.GetAsyncStringStoreBatch(operations, undefined);
-        const mockContext = new MockContext<string>({});
+        const mockContext = new DummyEntityContext<string>();
         const result = await entity(mockContext, testData.input);
         expect(result).to.not.be.undefined;
         if (result) {
@@ -67,31 +60,4 @@ function entityStateMatchesExpected(actual: EntityState, expected: EntityState):
         expect(actual.results[i].isError).to.be.equal(expected.results[i].isError);
         expect(actual.results[i].result).to.be.deep.equal(expected.results[i].result);
     }
-}
-
-class MockContext<T> implements IEntityFunctionContext<T> {
-    constructor(public bindings: IBindings) {}
-    functionName: string;
-    extraInputs: InvocationContextExtraInputs;
-    extraOutputs: InvocationContextExtraOutputs;
-    trace: (...args: any[]) => void;
-    debug: (...args: any[]) => void;
-    info: (...args: any[]) => void;
-    warn: (...args: any[]) => void;
-    error: (...args: any[]) => void;
-    log: (...args: any[]) => void;
-    retryContext?: RetryContext | undefined;
-    triggerMetadata?: TriggerMetadata | undefined;
-    traceContext: TraceContext;
-    public invocationId: string;
-    public bindingData: { [key: string]: any };
-    public req?: HttpRequest | undefined;
-    public res?: { [key: string]: any } | undefined;
-    public df: DurableEntityContext<T>;
-
-    public done: (err?: Error | string | null, result?: EntityState) => void;
-}
-
-interface IBindings {
-    [key: string]: unknown;
 }
