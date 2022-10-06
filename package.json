@@ -39,11 +39,12 @@
         "e2etst": "npm run "
     },
     "dependencies": {
-        "@azure/functions": "4.0.0-alpha.3",
+        "@azure/functions": "^4.0.0-alpha.3",
         "axios": "^0.21.1",
         "debug": "~2.6.9",
         "lodash": "^4.17.15",
         "moment": "^2.29.2",
+        "undici": "^5.9.1",
         "uuid": "~3.3.2",
         "validator": "~13.7.0"
     },
