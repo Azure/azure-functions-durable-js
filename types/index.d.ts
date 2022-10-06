@@ -1,5 +1,5 @@
 import { FunctionInput } from "@azure/functions";
 
-export interface ClientInput extends FunctionInput {
+export interface OrchestrationClientInput extends FunctionInput {
     type: "orchestrationClient";
 }

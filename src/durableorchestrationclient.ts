@@ -25,7 +25,7 @@ import {
     PurgeHistoryResult,
     Utils,
 } from "./classes";
-import { ClientInput } from "../types";
+import { OrchestrationClientInput } from "../types";
 import { WebhookUtils } from "./webhookutils";
 
 /** @hidden */
@@ -49,7 +49,7 @@ const URL = url.URL;
  */
 export function getClient(
     context: IOrchestrationFunctionContext,
-    clientInputOptions: ClientInput
+    clientInputOptions: OrchestrationClientInput
 ): DurableOrchestrationClient {
     if (!(context instanceof InvocationContext)) {
         throw new Error("The first argument to getClient must be the function invocation context");
@@ -66,14 +66,14 @@ export function getClient(
 /** @hidden */
 function getClientData(
     context: InvocationContext,
-    clientInput: ClientInput
+    OrchestrationClientInput: OrchestrationClientInput
 ): OrchestrationClientInputData {
-    if (!isClientInput(clientInput)) {
+    if (!isClientInput(OrchestrationClientInput)) {
         throw new Error(
             "The second argument to getClientData must be the function input for a durable client"
         );
     }
-    const clientData: unknown = context.extraInputs.get(clientInput);
+    const clientData: unknown = context.extraInputs.get(OrchestrationClientInput);
     if (clientData && OrchestrationClientInputData.isOrchestrationClientInputData(clientData)) {
         return clientData as OrchestrationClientInputData;
     }
@@ -84,11 +84,11 @@ function getClientData(
 }
 
 /** @hidden */
-function isClientInput(clientInput: any): boolean {
+function isClientInput(OrchestrationClientInput: any): boolean {
     return (
-        typeof clientInput === "object" &&
-        typeof clientInput.name === "string" &&
-        clientInput.type === "orchestrationClient"
+        typeof OrchestrationClientInput === "object" &&
+        typeof OrchestrationClientInput.name === "string" &&
+        OrchestrationClientInput.type === "orchestrationClient"
     );
 }
 
