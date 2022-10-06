@@ -38,6 +38,7 @@ import {
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
 import { ReplaySchema } from "../../src/replaySchema";
+import { DurableOrchestrationInput } from "../../src/testingUtils";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 import { TestUtils } from "../testobjects/testutils";
@@ -52,7 +53,11 @@ describe("Orchestrator", () => {
                 TestHistories.StarterHistory(moment.utc().toDate())
             ),
         });
-        const result = await orchestrator(mockContext);
+        const orchestrationInput = new DurableOrchestrationInput(
+            "",
+            TestHistories.StarterHistory(moment.utc().toDate())
+        );
+        const result = await orchestrator(mockContext, orchestrationInput);
 
         expect(result).to.be.deep.equal(
             new OrchestratorState(
@@ -942,7 +947,8 @@ describe("Orchestrator", () => {
                     }
                 );
 
-                const mockContext = new DummyOrchestrationContext(
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetCompletedHttpRequestWithPolling(
                         moment.utc().toDate(),
@@ -957,7 +963,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext);
+                const result = await orchestrator(mockContext, orchestrationInput);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -980,7 +986,8 @@ describe("Orchestrator", () => {
                 );
                 const res = new DurableHttpResponse(404, "Not found!", {});
 
-                const mockContext = new DummyOrchestrationContext(
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetCompletedHttpRequestWithPolling(
                         moment.utc().toDate(),
@@ -995,7 +1002,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext);
+                const result = await orchestrator(mockContext, orchestrationInput);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1016,7 +1023,8 @@ describe("Orchestrator", () => {
                     {}
                 );
 
-                const mockContext = new DummyOrchestrationContext(
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetSendHttpRequestReplayOne(
                         "SendHttpRequest",
@@ -1031,7 +1039,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext);
+                const result = await orchestrator(mockContext, orchestrationInput);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1050,7 +1058,8 @@ describe("Orchestrator", () => {
                     LoCaTiOn: "https://bing.com",
                 });
 
-                const mockContext = new DummyOrchestrationContext(
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetSendHttpRequestReplayOne(
                         "SendHttpRequest",
@@ -1065,7 +1074,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext);
+                const result = await orchestrator(mockContext, orchestrationInput);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1087,7 +1096,8 @@ describe("Orchestrator", () => {
                     true
                 );
 
-                const mockContext = new DummyOrchestrationContext(
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetPendingHttpPollingRequest(moment.utc().toDate(), req, 30000),
                     req,
@@ -1097,7 +1107,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext);
+                const result = await orchestrator(mockContext, orchestrationInput);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1116,7 +1126,8 @@ describe("Orchestrator", () => {
                     Location: "https://bing.com",
                 });
 
-                const mockContext = new DummyOrchestrationContext(
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetSendHttpRequestReplayOne(
                         "SendHttpRequest",
@@ -1131,7 +1142,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext);
+                const result = await orchestrator(mockContext, orchestrationInput);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1157,7 +1168,8 @@ describe("Orchestrator", () => {
                     Location: "https://bing.com",
                 });
 
-                const mockContext = new DummyOrchestrationContext(
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetSendHttpRequestReplayOne(
                         "SendHttpRequest",
@@ -1172,7 +1184,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V1
                 );
 
-                const result = await orchestrator(mockContext);
+                const result = await orchestrator(mockContext, orchestrationInput);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1194,7 +1206,8 @@ describe("Orchestrator", () => {
                     true
                 );
 
-                const mockContext = new DummyOrchestrationContext(
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetCallHttpWithPollingFailedRequest(
                         moment.utc().toDate(),
@@ -1210,7 +1223,7 @@ describe("Orchestrator", () => {
 
                 let errored = false;
                 try {
-                    await orchestrator(mockContext);
+                    await orchestrator(mockContext, orchestrationInput);
                 } catch (err) {
                     errored = true;
                     expect(err).to.be.an.instanceOf(OrchestrationFailureError);
@@ -1228,7 +1241,8 @@ describe("Orchestrator", () => {
                     true
                 );
 
-                const mockContext = new DummyOrchestrationContext(
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetCallHttpWithPollingFailedRequest(
                         moment.utc().toDate(),
@@ -1242,7 +1256,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                expect(orchestrator(mockContext)).to.throw;
+                expect(orchestrator(mockContext, orchestrationInput)).to.throw;
             });
         });
     });

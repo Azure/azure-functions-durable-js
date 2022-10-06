@@ -1,11 +1,4 @@
-import {
-    TraceContext,
-    HttpRequest,
-    InvocationContextExtraInputs,
-    InvocationContextExtraOutputs,
-    RetryContext,
-    TriggerMetadata,
-} from "@azure/functions";
+import { InvocationContext, InvocationContextInit, LogHandler } from "@azure/functions";
 import {
     DurableOrchestrationBindingInfo,
     DurableOrchestrationContext,
@@ -15,12 +8,14 @@ import {
 } from "./classes";
 import { IOrchestrationFunctionContext } from "./iorchestrationfunctioncontext";
 import { ReplaySchema } from "./replaySchema";
+import * as uuidv1 from "uuid/v1";
 
 /**
  * An orchestration context with dummy default values to facilitate mocking/stubbing the
  * Durable Functions API.
  */
-export class DummyOrchestrationContext implements IOrchestrationFunctionContext {
+export class DummyOrchestrationContext extends InvocationContext
+    implements IOrchestrationFunctionContext {
     /**
      * Creates a new instance of a dummy orchestration context.
      * All parameters are optional but are exposed to enable flexibility
@@ -38,6 +33,26 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
      * @param parentInstanceId The instanceId of the orchestration's parent, if this is a sub-orchestration
      */
     constructor(
+        functionName = "dummyContextFunctionName",
+        invocationId: string = uuidv1(),
+        logHandler: LogHandler = (_level, ...args) => console.log(...args)
+    ) {
+        const invocationContextInit: InvocationContextInit = {
+            functionName,
+            invocationId,
+            logHandler,
+        };
+        super(invocationContextInit);
+
+        // Set this as undefined, let it be initialized by the orchestrator
+        this.df = (undefined as unknown) as DurableOrchestrationContext;
+    }
+
+    df: DurableOrchestrationContext;
+}
+
+export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
+    constructor(
         instanceId = "",
         history: HistoryEvent[] | undefined = undefined,
         input: any = undefined,
@@ -52,38 +67,17 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
             const opts = new HistoryEventOptions(0, new Date());
             history = [new OrchestratorStartedEvent(opts)];
         }
-        this.bindings = [
-            new DurableOrchestrationBindingInfo(
-                history,
-                input,
-                instanceId,
-                isReplaying,
-                parentInstanceId,
-                maximumShortTimerDuration,
-                longRunningTimerIntervalDuration,
-                defaultHttpAsyncRequestSleepTimeMillseconds,
-                schemaVersion
-            ),
-        ];
 
-        // Set this as undefined, let it be initialized by the orchestrator
-        this.df = (undefined as unknown) as DurableOrchestrationContext;
+        super(
+            history,
+            input,
+            instanceId,
+            isReplaying,
+            parentInstanceId,
+            maximumShortTimerDuration,
+            longRunningTimerIntervalDuration,
+            defaultHttpAsyncRequestSleepTimeMillseconds,
+            schemaVersion
+        );
     }
-    functionName: string;
-    extraInputs: InvocationContextExtraInputs;
-    extraOutputs: InvocationContextExtraOutputs;
-    trace: (...args: any[]) => void;
-    debug: (...args: any[]) => void;
-    info: (...args: any[]) => void;
-    warn: (...args: any[]) => void;
-    error: (...args: any[]) => void;
-    log: (...args: any[]) => void;
-    retryContext?: RetryContext | undefined;
-    triggerMetadata?: TriggerMetadata | undefined;
-    df: DurableOrchestrationContext;
-    invocationId: string;
-    bindings: any;
-    traceContext: TraceContext;
-    req?: HttpRequest;
-    res?: { [key: string]: any };
 }
