@@ -19,7 +19,6 @@ import {
     HttpManagementPayload,
     IHttpRequest,
     IHttpResponse,
-    IOrchestrationFunctionContext,
     OrchestrationClientInputData,
     OrchestrationRuntimeStatus,
     PurgeHistoryResult,
