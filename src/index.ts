@@ -8,19 +8,36 @@ import {
     DummyOrchestrationContext,
 } from "./classes";
 import { getClient } from "./durableorchestrationclient";
-import { entity, orchestrator } from "./shim";
+import {
+    createEntityFunction,
+    createOrchestrator,
+    entity,
+    orchestration,
+    client,
+    clientComplex,
+    activityComplex,
+    activity,
+    httpClient,
+} from "./shim";
 import { ManagedIdentityTokenSource } from "./tokensource";
 
 export {
     DurableHttpRequest,
     DurableHttpResponse,
-    entity,
+    createEntityFunction,
     EntityId,
     EntityStateResponse,
     getClient,
     ManagedIdentityTokenSource,
-    orchestrator,
+    createOrchestrator,
     OrchestrationRuntimeStatus,
     RetryOptions,
     DummyOrchestrationContext,
+    entity,
+    orchestration,
+    client,
+    clientComplex,
+    activityComplex,
+    activity,
+    httpClient,
 };
