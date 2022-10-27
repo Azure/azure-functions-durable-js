@@ -185,6 +185,11 @@ export class TaskOrchestrationExecutor {
                 break;
             }
             case HistoryEventType.ExecutionStarted: {
+                // At the start of replay (when currentTask is NoOpTask),
+                // the `isReplaying` flag is determined from the ExecutionStarted event.
+                if (this.currentTask instanceof NoOpTask) {
+                    this.currentTask.isPlayed = event.IsPlayed;
+                }
                 this.tryResumingUserCode();
                 break;
             }

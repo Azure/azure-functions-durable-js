@@ -86,7 +86,6 @@ export class Orchestrator {
                 this.taskOrchestrationExecutor
             );
         }
-
         await this.taskOrchestrationExecutor.execute(context, state, upperSchemaVersion, this.fn);
         return;
     }
