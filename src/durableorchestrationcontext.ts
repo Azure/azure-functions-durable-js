@@ -74,6 +74,10 @@ export class DurableOrchestrationContext {
     private newGuidCounter: number;
     public customStatus: unknown;
 
+    public showInternalState(): string {
+        return this.state.toString();
+    }
+
     /**
      * The default time to wait between attempts when making HTTP polling requests
      * This duration is used unless a different value (in seconds) is specified in the
