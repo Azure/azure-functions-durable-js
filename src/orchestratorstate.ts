@@ -57,11 +57,11 @@ export class OrchestratorState implements IOrchestratorState {
         this.output = options.output;
         this.schemaVersion = options.schemaVersion;
 
-        if (options.error) {
+        if (options.error != null) {
             this.error = options.error;
         }
 
-        if (options.customStatus) {
+        if (options.customStatus != null) {
             this.customStatus = options.customStatus;
         }
         // Under replay protocol V1, compound actions are treated as lists of actions and
