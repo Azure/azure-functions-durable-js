@@ -132,6 +132,7 @@ export class TaskOrchestrationExecutor {
         }
 
         // Communicate the orchestration's current state
+        context.suppressAsyncDoneError = true;
         context.done(error, result);
         return;
     }
