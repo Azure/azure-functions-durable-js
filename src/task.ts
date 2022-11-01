@@ -245,6 +245,13 @@ export abstract class CompoundTask extends DFTask {
         if (children.length == 0) {
             this.state = TaskState.Completed;
         }
+
+        // Sub-tasks may have already completed, so we process them
+        children.forEach((child) => {
+            if (child.state != TaskState.Running) {
+                this.handleCompletion(child);
+            }
+        });
     }
 
     /**

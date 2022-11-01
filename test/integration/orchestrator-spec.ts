@@ -172,6 +172,44 @@ describe("Orchestrator", () => {
             expect(mockContext.df!.isReplaying).to.be.equal(lastEvent.IsPlayed);
         });
 
+        it("assigns isReplaying at the start of replay", async () => {
+            const orchestrator = TestOrchestrations.SayHelloSequenceTrackIsReplaying;
+            const name = "World";
+
+            const mockHistory = TestHistories.GetSayHelloWithActivityReplayOne(
+                "SayHelloWithActivity",
+                moment.utc().toDate(),
+                name
+            );
+
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(mockHistory, name),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue?.output).to.be.deep.equal([true, false]);
+        });
+
+        it("handles creating a composite task out of an already completed task", async () => {
+            const orchestrator = TestOrchestrations.MultiYieldWhenAll;
+            const name = "World";
+
+            const mockHistory = TestHistories.GetSayHelloWithActivityReplayOne(
+                "SayHelloWithActivity",
+                moment.utc().toDate(),
+                name
+            );
+
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(mockHistory, name),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue?.output, "done!"); // check the orchestration completed
+        });
+
         it("assigns parentInstanceId", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";

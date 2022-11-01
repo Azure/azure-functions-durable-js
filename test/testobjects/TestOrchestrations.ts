@@ -305,6 +305,25 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static SayHelloSequenceTrackIsReplaying: any = df.orchestrator(function* (context: any) {
+        const output = [];
+
+        output.push(context.df.isReplaying);
+        yield context.df.callActivity("Hello", "Tokyo");
+        output.push(context.df.isReplaying);
+        return output;
+    });
+
+    public static MultiYieldWhenAll: any = df.orchestrator(function* (context: any) {
+        const output = [];
+
+        output.push(context.isReplaying);
+        const task = context.df.callActivity("Hello", "Tokyo");
+        yield context.df.Task.all([task]);
+        yield context.df.Task.all([task]);
+        return "done!";
+    });
+
     public static SendHttpRequest: any = df.orchestrator(function* (context) {
         const input = context.df.getInput() as df.DurableHttpRequest;
         const output = yield context.df.callHttp(

@@ -113,7 +113,7 @@ export class TaskOrchestrationExecutor {
         }
 
         // Construct current orchestration state
-        const actions: IAction[][] = this.actions.length == 0 ? [] : [this.actions];
+        const actions: IAction[][] = this.actions.length == 0 ? [[]] : [this.actions];
         const orchestratorState = new OrchestratorState({
             isDone: this.hasCompletedSuccessfully(),
             actions: actions,
@@ -185,6 +185,11 @@ export class TaskOrchestrationExecutor {
                 break;
             }
             case HistoryEventType.ExecutionStarted: {
+                // At the start of replay (when currentTask is NoOpTask),
+                // the `isReplaying` flag is determined from the ExecutionStarted event.
+                if (this.currentTask instanceof NoOpTask) {
+                    this.currentTask.isPlayed = event.IsPlayed;
+                }
                 this.tryResumingUserCode();
                 break;
             }
