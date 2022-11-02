@@ -1,4 +1,6 @@
+import { Form, HttpMethod, HttpRequest, HttpRequestUser } from "@azure/functions";
 import {
+    Constants,
     HttpCreationPayload,
     HttpManagementPayload,
     IOrchestratorState,
@@ -6,6 +8,9 @@ import {
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
 import { TestConstants } from "./testconstants";
+
+const defaultOrchestrationName = "TestOrchestration";
+const defaultRequestUrl = `${Constants.DefaultLocalOrigin}/orchestrators/${defaultOrchestrationName}`;
 
 export class TestUtils {
     public static createOrchestrationClientInputData(
@@ -96,5 +101,39 @@ export class TestUtils {
         const dataStart = message.indexOf(label) + label.length;
         const dataJson = message.substr(dataStart);
         return JSON.parse(dataJson) as IOrchestratorState;
+    }
+}
+
+export class DummyHttpRequest implements HttpRequest {
+    public method: HttpMethod | null;
+    public user: HttpRequestUser | null;
+    public form: Form | null;
+
+    constructor(
+        public url = defaultRequestUrl,
+        method: HttpMethod = "GET",
+        public headers: Record<string, string> = {},
+        public query = {},
+        public params = {},
+        user?: HttpRequestUser,
+        form?: Form
+    ) {
+        this.method = method || null;
+        this.user = user || null;
+        this.form = form || null;
+    }
+
+    get(field: string): string | undefined {
+        return this.headers[field];
+    }
+
+    parseFormBody(): Form {
+        const dummyForm: Form = {
+            get: () => null,
+            getAll: () => [],
+            has: () => false,
+            length: 0,
+        } as any;
+        return this.form || dummyForm;
     }
 }

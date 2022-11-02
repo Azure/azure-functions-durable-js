@@ -13,6 +13,7 @@ import {
     OrchestrationRuntimeStatus,
     PurgeHistoryResult,
 } from "../../src/classes";
+import { DummyHttpRequest } from "../testobjects/testutils";
 
 chai.use(chaiString);
 const expect = chai.expect;
@@ -69,13 +70,7 @@ describe("Durable client RPC endpoint", () => {
         it("does NOT reference the RPC endpoint", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
             const client = new DurableOrchestrationClient(input);
-            const request: HttpRequest = {
-                method: "GET",
-                url: `${externalOrigin}/api/Foo`,
-                headers: {},
-                query: {},
-                params: {},
-            };
+            const request: HttpRequest = new DummyHttpRequest(`${externalOrigin}/api/Foo`);
 
             const instanceId = "abc123";
             const response = client.createCheckStatusResponse(request, instanceId);

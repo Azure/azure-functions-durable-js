@@ -19,7 +19,7 @@ import {
     PurgeHistoryResult,
 } from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
-import { TestUtils } from "../testobjects/testutils";
+import { DummyHttpRequest, TestUtils } from "../testobjects/testutils";
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
@@ -65,13 +65,7 @@ describe("Orchestration Client", () => {
     describe("createCheckStatusResponse()", () => {
         it(`returns a proper response object from request.url`, async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
-            const requestObj: HttpRequest = {
-                method: "GET",
-                url: defaultRequestUrl,
-                headers: {},
-                query: {},
-                params: {},
-            };
+            const requestObj: HttpRequest = new DummyHttpRequest();
 
             const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
 
@@ -1112,13 +1106,7 @@ describe("Orchestration Client", () => {
     });
 
     describe("waitForCompletionOrCreateCheckStatusResponse()", () => {
-        const defaultRequest: HttpRequest = {
-            url: defaultRequestUrl,
-            method: "GET",
-            headers: {},
-            query: {},
-            params: {},
-        };
+        const defaultRequest: HttpRequest = new DummyHttpRequest();
         const defaultTimeout = 50;
         const defaultInterval = 10;
 

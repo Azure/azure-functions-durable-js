@@ -10,6 +10,7 @@ import {
     Logger,
     HttpRequest,
     TraceContext,
+    ContextBindingData,
 } from "@azure/functions";
 
 describe("Entity", () => {
@@ -94,7 +95,7 @@ class MockContext<T> implements IEntityFunctionContext<T> {
     traceContext: TraceContext;
     public invocationId: string;
     public executionContext: ExecutionContext;
-    public bindingData: { [key: string]: any };
+    public bindingData: ContextBindingData;
     public bindingDefinitions: BindingDefinition[];
     public log: Logger;
     public req?: HttpRequest | undefined;
