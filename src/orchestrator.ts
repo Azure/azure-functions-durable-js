@@ -22,19 +22,25 @@ export class Orchestrator {
     // As a result, we are currently constrained to initialize all of our data in the `handle` method.
     constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {}
 
-    public listen(): (context: IOrchestrationFunctionContext) => Promise<OrchestratorState> {
+    public listen(): (
+        context: IOrchestrationFunctionContext,
+        orchestrationTrigger: DurableOrchestrationBindingInfo
+    ) => Promise<OrchestratorState> {
         return this.handle.bind(this);
     }
 
-    private async handle(context: IOrchestrationFunctionContext): Promise<OrchestratorState> {
+    private async handle(
+        context: IOrchestrationFunctionContext,
+        orchestrationTrigger: DurableOrchestrationBindingInfo
+    ): Promise<OrchestratorState> {
         this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
-            context.bindings,
+            { trigger: orchestrationTrigger },
             new DurableOrchestrationBindingInfoReqFields() as DurableOrchestrationBindingInfo
         )[0];
 
         if (!orchestrationBinding) {
-            throw new Error("Could not finding an orchestrationClient binding on context.");
+            throw new Error("Could not find an orchestrationClient binding on context.");
         }
 
         const state: HistoryEvent[] = orchestrationBinding.history;

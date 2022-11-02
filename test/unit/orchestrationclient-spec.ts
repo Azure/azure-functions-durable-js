@@ -65,13 +65,13 @@ describe("Orchestration Client", () => {
     describe("createCheckStatusResponse()", () => {
         it(`returns a proper response object from request.url`, async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
-            const requestObj: HttpRequest = {
+            const requestObj: HttpRequest = new HttpRequest({
                 method: "GET",
                 url: defaultRequestUrl,
                 headers: {},
                 query: {},
                 params: {},
-            };
+            });
 
             const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
 
@@ -1112,13 +1112,13 @@ describe("Orchestration Client", () => {
     });
 
     describe("waitForCompletionOrCreateCheckStatusResponse()", () => {
-        const defaultRequest: HttpRequest = {
+        const defaultRequest: HttpRequest = new HttpRequest({
             url: defaultRequestUrl,
             method: "GET",
             headers: {},
             query: {},
             params: {},
-        };
+        });
         const defaultTimeout = 50;
         const defaultInterval = 10;
 

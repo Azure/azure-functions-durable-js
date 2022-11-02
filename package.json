@@ -39,13 +39,13 @@
         "e2etst": "npm run "
     },
     "dependencies": {
-        "@azure/functions": "^1.2.3",
+        "@azure/functions": "^4.0.0-alpha.5",
         "axios": "^0.21.1",
         "debug": "~2.6.9",
         "lodash": "^4.17.15",
+        "moment": "^2.29.2",
         "uuid": "~3.3.2",
-        "validator": "~13.7.0",
-        "moment": "^2.29.2"
+        "validator": "~13.7.0"
     },
     "devDependencies": {
         "@types/chai": "~4.1.6",
@@ -55,7 +55,7 @@
         "@types/lodash": "^4.14.119",
         "@types/mocha": "^7.0.2",
         "@types/nock": "^9.3.0",
-        "@types/node": "^10.14.2",
+        "@types/node": "^18.0.0",
         "@types/rimraf": "0.0.28",
         "@types/sinon": "~5.0.5",
         "@types/uuid": "^3.4.4",

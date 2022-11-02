@@ -5,6 +5,8 @@ import {
     IOrchestrationFunctionContext,
     Orchestrator,
 } from "./classes";
+import { DurableEntityBindingInfo } from "./durableentitybindinginfo";
+import { DurableOrchestrationBindingInfo } from "./durableorchestrationbindinginfo";
 import { OrchestratorState } from "./orchestratorstate";
 
 /**
@@ -23,18 +25,24 @@ import { OrchestratorState } from "./orchestratorstate";
  */
 export function orchestrator(
     fn: (context: IOrchestrationFunctionContext) => Generator<unknown, unknown, any>
-): (context: IOrchestrationFunctionContext) => Promise<OrchestratorState> {
+): (
+    context: IOrchestrationFunctionContext,
+    orchestrationTrigger: DurableOrchestrationBindingInfo
+) => Promise<OrchestratorState> {
     const listener = new Orchestrator(fn).listen();
-    return async (context): Promise<OrchestratorState> => {
-        return await listener(context);
+    return async (context, orchestrationTrigger): Promise<OrchestratorState> => {
+        return await listener(context, orchestrationTrigger);
     };
 }
 
 export function entity<T = unknown>(
     fn: (context: IEntityFunctionContext<T>) => void
-): (context: IEntityFunctionContext<T>) => Promise<EntityState> {
+): (
+    context: IEntityFunctionContext<T>,
+    entityTrigger: DurableEntityBindingInfo
+) => Promise<EntityState> {
     const listener = new Entity<T>(fn).listen();
-    return async (context): Promise<EntityState> => {
-        return await listener(context);
+    return async (context, entityTrigger): Promise<EntityState> => {
+        return await listener(context, entityTrigger);
     };
 }

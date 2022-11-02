@@ -1,5 +1,4 @@
-variables:
-    { MODULE_VERSION: "1.2.2", NODE_10: "10.x", NODE_12: "12.x", NODE_14: "14.x", NODE_16: "16.x" }
+variables: { MODULE_VERSION: "3.0.0-alpha.1", NODE_18: "18.x" }
 name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
 
 pr:
@@ -18,42 +17,15 @@ jobs:
     - job: Test
       strategy:
           matrix:
-              UBUNTU_NODE10:
+              UBUNTU_NODE18:
                   IMAGE_TYPE: "ubuntu-latest"
-                  NODE_VERSION: $(NODE_10)
-              UBUNTU_NODE12:
-                  IMAGE_TYPE: "ubuntu-latest"
-                  NODE_VERSION: $(NODE_12)
-              UBUNTU_NODE14:
-                  IMAGE_TYPE: "ubuntu-latest"
-                  NODE_VERSION: $(NODE_14)
-              UBUNTU_NODE16:
-                  IMAGE_TYPE: "ubuntu-latest"
-                  NODE_VERSION: $(NODE_16)
-              WINDOWS_NODE10:
+                  NODE_VERSION: $(NODE_18)
+              WINDOWS_NODE18:
                   IMAGE_TYPE: "windows-latest"
-                  NODE_VERSION: $(NODE_10)
-              WINDOWS_NODE12:
-                  IMAGE_TYPE: "windows-latest"
-                  NODE_VERSION: $(NODE_12)
-              WINDOWS_NODE14:
-                  IMAGE_TYPE: "windows-latest"
-                  NODE_VERSION: $(NODE_14)
-              WINDOWS_NODE16:
-                  IMAGE_TYPE: "windows-latest"
-                  NODE_VERSION: $(NODE_16)
-              MAC_NODE10:
+                  NODE_VERSION: $(NODE_18)
+              MAC_NODE18:
                   IMAGE_TYPE: "macOS-latest"
-                  NODE_VERSION: $(NODE_10)
-              MAC_NODE12:
-                  IMAGE_TYPE: "macOS-latest"
-                  NODE_VERSION: $(NODE_12)
-              MAC_NODE14:
-                  IMAGE_TYPE: "macOS-latest"
-                  NODE_VERSION: $(NODE_14)
-              MAC_NODE16:
-                  IMAGE_TYPE: "macOS-latest"
-                  NODE_VERSION: $(NODE_16)
+                  NODE_VERSION: $(NODE_18)
       pool:
           vmImage: $(IMAGE_TYPE)
       steps:
@@ -73,22 +45,6 @@ jobs:
             displayName: "npm pack"
           - script: mv durable-functions-*.tgz package.tgz
             displayName: "Rename package file"
-          - task: CopyFiles@2
-            displayName: "Create smoke test app"
-            inputs:
-                SourceFolder: "$(System.DefaultWorkingDirectory)/test/test-app"
-                Contents: "**"
-                TargetFolder: "$(Agent.BuildDirectory)/test-app"
-                CleanTargetFolder: true
-          - script: npm install $(System.DefaultWorkingDirectory)/package.tgz
-            displayName: "Install packed durable-functions module (test app)"
-            workingDirectory: $(Agent.BuildDirectory)/test-app
-          - script: npm install
-            displayName: "npm install (test app)"
-            workingDirectory: $(Agent.BuildDirectory)/test-app
-          - script: npm run build
-            displayName: "Build smoke test app"
-            workingDirectory: "$(Agent.BuildDirectory)/test-app"
     - job: BuildArtifacts
       pool:
           name: "1ES-Hosted-AzFunc"
@@ -97,7 +53,7 @@ jobs:
       steps:
           - task: NodeTool@0
             inputs:
-                versionSpec: $(NODE_14)
+                versionSpec: $(NODE_18)
             displayName: "Install Node.js"
           - script: npm ci
             displayName: "npm ci"

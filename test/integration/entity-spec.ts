@@ -1,16 +1,10 @@
 import { expect } from "chai";
 import "mocha";
-import { DurableEntityContext, EntityState, IEntityFunctionContext } from "../../src/classes";
+import { EntityState } from "../../src/classes";
+import { DummyEntityContext } from "../../src/testingUtils";
 import { TestEntities } from "../testobjects/testentities";
 import { TestEntityBatches } from "../testobjects/testentitybatches";
 import { StringStoreOperation } from "../testobjects/testentityoperations";
-import {
-    BindingDefinition,
-    ExecutionContext,
-    Logger,
-    HttpRequest,
-    TraceContext,
-} from "@azure/functions";
 
 describe("Entity", () => {
     it("StringStore entity with no initial state.", async () => {
@@ -20,38 +14,26 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
         operations.push({ kind: "set", value: "hello world" });
         operations.push({ kind: "get" });
-
         const testData = TestEntityBatches.GetStringStoreBatch(operations, undefined);
-        const mockContext = new MockContext<string>({
-            context: testData.input,
-        });
-        const result = await entity(mockContext);
-
+        const mockContext = new DummyEntityContext<string>();
+        const result = await entity(mockContext, testData.input);
         expect(result).to.not.be.undefined;
-
         if (result) {
             entityStateMatchesExpected(result, testData.output);
         }
     });
-
     it("StringStore entity with initial state.", async () => {
         const entity = TestEntities.StringStore;
         const operations: StringStoreOperation[] = [];
         operations.push({ kind: "get" });
-
         const testData = TestEntityBatches.GetStringStoreBatch(operations, "Hello world");
-        const mockContext = new MockContext<string>({
-            context: testData.input,
-        });
-        const result = await entity(mockContext);
-
+        const mockContext = new DummyEntityContext<string>();
+        const result = await entity(mockContext, testData.input);
         expect(result).to.not.be.undefined;
-
         if (result) {
             entityStateMatchesExpected(result, testData.output);
         }
     });
-
     it("AsyncStringStore entity with no initial state.", async () => {
         const entity = TestEntities.AsyncStringStore;
         const operations: StringStoreOperation[] = [];
@@ -59,15 +41,10 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
         operations.push({ kind: "set", value: "set 2" });
         operations.push({ kind: "get" });
-
         const testData = TestEntityBatches.GetAsyncStringStoreBatch(operations, undefined);
-        const mockContext = new MockContext<string>({
-            context: testData.input,
-        });
-        const result = await entity(mockContext);
-
+        const mockContext = new DummyEntityContext<string>();
+        const result = await entity(mockContext, testData.input);
         expect(result).to.not.be.undefined;
-
         if (result) {
             entityStateMatchesExpected(result, testData.output);
         }
@@ -83,23 +60,4 @@ function entityStateMatchesExpected(actual: EntityState, expected: EntityState):
         expect(actual.results[i].isError).to.be.equal(expected.results[i].isError);
         expect(actual.results[i].result).to.be.deep.equal(expected.results[i].result);
     }
-}
-
-class MockContext<T> implements IEntityFunctionContext<T> {
-    constructor(public bindings: IBindings) {}
-    traceContext: TraceContext;
-    public invocationId: string;
-    public executionContext: ExecutionContext;
-    public bindingData: { [key: string]: any };
-    public bindingDefinitions: BindingDefinition[];
-    public log: Logger;
-    public req?: HttpRequest | undefined;
-    public res?: { [key: string]: any } | undefined;
-    public df: DurableEntityContext<T>;
-
-    public done: (err?: Error | string | null, result?: EntityState) => void;
-}
-
-interface IBindings {
-    [key: string]: unknown;
 }

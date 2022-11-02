@@ -1,6 +1,6 @@
 // tslint:disable:member-access
 
-import { HttpRequest } from "@azure/functions";
+import { HttpRequest, InvocationContext } from "@azure/functions";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 /** @hidden */
 import cloneDeep = require("lodash/cloneDeep");
@@ -25,6 +25,7 @@ import {
     PurgeHistoryResult,
     Utils,
 } from "./classes";
+import { DurableClientInput } from "./types";
 import { WebhookUtils } from "./webhookutils";
 
 /** @hidden */
@@ -46,8 +47,11 @@ const URL = url.URL;
  * };
  * ```
  */
-export function getClient(context: unknown): DurableOrchestrationClient {
-    let clientData = getClientData(context as IOrchestrationFunctionContext);
+export function getClient(
+    context: InvocationContext,
+    clientInputOptions: DurableClientInput
+): DurableOrchestrationClient {
+    let clientData = getClientData(context, clientInputOptions);
 
     if (!process.env.WEBSITE_HOSTNAME || process.env.WEBSITE_HOSTNAME.includes("0.0.0.0")) {
         clientData = correctClientData(clientData);
@@ -57,19 +61,17 @@ export function getClient(context: unknown): DurableOrchestrationClient {
 }
 
 /** @hidden */
-function getClientData(context: IOrchestrationFunctionContext): OrchestrationClientInputData {
-    if (context.bindings) {
-        const matchingInstances = Object.keys(context.bindings)
-            .map((key) => context.bindings[key])
-            .filter((val) => OrchestrationClientInputData.isOrchestrationClientInputData(val));
-
-        if (matchingInstances && matchingInstances.length > 0) {
-            return matchingInstances[0] as OrchestrationClientInputData;
-        }
+function getClientData(
+    context: InvocationContext,
+    clientInput: DurableClientInput
+): OrchestrationClientInputData {
+    const clientData: unknown = context.extraInputs.get(clientInput);
+    if (clientData && OrchestrationClientInputData.isOrchestrationClientInputData(clientData)) {
+        return clientData as OrchestrationClientInputData;
     }
 
     throw new Error(
-        "An orchestration client function must have an orchestrationClient input binding. Check your function.json definition."
+        "The specified input is not a valid orchestration client input. Check your extra inputs definition."
     );
 }
 

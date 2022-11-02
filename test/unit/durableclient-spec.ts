@@ -69,13 +69,13 @@ describe("Durable client RPC endpoint", () => {
         it("does NOT reference the RPC endpoint", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
             const client = new DurableOrchestrationClient(input);
-            const request: HttpRequest = {
+            const request: HttpRequest = new HttpRequest({
                 method: "GET",
                 url: `${externalOrigin}/api/Foo`,
                 headers: {},
                 query: {},
                 params: {},
-            };
+            });
 
             const instanceId = "abc123";
             const response = client.createCheckStatusResponse(request, instanceId);
