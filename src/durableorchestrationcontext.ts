@@ -15,7 +15,6 @@ import {
     GuidManager,
     HistoryEvent,
     WaitForExternalEventAction,
-    IAction,
 } from "./classes";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import { WhenAllAction } from "./actions/whenallaction";
