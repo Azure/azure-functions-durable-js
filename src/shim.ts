@@ -73,9 +73,7 @@ export function createOrchestrator(fn: OrchestrationHandler): OrchestrationFunct
  * const df = require("durable-functions");
  *
  * app.generic('DurableEntity', {
- *   trigger: trigger.generic({
- *       type: 'entityTrigger'
- *   }),
+ *   trigger: df.trigger.entity(),
  *   handler: df.createEntityFunction(function* (context) {
  *       // orchestrator body
  *  })
@@ -254,16 +252,8 @@ export function client(
  *
  */
 export function clientComplex(functionName: string, options: DurableClientOptions): void {
-    const clientInput: DurableClientInput = AzFuncInput.generic({
-        type: "orchestrationClient",
-    }) as DurableClientInput;
-
+    const clientInput: DurableClientInput = input.client();
     const clientHandler = options.handler;
-
-    const handler = (context: InvocationContext, triggerData: FunctionTrigger) => {
-        const client = getClient(context, clientInput);
-        return clientHandler(context, triggerData, client);
-    };
 
     if (options.extraInputs) {
         options.extraInputs.push(clientInput);
@@ -271,25 +261,42 @@ export function clientComplex(functionName: string, options: DurableClientOption
         options.extraInputs = [clientInput];
     }
 
+    const handler = (context: InvocationContext, triggerData: FunctionTrigger) => {
+        const client = getClient(context, clientInput);
+        return clientHandler(context, triggerData, client);
+    };
+
     app.generic(functionName, {
         ...options,
         handler,
     });
 }
 
+/**
+ * The root namespace to help create durable trigger configurations
+ */
 export namespace trigger {
+    /**
+     * @returns a durable activity trigger
+     */
     export function activity(): ActivityTrigger {
         return AzFuncTrigger.generic({
             type: "activityTrigger",
         }) as ActivityTrigger;
     }
 
+    /**
+     * @returns a durable orchestration trigger
+     */
     export function orchestration(): OrchestrationTrigger {
         return AzFuncTrigger.generic({
             type: "orchestrationTrigger",
         }) as OrchestrationTrigger;
     }
 
+    /**
+     * @returns a durable entity trigger
+     */
     export function entity(): EntityTrigger {
         return AzFuncTrigger.generic({
             type: "entityTrigger",
@@ -297,4 +304,16 @@ export namespace trigger {
     }
 }
 
-export namespace input {}
+/**
+ * The root namespace to help create durable input configurations
+ */
+export namespace input {
+    /**
+     * @returns a durable client input configuration object
+     */
+    export function client(): DurableClientInput {
+        return AzFuncInput.generic({
+            type: "orchestrationClient",
+        }) as DurableClientInput;
+    }
+}
