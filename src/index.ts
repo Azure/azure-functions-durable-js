@@ -18,6 +18,8 @@ import {
     activityComplex,
     activity,
     httpClient,
+    input,
+    trigger,
 } from "./shim";
 import { ManagedIdentityTokenSource } from "./tokensource";
 
@@ -40,4 +42,6 @@ export {
     activityComplex,
     activity,
     httpClient,
+    input,
+    trigger,
 };
