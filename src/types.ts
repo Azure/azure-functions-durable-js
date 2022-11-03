@@ -24,6 +24,10 @@ export type OrchestrationFunction = FunctionHandler &
         orchestrationTrigger: DurableOrchestrationInput
     ) => Promise<OrchestratorState>);
 
+export interface OrchestrationTrigger extends FunctionTrigger {
+    type: "orchestrationTrigger";
+}
+
 // entities
 export type EntityHandler<T> = (context: IEntityFunctionContext<T>) => void;
 
@@ -32,6 +36,10 @@ export type EntityFunction<T> = FunctionHandler &
         context: IEntityFunctionContext<T>,
         entityTrigger: DurableEntityBindingInfo
     ) => Promise<EntityState>);
+
+export interface EntityTrigger extends FunctionTrigger {
+    type: "entityTrigger";
+}
 
 // activities
 export type ActivityHandler<T> = FunctionHandler &
@@ -42,6 +50,10 @@ export type ActivityOptions<T> = {
     extraInputs?: FunctionInput[];
     extraOutputs?: FunctionOutput[];
 };
+
+export interface ActivityTrigger extends FunctionTrigger {
+    type: "activityTrigger";
+}
 
 // clients
 export interface DurableClientInput extends FunctionInput {
@@ -60,16 +72,4 @@ export interface DurableClientOptions {
     return?: FunctionOutput;
     extraInputs?: FunctionInput[];
     extraOutputs?: FunctionOutput[];
-}
-
-export interface ActivityTrigger extends FunctionTrigger {
-    type: "activityTrigger";
-}
-
-export interface OrchestrationTrigger extends FunctionTrigger {
-    type: "orchestrationTrigger";
-}
-
-export interface EntityTrigger extends FunctionTrigger {
-    type: "entityTrigger";
 }
