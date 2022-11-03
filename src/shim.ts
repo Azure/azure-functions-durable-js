@@ -13,11 +13,11 @@ import {
     ActivityOptions,
     EntityFunction,
     EntityHandler,
-    OrchestrationClientInput,
-    OrchestrationClientOptions,
+    DurableClientInput,
+    DurableClientOptions,
     OrchestrationFunction,
     OrchestrationHandler,
-    OrchestrationClientHandler,
+    DurableClientHandler,
     ActivityTrigger,
     OrchestrationTrigger,
     EntityTrigger,
@@ -204,7 +204,7 @@ export function activityComplex(functionName: string, options: ActivityOptions<a
  * });
  * ```
  */
-export function httpClient(functionName: string, clientHandler: OrchestrationClientHandler): void {
+export function httpClient(functionName: string, clientHandler: DurableClientHandler): void {
     client(functionName, AzFuncTrigger.http({}), output.http({}), clientHandler);
 }
 
@@ -235,7 +235,7 @@ export function client(
     functionName: string,
     trigger: FunctionTrigger,
     returnValue: FunctionOutput | undefined,
-    clientHandler: OrchestrationClientHandler
+    clientHandler: DurableClientHandler
 ): void {
     clientComplex(functionName, {
         trigger,
@@ -253,10 +253,10 @@ export function client(
  * such as handler, inputs and outputs
  *
  */
-export function clientComplex(functionName: string, options: OrchestrationClientOptions): void {
-    const clientInput: OrchestrationClientInput = AzFuncInput.generic({
+export function clientComplex(functionName: string, options: DurableClientOptions): void {
+    const clientInput: DurableClientInput = AzFuncInput.generic({
         type: "orchestrationClient",
-    }) as OrchestrationClientInput;
+    }) as DurableClientInput;
 
     const clientHandler = options.handler;
 
