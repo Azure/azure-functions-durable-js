@@ -31,6 +31,7 @@ import {
 import moment = require("moment");
 import { ReplaySchema } from "./replaySchema";
 import { CallHttpOptions, Task, TimerTask } from "./types";
+import { SignalEntityAction } from "./actions/signalentityaction";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -237,6 +238,19 @@ export class DurableOrchestrationContext {
         const newAction = new CallEntityAction(entityId, operationName, operationInput);
         const task = new AtomicTask(false, newAction);
         return task;
+    }
+
+    /**
+     * Send a signal operation to a Durable Entity, passing an argument, without
+     * waiting for a response. A fire-and-forget operation.
+     *
+     * @param entityId ID of the target entity.
+     * @param operationName The name of the operation.
+     * @param operationInput (optional) input for the operation.
+     */
+    public signalEntity(entityId: EntityId, operationName: string, operationInput?: unknown): void {
+        const action = new SignalEntityAction(entityId, operationName, operationInput);
+        this.taskOrchestratorExecutor.recordFireAndForgetAction(action);
     }
 
     /**

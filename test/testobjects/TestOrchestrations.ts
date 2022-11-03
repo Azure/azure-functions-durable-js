@@ -6,6 +6,10 @@ export class TestOrchestrations {
         return "Hello";
     });
 
+    public static YieldInteger: any = createOrchestrator(function* () {
+        yield 4;
+    });
+
     public static AnyAOrB: any = createOrchestrator(function* (context: any) {
         const completeInOrder = context.df.getInput();
 
@@ -102,6 +106,20 @@ export class TestOrchestrations {
         context.df.continueAsNew({ value: currentValue });
 
         return currentValue;
+    });
+
+    public static signalEntity: any = createOrchestrator(function* (context: any) {
+        const { id, entityName, operationName, operationArgument } = context.df.getInput();
+        const entityId = new df.EntityId(entityName, id);
+        context.df.signalEntity(entityId, operationName, operationArgument);
+        return;
+    });
+
+    public static signalEntityYield: any = createOrchestrator(function* (context: any) {
+        const { id, entityName, operationName, operationArgument } = context.df.getInput();
+        const entityId = new df.EntityId(entityName, id);
+        yield context.df.signalEntity(entityId, operationName, operationArgument);
+        return;
     });
 
     public static FanOutFanInDiskUsage: any = createOrchestrator(function* (context: any) {

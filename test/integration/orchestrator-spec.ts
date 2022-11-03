@@ -4,6 +4,7 @@ import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
 import { DummyOrchestrationContext, ManagedIdentityTokenSource } from "../../src";
+import { SignalEntityAction } from "../../src/actions/signalentityaction";
 import {
     ActionType,
     CallActivityAction,
@@ -54,6 +55,38 @@ describe("Orchestrator", () => {
                 true
             )
         );
+    });
+
+    it("doesn't allow yielding non-Task types", async () => {
+        const orchestrator = TestOrchestrations.YieldInteger;
+        const mockContext = new MockContext({
+            context: new DurableOrchestrationBindingInfo(
+                TestHistories.StarterHistory(moment.utc().toDate())
+            ),
+        });
+
+        orchestrator(mockContext);
+
+        const errorMsg =
+            `Durable Functions programming constraint violation: Orchestration yielded data of type number.` +
+            " Only Task types can be yielded. Please check your yield statements to make sure you only yield Task types resulting from calling Durable Functions APIs.";
+
+        const expectedErr = new OrchestrationFailureError(
+            false,
+            new OrchestratorState(
+                {
+                    isDone: false,
+                    actions: [],
+                    schemaVersion: ReplaySchema.V1,
+                    error: errorMsg,
+                    output: undefined,
+                },
+                true
+            )
+        );
+
+        expect(mockContext.doneValue).to.be.undefined;
+        expect(mockContext.err?.toString()).to.equal(expectedErr.toString());
     });
 
     it("handles a simple orchestration function (no activity functions)", async () => {
@@ -1291,6 +1324,103 @@ describe("Orchestrator", () => {
                     true
                 )
             );
+        });
+    });
+
+    describe("signalEntity()", () => {
+        it("scheduled a SignalEntity action", () => {
+            const orchestrator = TestOrchestrations.signalEntity;
+            const entityName = "Counter";
+            const id = "1234";
+            const expectedEntity = new EntityId(entityName, id);
+            const operationName = "add";
+            const operationArgument = 1;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart("signalEntity", new Date()),
+                    {
+                        id,
+                        entityName,
+                        operationName,
+                        operationArgument,
+                    }
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue).to.deep.equal(
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        output: undefined,
+                        actions: [
+                            [
+                                new SignalEntityAction(
+                                    expectedEntity,
+                                    operationName,
+                                    operationArgument
+                                ),
+                            ],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
+            );
+        });
+
+        it("doesn't allow signalEntity() to be yielded", () => {
+            const orchestrator = TestOrchestrations.signalEntityYield;
+            const entityName = "Counter";
+            const id = "1234";
+            const expectedEntity = new EntityId(entityName, id);
+            const operationName = "add";
+            const operationArgument = 1;
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(
+                    TestHistories.GetOrchestratorStart("signalEntity", new Date()),
+                    {
+                        id,
+                        entityName,
+                        operationName,
+                        operationArgument,
+                    }
+                ),
+            });
+
+            orchestrator(mockContext);
+
+            const errorMsg =
+                `Durable Functions programming constraint violation: Orchestration yielded data of type undefined.` +
+                ' This is likely a result of yielding a "fire-and-forget API" such as signalEntity or continueAsNew.' +
+                " These APIs should not be yielded as they are not blocking operations. Please remove the yield statement preceding those invocations." +
+                " If you are not calling those APIs, please check your yield statements to make sure you only yield Task types resulting from calling Durable Functions APIs.";
+
+            const expectedErr = new OrchestrationFailureError(
+                false,
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        actions: [
+                            [
+                                new SignalEntityAction(
+                                    expectedEntity,
+                                    operationName,
+                                    operationArgument
+                                ),
+                            ],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                        error: errorMsg,
+                        output: undefined,
+                    },
+                    true
+                )
+            );
+
+            expect(mockContext.doneValue).to.be.undefined;
+            expect(mockContext.err?.toString()).to.equal(expectedErr.toString());
         });
     });
 
