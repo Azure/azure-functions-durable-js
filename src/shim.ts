@@ -2,10 +2,10 @@ import {
     app,
     FunctionOutput,
     FunctionTrigger,
-    input,
+    input as AzFuncInput,
     InvocationContext,
     output,
-    trigger,
+    trigger as AzFuncTrigger,
 } from "@azure/functions";
 import { getClient } from "./durableorchestrationclient";
 import {
@@ -18,6 +18,9 @@ import {
     OrchestrationFunction,
     OrchestrationHandler,
     OrchestrationClientHandler,
+    ActivityTrigger,
+    OrchestrationTrigger,
+    EntityTrigger,
 } from "./types";
 import {
     Entity,
@@ -107,9 +110,7 @@ export function createEntityFunction<T = unknown>(fn: EntityHandler<T>): EntityF
  */
 export function orchestration(functionName: string, handler: OrchestrationHandler): void {
     app.generic(functionName, {
-        trigger: trigger.generic({
-            type: "orchestrationTrigger",
-        }),
+        trigger: trigger.orchestration(),
         handler: createOrchestrator(handler),
     });
 }
@@ -131,9 +132,7 @@ export function orchestration(functionName: string, handler: OrchestrationHandle
  */
 export function entity(functionName: string, handler: EntityHandler<unknown>): void {
     app.generic(functionName, {
-        trigger: trigger.generic({
-            type: "entityTrigger",
-        }),
+        trigger: trigger.entity(),
         handler: createEntityFunction(handler),
     });
 }
@@ -155,9 +154,7 @@ export function entity(functionName: string, handler: EntityHandler<unknown>): v
  */
 export function activity(functionName: string, handler: ActivityHandler<any>): void {
     app.generic(functionName, {
-        trigger: trigger.generic({
-            type: "activityTrigger",
-        }),
+        trigger: trigger.activity(),
         handler,
     });
 }
@@ -186,9 +183,7 @@ export function activity(functionName: string, handler: ActivityHandler<any>): v
  */
 export function activityComplex(functionName: string, options: ActivityOptions<any>): void {
     app.generic(functionName, {
-        trigger: trigger.generic({
-            type: "activityTrigger",
-        }),
+        trigger: trigger.activity(),
         ...options,
     });
 }
@@ -210,7 +205,7 @@ export function activityComplex(functionName: string, options: ActivityOptions<a
  * ```
  */
 export function httpClient(functionName: string, clientHandler: OrchestrationClientHandler): void {
-    client(functionName, trigger.http({}), output.http({}), clientHandler);
+    client(functionName, AzFuncTrigger.http({}), output.http({}), clientHandler);
 }
 
 /**
@@ -259,7 +254,7 @@ export function client(
  *
  */
 export function clientComplex(functionName: string, options: OrchestrationClientOptions): void {
-    const clientInput: OrchestrationClientInput = input.generic({
+    const clientInput: OrchestrationClientInput = AzFuncInput.generic({
         type: "orchestrationClient",
     }) as OrchestrationClientInput;
 
@@ -281,3 +276,25 @@ export function clientComplex(functionName: string, options: OrchestrationClient
         handler,
     });
 }
+
+export namespace trigger {
+    export function activity(): ActivityTrigger {
+        return AzFuncTrigger.generic({
+            type: "activityTrigger",
+        }) as ActivityTrigger;
+    }
+
+    export function orchestration(): OrchestrationTrigger {
+        return AzFuncTrigger.generic({
+            type: "orchestrationTrigger",
+        }) as OrchestrationTrigger;
+    }
+
+    export function entity(): EntityTrigger {
+        return AzFuncTrigger.generic({
+            type: "entityTrigger",
+        }) as EntityTrigger;
+    }
+}
+
+export namespace input {}

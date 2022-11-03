@@ -61,3 +61,15 @@ export interface DurableClientOptions {
     extraInputs?: FunctionInput[];
     extraOutputs?: FunctionOutput[];
 }
+
+export interface ActivityTrigger extends FunctionTrigger {
+    type: "activityTrigger";
+}
+
+export interface OrchestrationTrigger extends FunctionTrigger {
+    type: "orchestrationTrigger";
+}
+
+export interface EntityTrigger extends FunctionTrigger {
+    type: "entityTrigger";
+}
