@@ -25,7 +25,7 @@ export type OrchestrationFunction = FunctionHandler &
     ) => Promise<OrchestratorState>);
 
 // entities
-export type EntityHandler<T> = (context: IEntityFunctionContext<T>) => void | Promise<void>;
+export type EntityHandler<T> = (context: IEntityFunctionContext<T>) => void;
 
 export type EntityFunction<T> = FunctionHandler &
     ((
