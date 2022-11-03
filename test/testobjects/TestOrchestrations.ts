@@ -5,6 +5,10 @@ export class TestOrchestrations {
         return "Hello";
     });
 
+    public static YieldInteger: any = df.orchestrator(function* () {
+        yield 4;
+    });
+
     public static AnyAOrB: any = df.orchestrator(function* (context: any) {
         const completeInOrder = context.df.getInput();
 

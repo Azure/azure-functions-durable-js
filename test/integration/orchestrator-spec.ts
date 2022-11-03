@@ -69,6 +69,38 @@ describe("Orchestrator", () => {
         );
     });
 
+    it("doesn't allow yielding non-Task types", async () => {
+        const orchestrator = TestOrchestrations.YieldInteger;
+        const mockContext = new MockContext({
+            context: new DurableOrchestrationBindingInfo(
+                TestHistories.StarterHistory(moment.utc().toDate())
+            ),
+        });
+
+        orchestrator(mockContext);
+
+        const errorMsg =
+            `Durable Functions programming constraint violation: Orchestration yielded data of type number.` +
+            " Only Task types can be yielded. Please check your yield statements to make sure you only yield Task types resulting from calling Durable Functions APIs.";
+
+        const expectedErr = new OrchestrationFailureError(
+            false,
+            new OrchestratorState(
+                {
+                    isDone: false,
+                    actions: [],
+                    schemaVersion: ReplaySchema.V1,
+                    error: errorMsg,
+                    output: undefined,
+                },
+                true
+            )
+        );
+
+        expect(mockContext.doneValue).to.be.undefined;
+        expect(mockContext.err?.toString()).to.equal(expectedErr.toString());
+    });
+
     it("handles a simple orchestration function (no activity functions)", async () => {
         const orchestrator = TestOrchestrations.SayHelloInline;
         const name = "World";
@@ -1404,6 +1436,12 @@ describe("Orchestrator", () => {
 
             orchestrator(mockContext);
 
+            const errorMsg =
+                `Durable Functions programming constraint violation: Orchestration yielded data of type undefined.` +
+                ' This is likely a result of yielding a "fire-and-forget API" such as signalEntity or continueAsNew.' +
+                " These APIs should not be yielded as they are not blocking operations. Please remove the yield statement preceding those invocations." +
+                " If you are not calling those APIs, please check your yield statements to make sure you only yield Task types resulting from calling Durable Functions APIs.";
+
             const expectedErr = new OrchestrationFailureError(
                 false,
                 new OrchestratorState(
@@ -1419,8 +1457,7 @@ describe("Orchestrator", () => {
                             ],
                         ],
                         schemaVersion: ReplaySchema.V1,
-                        error:
-                            "Orchestration yielded data of type undefined. Only Task types can be yielded.Please refactor your orchestration to yield only Tasks.",
+                        error: errorMsg,
                         output: undefined,
                     },
                     true
@@ -1428,7 +1465,7 @@ describe("Orchestrator", () => {
             );
 
             expect(mockContext.doneValue).to.be.undefined;
-            expect(JSON.stringify(mockContext.err)).to.equal(JSON.stringify(expectedErr));
+            expect(mockContext.err?.toString()).to.equal(expectedErr.toString());
         });
     });
 
