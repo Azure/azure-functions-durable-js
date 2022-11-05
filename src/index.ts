@@ -23,6 +23,8 @@ import {
 } from "./shim";
 import { ManagedIdentityTokenSource } from "./tokensource";
 
+export * from "./types";
+
 export {
     DurableHttpRequest,
     DurableHttpResponse,
