@@ -128,7 +128,7 @@ export function orchestration(functionName: string, handler: OrchestrationHandle
  * });
  * ```
  */
-export function entity(functionName: string, handler: EntityHandler<unknown>): void {
+export function entity<T = unknown>(functionName: string, handler: EntityHandler<T>): void {
     app.generic(functionName, {
         trigger: trigger.entity(),
         handler: createEntityFunction(handler),
@@ -150,7 +150,7 @@ export function entity(functionName: string, handler: EntityHandler<unknown>): v
  * });
  * ```
  */
-export function activity(functionName: string, handler: ActivityHandler<any>): void {
+export function activity<T = unknown>(functionName: string, handler: ActivityHandler<T>): void {
     app.generic(functionName, {
         trigger: trigger.activity(),
         handler,
@@ -179,7 +179,10 @@ export function activity(functionName: string, handler: ActivityHandler<any>): v
  * });
  * ```
  */
-export function activityComplex(functionName: string, options: ActivityOptions<any>): void {
+export function activityComplex<T = unknown>(
+    functionName: string,
+    options: ActivityOptions<T>
+): void {
     app.generic(functionName, {
         trigger: trigger.activity(),
         ...options,
