@@ -29,6 +29,6 @@ jobs:
                 command: custom
                 workingDir: "$(Pipeline.Workspace)/DurableJSCI/drop"
                 verbose: true
-                customCommand: "publish package.tgz"
+                customCommand: "publish package.tgz --dry-run"
                 publishRegistry: useExternalRegistry
                 publishEndpoint: "NPM Durable Functions JS Publish"
