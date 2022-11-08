@@ -23,12 +23,10 @@ jobs:
           - script: mv *.tgz package.tgz
             displayName: "Rename tgz file" # because the publish command below requires an exact path
             workingDirectory: "$(Pipeline.Workspace)/DurableJSCI/drop"
-          - task: Npm@1
-            displayName: "npm publish"
+          - task: npmAuthenticate@0
             inputs:
-                command: custom
-                workingDir: "$(Pipeline.Workspace)/DurableJSCI/drop"
-                verbose: true
-                customCommand: "publish package.tgz"
-                publishRegistry: useExternalRegistry
-                publishEndpoint: "NPM Durable Functions JS Publish"
+              workingFile: .npmrc
+              customEndpoint: "NPM Durable Functions JS Publish"
+          - script: npm publish package.tgz
+            workingDir: "$(Pipeline.Workspace)/DurableJSCI/drop"
+            verbose: true
