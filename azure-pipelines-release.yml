@@ -27,7 +27,7 @@ jobs:
             workingDirectory: "$(Pipeline.Workspace)/DurableJSCI/drop"
           - task: npmAuthenticate@0
             inputs:
-              workingFile: .npmrc
+              workingFile: $(Pipeline.Workspace)/DurableJSCI/drop/.npmrc
               customEndpoint: "NPM Durable Functions JS Publish"
           - script: npm publish package.tgz
             workingDirectory: "$(Pipeline.Workspace)/DurableJSCI/drop"
