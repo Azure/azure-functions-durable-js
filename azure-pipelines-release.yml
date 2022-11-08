@@ -25,6 +25,9 @@ jobs:
             workingDirectory: "$(Pipeline.Workspace)/DurableJSCI/drop"
           - script: echo -e "registry=https://registry.npmjs.org/ >" .npmrc
             workingDirectory: "$(Pipeline.Workspace)/DurableJSCI/drop"
+          - script: "ls"
+            workingDirectory: "$(Pipeline.Workspace)/DurableJSCI/drop"
+            verbose: true
           - task: npmAuthenticate@0
             inputs:
               workingFile: $(Pipeline.Workspace)/DurableJSCI/drop/.npmrc
