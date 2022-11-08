@@ -23,7 +23,7 @@ jobs:
           - script: mv *.tgz package.tgz
             displayName: "Rename tgz file" # because the publish command below requires an exact path
             workingDirectory: "$(Pipeline.Workspace)/DurableJSCI/drop"
-          - sript: echo -e "registry=https://registry.npmjs.org/ >" .npmrc
+          - script: echo -e "registry=https://registry.npmjs.org/ >" .npmrc
           - task: npmAuthenticate@0
             inputs:
               workingFile: .npmrc
