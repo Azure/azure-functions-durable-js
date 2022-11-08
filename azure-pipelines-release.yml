@@ -28,5 +28,4 @@ jobs:
               workingFile: .npmrc
               customEndpoint: "NPM Durable Functions JS Publish"
           - script: npm publish package.tgz
-            workingDir: "$(Pipeline.Workspace)/DurableJSCI/drop"
-            verbose: true
+            workingDirectory: "$(Pipeline.Workspace)/DurableJSCI/drop"
