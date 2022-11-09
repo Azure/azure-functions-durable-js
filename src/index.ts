@@ -14,10 +14,7 @@ import {
     entity,
     orchestration,
     client,
-    clientComplex,
-    activityComplex,
     activity,
-    httpClient,
     input,
     trigger,
 } from "./shim";
@@ -40,10 +37,7 @@ export {
     entity,
     orchestration,
     client,
-    clientComplex,
-    activityComplex,
     activity,
-    httpClient,
     input,
     trigger,
 };

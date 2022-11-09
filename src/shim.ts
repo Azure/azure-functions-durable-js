@@ -1,15 +1,11 @@
 import {
     app,
-    FunctionOutput,
-    FunctionTrigger,
     input as AzFuncInput,
     InvocationContext,
-    output,
     trigger as AzFuncTrigger,
 } from "@azure/functions";
 import { getClient } from "./durableorchestrationclient";
 import {
-    ActivityHandler,
     ActivityOptions,
     EntityFunction,
     EntityHandler,
@@ -136,30 +132,7 @@ export function entity<T = unknown>(functionName: string, handler: EntityHandler
 }
 
 /**
- * Registers a function as an Activity Function for your Function App.
- *
- * @param functionName the name of your new activity function
- * @param handler the function that should act as an activity
- *
- * @example Register an activity function
- * ```javascript
- * const df = require("durable-functions");
- *
- * df.activity('MyActivity', function (context) {
- *     // activity body
- * });
- * ```
- */
-export function activity<T = unknown>(functionName: string, handler: ActivityHandler<T>): void {
-    app.generic(functionName, {
-        trigger: trigger.activity(),
-        handler,
-    });
-}
-
-/**
- * Registers a function as an Activity Function for your Function App,
- * allowing for extra configurations, such as extra input and output bindings
+ * Registers a function as an Activity Function for your Function App
  *
  * @param functionName the name of your new activity function
  * @param options the configuration options for this activity,
@@ -179,69 +152,10 @@ export function activity<T = unknown>(functionName: string, handler: ActivityHan
  * });
  * ```
  */
-export function activityComplex<T = unknown>(
-    functionName: string,
-    options: ActivityOptions<T>
-): void {
+export function activity<T = unknown>(functionName: string, options: ActivityOptions<T>): void {
     app.generic(functionName, {
         trigger: trigger.activity(),
         ...options,
-    });
-}
-
-/**
- * Registers a function as a Durable Client for your Function App,
- * that is triggered by an HTTP request and returns an HTTP response
- *
- * @param functionName the name of your new Durable Client function
- * @param clientHandler the function handler that should act as a durable client
- *
- * @example Register an activity function with extra inputs and outputs
- * ```javascript
- * const df = require("durable-functions");
- *
- * df.httpClient('DurableFunctionsHTTPStart', function (context, client) {
- *   // function body
- * });
- * ```
- */
-export function httpClient(functionName: string, clientHandler: DurableClientHandler): void {
-    client(functionName, AzFuncTrigger.http({}), output.http({}), clientHandler);
-}
-
-/**
- * Registers a function as a Durable Client for your Function App
- *
- * @param functionName the name of your new Durable Client function
- * @param trigger the trigger for the client function
- * @param returnValue the primary output of the client function
- * @param clientHandler the function handler that should act as a durable client
- *
- * @example Register a client that is triggered by HTTP requests and returns HTTP response
- * ```javascript
- * const df = require("durable-functions");
- * const { trigger, output } = require("@azure/functions");
- *
- * df.client(
- *     'DurableFunctionsHTTPStart',
- *     trigger.http({}),
- *     output.http({}),
- *     function (context, client) {
- *       // function body
- *     }
- * );
- * ```
- */
-export function client(
-    functionName: string,
-    trigger: FunctionTrigger,
-    returnValue: FunctionOutput | undefined,
-    clientHandler: DurableClientHandler
-): void {
-    clientComplex(functionName, {
-        trigger,
-        return: returnValue,
-        handler: clientHandler,
     });
 }
 
@@ -254,9 +168,9 @@ export function client(
  * such as handler, inputs and outputs
  *
  */
-export function clientComplex(functionName: string, options: DurableClientOptions): void {
+export function client(functionName: string, options: DurableClientOptions): void {
     const clientInput: DurableClientInput = input.client();
-    const clientHandler = options.handler;
+    const clientHandler: DurableClientHandler = options.handler;
 
     if (options.extraInputs) {
         options.extraInputs.push(clientInput);
@@ -264,7 +178,7 @@ export function clientComplex(functionName: string, options: DurableClientOption
         options.extraInputs = [clientInput];
     }
 
-    const handler = (context: InvocationContext, triggerData: FunctionTrigger) => {
+    const handler = (context: InvocationContext, triggerData: unknown) => {
         const client = getClient(context, clientInput);
         return clientHandler(context, triggerData, client);
     };
