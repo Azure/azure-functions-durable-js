@@ -332,6 +332,19 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static FanningIsReplaying: any = df.orchestrator(function* (context: any) {
+        const output = [];
+
+        output.push(context.df.isReplaying);
+        const tasks = [
+            context.df.callActivity("Hello", "Tokyo"),
+            context.df.callActivity("Hello", "Seattle"),
+        ];
+        yield context.df.Task.all(tasks);
+        output.push(context.df.isReplaying);
+        return output;
+    });
+
     public static MultiYieldWhenAll: any = df.orchestrator(function* (context: any) {
         const output = [];
 

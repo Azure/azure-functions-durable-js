@@ -224,6 +224,20 @@ describe("Orchestrator", () => {
             expect(mockContext.doneValue?.output).to.be.deep.equal([true, false]);
         });
 
+        it("can assign isReplaying to False in WhenAll", async () => {
+            const orchestrator = TestOrchestrations.FanningIsReplaying;
+
+            const mockHistory = TestHistories.GetSimpleFanOut(moment.utc().toDate());
+
+            const mockContext = new MockContext({
+                context: new DurableOrchestrationBindingInfo(mockHistory, "SimpleFanOut"),
+            });
+
+            orchestrator(mockContext);
+
+            expect(mockContext.doneValue?.output).to.be.deep.equal([true, false]);
+        });
+
         it("handles creating a composite task out of an already completed task", async () => {
             const orchestrator = TestOrchestrations.MultiYieldWhenAll;
             const name = "World";
