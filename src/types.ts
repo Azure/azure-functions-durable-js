@@ -6,7 +6,7 @@ import {
     FunctionOutput,
     FunctionTrigger,
 } from "@azure/functions";
-import { DurableOrchestrationClient, EntityState } from "../src/classes";
+import { EntityState } from "../src/classes";
 import { DurableEntityBindingInfo } from "../src/durableentitybindinginfo";
 import { IEntityFunctionContext } from "../src/ientityfunctioncontext";
 import { IOrchestrationFunctionContext } from "../src/iorchestrationfunctioncontext";
@@ -58,18 +58,4 @@ export interface ActivityTrigger extends FunctionTrigger {
 // clients
 export interface DurableClientInput extends FunctionInput {
     type: "orchestrationClient";
-}
-
-export type DurableClientHandler = (
-    context: InvocationContext,
-    triggerInput: any,
-    orchestrationClient: DurableOrchestrationClient
-) => FunctionResult<any>;
-
-export interface DurableClientOptions {
-    handler: DurableClientHandler;
-    trigger: FunctionTrigger;
-    return?: FunctionOutput;
-    extraInputs?: FunctionInput[];
-    extraOutputs?: FunctionOutput[];
 }

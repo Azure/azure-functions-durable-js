@@ -1,19 +1,11 @@
-import {
-    app,
-    input as AzFuncInput,
-    InvocationContext,
-    trigger as AzFuncTrigger,
-} from "@azure/functions";
-import { getClient } from "./durableorchestrationclient";
+import { app, input as AzFuncInput, trigger as AzFuncTrigger } from "@azure/functions";
 import {
     ActivityOptions,
     EntityFunction,
     EntityHandler,
     DurableClientInput,
-    DurableClientOptions,
     OrchestrationFunction,
     OrchestrationHandler,
-    DurableClientHandler,
     ActivityTrigger,
     OrchestrationTrigger,
     EntityTrigger,
@@ -156,36 +148,6 @@ export function activity<T = unknown>(functionName: string, options: ActivityOpt
     app.generic(functionName, {
         trigger: trigger.activity(),
         ...options,
-    });
-}
-
-/**
- * Registers a function as a Durable Client for your Function App,
- * allowing extra configurations, such as extra inputs and outputs
- *
- * @param functionName the name of your new Durable Client function
- * @param options object specifying configuration options,
- * such as handler, inputs and outputs
- *
- */
-export function client(functionName: string, options: DurableClientOptions): void {
-    const clientInput: DurableClientInput = input.client();
-    const clientHandler: DurableClientHandler = options.handler;
-
-    if (options.extraInputs) {
-        options.extraInputs.push(clientInput);
-    } else {
-        options.extraInputs = [clientInput];
-    }
-
-    const handler = (context: InvocationContext, triggerData: unknown) => {
-        const client = getClient(context, clientInput);
-        return clientHandler(context, triggerData, client);
-    };
-
-    app.generic(functionName, {
-        ...options,
-        handler,
     });
 }
 
