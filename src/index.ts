@@ -8,7 +8,7 @@ import {
     DummyOrchestrationContext,
 } from "./classes";
 import { getClient } from "./durableorchestrationclient";
-import { createEntityFunction, entity, orchestration, activity, input, trigger } from "./shim";
+import { entity, orchestration, activity, input, trigger } from "./shim";
 import { ManagedIdentityTokenSource } from "./tokensource";
 
 export * from "./types";
@@ -16,7 +16,6 @@ export * from "./types";
 export {
     DurableHttpRequest,
     DurableHttpResponse,
-    createEntityFunction,
     EntityId,
     EntityStateResponse,
     getClient,
