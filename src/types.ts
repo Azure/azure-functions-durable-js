@@ -33,5 +33,5 @@ export interface ActivityTrigger extends FunctionTrigger {
 
 // clients
 export interface DurableClientInput extends FunctionInput {
-    type: "orchestrationClient";
+    type: "durableClient";
 }

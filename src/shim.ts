@@ -180,7 +180,7 @@ export namespace input {
      */
     export function durableClient(): DurableClientInput {
         return azFuncInput.generic({
-            type: "orchestrationClient",
+            type: "durableClient",
         }) as DurableClientInput;
     }
 }
