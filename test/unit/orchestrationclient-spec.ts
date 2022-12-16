@@ -74,6 +74,7 @@ describe("Orchestration Client", () => {
             });
 
             const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
+            const responseBody = await response.json();
 
             const expectedPayload = TestUtils.createHttpManagementPayload(
                 defaultInstanceId,
@@ -81,16 +82,12 @@ describe("Orchestration Client", () => {
                 defaultTaskHub,
                 defaultConnection
             );
-            const expectedResponse = {
-                status: 202,
-                body: expectedPayload,
-                headers: {
-                    "Content-Type": "application/json",
-                    Location: expectedPayload.statusQueryGetUri,
-                    "Retry-After": 10,
-                },
-            };
-            expect(response).to.be.deep.equal(expectedResponse);
+
+            expect(response.status).to.equal(202);
+            expect(responseBody).to.deep.equal(expectedPayload);
+            expect(response.headers.get("Content-Type")).to.equal("application/json");
+            expect(response.headers.get("Location")).to.equal(expectedPayload.statusQueryGetUri);
+            expect(response.headers.get("Retry-After")).to.equal("10");
         });
 
         it(`returns a proper response object from request.http.url`, async () => {
@@ -103,6 +100,7 @@ describe("Orchestration Client", () => {
             };
 
             const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
+            const responseBody = await response.json();
 
             const expectedPayload = TestUtils.createHttpManagementPayload(
                 defaultInstanceId,
@@ -110,16 +108,12 @@ describe("Orchestration Client", () => {
                 defaultTaskHub,
                 defaultConnection
             );
-            const expectedResponse = {
-                status: 202,
-                body: expectedPayload,
-                headers: {
-                    "Content-Type": "application/json",
-                    Location: expectedPayload.statusQueryGetUri,
-                    "Retry-After": 10,
-                },
-            };
-            expect(response).to.be.deep.equal(expectedResponse);
+
+            expect(response.status).to.equal(202);
+            expect(responseBody).to.deep.equal(expectedPayload);
+            expect(response.headers.get("Content-Type")).to.equal("application/json");
+            expect(response.headers.get("Location")).to.equal(expectedPayload.statusQueryGetUri);
+            expect(response.headers.get("Retry-After")).to.equal("10");
         });
 
         it("returns a proper response object when request is undefined", async () => {
@@ -131,18 +125,15 @@ describe("Orchestration Client", () => {
                 defaultTaskHub,
                 defaultConnection
             );
-            const expectedResponse = {
-                status: 202,
-                body: expectedPayload,
-                headers: {
-                    "Content-Type": "application/json",
-                    Location: expectedPayload.statusQueryGetUri,
-                    "Retry-After": 10,
-                },
-            };
 
             const response = client.createCheckStatusResponse(undefined, defaultInstanceId);
-            expect(response).to.be.deep.equal(expectedResponse);
+            const responseBody = await response.json();
+
+            expect(response.status).to.equal(202);
+            expect(responseBody).to.deep.equal(expectedPayload);
+            expect(response.headers.get("Content-Type")).to.equal("application/json");
+            expect(response.headers.get("Location")).to.equal(expectedPayload.statusQueryGetUri);
+            expect(response.headers.get("Retry-After")).to.equal("10");
         });
     });
 
