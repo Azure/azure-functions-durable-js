@@ -131,7 +131,7 @@ export namespace app {
      * });
      * ```
      */
-    export function activity<T = unknown>(functionName: string, options: ActivityOptions<T>): void {
+    export function activity(functionName: string, options: ActivityOptions): void {
         azFuncApp.generic(functionName, {
             trigger: trigger.activity(),
             ...options,

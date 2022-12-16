@@ -1,11 +1,4 @@
-import {
-    FunctionInput,
-    FunctionHandler,
-    InvocationContext,
-    FunctionResult,
-    FunctionOutput,
-    FunctionTrigger,
-} from "@azure/functions";
+import { FunctionInput, FunctionHandler, FunctionOutput, FunctionTrigger } from "@azure/functions";
 import { IEntityFunctionContext } from "../src/ientityfunctioncontext";
 import { IOrchestrationFunctionContext } from "../src/iorchestrationfunctioncontext";
 
@@ -26,11 +19,10 @@ export interface EntityTrigger extends FunctionTrigger {
 }
 
 // activities
-export type ActivityHandler<T> = FunctionHandler &
-    ((context: InvocationContext, input: T) => FunctionResult<any>);
+export type ActivityHandler = FunctionHandler;
 
-export type ActivityOptions<T> = {
-    handler: ActivityHandler<T>;
+export type ActivityOptions = {
+    handler: ActivityHandler;
     extraInputs?: FunctionInput[];
     extraOutputs?: FunctionOutput[];
 };
