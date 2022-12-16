@@ -40,20 +40,6 @@ type OrchestrationFunction = FunctionHandler &
  * Enables a generator function to act as an orchestrator function.
  *
  * @param fn the generator function that should act as an orchestrator
- * @example Register an orchestrator using `app.generic()`
- * ```javascript
- * const { app } = require("@azure/functions")
- * const df = require("durable-functions");
- *
- * app.generic('DurableFunctionsOrchestratorJS', {
- *   trigger: trigger.generic({
- *       type: 'orchestrationTrigger'
- *   }),
- *   handler: df.createOrchestrator(function* (context) {
- *       // orchestrator body
- *  })
- * })
- * ```
  */
 export function createOrchestrator(fn: OrchestrationHandler): OrchestrationFunction {
     const listener = new Orchestrator(fn).listen();
@@ -70,18 +56,6 @@ export function createOrchestrator(fn: OrchestrationHandler): OrchestrationFunct
  * Enables an entity handler function to act as a Durable Entity Azure Function.
  *
  * @param fn the handler function that should act as a durable entity
- * @example Register an entity using `app.generic()`
- * ```javascript
- * const { app } = require("@azure/functions")
- * const df = require("durable-functions");
- *
- * app.generic('DurableEntity', {
- *   trigger: df.trigger.entity(),
- *   handler: df.createEntityFunction(function* (context) {
- *       // orchestrator body
- *  })
- * })
- * ```
  */
 export function createEntityFunction<T = unknown>(fn: EntityHandler<T>): EntityFunction<T> {
     const listener = new Entity<T>(fn).listen();
@@ -105,7 +79,7 @@ export namespace app {
      * ```javascript
      * const df = require("durable-functions");
      *
-     * df.orchestration('DurableFunctionsOrchestratorJS', function* (context) {
+     * df.orchestration('durableOrchestration1', function* (context) {
      *     // orchestrator body
      * });
      * ```
@@ -127,7 +101,7 @@ export namespace app {
      * ```javascript
      * const df = require("durable-functions");
      *
-     * df.entity('CounterEntity', function (context) {
+     * df.entity('Counter', function (context) {
      *     // entity body
      * });
      * ```
@@ -146,14 +120,11 @@ export namespace app {
      * @param options the configuration options for this activity,
      * specifying the handler and the inputs and outputs
      *
-     * @example Register an activity function with extra inputs and outputs
+     * @example Register an activity function
      * ```javascript
      * const df = require("durable-functions");
-     * const { input, output } = require("@azure/functions");
      *
      * df.activity('MyActivity', {
-     *   extraInputs: input.storageBlob({ path: 'test/{test}', connection: 'conn' }),
-     *   extraOutputs: output.storageBlob({ path: 'test/{test}', connection: 'conn' }),
      *   handler: function (context) {
      *      // activity body
      *   }
