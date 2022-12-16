@@ -12,6 +12,8 @@ import {
     ActivityTrigger,
     OrchestrationTrigger,
     EntityTrigger,
+    OrchestrationOptions,
+    EntityOptions,
 } from "./types";
 import {
     Entity,
@@ -84,7 +86,34 @@ export namespace app {
      * });
      * ```
      */
-    export function orchestration(functionName: string, handler: OrchestrationHandler): void {
+    export function orchestration(functionName: string, handler: OrchestrationHandler): void;
+
+    /**
+     * Registers a generator function as a Durable Orchestrator for your Function App.
+     *
+     * @param functionName the name of your new durable orchestrator
+     * @param options the configuration options object describing the handler for this orchestrator
+     *
+     * @example Register an orchestrator
+     * ```javascript
+     * const df = require("durable-functions");
+     *
+     * df.orchestration('durableOrchestration1', {
+     *   handler: function* (context) {
+     *       // orchestrator body
+     *   }
+     * });
+     * ```
+     */
+    export function orchestration(functionName: string, options: OrchestrationOptions): void;
+
+    export function orchestration(
+        functionName: string,
+        handlerOrOptions: OrchestrationHandler | OrchestrationOptions
+    ): void {
+        const handler: OrchestrationHandler =
+            typeof handlerOrOptions === "function" ? handlerOrOptions : handlerOrOptions.handler;
+
         azFuncApp.generic(functionName, {
             trigger: trigger.orchestration(),
             handler: createOrchestrator(handler),
@@ -106,7 +135,34 @@ export namespace app {
      * });
      * ```
      */
-    export function entity<T = unknown>(functionName: string, handler: EntityHandler<T>): void {
+    export function entity<T = unknown>(functionName: string, handler: EntityHandler<T>): void;
+
+    /**
+     * Registers a function as a Durable Entity for your Function App.
+     *
+     * @param functionName the name of your new durable entity
+     * @param options the configuration options object describing the handler for this entity
+     *
+     * @example Register a counter entity
+     * ```javascript
+     * const df = require("durable-functions");
+     *
+     * df.entity('Counter', {
+     *   handler: function (context) {
+     *     // entity body
+     *   }
+     * });
+     * ```
+     */
+    export function entity<T = unknown>(functionName: string, options: EntityOptions<T>): void;
+
+    export function entity<T = unknown>(
+        functionName: string,
+        handlerOrOptions: EntityHandler<T> | EntityOptions<T>
+    ): void {
+        const handler: EntityHandler<T> =
+            typeof handlerOrOptions === "function" ? handlerOrOptions : handlerOrOptions.handler;
+
         azFuncApp.generic(functionName, {
             trigger: trigger.entity(),
             handler: createEntityFunction(handler),

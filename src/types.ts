@@ -7,12 +7,20 @@ export type OrchestrationHandler = (
     context: IOrchestrationFunctionContext
 ) => Generator<unknown, unknown, any>;
 
+export type OrchestrationOptions = {
+    handler: OrchestrationHandler;
+};
+
 export interface OrchestrationTrigger extends FunctionTrigger {
     type: "orchestrationTrigger";
 }
 
 // entities
 export type EntityHandler<T> = (context: IEntityFunctionContext<T>) => void;
+
+export type EntityOptions<T> = {
+    handler: EntityHandler<T>;
+};
 
 export interface EntityTrigger extends FunctionTrigger {
     type: "entityTrigger";
