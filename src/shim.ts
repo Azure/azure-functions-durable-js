@@ -190,7 +190,7 @@ export namespace input {
     /**
      * @returns a durable client input configuration object
      */
-    export function client(): DurableClientInput {
+    export function durableClient(): DurableClientInput {
         return AzFuncInput.generic({
             type: "orchestrationClient",
         }) as DurableClientInput;
