@@ -1,8 +1,8 @@
 import {
-    app,
+    app as azFuncApp,
     FunctionHandler,
-    input as AzFuncInput,
-    trigger as AzFuncTrigger,
+    input as azFuncInput,
+    trigger as azFuncTrigger,
 } from "@azure/functions";
 import {
     ActivityOptions,
@@ -94,76 +94,78 @@ export function createEntityFunction<T = unknown>(fn: EntityHandler<T>): EntityF
     };
 }
 
-/**
- * Registers a generator function as a Durable Orchestrator for your Function App.
- *
- * @param functionName the name of your new durable orchestrator
- * @param handler the generator function that should act as an orchestrator
- *
- * @example Register an orchestrator
- * ```javascript
- * const df = require("durable-functions");
- *
- * df.orchestration('DurableFunctionsOrchestratorJS', function* (context) {
- *     // orchestrator body
- * });
- * ```
- */
-export function orchestration(functionName: string, handler: OrchestrationHandler): void {
-    app.generic(functionName, {
-        trigger: trigger.orchestration(),
-        handler: createOrchestrator(handler),
-    });
-}
+export namespace app {
+    /**
+     * Registers a generator function as a Durable Orchestrator for your Function App.
+     *
+     * @param functionName the name of your new durable orchestrator
+     * @param handler the generator function that should act as an orchestrator
+     *
+     * @example Register an orchestrator
+     * ```javascript
+     * const df = require("durable-functions");
+     *
+     * df.orchestration('DurableFunctionsOrchestratorJS', function* (context) {
+     *     // orchestrator body
+     * });
+     * ```
+     */
+    export function orchestration(functionName: string, handler: OrchestrationHandler): void {
+        azFuncApp.generic(functionName, {
+            trigger: trigger.orchestration(),
+            handler: createOrchestrator(handler),
+        });
+    }
 
-/**
- * Registers a function as a Durable Entity for your Function App.
- *
- * @param functionName the name of your new durable entity
- * @param handler the function that should act as an entity
- *
- * @example Register a counter entity
- * ```javascript
- * const df = require("durable-functions");
- *
- * df.entity('CounterEntity', function (context) {
- *     // entity body
- * });
- * ```
- */
-export function entity<T = unknown>(functionName: string, handler: EntityHandler<T>): void {
-    app.generic(functionName, {
-        trigger: trigger.entity(),
-        handler: createEntityFunction(handler),
-    });
-}
+    /**
+     * Registers a function as a Durable Entity for your Function App.
+     *
+     * @param functionName the name of your new durable entity
+     * @param handler the function that should act as an entity
+     *
+     * @example Register a counter entity
+     * ```javascript
+     * const df = require("durable-functions");
+     *
+     * df.entity('CounterEntity', function (context) {
+     *     // entity body
+     * });
+     * ```
+     */
+    export function entity<T = unknown>(functionName: string, handler: EntityHandler<T>): void {
+        azFuncApp.generic(functionName, {
+            trigger: trigger.entity(),
+            handler: createEntityFunction(handler),
+        });
+    }
 
-/**
- * Registers a function as an Activity Function for your Function App
- *
- * @param functionName the name of your new activity function
- * @param options the configuration options for this activity,
- * specifying the handler and the inputs and outputs
- *
- * @example Register an activity function with extra inputs and outputs
- * ```javascript
- * const df = require("durable-functions");
- * const { input, output } = require("@azure/functions");
- *
- * df.activity('MyActivity', {
- *   extraInputs: input.storageBlob({ path: 'test/{test}', connection: 'conn' }),
- *   extraOutputs: output.storageBlob({ path: 'test/{test}', connection: 'conn' }),
- *   handler: function (context) {
- *      // activity body
- *   }
- * });
- * ```
- */
-export function activity<T = unknown>(functionName: string, options: ActivityOptions<T>): void {
-    app.generic(functionName, {
-        trigger: trigger.activity(),
-        ...options,
-    });
+    /**
+     * Registers a function as an Activity Function for your Function App
+     *
+     * @param functionName the name of your new activity function
+     * @param options the configuration options for this activity,
+     * specifying the handler and the inputs and outputs
+     *
+     * @example Register an activity function with extra inputs and outputs
+     * ```javascript
+     * const df = require("durable-functions");
+     * const { input, output } = require("@azure/functions");
+     *
+     * df.activity('MyActivity', {
+     *   extraInputs: input.storageBlob({ path: 'test/{test}', connection: 'conn' }),
+     *   extraOutputs: output.storageBlob({ path: 'test/{test}', connection: 'conn' }),
+     *   handler: function (context) {
+     *      // activity body
+     *   }
+     * });
+     * ```
+     */
+    export function activity<T = unknown>(functionName: string, options: ActivityOptions<T>): void {
+        azFuncApp.generic(functionName, {
+            trigger: trigger.activity(),
+            ...options,
+        });
+    }
 }
 
 /**
@@ -174,7 +176,7 @@ export namespace trigger {
      * @returns a durable activity trigger
      */
     export function activity(): ActivityTrigger {
-        return AzFuncTrigger.generic({
+        return azFuncTrigger.generic({
             type: "activityTrigger",
         }) as ActivityTrigger;
     }
@@ -183,7 +185,7 @@ export namespace trigger {
      * @returns a durable orchestration trigger
      */
     export function orchestration(): OrchestrationTrigger {
-        return AzFuncTrigger.generic({
+        return azFuncTrigger.generic({
             type: "orchestrationTrigger",
         }) as OrchestrationTrigger;
     }
@@ -192,7 +194,7 @@ export namespace trigger {
      * @returns a durable entity trigger
      */
     export function entity(): EntityTrigger {
-        return AzFuncTrigger.generic({
+        return azFuncTrigger.generic({
             type: "entityTrigger",
         }) as EntityTrigger;
     }
@@ -206,7 +208,7 @@ export namespace input {
      * @returns a durable client input configuration object
      */
     export function durableClient(): DurableClientInput {
-        return AzFuncInput.generic({
+        return azFuncInput.generic({
             type: "orchestrationClient",
         }) as DurableClientInput;
     }

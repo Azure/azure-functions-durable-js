@@ -8,7 +8,7 @@ import {
     DummyOrchestrationContext,
 } from "./classes";
 import { getClient } from "./durableorchestrationclient";
-import { entity, orchestration, activity, input, trigger } from "./shim";
+import { app, input, trigger } from "./shim";
 import { ManagedIdentityTokenSource } from "./tokensource";
 
 export * from "./types";
@@ -23,9 +23,7 @@ export {
     OrchestrationRuntimeStatus,
     RetryOptions,
     DummyOrchestrationContext,
-    entity,
-    orchestration,
-    activity,
+    app,
     input,
     trigger,
 };
