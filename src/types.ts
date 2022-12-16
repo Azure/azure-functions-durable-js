@@ -6,12 +6,8 @@ import {
     FunctionOutput,
     FunctionTrigger,
 } from "@azure/functions";
-import { EntityState } from "../src/classes";
-import { DurableEntityBindingInfo } from "../src/durableentitybindinginfo";
 import { IEntityFunctionContext } from "../src/ientityfunctioncontext";
 import { IOrchestrationFunctionContext } from "../src/iorchestrationfunctioncontext";
-import { OrchestratorState } from "../src/orchestratorstate";
-import { DurableOrchestrationInput } from "../src/testingUtils";
 
 // orchestrations
 export type OrchestrationHandler = (

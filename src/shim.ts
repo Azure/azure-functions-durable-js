@@ -1,10 +1,13 @@
-import { app, input as AzFuncInput, trigger as AzFuncTrigger } from "@azure/functions";
+import {
+    app,
+    FunctionHandler,
+    input as AzFuncInput,
+    trigger as AzFuncTrigger,
+} from "@azure/functions";
 import {
     ActivityOptions,
-    EntityFunction,
     EntityHandler,
     DurableClientInput,
-    OrchestrationFunction,
     OrchestrationHandler,
     ActivityTrigger,
     OrchestrationTrigger,
@@ -20,6 +23,18 @@ import {
 import { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 import { OrchestratorState } from "./orchestratorstate";
 import { DurableOrchestrationInput } from "./testingUtils";
+
+type EntityFunction<T> = FunctionHandler &
+    ((
+        context: IEntityFunctionContext<T>,
+        entityTrigger: DurableEntityBindingInfo
+    ) => Promise<EntityState>);
+
+type OrchestrationFunction = FunctionHandler &
+    ((
+        context: IOrchestrationFunctionContext,
+        orchestrationTrigger: DurableOrchestrationInput
+    ) => Promise<OrchestratorState>);
 
 /**
  * Enables a generator function to act as an orchestrator function.
