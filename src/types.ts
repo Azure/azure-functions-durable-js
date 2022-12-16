@@ -18,24 +18,12 @@ export type OrchestrationHandler = (
     context: IOrchestrationFunctionContext
 ) => Generator<unknown, unknown, any>;
 
-export type OrchestrationFunction = FunctionHandler &
-    ((
-        context: IOrchestrationFunctionContext,
-        orchestrationTrigger: DurableOrchestrationInput
-    ) => Promise<OrchestratorState>);
-
 export interface OrchestrationTrigger extends FunctionTrigger {
     type: "orchestrationTrigger";
 }
 
 // entities
 export type EntityHandler<T> = (context: IEntityFunctionContext<T>) => void;
-
-export type EntityFunction<T> = FunctionHandler &
-    ((
-        context: IEntityFunctionContext<T>,
-        entityTrigger: DurableEntityBindingInfo
-    ) => Promise<EntityState>);
 
 export interface EntityTrigger extends FunctionTrigger {
     type: "entityTrigger";
