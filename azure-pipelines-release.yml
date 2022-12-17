@@ -40,4 +40,4 @@ jobs:
                 workingDir: "$(Pipeline.Workspace)/DurableJSCI/drop"
                 verbose: true
                 customCommand: "publish package.tgz --tag ${{ parameters.NpmPublishTag }} --dry-run ${{ lower(parameters.NpmPublishDryRun) }}"
-                publishEndpoint: "NPM Durable Functions JS Publish"
+                customEndpoint: "NPM Durable Functions JS Publish"
