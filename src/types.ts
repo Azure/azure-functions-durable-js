@@ -1,4 +1,10 @@
-import { FunctionInput, FunctionHandler, FunctionOutput, FunctionTrigger } from "@azure/functions";
+import {
+    FunctionInput,
+    FunctionHandler,
+    FunctionOutput,
+    FunctionTrigger,
+    FunctionOptions,
+} from "@azure/functions";
 import { IEntityFunctionContext } from "../src/ientityfunctioncontext";
 import { IOrchestrationFunctionContext } from "../src/iorchestrationfunctioncontext";
 
@@ -7,9 +13,9 @@ export type OrchestrationHandler = (
     context: IOrchestrationFunctionContext
 ) => Generator<unknown, unknown, any>;
 
-export type OrchestrationOptions = {
+export interface OrchestrationOptions extends Partial<FunctionOptions> {
     handler: OrchestrationHandler;
-};
+}
 
 export interface OrchestrationTrigger extends FunctionTrigger {
     type: "orchestrationTrigger";
@@ -18,9 +24,9 @@ export interface OrchestrationTrigger extends FunctionTrigger {
 // entities
 export type EntityHandler<T> = (context: IEntityFunctionContext<T>) => void;
 
-export type EntityOptions<T> = {
+export interface EntityOptions<T> extends Partial<FunctionOptions> {
     handler: EntityHandler<T>;
-};
+}
 
 export interface EntityTrigger extends FunctionTrigger {
     type: "entityTrigger";
@@ -29,11 +35,11 @@ export interface EntityTrigger extends FunctionTrigger {
 // activities
 export type ActivityHandler = FunctionHandler;
 
-export type ActivityOptions = {
+export interface ActivityOptions extends Partial<FunctionOptions> {
     handler: ActivityHandler;
     extraInputs?: FunctionInput[];
     extraOutputs?: FunctionOutput[];
-};
+}
 
 export interface ActivityTrigger extends FunctionTrigger {
     type: "activityTrigger";

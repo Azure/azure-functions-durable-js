@@ -93,12 +93,15 @@ export namespace app {
         functionName: string,
         handlerOrOptions: OrchestrationHandler | OrchestrationOptions
     ): void {
-        const handler: OrchestrationHandler =
-            typeof handlerOrOptions === "function" ? handlerOrOptions : handlerOrOptions.handler;
+        const options: OrchestrationOptions =
+            typeof handlerOrOptions === "function"
+                ? { handler: handlerOrOptions }
+                : handlerOrOptions;
 
         azFuncApp.generic(functionName, {
             trigger: trigger.orchestration(),
-            handler: createOrchestrator(handler),
+            ...options,
+            handler: createOrchestrator(options.handler),
         });
     }
 
@@ -124,12 +127,15 @@ export namespace app {
         functionName: string,
         handlerOrOptions: EntityHandler<T> | EntityOptions<T>
     ): void {
-        const handler: EntityHandler<T> =
-            typeof handlerOrOptions === "function" ? handlerOrOptions : handlerOrOptions.handler;
+        const options: EntityOptions<T> =
+            typeof handlerOrOptions === "function"
+                ? { handler: handlerOrOptions }
+                : handlerOrOptions;
 
         azFuncApp.generic(functionName, {
             trigger: trigger.entity(),
-            handler: createEntityFunction(handler),
+            ...options,
+            handler: createEntityFunction(options.handler),
         });
     }
 
