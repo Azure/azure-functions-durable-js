@@ -1,3 +1,13 @@
+parameters:
+    - name: NpmPublishTag
+      displayName: "Tag"
+      type: string
+      default: "preview"
+    - name: NpmPublishDryRun
+      displayName: "Dry Run"
+      type: boolean
+      default: true
+
 trigger: none
 pr: none
 
@@ -29,5 +39,5 @@ jobs:
                 command: custom
                 workingDir: "$(Pipeline.Workspace)/DurableJSCI/drop"
                 verbose: true
-                customCommand: "publish package.tgz"
-                publishEndpoint: "NPM Durable Functions JS Publish"
+                customCommand: "publish package.tgz --tag ${{ parameters.NpmPublishTag }} --dry-run ${{ lower(parameters.NpmPublishDryRun) }}"
+                customEndpoint: "NPM Durable Functions JS Publish"
