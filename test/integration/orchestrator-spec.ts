@@ -41,7 +41,7 @@ describe("Orchestrator", () => {
             "",
             TestHistories.StarterHistory(moment.utc().toDate())
         );
-        const result = await orchestrator(mockContext, orchestrationInput);
+        const result = await orchestrator(orchestrationInput, mockContext);
 
         expect(result).to.be.deep.equal(
             new OrchestratorState(
@@ -65,7 +65,7 @@ describe("Orchestrator", () => {
             TestHistories.GetOrchestratorStart("SayHelloInline", moment.utc().toDate(), name),
             name
         );
-        const result = await orchestrator(mockContext, orchestrationInput);
+        const result = await orchestrator(orchestrationInput, mockContext);
 
         expect(result).to.be.deep.equal(
             new OrchestratorState(
@@ -96,7 +96,7 @@ describe("Orchestrator", () => {
                     ),
                     falsyValue
                 );
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
                 expect(result).to.deep.equal(
                     new OrchestratorState(
                         {
@@ -128,7 +128,7 @@ describe("Orchestrator", () => {
                 TestHistories.GetOrchestratorStart("SayHelloInline", moment.utc().toDate(), name),
                 name
             );
-            await orchestrator(mockContext, orchestrationInput);
+            await orchestrator(orchestrationInput, mockContext);
 
             expect(mockContext.df!.instanceId).to.be.equal(id);
         });
@@ -146,7 +146,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput("", mockHistory, name);
 
-            await orchestrator(mockContext, orchestrationInput);
+            await orchestrator(orchestrationInput, mockContext);
 
             const lastEvent = mockHistory.pop() as HistoryEvent;
 
@@ -175,7 +175,7 @@ describe("Orchestrator", () => {
                 id
             );
 
-            await orchestrator(mockContext, orchestrationInput);
+            await orchestrator(orchestrationInput, mockContext);
 
             expect(mockContext.df!.parentInstanceId).to.be.equal(id);
         });
@@ -197,7 +197,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            await orchestrator(mockContext, orchestrationInput);
+            await orchestrator(orchestrationInput, mockContext);
 
             expect(mockContext.df!.currentUtcDateTime).to.be.deep.equal(nextTimestamp);
         });
@@ -215,7 +215,7 @@ describe("Orchestrator", () => {
                 }
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result!.error).to.equal(undefined);
         });
@@ -232,7 +232,7 @@ describe("Orchestrator", () => {
             const expectedErr = "Exception from Orchestrator";
             let errored = false;
             try {
-                await orchestrator(mockContext, orchestrationInput);
+                await orchestrator(orchestrationInput, mockContext);
             } catch (err) {
                 errored = true;
                 expect(err).to.be.an.instanceOf(OrchestrationFailureError);
@@ -257,7 +257,7 @@ describe("Orchestrator", () => {
             const expectedErr = "Activity function 'ThrowsErrorActivity' failed.";
             let errored = false;
             try {
-                await orchestrator(mockContext, orchestrationTrigger);
+                await orchestrator(orchestrationTrigger, mockContext);
             } catch (err) {
                 errored = true;
                 expect(err).to.be.an.instanceOf(OrchestrationFailureError);
@@ -290,7 +290,7 @@ describe("Orchestrator", () => {
                 TestHistories.GetThrowsExceptionFromActivityReplayOne(moment.utc().toDate()),
                 name
             );
-            const result = await orchestrator(mockContext, orchestrationTrigger);
+            const result = await orchestrator(orchestrationTrigger, mockContext);
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
                     {
@@ -323,7 +323,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -346,7 +346,7 @@ describe("Orchestrator", () => {
                 TestHistories.GetOrchestratorStart("CallActivityNoInput", moment.utc().toDate())
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -376,7 +376,7 @@ describe("Orchestrator", () => {
                         falsyValue
                     );
 
-                    const result = await orchestrator(mockContext, orchestrationInput);
+                    const result = await orchestrator(orchestrationInput, mockContext);
 
                     expect(result).to.be.deep.equal(
                         new OrchestratorState(
@@ -404,7 +404,7 @@ describe("Orchestrator", () => {
                         falsyValue
                     );
 
-                    const result = await orchestrator(mockContext, orchestrationInput);
+                    const result = await orchestrator(orchestrationInput, mockContext);
 
                     expect(result).to.be.deep.equal(
                         new OrchestratorState(
@@ -435,7 +435,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -464,7 +464,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -487,7 +487,7 @@ describe("Orchestrator", () => {
                 TestHistories.GetHelloSequenceReplayFinal("SayHelloSequence", moment.utc().toDate())
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -523,7 +523,7 @@ describe("Orchestrator", () => {
 
             let errored = false;
             try {
-                await orchestrator(mockContext, orchestrationInput);
+                await orchestrator(orchestrationInput, mockContext);
             } catch (err) {
                 errored = true;
                 expect(err).to.be.an.instanceOf(OrchestrationFailureError);
@@ -555,7 +555,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -593,7 +593,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -618,7 +618,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -659,7 +659,7 @@ describe("Orchestrator", () => {
 
             let errored = false;
             try {
-                await orchestrator(mockContext, orchestrationInput);
+                await orchestrator(orchestrationInput, mockContext);
             } catch (err) {
                 errored = true;
                 expect(err).to.be.an.instanceOf(OrchestrationFailureError);
@@ -693,7 +693,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -730,7 +730,7 @@ describe("Orchestrator", () => {
                 undefined
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -775,7 +775,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -807,7 +807,7 @@ describe("Orchestrator", () => {
                 req
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -838,7 +838,7 @@ describe("Orchestrator", () => {
                 req
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             // This is the exact protocol expected by the durable extension
             expect(result).to.be.deep.equal({
@@ -885,7 +885,7 @@ describe("Orchestrator", () => {
                 req
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -936,7 +936,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -975,7 +975,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1012,7 +1012,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1047,7 +1047,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1080,7 +1080,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1115,7 +1115,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1157,7 +1157,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V1
                 );
 
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState({
@@ -1196,7 +1196,7 @@ describe("Orchestrator", () => {
 
                 let errored = false;
                 try {
-                    await orchestrator(mockContext, orchestrationInput);
+                    await orchestrator(orchestrationInput, mockContext);
                 } catch (err) {
                     errored = true;
                     expect(err).to.be.an.instanceOf(OrchestrationFailureError);
@@ -1229,7 +1229,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                expect(orchestrator(mockContext, orchestrationInput)).to.throw;
+                expect(orchestrator(orchestrationInput, mockContext)).to.throw;
             });
         });
     });
@@ -1247,7 +1247,7 @@ describe("Orchestrator", () => {
                 instanceId
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1278,7 +1278,7 @@ describe("Orchestrator", () => {
                 true
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1310,7 +1310,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1342,7 +1342,7 @@ describe("Orchestrator", () => {
                 id
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1387,7 +1387,7 @@ describe("Orchestrator", () => {
                 id
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1448,7 +1448,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1487,7 +1487,7 @@ describe("Orchestrator", () => {
 
             let errored = false;
             try {
-                await orchestrator(mockContext, orchestrationInput);
+                await orchestrator(orchestrationInput, mockContext);
             } catch (err) {
                 errored = true;
                 expect(err).to.be.an.instanceOf(OrchestrationFailureError);
@@ -1528,7 +1528,7 @@ describe("Orchestrator", () => {
 
             let errored = false;
             try {
-                await orchestrator(mockContext, orchestrationInput);
+                await orchestrator(orchestrationInput, mockContext);
             } catch (err) {
                 errored = true;
                 expect(err).to.be.an.instanceOf(OrchestrationFailureError);
@@ -1562,7 +1562,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1604,7 +1604,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1644,7 +1644,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1690,7 +1690,7 @@ describe("Orchestrator", () => {
 
             let errored = false;
             try {
-                await orchestrator(mockContext, orchestrationInput);
+                await orchestrator(orchestrationInput, mockContext);
             } catch (err) {
                 errored = true;
                 expect(err).to.be.an.instanceOf(OrchestrationFailureError);
@@ -1737,7 +1737,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1775,7 +1775,7 @@ describe("Orchestrator", () => {
                 undefined
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1814,7 +1814,7 @@ describe("Orchestrator", () => {
                 { value: 5 }
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1844,7 +1844,7 @@ describe("Orchestrator", () => {
                 fireAt
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1871,7 +1871,7 @@ describe("Orchestrator", () => {
                 fireAt
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -1903,7 +1903,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState(
@@ -1934,7 +1934,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
 
                 expect(result).to.be.deep.equal(
                     new OrchestratorState(
@@ -1965,7 +1965,7 @@ describe("Orchestrator", () => {
                     ReplaySchema.V3
                 );
 
-                const result = await orchestrator(mockContext, orchestrationInput);
+                const result = await orchestrator(orchestrationInput, mockContext);
 
                 expect(result).to.deep.equal(
                     new OrchestratorState(
@@ -1999,8 +1999,8 @@ describe("Orchestrator", () => {
                 TestHistories.GetOrchestratorStart("GuidGenerator", currentUtcDateTime)
             );
 
-            const result1 = await orchestrator(mockContext1, orchestrationInput1);
-            const result2 = await orchestrator(mockContext2, orchestrationInput2);
+            const result1 = await orchestrator(orchestrationInput1, mockContext1);
+            const result2 = await orchestrator(orchestrationInput2, mockContext2);
 
             expect(result1.isDone).to.equal(true);
             expect(result1).to.deep.equal(result2);
@@ -2020,7 +2020,7 @@ describe("Orchestrator", () => {
                 new EntityId("samplename", "samplekey"),
             ]);
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.deep.equal(
                 new OrchestratorState(
@@ -2055,7 +2055,7 @@ describe("Orchestrator", () => {
                 name
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.deep.eq(
                 new OrchestratorState(
@@ -2085,7 +2085,7 @@ describe("Orchestrator", () => {
                 undefined
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.deep.equal(
                 new OrchestratorState(
@@ -2121,7 +2121,7 @@ describe("Orchestrator", () => {
                 undefined
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.deep.equal(
                 new OrchestratorState(
@@ -2158,7 +2158,7 @@ describe("Orchestrator", () => {
                 undefined
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.deep.equal(
                 new OrchestratorState(
@@ -2192,7 +2192,7 @@ describe("Orchestrator", () => {
                 "C:\\Dev"
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2220,7 +2220,7 @@ describe("Orchestrator", () => {
                 "C:\\Dev"
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2248,7 +2248,7 @@ describe("Orchestrator", () => {
                 "C:\\Dev"
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2282,7 +2282,7 @@ describe("Orchestrator", () => {
             let errored = false;
 
             try {
-                await orchestrator(mockContext, orchestrationInput);
+                await orchestrator(orchestrationInput, mockContext);
             } catch (err) {
                 errored = true;
                 expect(err).to.be.an.instanceOf(OrchestrationFailureError);
@@ -2314,7 +2314,7 @@ describe("Orchestrator", () => {
                 completeInOrder
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2344,7 +2344,7 @@ describe("Orchestrator", () => {
                 completeInOrder
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2374,7 +2374,7 @@ describe("Orchestrator", () => {
                 completeInOrder
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2404,7 +2404,7 @@ describe("Orchestrator", () => {
                 TestHistories.GetAnyWithTaskSet(initialTime, 1, eventsWin)
             );
 
-            let result = await orchestrator(mockContext, orchestrationInput);
+            let result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2430,7 +2430,7 @@ describe("Orchestrator", () => {
                 TestHistories.GetAnyWithTaskSet(initialTime, 2, eventsWin)
             );
 
-            result = await orchestrator(mockContext, orchestrationInput);
+            result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2462,7 +2462,7 @@ describe("Orchestrator", () => {
                 TestHistories.GetAnyWithTaskSet(initialTime, 1, eventsWin)
             );
 
-            let result = await orchestrator(mockContext, orchestrationInput);
+            let result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2488,7 +2488,7 @@ describe("Orchestrator", () => {
                 TestHistories.GetAnyWithTaskSet(initialTime, 2, eventsWin)
             );
 
-            result = await orchestrator(mockContext, orchestrationInput);
+            result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2519,7 +2519,7 @@ describe("Orchestrator", () => {
                 completeInOrder
             );
 
-            const result = await orchestrator(mockContext, orchestrationInput);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2551,7 +2551,7 @@ describe("Orchestrator", () => {
                 undefined
             );
 
-            let result = await orchestrator(mockContext, orchestrationInput);
+            let result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2578,7 +2578,7 @@ describe("Orchestrator", () => {
                 undefined
             );
 
-            result = await orchestrator(mockContext, orchestrationInput);
+            result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2606,7 +2606,7 @@ describe("Orchestrator", () => {
                 undefined
             );
 
-            result = await orchestrator(mockContext, orchestrationInput);
+            result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2634,7 +2634,7 @@ describe("Orchestrator", () => {
                 undefined
             );
 
-            result = await orchestrator(mockContext, orchestrationInput);
+            result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2667,7 +2667,7 @@ describe("Orchestrator", () => {
                 null
             );
 
-            let result = await orchestrator(mockContext, orchestrationInput);
+            let result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(
@@ -2694,7 +2694,7 @@ describe("Orchestrator", () => {
                 null
             );
 
-            result = await orchestrator(mockContext, orchestrationInput);
+            result = await orchestrator(orchestrationInput, mockContext);
 
             expect(result).to.be.deep.equal(
                 new OrchestratorState(

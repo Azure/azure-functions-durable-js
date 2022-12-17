@@ -16,7 +16,7 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
         const testData = TestEntityBatches.GetStringStoreBatch(operations, undefined);
         const mockContext = new DummyEntityContext<string>();
-        const result = await entity(mockContext, testData.input);
+        const result = await entity(testData.input, mockContext);
         expect(result).to.not.be.undefined;
         if (result) {
             entityStateMatchesExpected(result, testData.output);
@@ -28,7 +28,7 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
         const testData = TestEntityBatches.GetStringStoreBatch(operations, "Hello world");
         const mockContext = new DummyEntityContext<string>();
-        const result = await entity(mockContext, testData.input);
+        const result = await entity(testData.input, mockContext);
         expect(result).to.not.be.undefined;
         if (result) {
             entityStateMatchesExpected(result, testData.output);
@@ -43,7 +43,7 @@ describe("Entity", () => {
         operations.push({ kind: "get" });
         const testData = TestEntityBatches.GetAsyncStringStoreBatch(operations, undefined);
         const mockContext = new DummyEntityContext<string>();
-        const result = await entity(mockContext, testData.input);
+        const result = await entity(testData.input, mockContext);
         expect(result).to.not.be.undefined;
         if (result) {
             entityStateMatchesExpected(result, testData.output);

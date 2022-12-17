@@ -79,7 +79,7 @@ describe("Durable client RPC endpoint", () => {
 
             const instanceId = "abc123";
             const response = client.createCheckStatusResponse(request, instanceId);
-            const payload = response.body as HttpManagementPayload;
+            const payload = (await response.json()) as HttpManagementPayload;
 
             expect(payload).is.an("object");
             expect(payload.id).to.be.equal(instanceId);

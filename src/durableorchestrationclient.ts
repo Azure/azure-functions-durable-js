@@ -1,6 +1,6 @@
 // tslint:disable:member-access
 
-import { HttpRequest, InvocationContext } from "@azure/functions";
+import { HttpRequest, HttpResponse, InvocationContext } from "@azure/functions";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 /** @hidden */
 import cloneDeep = require("lodash/cloneDeep");
@@ -19,7 +19,6 @@ import {
     HttpManagementPayload,
     IHttpRequest,
     IHttpResponse,
-    IOrchestrationFunctionContext,
     OrchestrationClientInputData,
     OrchestrationRuntimeStatus,
     PurgeHistoryResult,
@@ -177,18 +176,18 @@ export class DurableOrchestrationClient {
     public createCheckStatusResponse(
         request: IHttpRequest | HttpRequest | undefined,
         instanceId: string
-    ): IHttpResponse {
+    ): HttpResponse {
         const httpManagementPayload = this.getClientResponseLinks(request, instanceId);
 
-        return {
+        return new HttpResponse({
             status: 202,
-            body: httpManagementPayload,
+            jsonBody: httpManagementPayload,
             headers: {
                 "Content-Type": "application/json",
                 Location: httpManagementPayload.statusQueryGetUri,
-                "Retry-After": 10,
+                "Retry-After": "10",
             },
-        };
+        });
     }
 
     /**

@@ -1,7 +1,7 @@
-import * as df from "../../src";
+import { createEntityFunction } from "../../src/shim";
 
 export class TestEntities {
-    public static StringStore = df.entity<string>((context): void => {
+    public static StringStore = createEntityFunction<string>((context): void => {
         switch (context.df.operationName) {
             case "set":
                 context.df.setState(context.df.getInput() || "");
@@ -14,7 +14,7 @@ export class TestEntities {
         }
     });
 
-    public static Counter = df.entity<number>((context): void => {
+    public static Counter = createEntityFunction<number>((context): void => {
         const input = context.df.getInput();
         const state = context.df.getState();
 
@@ -43,7 +43,7 @@ export class TestEntities {
         }
     });
 
-    public static AsyncStringStore = df.entity<string>(async (context) => {
+    public static AsyncStringStore = createEntityFunction<string>(async (context) => {
         await new Promise<void>((resolve) => setTimeout(() => resolve(), 0)); // force onto the event loop and result in a no-op delay
         switch (context.df.operationName) {
             case "set":
