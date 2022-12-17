@@ -77,14 +77,6 @@ export namespace app {
      * @param functionName the name of your new durable orchestrator
      * @param handler the generator function that should act as an orchestrator
      *
-     * @example Register an orchestrator
-     * ```javascript
-     * const df = require("durable-functions");
-     *
-     * df.orchestration('durableOrchestration1', function* (context) {
-     *     // orchestrator body
-     * });
-     * ```
      */
     export function orchestration(functionName: string, handler: OrchestrationHandler): void;
 
@@ -94,16 +86,6 @@ export namespace app {
      * @param functionName the name of your new durable orchestrator
      * @param options the configuration options object describing the handler for this orchestrator
      *
-     * @example Register an orchestrator
-     * ```javascript
-     * const df = require("durable-functions");
-     *
-     * df.orchestration('durableOrchestration1', {
-     *   handler: function* (context) {
-     *       // orchestrator body
-     *   }
-     * });
-     * ```
      */
     export function orchestration(functionName: string, options: OrchestrationOptions): void;
 
@@ -126,14 +108,6 @@ export namespace app {
      * @param functionName the name of your new durable entity
      * @param handler the function that should act as an entity
      *
-     * @example Register a counter entity
-     * ```javascript
-     * const df = require("durable-functions");
-     *
-     * df.entity('Counter', function (context) {
-     *     // entity body
-     * });
-     * ```
      */
     export function entity<T = unknown>(functionName: string, handler: EntityHandler<T>): void;
 
@@ -143,16 +117,6 @@ export namespace app {
      * @param functionName the name of your new durable entity
      * @param options the configuration options object describing the handler for this entity
      *
-     * @example Register a counter entity
-     * ```javascript
-     * const df = require("durable-functions");
-     *
-     * df.entity('Counter', {
-     *   handler: function (context) {
-     *     // entity body
-     *   }
-     * });
-     * ```
      */
     export function entity<T = unknown>(functionName: string, options: EntityOptions<T>): void;
 
@@ -173,19 +137,7 @@ export namespace app {
      * Registers a function as an Activity Function for your Function App
      *
      * @param functionName the name of your new activity function
-     * @param options the configuration options for this activity,
-     * specifying the handler and the inputs and outputs
-     *
-     * @example Register an activity function
-     * ```javascript
-     * const df = require("durable-functions");
-     *
-     * df.activity('MyActivity', {
-     *   handler: function (context) {
-     *      // activity body
-     *   }
-     * });
-     * ```
+     * @param options the configuration options for this activity, specifying the handler and the inputs and outputs
      */
     export function activity(functionName: string, options: ActivityOptions): void {
         azFuncApp.generic(functionName, {
