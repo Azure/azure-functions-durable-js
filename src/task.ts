@@ -344,8 +344,7 @@ export class WhenAllTask extends CompoundTask {
     }
 
     trySetIsPlayed(): void {
-        const isPlayed = this.children.every((c) => c.isPlayed);
-        this.isPlayed = isPlayed;
+        this.isPlayed = this.children.every((c) => c.isPlayed);
     }
 
     /**
@@ -380,8 +379,7 @@ export class WhenAllTask extends CompoundTask {
  */
 export class WhenAnyTask extends CompoundTask {
     trySetIsPlayed(): void {
-        const isPlayed = this.children.some((c) => c.isPlayed);
-        this.isPlayed = isPlayed;
+        this.isPlayed = this.children.some((c) => c.isPlayed);
     }
     /**
      * @hidden
