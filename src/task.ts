@@ -245,7 +245,6 @@ export abstract class CompoundTask extends DFTask {
         // If the task has no children, then it's completed by definition.
         if (children.length == 0) {
             this.state = TaskState.Completed;
-            // TODO: how should isPlayed change here?
         }
 
         // Sub-tasks may have already completed, so we process them
