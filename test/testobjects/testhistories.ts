@@ -1434,6 +1434,88 @@ export class TestHistories {
         return history;
     }
 
+    public static GetSimpleFanOut(firstTimestamp: Date) {
+        const historyEvents: HistoryEvent[] = [];
+
+        historyEvents.push(
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+            })
+        );
+        historyEvents.push(
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: "SayHelloWithActivityRetryFanout",
+                input: undefined,
+            })
+        );
+        historyEvents.push(
+            new TaskScheduledEvent({
+                eventId: 0,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: "Hello",
+                input: "Tokyo",
+            })
+        );
+        historyEvents.push(
+            new TaskScheduledEvent({
+                eventId: 1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: "Hello",
+                input: "Seattle",
+            })
+        );
+        historyEvents.push(
+            new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+            })
+        );
+
+        historyEvents.push(
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: moment(firstTimestamp).add(100, "s").toDate(),
+                isPlayed: true,
+            })
+        );
+        historyEvents.push(
+            new TaskCompletedEvent({
+                eventId: -1,
+                timestamp: moment(firstTimestamp).add(100, "s").toDate(),
+                isPlayed: true,
+                result: JSON.stringify(`Hello, Tokyo!`),
+                taskScheduledId: 0,
+            })
+        );
+
+        historyEvents.push(
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: moment(firstTimestamp).add(100, "s").toDate(),
+                isPlayed: false,
+            })
+        );
+        historyEvents.push(
+            new TaskCompletedEvent({
+                eventId: -1,
+                timestamp: moment(firstTimestamp).add(100, "s").toDate(),
+                isPlayed: false,
+                result: JSON.stringify(`Hello, Seattle!`),
+                taskScheduledId: 1,
+            })
+        );
+
+        return historyEvents;
+    }
+
     public static GetSayHelloWithActivityRetryFanout(
         firstTimestamp: Date,
         retryInterval: number,

@@ -125,6 +125,7 @@ export abstract class TaskBase {
      */
     constructor(public id: TaskID, protected action: BackingAction) {
         this.state = TaskState.Running;
+        this.isPlayed = false;
     }
 
     /** Get this task's backing action */
@@ -261,11 +262,16 @@ export abstract class CompoundTask extends DFTask {
      *  A sub-task of this task.
      */
     public handleCompletion(child: TaskBase): void {
-        if (!this.isPlayed) {
-            this.isPlayed = child.isPlayed;
-        }
+        this.trySetIsPlayed();
         this.trySetValue(child);
     }
+
+    /**
+     * @hidden
+     *
+     * Task-internal logic for setting this task's isPlayed flag
+     */
+    abstract trySetIsPlayed(): void;
 
     /**
      * @hidden
@@ -336,6 +342,10 @@ export class WhenAllTask extends CompoundTask {
         super(children, action);
     }
 
+    trySetIsPlayed(): void {
+        this.isPlayed = this.children.every((c) => c.isPlayed);
+    }
+
     /**
      * @hidden
      * Attempts to set a value to this task, given a completed sub-task
@@ -367,6 +377,9 @@ export class WhenAllTask extends CompoundTask {
  * A WhenAny task.
  */
 export class WhenAnyTask extends CompoundTask {
+    trySetIsPlayed(): void {
+        this.isPlayed = this.children.some((c) => c.isPlayed);
+    }
     /**
      * @hidden
      * Attempts to set a value to this task, given a completed sub-task
@@ -382,6 +395,7 @@ export class WhenAnyTask extends CompoundTask {
         // in the result as a value.
         if (this.state === TaskState.Running) {
             this.setValue(false, child);
+            this.isPlayed = child.isPlayed;
         }
     }
 }
@@ -419,6 +433,11 @@ export class CallHttpWithPollingTask extends CompoundTask {
             defaultHttpAsyncRequestSleepTimeMillseconds,
             "ms"
         );
+    }
+
+    trySetIsPlayed(): void {
+        const isPlayed = this.children.every((c) => c.isPlayed);
+        this.isPlayed = isPlayed;
     }
 
     public trySetValue(child: TaskBase): void {
