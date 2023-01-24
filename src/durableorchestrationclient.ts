@@ -24,7 +24,7 @@ import {
     PurgeHistoryResult,
     Utils,
 } from "./classes";
-import { DurableClientInput } from "./types";
+import { ClientStartNewOptions, DurableClientInput } from "./types";
 import { WebhookUtils } from "./webhookutils";
 
 /** @hidden */
@@ -38,9 +38,9 @@ const URL = url.URL;
  * ```javascript
  * const df = require("durable-functions");
  *
- * module.exports = async function (context, req) {
- *     const client = df.getClient(context);
- *     const instanceId = await client.startNew(req.params.functionName, undefined, req.body);
+ * module.exports = async function (req, context) {
+ *     const client = df.getClient(context, clientInput);
+ *     const instanceId = await client.startNew(req.params.functionName, { input: req.text() });
  *
  *     return client.createCheckStatusResponse(req, instanceId);
  * };
@@ -648,17 +648,13 @@ export class DurableOrchestrationClient {
      * existing instance will be silently replaced by this new instance.
      * @param orchestratorFunctionName The name of the orchestrator function to
      *  start.
-     * @param instanceId The ID to use for the new orchestration instance. If
-     *  no instanceId is specified, the Durable Functions extension will
-     *  generate a random GUID (recommended).
-     * @param input JSON-serializable input value for the orchestrator
-     *  function.
+     * @param options optional object specifying the orchestration instance ID and any optional input
+     * @param input
      * @returns The ID of the new orchestration instance.
      */
     public async startNew(
         orchestratorFunctionName: string,
-        instanceId?: string,
-        input?: unknown
+        options?: ClientStartNewOptions
     ): Promise<string> {
         if (!orchestratorFunctionName) {
             throw new Error("orchestratorFunctionName must be a valid string.");
@@ -666,10 +662,12 @@ export class DurableOrchestrationClient {
 
         // TODO: Add support for specifying a task hub and a connection name
         let requestUrl: string;
+        const instanceIdPath: string = options?.instanceId ? `/${options.instanceId}` : "";
+        const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             requestUrl = new URL(
-                `orchestrators/${orchestratorFunctionName}${instanceId ? `/${instanceId}` : ""}`,
+                `orchestrators/${orchestratorFunctionName}${instanceIdPath}`,
                 this.clientData.rpcBaseUrl
             ).href;
         } else {
@@ -677,13 +675,10 @@ export class DurableOrchestrationClient {
             requestUrl = this.clientData.creationUrls.createNewInstancePostUri;
             requestUrl = requestUrl
                 .replace(this.functionNamePlaceholder, orchestratorFunctionName)
-                .replace(this.instanceIdPlaceholder, instanceId ? `/${instanceId}` : "");
+                .replace(this.instanceIdPlaceholder, instanceIdPath);
         }
 
-        const response = await this.axiosInstance.post(
-            requestUrl,
-            input !== undefined ? JSON.stringify(input) : ""
-        );
+        const response = await this.axiosInstance.post(requestUrl, input);
         if (response.data && response.status <= 202) {
             return (response.data as HttpManagementPayload).id;
         } else {
