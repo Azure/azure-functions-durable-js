@@ -50,7 +50,7 @@ export function createOrchestrator(fn: OrchestrationHandler): OrchestrationFunct
         orchestrationTrigger: DurableOrchestrationInput,
         context: IOrchestrationFunctionContext
     ): Promise<OrchestratorState> => {
-        return await listener(context, orchestrationTrigger);
+        return await listener(orchestrationTrigger, context);
     };
 }
 
@@ -66,7 +66,7 @@ export function createEntityFunction<T = unknown>(fn: EntityHandler<T>): EntityF
         entityTrigger: DurableEntityBindingInfo,
         context: IEntityFunctionContext<T>
     ): Promise<EntityState> => {
-        return await listener(context, entityTrigger);
+        return await listener(entityTrigger, context);
     };
 }
 

@@ -23,15 +23,15 @@ export class Orchestrator {
     constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {}
 
     public listen(): (
-        context: IOrchestrationFunctionContext,
-        orchestrationTrigger: DurableOrchestrationBindingInfo
+        orchestrationTrigger: DurableOrchestrationBindingInfo,
+        context: IOrchestrationFunctionContext
     ) => Promise<OrchestratorState> {
         return this.handle.bind(this);
     }
 
     private async handle(
-        context: IOrchestrationFunctionContext,
-        orchestrationTrigger: DurableOrchestrationBindingInfo
+        orchestrationTrigger: DurableOrchestrationBindingInfo,
+        context: IOrchestrationFunctionContext
     ): Promise<OrchestratorState> {
         this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
