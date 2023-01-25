@@ -50,7 +50,7 @@ export interface CallHttpOptions {
      * Specifies whether the DurableHttpRequest should handle the asynchronous pattern.
      * @default true
      */
-    asynchronousPatternEnabled: boolean;
+    asynchronousPatternEnabled?: boolean;
 }
 
 // Over time we will likely add more implementations
