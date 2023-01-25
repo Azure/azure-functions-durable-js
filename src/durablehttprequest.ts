@@ -1,4 +1,4 @@
-import { TokenSource } from "./tokensource";
+import { TokenSource } from "./types";
 
 /**
  * Data structure representing a durable HTTP request.

@@ -1,4 +1,3 @@
-import { TokenSource } from "./tokensource";
 import {
     EntityId,
     RetryOptions,
@@ -33,6 +32,7 @@ import {
 } from "./task";
 import moment = require("moment");
 import { ReplaySchema } from "./replaySchema";
+import { CallHttpOptions } from "./types";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -301,28 +301,24 @@ export class DurableOrchestrationContext {
      *
      * @param req The durable HTTP request to schedule.
      */
-    public callHttp(
-        method: string,
-        uri: string,
-        content?: string | object,
-        headers?: { [key: string]: string },
-        tokenSource?: TokenSource,
-        asynchronousPatternEnabled = true
-    ): Task {
+    public callHttp(options: CallHttpOptions): Task {
+        let content = options.body;
         if (content && typeof content !== "string") {
             content = JSON.stringify(content);
         }
 
-        const req = new DurableHttpRequest(
-            method,
-            uri,
+        const request = new DurableHttpRequest(
+            options.method,
+            options.url,
             content as string,
-            headers,
-            tokenSource,
-            asynchronousPatternEnabled
+            options.headers,
+            options.tokenSource,
+            typeof options.asynchronousPatternEnabled === "undefined"
+                ? true
+                : options.asynchronousPatternEnabled
         );
-        const newAction = new CallHttpAction(req);
-        if (this.schemaVersion >= ReplaySchema.V3 && req.asynchronousPatternEnabled) {
+        const newAction = new CallHttpAction(request);
+        if (this.schemaVersion >= ReplaySchema.V3 && request.asynchronousPatternEnabled) {
             if (!this.defaultHttpAsyncRequestSleepTimeMillseconds) {
                 throw Error(
                     "A framework-internal error was detected: replay schema version >= V3 is being used, " +

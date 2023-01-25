@@ -7,6 +7,7 @@ import {
 } from "@azure/functions";
 import { IEntityFunctionContext } from "../src/ientityfunctioncontext";
 import { IOrchestrationFunctionContext } from "../src/iorchestrationfunctioncontext";
+import { ManagedIdentityTokenSource } from "./tokensource";
 
 // orchestrations
 export type OrchestrationHandler = (
@@ -20,6 +21,40 @@ export interface OrchestrationOptions extends Partial<FunctionOptions> {
 export interface OrchestrationTrigger extends FunctionTrigger {
     type: "orchestrationTrigger";
 }
+
+/**
+ * Options object provided to `callHttp()` methods on orchestration contexts
+ */
+export interface CallHttpOptions {
+    /**
+     * The HTTP request method.
+     */
+    method: string;
+    /**
+     * The HTTP request URL.
+     */
+    url: string;
+    /**
+     * The HTTP request body.
+     */
+    body?: string | object;
+    /**
+     * The HTTP request headers.
+     */
+    headers?: { [key: string]: string };
+    /**
+     * The source of the OAuth token to add to the request.
+     */
+    tokenSource?: TokenSource;
+    /**
+     * Specifies whether the DurableHttpRequest should handle the asynchronous pattern.
+     * @default true
+     */
+    asynchronousPatternEnabled: boolean;
+}
+
+// Over time we will likely add more implementations
+export type TokenSource = ManagedIdentityTokenSource;
 
 // entities
 export type EntityHandler<T> = (context: IEntityFunctionContext<T>) => void;
