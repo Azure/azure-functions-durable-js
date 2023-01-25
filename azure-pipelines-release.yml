@@ -16,7 +16,7 @@ resources:
         - pipeline: DurableJSCI
           project: "Azure Functions"
           source: azure-functions-durable-js
-          branch: main
+          branch: v3.x
 
 jobs:
     - job: Release
