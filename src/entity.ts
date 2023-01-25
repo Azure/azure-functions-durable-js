@@ -21,15 +21,15 @@ export class Entity<T> {
     constructor(public fn: (context: IEntityFunctionContext<T>) => void) {}
 
     public listen(): (
-        context: IEntityFunctionContext<T>,
-        entityTrigger: DurableEntityBindingInfo
+        entityTrigger: DurableEntityBindingInfo,
+        context: IEntityFunctionContext<T>
     ) => Promise<EntityState> {
         return this.handle.bind(this);
     }
 
     private async handle(
-        context: IEntityFunctionContext<T>,
-        entityTrigger: DurableEntityBindingInfo
+        entityTrigger: DurableEntityBindingInfo,
+        context: IEntityFunctionContext<T>
     ): Promise<EntityState> {
         const entityBinding = Utils.getInstancesOf<DurableEntityBindingInfo>(
             { trigger: entityTrigger },
