@@ -15,18 +15,19 @@ if (
     process.env.TwilioAuthToken
 ) {
     df.app.orchestration("weatherMonitor", function* (context) {
+        // get input
         const input = context.df.getInput();
         context.log(`Received monitor request. Location: ${input.location}. Phone: ${input.phone}`);
         verifyRequest(input);
 
+        // set expiry time to 6 hours from now
         const endTime = DateTime.fromJSDate(context.df.currentUtcDateTime).plus({ hours: 6 });
-
         const locationString = `${input.location.city}${
             input.location.state ? `, ${input.location.state}` : ""
         }, ${input.location.country}`;
-
         context.log(`Instantiating monitor for ${locationString}. Expires: ${endTime.toString()}.`);
 
+        // until the expiry time
         while (DateTime.fromJSDate(context.df.currentUtcDateTime) < endTime) {
             // Check the weather
             context.log(
@@ -39,7 +40,6 @@ if (
                 context.log(
                     `Detected clear weather for ${locationString}. Notifying ${input.phone}.`
                 );
-
                 yield context.df.callActivity(sendGoodWeatherAlertActivity, input.phone);
                 break;
             } else {
@@ -50,7 +50,7 @@ if (
 
                 context.log(`Next check for ${locationString} at ${nextCheckpoint.toString()}`);
 
-                yield context.df.createTimer(nextCheckpoint.toJSDate()); // accomodate cancellation tokens
+                yield context.df.createTimer(nextCheckpoint.toJSDate());
             }
         }
 
@@ -84,7 +84,9 @@ if (
     df.app.activity(getIsClearActivity, {
         handler: async function (location, context) {
             try {
+                // get current conditions from OpenWeatherMap API
                 const currentConditions = await getCurrentConditions(location);
+                // compare against known clear conditions
                 return clearWeatherConditions.includes(currentConditions.description);
             } catch (err) {
                 context.log(`${getIsClearActivity} encountered an error: ${err}`);
@@ -95,6 +97,7 @@ if (
 
     async function getCurrentConditions(location) {
         try {
+            // get current conditions from OpenWeatherMap API
             const url = location.state
                 ? `https://api.openweathermap.org/data/2.5/weather?q=${location.city},${location.state},${location.country}&appid=${process.env.OpenWeatherMapApiKey}`
                 : `https://api.openweathermap.org/data/2.5/weather?q=${location.city},${location.country}&appid=${process.env.OpenWeatherMapApiKey}`;
@@ -106,6 +109,7 @@ if (
         }
     }
 
+    // configure twilio output
     const twilioOutput = output.generic({
         type: "twilioSms",
         from: "%TwilioPhoneNumber%",
@@ -114,13 +118,14 @@ if (
     });
 
     df.app.activity(sendGoodWeatherAlertActivity, {
+        extraOutputs: [twilioOutput], // register twilio output
         handler: function (phoneNumber, context) {
+            // send message to phone number
             context.extraOutputs.set(twilioOutput, {
                 body: "The weather's clear outside! Go talk a walk!",
                 to: phoneNumber,
             });
         },
-        extraOutputs: [twilioOutput],
     });
 } else {
     console.warn(
