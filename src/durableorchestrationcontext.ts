@@ -313,7 +313,7 @@ export class DurableOrchestrationContext {
             content as string,
             options.headers,
             options.tokenSource,
-            typeof options.asynchronousPatternEnabled === "undefined"
+            options.asynchronousPatternEnabled === undefined
                 ? true
                 : options.asynchronousPatternEnabled
         );
