@@ -663,7 +663,6 @@ export class DurableOrchestrationClient {
         // TODO: Add support for specifying a task hub and a connection name
         let requestUrl: string;
         const instanceIdPath: string = options?.instanceId ? `/${options.instanceId}` : "";
-        const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             requestUrl = new URL(
@@ -678,6 +677,7 @@ export class DurableOrchestrationClient {
                 .replace(this.instanceIdPlaceholder, instanceIdPath);
         }
 
+        const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
         const response = await this.axiosInstance.post(requestUrl, input);
         if (response.data && response.status <= 202) {
             return (response.data as HttpManagementPayload).id;
