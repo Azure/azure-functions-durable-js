@@ -26,14 +26,14 @@ if (process.env.TwilioPhoneNumber && process.env.TwilioAccountSid && process.env
 
             const winner = yield context.df.Task.any([challengeResponseTask, timeoutTask]);
 
-            if (winner === challengeResponseTask) {
-                // We got back a response! Compare it to the challenge code.
-                if (challengeResponseTask.result === challengeCode) {
-                    authorized = true;
-                    break;
-                }
-            } else {
+            if (winner === timeoutTask) {
                 // Timeout expired
+                break;
+            }
+
+            // We got back a response! Compare it to the challenge code.
+            if (challengeResponseTask.result === challengeCode) {
+                authorized = true;
                 break;
             }
         }
