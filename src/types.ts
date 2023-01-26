@@ -4,9 +4,12 @@ import {
     FunctionOutput,
     FunctionTrigger,
     FunctionOptions,
+    InvocationContext,
+    FunctionResult,
 } from "@azure/functions";
 import { IEntityFunctionContext } from "../src/ientityfunctioncontext";
 import { IOrchestrationFunctionContext } from "../src/iorchestrationfunctioncontext";
+import { DurableOrchestrationClient } from "./durableorchestrationclient";
 
 // orchestrations
 export type OrchestrationHandler = (
@@ -49,3 +52,13 @@ export interface ActivityTrigger extends FunctionTrigger {
 export interface DurableClientInput extends FunctionInput {
     type: "durableClient";
 }
+
+export interface DurableClientOptions /* extends Omit<FunctionOptions, "handler"> */ {
+    handler: DurableClientHandler;
+}
+
+export type DurableClientHandler = (
+    triggerInput: any,
+    client: DurableOrchestrationClient,
+    context: InvocationContext
+) => FunctionResult<any>;

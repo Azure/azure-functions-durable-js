@@ -1,7 +1,9 @@
 import {
     app as azFuncApp,
     FunctionHandler,
+    FunctionOptions,
     input as azFuncInput,
+    InvocationContext,
     trigger as azFuncTrigger,
 } from "@azure/functions";
 import {
@@ -14,8 +16,10 @@ import {
     EntityTrigger,
     OrchestrationOptions,
     EntityOptions,
+    DurableClientHandler,
 } from "./types";
 import {
+    DurableOrchestrationClient,
     Entity,
     EntityState,
     IEntityFunctionContext,
@@ -25,6 +29,7 @@ import {
 import { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 import { OrchestratorState } from "./orchestratorstate";
 import { DurableOrchestrationInput } from "./testingUtils";
+import { getClient } from "./durableorchestrationclient";
 
 type EntityFunction<T> = FunctionHandler &
     ((
@@ -150,6 +155,29 @@ export namespace app {
             trigger: trigger.activity(),
             ...options,
         });
+    }
+
+    type SomeType = Partial<FunctionOptions> & { handler: FunctionHandler };
+
+    export function clientify<T extends SomeType>(
+        register: (name: string, options: T) => void
+    ): (name: string, options: T & { handler: DurableClientHandler }) => void {
+        return (name: string, options) => {
+            const clientHandler: DurableClientHandler = options.handler;
+            const clientInput = input.durableClient();
+            if (options.extraInputs) {
+                options.extraInputs.push(clientInput);
+            } else {
+                options.extraInputs = [clientInput];
+            }
+            register(name, {
+                ...options,
+                handler: (triggerInput: any, context: InvocationContext) => {
+                    const client: DurableOrchestrationClient = getClient(context, clientInput);
+                    return clientHandler(triggerInput, client, context);
+                },
+            });
+        };
     }
 }
 
