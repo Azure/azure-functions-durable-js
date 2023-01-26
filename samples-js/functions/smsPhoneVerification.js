@@ -17,7 +17,7 @@ if (process.env.TwilioPhoneNumber && process.env.TwilioAccountSid && process.env
         );
 
         // The user has 90 seconds to respond with the code they received in the SMS message.
-        const expiration = DateTime.fromJSDate(context.df.currentUtcDateTime).plus({ hours: 90 });
+        const expiration = DateTime.fromJSDate(context.df.currentUtcDateTime).plus({ seconds: 90 });
         const timeoutTask = context.df.createTimer(expiration.toJSDate());
 
         let authorized = false;
