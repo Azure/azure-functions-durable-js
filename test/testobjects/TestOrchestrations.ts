@@ -318,14 +318,14 @@ export class TestOrchestrations {
 
     public static SendHttpRequest: any = createOrchestrator(function* (context) {
         const input = context.df.getInput() as df.DurableHttpRequest;
-        const output = yield context.df.callHttp(
-            input.method,
-            input.uri,
-            input.content,
-            input.headers,
-            input.tokenSource,
-            input.asynchronousPatternEnabled
-        );
+        const output = yield context.df.callHttp({
+            method: input.method,
+            url: input.uri,
+            body: input.content,
+            headers: input.headers,
+            tokenSource: input.tokenSource,
+            asynchronousPatternEnabled: input.asynchronousPatternEnabled,
+        });
         return output;
     });
 
