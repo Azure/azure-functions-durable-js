@@ -34,17 +34,7 @@ const URL = url.URL;
  * Returns an OrchestrationClient instance.
  * @param context The context object of the Azure function whose body
  *  calls this method.
- * @example Get an orchestration client instance
- * ```javascript
- * const df = require("durable-functions");
  *
- * module.exports = async function (req, context) {
- *     const client = df.getClient(context, clientInput);
- *     const instanceId = await client.startNew(req.params.functionName, { input: req.text() });
- *
- *     return client.createCheckStatusResponse(req, instanceId);
- * };
- * ```
  */
 export function getClient(
     context: InvocationContext,
