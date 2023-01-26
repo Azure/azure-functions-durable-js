@@ -13,7 +13,7 @@ app.http("httpSyncStart", {
     extraInputs: [clientInput],
     handler: async function (request, context) {
         const client = df.getClient(context, clientInput);
-        const body = await request.text();
+        const body = await request.json();
         const instanceId = await client.startNew(request.params.orchestratorName, undefined, body);
 
         context.log(`Started orchestration with ID = '${instanceId}'.`);

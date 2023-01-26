@@ -8,7 +8,7 @@ app.http("httpStart", {
     extraInputs: [clientInput],
     handler: async (request, context) => {
         const client = df.getClient(context, clientInput);
-        const body = await request.text();
+        const body = await request.json();
         const instanceId = await client.startNew(request.params.orchestratorName, undefined, body);
 
         context.log(`Started orchestration with ID = '${instanceId}'.`);
