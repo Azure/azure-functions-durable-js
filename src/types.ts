@@ -53,7 +53,7 @@ export interface DurableClientInput extends FunctionInput {
 /**
  * Options object provided as an optional second argument to the `client.startNew()` method
  */
-export interface ClientStartNewOptions {
+export interface StartNewOptions {
     /**
      * The ID to use for the new orchestration instance. If
      *  no instanceId is specified, the Durable Functions extension will

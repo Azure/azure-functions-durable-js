@@ -24,7 +24,7 @@ import {
     PurgeHistoryResult,
     Utils,
 } from "./classes";
-import { ClientStartNewOptions, DurableClientInput } from "./types";
+import { StartNewOptions, DurableClientInput } from "./types";
 import { WebhookUtils } from "./webhookutils";
 
 /** @hidden */
@@ -653,7 +653,7 @@ export class DurableOrchestrationClient {
      */
     public async startNew(
         orchestratorFunctionName: string,
-        options?: ClientStartNewOptions
+        options?: StartNewOptions
     ): Promise<string> {
         if (!orchestratorFunctionName) {
             throw new Error("orchestratorFunctionName must be a valid string.");
