@@ -18,8 +18,8 @@ app.http("httpSyncStart", {
 
         context.log(`Started orchestration with ID = '${instanceId}'.`);
 
-        const timeoutInMilliseconds = getTimeInSeconds(request, timeout) || 30000;
-        const retryIntervalInMilliseconds = getTimeInSeconds(request, retryInterval) || 1000;
+        const timeoutInMilliseconds = getTimeInMilliseconds(request, timeout) || 30000;
+        const retryIntervalInMilliseconds = getTimeInMilliseconds(request, retryInterval) || 1000;
 
         const response = client.waitForCompletionOrCreateCheckStatusResponse(
             request,
@@ -31,9 +31,9 @@ app.http("httpSyncStart", {
     },
 });
 
-function getTimeInSeconds(req, queryParameterName) {
+function getTimeInMilliseconds(req, queryParameterName) {
+    // parameters are passed in as seconds
     const queryValue = req.query.get(queryParameterName);
-    return queryValue
-        ? queryValue * 1000 // expected to be in seconds
-        : undefined;
+    // return as milliseconds
+    return queryValue ? queryValue * 1000 : undefined;
 }
