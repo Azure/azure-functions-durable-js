@@ -18,7 +18,6 @@ import {
     HttpCreationPayload,
     HttpManagementPayload,
     IHttpRequest,
-    IHttpResponse,
     OrchestrationClientInputData,
     OrchestrationRuntimeStatus,
     PurgeHistoryResult,
@@ -734,7 +733,7 @@ export class DurableOrchestrationClient {
         instanceId: string,
         timeoutInMilliseconds = 10000,
         retryIntervalInMilliseconds = 1000
-    ): Promise<IHttpResponse> {
+    ): Promise<HttpResponse> {
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
             throw new Error(
                 `Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`
@@ -773,15 +772,15 @@ export class DurableOrchestrationClient {
         }
     }
 
-    private createHttpResponse(statusCode: number, body: unknown): IHttpResponse {
+    private createHttpResponse(statusCode: number, body: unknown): HttpResponse {
         const bodyAsJson = JSON.stringify(body);
-        return {
+        return new HttpResponse({
             status: statusCode,
             body: bodyAsJson,
             headers: {
                 "Content-Type": "application/json",
             },
-        };
+        });
     }
 
     private getClientResponseLinks(
