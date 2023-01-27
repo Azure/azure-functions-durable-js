@@ -999,7 +999,10 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "", ""));
 
-            const result = await client.startNew(functionName, defaultInstanceId, testData);
+            const result = await client.startNew(functionName, {
+                instanceId: defaultInstanceId,
+                input: testData,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.equal(defaultInstanceId);
         });
