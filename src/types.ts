@@ -55,7 +55,7 @@ export interface DurableClientInput extends FunctionInput {
  */
 export interface StartNewOptions {
     /**
-     * The ID to use for the new orchestration instance. If
+     *  The ID to use for the new orchestration instance. If
      *  no instanceId is specified, the Durable Functions extension will
      *  generate a random GUID (recommended).
      */

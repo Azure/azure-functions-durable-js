@@ -638,7 +638,7 @@ export class DurableOrchestrationClient {
      * existing instance will be silently replaced by this new instance.
      * @param orchestratorFunctionName The name of the orchestrator function to
      *  start.
-     * @param options optional object specifying the orchestration instance ID and any input to the orchestration
+     * @param options optional object to control the scheduled orchestrator (e.g provide input, instanceID)
      * @returns The ID of the new orchestration instance.
      */
     public async startNew(
