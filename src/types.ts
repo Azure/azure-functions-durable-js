@@ -5,8 +5,10 @@ import {
     FunctionTrigger,
     FunctionOptions,
 } from "@azure/functions";
+import { RetryOptions } from ".";
 import { IEntityFunctionContext } from "../src/ientityfunctioncontext";
 import { IOrchestrationFunctionContext } from "../src/iorchestrationfunctioncontext";
+import { Task } from "./task";
 import { ManagedIdentityTokenSource } from "./tokensource";
 
 // orchestrations
@@ -79,6 +81,13 @@ export interface ActivityOptions extends Partial<FunctionOptions> {
 export interface ActivityTrigger extends FunctionTrigger {
     type: "activityTrigger";
 }
+
+export interface CallActivityOptions {
+    input?: unknown;
+    retryOptions: RetryOptions;
+}
+
+export type CallableActivity = (options?: CallActivityOptions) => Task;
 
 // clients
 export interface DurableClientInput extends FunctionInput {

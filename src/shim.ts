@@ -14,8 +14,12 @@ import {
     EntityTrigger,
     OrchestrationOptions,
     EntityOptions,
+    CallableActivity,
+    CallActivityOptions,
 } from "./types";
 import {
+    CallActivityAction,
+    CallActivityWithRetryAction,
     Entity,
     EntityState,
     IEntityFunctionContext,
@@ -25,6 +29,7 @@ import {
 import { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 import { OrchestratorState } from "./orchestratorstate";
 import { DurableOrchestrationInput } from "./testingUtils";
+import { AtomicTask, RetryableTask } from "./task";
 
 type EntityFunction<T> = FunctionHandler &
     ((
@@ -145,11 +150,33 @@ export namespace app {
      * @param functionName the name of your new activity function
      * @param options the configuration options for this activity, specifying the handler and the inputs and outputs
      */
-    export function activity(functionName: string, options: ActivityOptions): void {
-        azFuncApp.generic(functionName, {
+    export function activity(activityName: string, options: ActivityOptions): CallableActivity {
+        azFuncApp.generic(activityName, {
             trigger: trigger.activity(),
             ...options,
         });
+
+        return (options: CallActivityOptions) => {
+            const input = options && options.input;
+            const retryOptions = options && options.retryOptions;
+            if (retryOptions) {
+                const newAction = new CallActivityWithRetryAction(
+                    activityName,
+                    retryOptions,
+                    input
+                );
+                const backingTask = new AtomicTask(false, newAction);
+                const task = new RetryableTask(
+                    backingTask,
+                    retryOptions,
+                    this.taskOrchestratorExecutor
+                );
+                return task;
+            }
+            const newAction = new CallActivityAction(activityName, input);
+            const task = new AtomicTask(false, newAction);
+            return task;
+        };
     }
 }
 

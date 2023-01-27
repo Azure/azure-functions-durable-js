@@ -8,12 +8,13 @@ import {
     DummyOrchestrationContext,
 } from "./classes";
 import { getClient } from "./durableorchestrationclient";
-import { app, input, trigger } from "./shim";
+import { app, input, trigger, createOrchestrator } from "./shim";
 import { ManagedIdentityTokenSource } from "./tokensource";
 
 export * from "./types";
 
 export {
+    createOrchestrator,
     DurableHttpRequest,
     DurableHttpResponse,
     EntityId,
