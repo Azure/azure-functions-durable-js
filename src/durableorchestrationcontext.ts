@@ -30,7 +30,7 @@ import {
     LongTimerTask,
     CallHttpWithPollingTask,
 } from "./task";
-import moment = require("moment");
+import { Duration } from "luxon";
 import { ReplaySchema } from "./replaySchema";
 import { CallHttpOptions } from "./types";
 
