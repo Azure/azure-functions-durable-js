@@ -7,12 +7,23 @@ import {
 } from "@azure/functions";
 import { IEntityFunctionContext } from "../src/ientityfunctioncontext";
 import { IOrchestrationFunctionContext } from "../src/iorchestrationfunctioncontext";
+import { DurableOrchestrationClient } from "./durableorchestrationclient";
 import { ManagedIdentityTokenSource } from "./tokensource";
+import { Task as TaskTask, TimerTask as TimerTaskTask } from "./task";
 
 // orchestrations
+export type OrchestrationContext = IOrchestrationFunctionContext;
+
 export type OrchestrationHandler = (
-    context: IOrchestrationFunctionContext
-) => Generator<unknown, unknown, any>;
+    context: OrchestrationContext
+) => Generator<
+    Task, // orchestrations yield Task types
+    any, // return type of the orchestration
+    any // what the SDK passes back to the orchestration
+>;
+
+export type Task = TaskTask;
+export type TimerTask = TimerTaskTask;
 
 export interface OrchestrationOptions extends Partial<FunctionOptions> {
     handler: OrchestrationHandler;
@@ -57,7 +68,8 @@ export interface CallHttpOptions {
 export type TokenSource = ManagedIdentityTokenSource;
 
 // entities
-export type EntityHandler<T> = (context: IEntityFunctionContext<T>) => void;
+export type EntityContext<T> = IEntityFunctionContext<T>;
+export type EntityHandler<T> = (context: EntityContext<T>) => void;
 
 export interface EntityOptions<T> extends Partial<FunctionOptions> {
     handler: EntityHandler<T>;
@@ -101,3 +113,4 @@ export interface StartNewOptions {
      */
     input?: unknown;
 }
+export type DurableClient = DurableOrchestrationClient;
