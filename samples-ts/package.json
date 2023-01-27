@@ -1,0 +1,23 @@
+{
+    "name": "samples-ts",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/functions/*.js",
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc -w",
+        "prestart": "npm run build",
+        "start": "func start",
+        "test": "echo \"No tests yet...\""
+    },
+    "devDependencies": {
+        "@azure/functions": "^4.0.0-alpha.6",
+        "@types/luxon": "^3.2.0",
+        "@types/node": "16.x",
+        "typescript": "^4.0.0"
+    },
+    "dependencies": {
+        "durable-functions": "file:..",
+        "luxon": "^3.2.1"
+    }
+}
