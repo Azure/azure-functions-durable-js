@@ -128,7 +128,7 @@ export interface DurableOrchestrationContext {
      * If `instanceId` is not specified, the extension will generate an id in
      * the format `<calling orchestrator instance ID>:<#>`
      */
-    callSubOrchestrator(name: string, options?: CallSubOrchestratorOptions): Task;
+    callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task;
 
     /**
      * Schedules an orchestrator function named `name` for execution with retry
@@ -222,22 +222,6 @@ export interface DurableOrchestrationContext {
      *  the specified name is received
      */
     waitForExternalEvent(name: string): Task;
-}
-
-/**
- * Options object passed to the `context.df.callSubOrchestrator()` method
- */
-export interface CallSubOrchestratorOptions {
-    /**
-     * The JSON-serializable input to pass to the orchestrator function.
-     */
-    input?: unknown;
-    /**
-     * A unique ID to use for the sub-orchestration instance.
-     * If `instanceId` is not specified, the extension will generate an id in
-     * the format `<calling orchestrator instance ID>:<#>`
-     */
-    instanceId?: string;
 }
 
 /**
