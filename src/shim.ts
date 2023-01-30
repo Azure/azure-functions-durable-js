@@ -135,10 +135,10 @@ export namespace app {
     /**
      * Registers a function as an Activity Function for your Function App
      *
-     * @param functionName the name of your new activity function
+     * @param activityName the name of your new activity function
      * @param options the configuration options for this activity, specifying the handler and the inputs and outputs
      */
-    export function activity(activityName: string, options: ActivityOptions) {
+    export function activity(activityName: string, options: ActivityOptions): void {
         azFuncApp.generic(activityName, {
             trigger: trigger.activity(),
             ...options,

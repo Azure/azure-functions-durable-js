@@ -116,18 +116,12 @@ export class DummyEntityContext<T> extends InvocationContext implements EntityCo
     constructor(
         functionName = "dummyContextFunctionName",
         invocationId: string = uuidv1(),
-        logHandler: LogHandler = (_level, ...args) => console.log(...args),
-        options: EffectiveFunctionOptions = {
-            trigger: trigger.entity(),
-            extraInputs: [],
-            extraOutputs: [],
-        }
+        logHandler: LogHandler = (_level, ...args) => console.log(...args)
     ) {
         const invocationContextInit: InvocationContextInit = {
             functionName,
             invocationId,
             logHandler,
-            options,
         };
         super(invocationContextInit);
 
