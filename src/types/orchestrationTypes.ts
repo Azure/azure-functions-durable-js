@@ -122,7 +122,11 @@ export interface DurableOrchestrationContext {
      * Schedules an orchestration function named `name` for execution.
      *
      * @param name The name of the orchestrator function to call.
-     * @param options optional object to control the scheduled orchestrator (e.g provide input, instanceID)
+     * @param input The JSON-serializable input to pass to the orchestrator
+     * function.
+     * @param instanceId A unique ID to use for the sub-orchestration instance.
+     * If `instanceId` is not specified, the extension will generate an id in
+     * the format `<calling orchestrator instance ID>:<#>`
      */
     callSubOrchestrator(name: string, options?: CallSubOrchestratorOptions): Task;
 
@@ -132,12 +136,15 @@ export interface DurableOrchestrationContext {
      *
      * @param name The name of the orchestrator function to call.
      * @param retryOptions The retry options for the orchestrator function.
-     * @param options optional object to control the scheduled orchestrator (e.g provide input, instanceID)
+     * @param input The JSON-serializable input to pass to the orchestrator
+     * function.
+     * @param instanceId A unique ID to use for the sub-orchestration instance.
      */
     callSubOrchestratorWithRetry(
         name: string,
         retryOptions: RetryOptions,
-        options?: CallSubOrchestratorOptions
+        input?: unknown,
+        instanceId?: string
     ): Task;
 
     /**

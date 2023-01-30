@@ -24,14 +24,10 @@ import {
     DurableClientInput,
     DurableOrchestrationStatus,
     EntityStateResponse,
-    GetStatusOptions,
     HttpManagementPayload,
     OrchestrationRuntimeStatus,
     PurgeHistoryResult,
-    RaiseEventOptions,
-    SignalEntityOptions,
     StartNewOptions,
-    TaskHubOptions,
 } from "./types";
 import { WebhookUtils } from "./webhookutils";
 
