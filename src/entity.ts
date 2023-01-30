@@ -1,16 +1,15 @@
 import * as debug from "debug";
 import {
     DurableEntityBindingInfo,
-    DurableEntityContext,
     EntityId,
     EntityState,
-    IEntityFunctionContext,
     OperationResult,
     RequestMessage,
     Signal,
     Utils,
 } from "./classes";
 import { DurableEntityBindingInfoReqFields } from "./durableentitybindinginfo";
+import { DurableEntityContext, EntityContext } from "./types";
 
 /** @hidden */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -18,18 +17,18 @@ const log = debug("orchestrator");
 
 /** @hidden */
 export class Entity<T> {
-    constructor(public fn: (context: IEntityFunctionContext<T>) => void) {}
+    constructor(public fn: (context: EntityContext<T>) => void) {}
 
     public listen(): (
         entityTrigger: DurableEntityBindingInfo,
-        context: IEntityFunctionContext<T>
+        context: EntityContext<T>
     ) => Promise<EntityState> {
         return this.handle.bind(this);
     }
 
     private async handle(
         entityTrigger: DurableEntityBindingInfo,
-        context: IEntityFunctionContext<T>
+        context: EntityContext<T>
     ): Promise<EntityState> {
         const entityBinding = Utils.getInstancesOf<DurableEntityBindingInfo>(
             { trigger: entityTrigger },
