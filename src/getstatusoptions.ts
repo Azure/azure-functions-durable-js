@@ -1,9 +1,9 @@
 // tslint:disable:member-access
 
-import { OrchestrationRuntimeStatus } from "./classes";
+import { OrchestrationRuntimeStatus } from "./types";
 
 /** @hidden */
-export class GetStatusOptions {
+export interface GetStatusInternalOptions {
     instanceId?: string;
     taskHubName?: string;
     connectionName?: string;
