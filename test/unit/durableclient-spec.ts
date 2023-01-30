@@ -5,14 +5,16 @@ import nock = require("nock");
 import url = require("url");
 import {
     DurableOrchestrationClient,
-    DurableOrchestrationStatus,
     EntityId,
+    OrchestrationClientInputData,
+} from "../../src/classes";
+import { DurableOrchestrationStatus } from "../../src/durableorchestrationstatus";
+import {
     EntityStateResponse,
     HttpManagementPayload,
-    OrchestrationClientInputData,
     OrchestrationRuntimeStatus,
     PurgeHistoryResult,
-} from "../../src/classes";
+} from "../../src/types";
 
 chai.use(chaiString);
 const expect = chai.expect;
@@ -32,11 +34,11 @@ const durableClientBindingInputJson = JSON.stringify({
     creationUrls: {},
     managementUrls: {
         id: "INSTANCEID",
-        statusQueryGetUri: `${externalBaseUrl}/instances/INSTANCEID?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
-        sendEventPostUri: `${externalBaseUrl}/instances/INSTANCEID/raiseEvent/{eventName}?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
-        terminatePostUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
-        rewindPostUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
-        purgeHistoryDeleteUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
+        statusQueryGetUrl: `${externalBaseUrl}/instances/INSTANCEID?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
+        sendEventPostUrl: `${externalBaseUrl}/instances/INSTANCEID/raiseEvent/{eventName}?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
+        terminatePostUrl: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
+        rewindPostUrl: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
+        purgeHistoryDeleteUrl: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
     },
     baseUrl: externalBaseUrl,
     rpcBaseUrl: testRpcBaseUrl,
@@ -61,7 +63,7 @@ describe("Durable client RPC endpoint", () => {
             expect(input.rpcBaseUrl).to.be.equal(testRpcBaseUrl);
             expect(input.managementUrls).to.be.an("object");
             expect(input.managementUrls.id).to.be.equal("INSTANCEID");
-            expect(input.managementUrls.statusQueryGetUri).to.startsWith(externalBaseUrl);
+            expect(input.managementUrls.statusQueryGetUrl).to.startsWith(externalBaseUrl);
         });
     });
 
@@ -86,11 +88,11 @@ describe("Durable client RPC endpoint", () => {
 
             // Verify that even when using local RPC, we still expose the external
             // URLs in the createCheckStatusResponse API result.
-            expect(payload.purgeHistoryDeleteUri).to.startWith(externalBaseUrl);
-            expect(payload.rewindPostUri).to.startWith(externalBaseUrl);
-            expect(payload.sendEventPostUri).to.startWith(externalBaseUrl);
-            expect(payload.statusQueryGetUri).to.startWith(externalBaseUrl);
-            expect(payload.terminatePostUri).to.startWith(externalBaseUrl);
+            expect(payload.purgeHistoryDeleteUrl).to.startWith(externalBaseUrl);
+            expect(payload.rewindPostUrl).to.startWith(externalBaseUrl);
+            expect(payload.sendEventPostUrl).to.startWith(externalBaseUrl);
+            expect(payload.statusQueryGetUrl).to.startWith(externalBaseUrl);
+            expect(payload.terminatePostUrl).to.startWith(externalBaseUrl);
         });
     });
 
@@ -135,7 +137,7 @@ describe("Durable client RPC endpoint", () => {
                 .post(expectedUrl.pathname, eventData)
                 .reply(202);
 
-            await client.raiseEvent(instanceId, eventName, eventData);
+            await client.raiseEvent({ instanceId, eventName, eventData });
             expect(scope.isDone()).to.be.equal(true);
         });
 
@@ -160,7 +162,13 @@ describe("Durable client RPC endpoint", () => {
                 .query({ taskHub, connection })
                 .reply(202);
 
-            await client.raiseEvent(instanceId, eventName, eventData, taskHub, connection);
+            await client.raiseEvent({
+                instanceId,
+                eventName,
+                eventData,
+                taskHubName: taskHub,
+                connectionName: connection,
+            });
             expect(scope.isDone()).to.be.equal(true);
         });
     });
@@ -207,7 +215,11 @@ describe("Durable client RPC endpoint", () => {
                     history: [],
                 });
 
-            const result = await client.getStatus(instanceId, true, true, true);
+            const result = await client.getStatus(instanceId, {
+                showHistory: true,
+                showHistoryOutput: true,
+                showInput: true,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.an("object");
         });
@@ -416,7 +428,10 @@ describe("Durable client RPC endpoint", () => {
                 .query({ reason, taskHub, connection })
                 .reply(202);
 
-            await client.rewind(instanceId, reason, taskHub, connection);
+            await client.rewind(instanceId, reason, {
+                taskHubName: taskHub,
+                connectionName: connection,
+            });
             expect(scope.isDone()).to.be.equal(true);
         });
     });
@@ -459,7 +474,12 @@ describe("Durable client RPC endpoint", () => {
                 .query({ op, taskHub, connection })
                 .reply(202);
 
-            await client.signalEntity(entityId, op, payload, taskHub, connection);
+            await client.signalEntity(entityId, {
+                operationName: op,
+                operationContent: payload,
+                taskHubName: taskHub,
+                connectionName: connection,
+            });
             expect(scope.isDone()).to.equal(true);
         });
     });
@@ -506,7 +526,10 @@ describe("Durable client RPC endpoint", () => {
                 .query({ taskHub, connection })
                 .reply(200, expectedEntityState);
 
-            const result = await client.readEntityState(entityId, taskHub, connection);
+            const result = await client.readEntityState(entityId, {
+                taskHubName: taskHub,
+                connectionName: connection,
+            });
             expect(scope.isDone()).to.equal(true);
             expect(result.entityExists).to.equal(true);
             expect(result.entityState).to.deep.equal(expectedEntityState);

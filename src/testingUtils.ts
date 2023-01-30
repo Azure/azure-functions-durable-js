@@ -1,4 +1,9 @@
-import { InvocationContext, InvocationContextInit, LogHandler } from "@azure/functions";
+import {
+    EffectiveFunctionOptions,
+    InvocationContext,
+    InvocationContextInit,
+    LogHandler,
+} from "@azure/functions";
 import {
     DurableOrchestrationBindingInfo,
     DurableOrchestrationContext,
@@ -6,18 +11,16 @@ import {
     HistoryEventOptions,
     OrchestratorStartedEvent,
 } from "./classes";
-import { IOrchestrationFunctionContext } from "./iorchestrationfunctioncontext";
 import { ReplaySchema } from "./replaySchema";
 import * as uuidv1 from "uuid/v1";
-import { IEntityFunctionContext } from "./ientityfunctioncontext";
-import { DurableEntityContext } from "./durableentitycontext";
+import { trigger } from "./shim";
+import { DurableEntityContext, EntityContext, OrchestrationContext } from "./types";
 
 /**
  * An orchestration context with dummy default values to facilitate mocking/stubbing the
  * Durable Functions API.
  */
-export class DummyOrchestrationContext extends InvocationContext
-    implements IOrchestrationFunctionContext {
+export class DummyOrchestrationContext extends InvocationContext implements OrchestrationContext {
     /**
      * Creates a new instance of a dummy orchestration context.
      * All parameters are optional but are exposed to enable flexibility
@@ -30,12 +33,18 @@ export class DummyOrchestrationContext extends InvocationContext
     constructor(
         functionName = "dummyContextFunctionName",
         invocationId: string = uuidv1(),
-        logHandler: LogHandler = (_level, ...args) => console.log(...args)
+        logHandler: LogHandler = (_level, ...args) => console.log(...args),
+        options: EffectiveFunctionOptions = {
+            trigger: trigger.orchestration(),
+            extraInputs: [],
+            extraOutputs: [],
+        }
     ) {
         const invocationContextInit: InvocationContextInit = {
             functionName,
             invocationId,
             logHandler,
+            options,
         };
         super(invocationContextInit);
 
@@ -94,7 +103,7 @@ export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
     }
 }
 
-export class DummyEntityContext<T> extends InvocationContext implements IEntityFunctionContext<T> {
+export class DummyEntityContext<T> extends InvocationContext implements EntityContext<T> {
     /**
      * Creates a new instance of a dummy entity context.
      * All parameters are optional but are exposed to enable flexibility
@@ -107,12 +116,18 @@ export class DummyEntityContext<T> extends InvocationContext implements IEntityF
     constructor(
         functionName = "dummyContextFunctionName",
         invocationId: string = uuidv1(),
-        logHandler: LogHandler = (_level, ...args) => console.log(...args)
+        logHandler: LogHandler = (_level, ...args) => console.log(...args),
+        options: EffectiveFunctionOptions = {
+            trigger: trigger.entity(),
+            extraInputs: [],
+            extraOutputs: [],
+        }
     ) {
         const invocationContextInit: InvocationContextInit = {
             functionName,
             invocationId,
             logHandler,
+            options,
         };
         super(invocationContextInit);
 

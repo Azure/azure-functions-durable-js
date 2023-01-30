@@ -1,10 +1,10 @@
 import {
     HttpCreationPayload,
-    HttpManagementPayload,
     IOrchestratorState,
     OrchestrationClientInputData,
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
+import { HttpManagementPayload } from "../../src/types";
 import { TestConstants } from "./testconstants";
 
 export class TestUtils {
@@ -60,34 +60,34 @@ export class TestUtils {
         taskHub: string,
         connection: string
     ): HttpManagementPayload {
-        return new HttpManagementPayload(
+        return {
             id,
-            TestConstants.statusQueryGetUriTemplate
+            statusQueryGetUrl: TestConstants.statusQueryGetUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
-            TestConstants.sendEventPostUriTemplate
+            sendEventPostUrl: TestConstants.sendEventPostUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
-            TestConstants.terminatePostUriTemplate
+            terminatePostUrl: TestConstants.terminatePostUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
-            TestConstants.rewindPostUriTemplate
+            rewindPostUrl: TestConstants.rewindPostUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
-            TestConstants.purgeDeleteUriTemplate
+            purgeHistoryDeleteUrl: TestConstants.purgeDeleteUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
-                .replace(TestConstants.connectionPlaceholder, connection)
-        );
+                .replace(TestConstants.connectionPlaceholder, connection),
+        };
     }
 
     public static extractStateFromError(err: OrchestrationFailureError): IOrchestratorState {

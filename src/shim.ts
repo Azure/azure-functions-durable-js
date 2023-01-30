@@ -1,7 +1,10 @@
 import {
     app as azFuncApp,
     FunctionHandler,
+    FunctionOptions,
+    HttpFunctionOptions,
     input as azFuncInput,
+    InvocationContext,
     trigger as azFuncTrigger,
 } from "@azure/functions";
 import {
@@ -14,28 +17,34 @@ import {
     EntityTrigger,
     OrchestrationOptions,
     EntityOptions,
+    DurableClient,
+    DurableClientHandler,
+    DurableClientOptions,
+    CallActivityOptions,
+    CallableActivity,
+    EntityContext,
+    OrchestrationContext,
 } from "./types";
 import {
+    CallActivityAction,
+    CallActivityWithRetryAction,
     Entity,
     EntityState,
-    IEntityFunctionContext,
-    IOrchestrationFunctionContext,
     Orchestrator,
 } from "./classes";
 import { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 import { OrchestratorState } from "./orchestratorstate";
 import { DurableOrchestrationInput } from "./testingUtils";
+import { getClient } from "./durableorchestrationclient";
+import { AtomicTask, RetryableTask } from "./task";
 
 type EntityFunction<T> = FunctionHandler &
-    ((
-        entityTrigger: DurableEntityBindingInfo,
-        context: IEntityFunctionContext<T>
-    ) => Promise<EntityState>);
+    ((entityTrigger: DurableEntityBindingInfo, context: EntityContext<T>) => Promise<EntityState>);
 
 type OrchestrationFunction = FunctionHandler &
     ((
         orchestrationTrigger: DurableOrchestrationInput,
-        context: IOrchestrationFunctionContext
+        context: OrchestrationContext
     ) => Promise<OrchestratorState>);
 
 /**
@@ -48,7 +57,7 @@ export function createOrchestrator(fn: OrchestrationHandler): OrchestrationFunct
 
     return async (
         orchestrationTrigger: DurableOrchestrationInput,
-        context: IOrchestrationFunctionContext
+        context: OrchestrationContext
     ): Promise<OrchestratorState> => {
         return await listener(orchestrationTrigger, context);
     };
@@ -64,7 +73,7 @@ export function createEntityFunction<T = unknown>(fn: EntityHandler<T>): EntityF
 
     return async (
         entityTrigger: DurableEntityBindingInfo,
-        context: IEntityFunctionContext<T>
+        context: EntityContext<T>
     ): Promise<EntityState> => {
         return await listener(entityTrigger, context);
     };
@@ -145,10 +154,109 @@ export namespace app {
      * @param functionName the name of your new activity function
      * @param options the configuration options for this activity, specifying the handler and the inputs and outputs
      */
-    export function activity(functionName: string, options: ActivityOptions): void {
-        azFuncApp.generic(functionName, {
+    export function activity(activityName: string, options: ActivityOptions): CallableActivity {
+        azFuncApp.generic(activityName, {
             trigger: trigger.activity(),
             ...options,
+        });
+
+        return (options: CallActivityOptions) => {
+            const input = options && options.input;
+            const retryOptions = options && options.retryOptions;
+            if (retryOptions) {
+                const newAction = new CallActivityWithRetryAction(
+                    activityName,
+                    retryOptions,
+                    input
+                );
+                const backingTask = new AtomicTask(false, newAction);
+                const task = new RetryableTask(
+                    backingTask,
+                    retryOptions,
+                    this.taskOrchestratorExecutor
+                );
+                return task;
+            }
+            const newAction = new CallActivityAction(activityName, input);
+            const task = new AtomicTask(false, newAction);
+            return task;
+        };
+    }
+
+    type SomeType = Partial<FunctionOptions> & { handler: FunctionHandler };
+
+    export function clientify<T extends SomeType>(
+        register: (name: string, options: T) => void
+    ): (name: string, options: T & { handler: DurableClientHandler }) => void {
+        return (name: string, options) => {
+            const clientHandler: DurableClientHandler = options.handler;
+            const clientInput = input.durableClient();
+            if (options.extraInputs) {
+                options.extraInputs.push(clientInput);
+            } else {
+                options.extraInputs = [clientInput];
+            }
+            register(name, {
+                ...options,
+                handler: (triggerInput: any, context: InvocationContext) => {
+                    const client: DurableClient = getClient(context);
+                    return clientHandler(triggerInput, client, context);
+                },
+            });
+        };
+    }
+
+    /**
+     * Registers a function as a Durable Client for your Function App,
+     * allowing extra configurations, such as extra inputs and outputs
+     *
+     * @param functionName the name of your new Durable Client function
+     * @param options object specifying configuration options,
+     * such as handler, inputs and outputs
+     *
+     */
+    export function client(functionName: string, options: DurableClientOptions): void {
+        const clientInput: DurableClientInput = input.durableClient();
+        const clientHandler: DurableClientHandler = options.handler;
+
+        if (options.extraInputs) {
+            options.extraInputs.push(clientInput);
+        } else {
+            options.extraInputs = [clientInput];
+        }
+
+        const handler = (triggerData: unknown, context: InvocationContext) => {
+            const client = getClient(context);
+            return clientHandler(triggerData, client, context);
+        };
+
+        azFuncApp.generic(functionName, {
+            ...options,
+            handler,
+        });
+    }
+
+    export type HttpDurableClientOptions = Omit<HttpFunctionOptions, "handler"> & {
+        handler: DurableClientHandler;
+    };
+    export function httpClient(functionName: string, options: HttpDurableClientOptions): void {
+        const clientInput: DurableClientInput = input.durableClient();
+        const clientHandler: DurableClientHandler = options.handler;
+
+        if (options.extraInputs) {
+            options.extraInputs.push(clientInput);
+        } else {
+            options.extraInputs = [clientInput];
+        }
+
+        const handler = (triggerData: unknown, context: InvocationContext) => {
+            const client = getClient(context);
+            return clientHandler(triggerData, client, context);
+        };
+
+        azFuncApp.http(functionName, {
+            ...options,
+            handler,
         });
     }
 }
