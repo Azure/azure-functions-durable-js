@@ -8,6 +8,7 @@ import {
     InvocationContext,
 } from "@azure/functions";
 import { IHttpRequest } from "../ihttprequest";
+import { IHttpResponse } from "../ihttpresponse";
 import { EntityId, EntityStateResponse } from "./entityTypes";
 import { DurableOrchestrationStatus, OrchestrationRuntimeStatus } from "./orchestrationTypes";
 
@@ -54,9 +55,17 @@ export interface DurableClient {
     /**
      * Gets the status of the specified orchestration instance.
      * @param instanceId The ID of the orchestration instance to query.
-     * @param options options object specifying optional extra configuration options
+     * @param showHistory Boolean marker for including execution history in the
+     *  response.
+     * @param showHistoryOutput Boolean marker for including input and output
+     *  in the execution history response.
      */
-    getStatus(instanceId: string, options?: GetStatusOptions): Promise<DurableOrchestrationStatus>;
+    getStatus(
+        instanceId: string,
+        showHistory?: boolean,
+        showHistoryOutput?: boolean,
+        showInput?: boolean
+    ): Promise<DurableOrchestrationStatus>;
 
     /**
      * Gets the status of all orchestration instances.
@@ -102,10 +111,14 @@ export interface DurableClient {
 
     /**
      * Sends an event notification message to a waiting orchestration instance.
-     *
-     * @param options RaiseEventOptions object specifying which orchestration to
-     * send event to and the event data.
-     *
+     * @param instanceId The ID of the orchestration instance that will handle
+     *  the event.
+     * @param eventName The name of the event.
+     * @param eventData The JSON-serializable data associated with the event.
+     * @param taskHubName The TaskHubName of the orchestration that will handle
+     *  the event.
+     * @param connectionName The name of the connection string associated with
+     *  `taskHubName.`
      * @returns A promise that resolves when the event notification message has
      *  been enqueued.
      *
@@ -116,46 +129,61 @@ export interface DurableClient {
      * If the specified instance is not found or not running, this operation
      * will have no effect.
      */
-    raiseEvent(options: RaiseEventOptions): Promise<void>;
+    raiseEvent(
+        instanceId: string,
+        eventName: string,
+        eventData: unknown,
+        taskHubName?: string,
+        connectionName?: string
+    ): Promise<void>;
 
     /**
      * Tries to read the current state of an entity. Returnes undefined if the
      * entity does not exist, or if the JSON-serialized state of the entity is
      * larger than 16KB.
-     *
-     * @param T The JSON-serializable type of the entity state.
+     * @param T The JSON-serializable type of the entity.
      * @param entityId The target entity.
-     * @param options optional object providing the TaskHubName of the target entity
-     *  and the name of its associated connection string
-     *
+     * @param taskHubName The TaskHubName of the target entity.
+     * @param connectionName The name of the connection string associated with
+     * [taskHubName].
      * @returns A response containing the current state of the entity.
      */
     readEntityState<T>(
         entityId: EntityId,
-        options?: TaskHubOptions
+        taskHubName?: string,
+        connectionName?: string
     ): Promise<EntityStateResponse<T>>;
 
     /**
      * Rewinds the specified failed orchestration instance with a reason.
-     *
      * @param instanceId The ID of the orchestration instance to rewind.
      * @param reason The reason for rewinding the orchestration instance.
-     * @param options object providing TaskHubName of the orchestration instance and
-     *  the name of its associated connection string
-     *
      * @returns A promise that resolves when the rewind message is enqueued.
      *
      * This feature is currently in preview.
      */
-    rewind(instanceId: string, reason: string, options?: TaskHubOptions): Promise<void>;
+    rewind(
+        instanceId: string,
+        reason: string,
+        taskHubName?: string,
+        connectionName?: string
+    ): Promise<void>;
 
     /**
      * Signals an entity to perform an operation.
-     *
      * @param entityId The target entity.
-     * @param options options object providing configurations the signal to the entity
+     * @param operationName The name of the operation.
+     * @param operationContent The content for the operation.
+     * @param taskHubName The TaskHubName of the target entity.
+     * @param connectionName The name of the connection string associated with [taskHubName].
      */
-    signalEntity(entityId: EntityId, options?: SignalEntityOptions): Promise<void>;
+    signalEntity(
+        entityId: EntityId,
+        operationName?: string,
+        operationContent?: unknown,
+        taskHubName?: string,
+        connectionName?: string
+    ): Promise<void>;
 
     /**
      * Starts a new instance of the specified orchestrator function.
@@ -199,9 +227,9 @@ export interface DurableClient {
     waitForCompletionOrCreateCheckStatusResponse(
         request: HttpRequest,
         instanceId: string,
-        timeoutInMilliseconds?: number,
-        retryIntervalInMilliseconds?: number
-    ): Promise<HttpResponse>;
+        timeoutInMilliseconds: number,
+        retryIntervalInMilliseconds: number
+    ): Promise<IHttpResponse>;
 }
 
 /**

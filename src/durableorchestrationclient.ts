@@ -14,6 +14,7 @@ import {
     EntityId,
     HttpCreationPayload,
     IHttpRequest,
+    IHttpResponse,
     OrchestrationClientInputData,
     Utils,
 } from "./classes";
@@ -194,14 +195,17 @@ export class DurableOrchestrationClient implements DurableClient {
 
     public async getStatus(
         instanceId: string,
-        options: GetStatusOptions = {}
+        showHistory?: boolean,
+        showHistoryOutput?: boolean,
+        showInput?: boolean
     ): Promise<DurableOrchestrationStatus> {
-        const internalOptions: GetStatusInternalOptions = {
+        const options: GetStatusInternalOptions = {
             instanceId,
-            ...options,
+            showHistory,
+            showHistoryOutput,
+            showInput,
         };
-        const response = await this.getStatusInternal(internalOptions);
-
+        const response = await this.getStatusInternal(options);
         switch (response.status) {
             case 200: // instance completed
             case 202: // instance in progress
@@ -335,8 +339,13 @@ export class DurableOrchestrationClient implements DurableClient {
         }
     }
 
-    public async raiseEvent(options: RaiseEventOptions): Promise<void> {
-        const eventName = options.eventName;
+    public async raiseEvent(
+        instanceId: string,
+        eventName: string,
+        eventData: unknown,
+        taskHubName?: string,
+        connectionName?: string
+    ): Promise<void> {
         if (!eventName) {
             throw new Error("eventName must be a valid string.");
         }
@@ -344,51 +353,42 @@ export class DurableOrchestrationClient implements DurableClient {
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
-            let path = `instances/${options.instanceId}/raiseEvent/${eventName}`;
+            let path = `instances/${instanceId}/raiseEvent/${eventName}`;
             const query: string[] = [];
-            if (options.taskHubName) {
-                query.push(`taskHub=${options.taskHubName}`);
+            if (taskHubName) {
+                query.push(`taskHub=${taskHubName}`);
             }
-            if (options.connectionName) {
-                query.push(`connection=${options.connectionName}`);
+            if (connectionName) {
+                query.push(`connection=${connectionName}`);
             }
 
             if (query.length > 0) {
                 path += "?" + query.join("&");
             }
-
             requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
         } else {
             // Legacy app frontend path
             const idPlaceholder = this.clientData.managementUrls.id;
-            requestUrl = this.clientData.managementUrls.sendEventPostUrl
-                .replace(idPlaceholder, options.instanceId)
+            requestUrl = this.clientData.managementUrls.sendEventPostUri
+                .replace(idPlaceholder, instanceId)
                 .replace(this.eventNamePlaceholder, eventName);
 
-            if (options.taskHubName) {
-                requestUrl = requestUrl.replace(this.clientData.taskHubName, options.taskHubName);
+            if (taskHubName) {
+                requestUrl = requestUrl.replace(this.clientData.taskHubName, taskHubName);
             }
 
-            if (options.connectionName) {
-                requestUrl = requestUrl.replace(
-                    /(connection=)([\w]+)/gi,
-                    "$1" + options.connectionName
-                );
+            if (connectionName) {
+                requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + connectionName);
             }
         }
 
-        const response = await this.axiosInstance.post(
-            requestUrl,
-            JSON.stringify(options.eventData)
-        );
+        const response = await this.axiosInstance.post(requestUrl, JSON.stringify(eventData));
         switch (response.status) {
             case 202: // event accepted
             case 410: // instance completed or failed
                 return;
             case 404:
-                return Promise.reject(
-                    new Error(`No instance with ID '${options.instanceId}' found.`)
-                );
+                return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
             default:
                 return Promise.reject(this.createGenericError(response));
         }
@@ -396,24 +396,24 @@ export class DurableOrchestrationClient implements DurableClient {
 
     public async readEntityState<T>(
         entityId: EntityId,
-        options?: TaskHubOptions
+        taskHubName?: string,
+        connectionName?: string
     ): Promise<EntityStateResponse<T>> {
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             let path = `entities/${entityId.name}/${entityId.key}`;
             const query: string[] = [];
-            if (options?.taskHubName) {
-                query.push(`taskHub=${options.taskHubName}`);
+            if (taskHubName) {
+                query.push(`taskHub=${taskHubName}`);
             }
-            if (options?.connectionName) {
-                query.push(`connection=${options.connectionName}`);
+            if (connectionName) {
+                query.push(`connection=${connectionName}`);
             }
 
             if (query.length > 0) {
                 path += "?" + query.join("&");
             }
-
             requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
         } else {
             // Legacy app frontend path
@@ -422,14 +422,13 @@ export class DurableOrchestrationClient implements DurableClient {
                     "Cannot use the readEntityState API with this version of the Durable Task Extension."
                 );
             }
-
             requestUrl = WebhookUtils.getReadEntityUrl(
                 this.clientData.baseUrl,
                 this.clientData.requiredQueryStringParameters,
                 entityId.name,
                 entityId.key,
-                options?.taskHubName,
-                options?.connectionName
+                taskHubName,
+                connectionName
             );
         }
 
@@ -452,7 +451,8 @@ export class DurableOrchestrationClient implements DurableClient {
     public async rewind(
         instanceId: string,
         reason: string,
-        options?: TaskHubOptions
+        taskHubName?: string,
+        connectionName?: string
     ): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
 
@@ -461,11 +461,11 @@ export class DurableOrchestrationClient implements DurableClient {
             // Fast local RPC path
             let path = `instances/${instanceId}/rewind?reason=${reason}`;
             const query: string[] = [];
-            if (options?.taskHubName) {
-                query.push(`taskHub=${options.taskHubName}`);
+            if (taskHubName) {
+                query.push(`taskHub=${taskHubName}`);
             }
-            if (options?.connectionName) {
-                query.push(`connection=${options.connectionName}`);
+            if (connectionName) {
+                query.push(`connection=${connectionName}`);
             }
 
             if (query.length > 0) {
@@ -497,20 +497,26 @@ export class DurableOrchestrationClient implements DurableClient {
         }
     }
 
-    public async signalEntity(entityId: EntityId, options?: SignalEntityOptions): Promise<void> {
+    public async signalEntity(
+        entityId: EntityId,
+        operationName?: string,
+        operationContent?: unknown,
+        taskHubName?: string,
+        connectionName?: string
+    ): Promise<void> {
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             let path = `entities/${entityId.name}/${entityId.key}`;
             const query: string[] = [];
-            if (options?.operationName) {
-                query.push(`op=${options.operationName}`);
+            if (operationName) {
+                query.push(`op=${operationName}`);
             }
-            if (options?.taskHubName) {
-                query.push(`taskHub=${options.taskHubName}`);
+            if (taskHubName) {
+                query.push(`taskHub=${taskHubName}`);
             }
-            if (options?.connectionName) {
-                query.push(`connection=${options.connectionName}`);
+            if (connectionName) {
+                query.push(`connection=${connectionName}`);
             }
 
             if (query.length > 0) {
@@ -531,15 +537,15 @@ export class DurableOrchestrationClient implements DurableClient {
                 this.clientData.requiredQueryStringParameters,
                 entityId.name,
                 entityId.key,
-                options?.operationName,
-                options?.taskHubName,
-                options?.connectionName
+                operationName,
+                taskHubName,
+                connectionName
             );
         }
 
         const response = await this.axiosInstance.post(
             requestUrl,
-            JSON.stringify(options?.operationContent)
+            JSON.stringify(operationContent)
         );
         switch (response.status) {
             case 202: // signal accepted
@@ -616,7 +622,7 @@ export class DurableOrchestrationClient implements DurableClient {
         instanceId: string,
         timeoutInMilliseconds = 10000,
         retryIntervalInMilliseconds = 1000
-    ): Promise<HttpResponse> {
+    ): Promise<IHttpResponse> {
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
             throw new Error(
                 `Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`
@@ -655,15 +661,15 @@ export class DurableOrchestrationClient implements DurableClient {
         }
     }
 
-    private createHttpResponse(statusCode: number, body: unknown): HttpResponse {
+    private createHttpResponse(statusCode: number, body: unknown): IHttpResponse {
         const bodyAsJson = JSON.stringify(body);
-        return new HttpResponse({
+        return {
             status: statusCode,
             body: bodyAsJson,
             headers: {
                 "Content-Type": "application/json",
             },
-        });
+        };
     }
 
     private getClientResponseLinks(
