@@ -62,27 +62,27 @@ export class TestUtils {
     ): HttpManagementPayload {
         return {
             id,
-            statusQueryGetUrl: TestConstants.statusQueryGetUriTemplate
+            statusQueryGetUri: TestConstants.statusQueryGetUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
-            sendEventPostUrl: TestConstants.sendEventPostUriTemplate
+            sendEventPostUri: TestConstants.sendEventPostUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
-            terminatePostUrl: TestConstants.terminatePostUriTemplate
+            terminatePostUri: TestConstants.terminatePostUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
-            rewindPostUrl: TestConstants.rewindPostUriTemplate
+            rewindPostUri: TestConstants.rewindPostUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection),
-            purgeHistoryDeleteUrl: TestConstants.purgeDeleteUriTemplate
+            purgeHistoryDeleteUri: TestConstants.purgeDeleteUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)

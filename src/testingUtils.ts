@@ -1,9 +1,4 @@
-import {
-    EffectiveFunctionOptions,
-    InvocationContext,
-    InvocationContextInit,
-    LogHandler,
-} from "@azure/functions";
+import { InvocationContext, InvocationContextInit, LogHandler } from "@azure/functions";
 import {
     DurableOrchestrationBindingInfo,
     DurableOrchestrationContext,
@@ -13,7 +8,6 @@ import {
 } from "./classes";
 import { ReplaySchema } from "./replaySchema";
 import * as uuidv1 from "uuid/v1";
-import { trigger } from "./shim";
 import { DurableEntityContext, EntityContext, OrchestrationContext } from "./types";
 
 /**
@@ -33,18 +27,12 @@ export class DummyOrchestrationContext extends InvocationContext implements Orch
     constructor(
         functionName = "dummyContextFunctionName",
         invocationId: string = uuidv1(),
-        logHandler: LogHandler = (_level, ...args) => console.log(...args),
-        options: EffectiveFunctionOptions = {
-            trigger: trigger.orchestration(),
-            extraInputs: [],
-            extraOutputs: [],
-        }
+        logHandler: LogHandler = (_level, ...args) => console.log(...args)
     ) {
         const invocationContextInit: InvocationContextInit = {
             functionName,
             invocationId,
             logHandler,
-            options,
         };
         super(invocationContextInit);
 
