@@ -179,7 +179,7 @@ export class DurableOrchestrationClient implements DurableClient {
             jsonBody: httpManagementPayload,
             headers: {
                 "Content-Type": "application/json",
-                Location: httpManagementPayload.statusQueryGetUrl,
+                Location: httpManagementPayload.statusQueryGetUri,
                 "Retry-After": "10",
             },
         });
@@ -202,6 +202,7 @@ export class DurableOrchestrationClient implements DurableClient {
             showInput,
         };
         const response = await this.getStatusInternal(options);
+
         switch (response.status) {
             case 200: // instance completed
             case 202: // instance in progress
@@ -251,7 +252,7 @@ export class DurableOrchestrationClient implements DurableClient {
             requestUrl = new URL(`instances/${instanceId}`, this.clientData.rpcBaseUrl).href;
         } else {
             // Legacy app frontend path
-            const template = this.clientData.managementUrls.purgeHistoryDeleteUrl;
+            const template = this.clientData.managementUrls.purgeHistoryDeleteUri;
             const idPlaceholder = this.clientData.managementUrls.id;
             requestUrl = template.replace(idPlaceholder, instanceId);
         }
@@ -296,7 +297,7 @@ export class DurableOrchestrationClient implements DurableClient {
         } else {
             // Legacy app frontend path
             const idPlaceholder = this.clientData.managementUrls.id;
-            requestUrl = this.clientData.managementUrls.statusQueryGetUrl.replace(
+            requestUrl = this.clientData.managementUrls.statusQueryGetUri.replace(
                 idPlaceholder,
                 ""
             );
@@ -471,7 +472,7 @@ export class DurableOrchestrationClient implements DurableClient {
             requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
         } else {
             // Legacy app frontend path
-            requestUrl = this.clientData.managementUrls.rewindPostUrl
+            requestUrl = this.clientData.managementUrls.rewindPostUri
                 .replace(idPlaceholder, instanceId)
                 .replace(this.reasonPlaceholder, reason);
         }
@@ -570,7 +571,7 @@ export class DurableOrchestrationClient implements DurableClient {
             ).href;
         } else {
             // Legacy app frontend path
-            requestUrl = this.clientData.creationUrls.createNewInstancePostUrl;
+            requestUrl = this.clientData.creationUrls.createNewInstancePostUri;
             requestUrl = requestUrl
                 .replace(this.functionNamePlaceholder, orchestratorFunctionName)
                 .replace(this.instanceIdPlaceholder, instanceIdPath);
@@ -596,7 +597,7 @@ export class DurableOrchestrationClient implements DurableClient {
             ).href;
         } else {
             // Legacy app frontend path
-            requestUrl = this.clientData.managementUrls.terminatePostUrl
+            requestUrl = this.clientData.managementUrls.terminatePostUri
                 .replace(idPlaceholder, instanceId)
                 .replace(this.reasonPlaceholder, reason);
         }
@@ -791,7 +792,7 @@ export class DurableOrchestrationClient implements DurableClient {
             requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
         } else {
             // Legacy app frontend code path
-            const template = this.clientData.managementUrls.statusQueryGetUrl;
+            const template = this.clientData.managementUrls.statusQueryGetUri;
             const idPlaceholder = this.clientData.managementUrls.id;
 
             requestUrl = template.replace(

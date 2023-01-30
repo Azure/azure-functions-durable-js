@@ -741,7 +741,6 @@ describe("Orchestration Client", () => {
 
             const expectedResponse: EntityStateResponse<unknown> = {
                 entityExists: false,
-                entityState: undefined,
             };
 
             const expectedWebhookUrl = new url.URL(
