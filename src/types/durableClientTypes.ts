@@ -243,23 +243,23 @@ export interface HttpManagementPayload {
     /**
      * The HTTP GET status query endpoint URL.
      */
-    readonly statusQueryGetUrl: string;
+    readonly statusQueryGetUri: string;
     /**
      * The HTTP POST external event sending endpoint URL.
      */
-    readonly sendEventPostUrl: string;
+    readonly sendEventPostUri: string;
     /**
      * The HTTP POST instance termination endpoint URL.
      */
-    readonly terminatePostUrl: string;
+    readonly terminatePostUri: string;
     /**
      * The HTTP POST instance rewind endpoint URL.
      */
-    readonly rewindPostUrl: string;
+    readonly rewindPostUri: string;
     /**
      * The HTTP DELETE purge endpoint URL.
      */
-    readonly purgeHistoryDeleteUrl: string;
+    readonly purgeHistoryDeleteUri: string;
 
     /** @hidden */
     [key: string]: string;
