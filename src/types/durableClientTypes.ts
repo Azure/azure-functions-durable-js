@@ -1,12 +1,4 @@
-import {
-    FunctionInput,
-    FunctionOutput,
-    FunctionResult,
-    FunctionTrigger,
-    HttpRequest,
-    HttpResponse,
-    InvocationContext,
-} from "@azure/functions";
+import { FunctionInput, HttpRequest, HttpResponse } from "@azure/functions";
 import { IHttpRequest } from "../ihttprequest";
 import { IHttpResponse } from "../ihttpresponse";
 import { EntityId, EntityStateResponse } from "./entityTypes";
@@ -266,24 +258,6 @@ export interface HttpManagementPayload {
 }
 
 /**
- * Options object passed to client `getStatus()` method
- */
-export interface GetStatusOptions {
-    /**
-     * Specifies whether execution history should be included in the response.
-     */
-    showHistory?: boolean;
-    /**
-     * Specifies whether input and output should be included in the execution history response.
-     */
-    showHistoryOutput?: boolean;
-    /**
-     * Specifies whether orchestration input should be included in the response.
-     */
-    showInput?: boolean;
-}
-
-/**
  * Interface to hold statistics about this execution of purge history.
  * The return type of DurableClient.purgeHistory()
  */
@@ -292,35 +266,6 @@ export interface PurgeHistoryResult {
      * The number of deleted instances.
      */
     readonly instancesDeleted: number;
-}
-
-/**
- * Options object passed to DurableClient.raiseEvent()
- */
-export interface RaiseEventOptions extends TaskHubOptions {
-    /**
-     * The ID of the orchestration instance that will handle the event.
-     */
-    instanceId: string;
-    /**
-     * The name of the event.
-     */
-    eventName: string;
-    /**
-     * The JSON-serializable data associated with the event.
-     */
-    eventData: unknown;
-}
-
-export interface SignalEntityOptions extends TaskHubOptions {
-    /**
-     * The name of the operation.
-     */
-    operationName?: string;
-    /**
-     * The content for the operation
-     */
-    operationContent?: unknown;
 }
 
 /**
@@ -338,33 +283,4 @@ export interface StartNewOptions {
      * JSON-serializable input value for the orchestrator function.
      */
     input?: unknown;
-}
-
-/**
- * Options object passed to DurableClient APIs to specify task hub properties
- */
-export interface TaskHubOptions {
-    /**
-     * The TaskHubName of the orchestration
-     */
-    taskHubName?: string;
-    /**
-     * The name of the connection string associated with `taskHubName.`
-     */
-    connectionName?: string;
-}
-
-export type DurableClientHandler = (
-    triggerInput: any,
-    client: DurableClient,
-    context: InvocationContext
-) => FunctionResult<any>;
-
-export interface DurableClientOptions {
-    handler: DurableClientHandler;
-    trigger: FunctionTrigger;
-    return?: FunctionOutput;
-    extraInputs?: FunctionInput[];
-    extraOutputs?: FunctionOutput[];
-    [key: string]: any;
 }
