@@ -1,6 +1,6 @@
 // tslint:disable:member-access
 
-import { HttpRequest, HttpResponse, InvocationContext } from "@azure/functions";
+import { FunctionInput, HttpRequest, HttpResponse, InvocationContext } from "@azure/functions";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 /** @hidden */
 import cloneDeep = require("lodash/cloneDeep");
@@ -36,10 +36,17 @@ const URL = url.URL;
  *  calls this method.
  *
  */
-export function getClient(
-    context: InvocationContext,
-    clientInputOptions: DurableClientInput
-): DurableOrchestrationClient {
+export function getClient(context: InvocationContext): DurableOrchestrationClient {
+    const foundInput: FunctionInput | undefined = context.options.extraInputs.find(
+        isDurableClientInput
+    );
+    if (!foundInput) {
+        throw new Error(
+            "Could not find a registered durable client input binding. Check your extraInputs definition when registering your function."
+        );
+    }
+
+    const clientInputOptions = foundInput as DurableClientInput;
     let clientData = getClientData(context, clientInputOptions);
 
     if (!process.env.WEBSITE_HOSTNAME || process.env.WEBSITE_HOSTNAME.includes("0.0.0.0")) {
@@ -47,6 +54,11 @@ export function getClient(
     }
 
     return new DurableOrchestrationClient(clientData);
+}
+
+/** @hidden */
+function isDurableClientInput(input: FunctionInput): boolean {
+    return input.type === "durableClient" || input.type === "orchestrationClient";
 }
 
 /** @hidden */
@@ -60,7 +72,7 @@ function getClientData(
     }
 
     throw new Error(
-        "The specified input is not a valid orchestration client input. Check your extra inputs definition."
+        "Received input is not a valid durable client input. Check your extraInputs definition when registering your function."
     );
 }
 
