@@ -5,10 +5,7 @@ export { Utils } from "./utils";
 export { Orchestrator } from "./orchestrator";
 export { Entity } from "./entity";
 
-export { IEntityFunctionContext } from "./ientityfunctioncontext";
-export { IOrchestrationFunctionContext } from "./iorchestrationfunctioncontext";
 export { DurableEntityBindingInfo } from "./durableentitybindinginfo";
-export { DurableEntityContext } from "./durableentitycontext";
 export { DurableOrchestrationBindingInfo } from "./durableorchestrationbindinginfo";
 export { DurableOrchestrationContext } from "./durableorchestrationcontext";
 
@@ -50,15 +47,9 @@ export { RetryOptions } from "./retryoptions";
 export { DurableOrchestrationClient } from "./durableorchestrationclient";
 export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
 export { HttpCreationPayload } from "./httpcreationpayload";
-export { HttpManagementPayload } from "./httpmanagementpayload";
-export { GetStatusOptions } from "./getstatusoptions";
 
 export { IHttpRequest } from "./ihttprequest";
 export { IHttpResponse } from "./ihttpresponse";
-
-export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
-export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
-export { PurgeHistoryResult } from "./purgehistoryresult";
 
 export { GuidManager } from "./guidmanager";
 
@@ -67,7 +58,6 @@ export { DurableHttpResponse } from "./durablehttpresponse";
 export { DurableLock } from "./entities/durablelock";
 export { EntityId } from "./entities/entityid";
 export { EntityState } from "./entities/entitystate";
-export { EntityStateResponse } from "./entities/entitystateresponse";
 export { LockState } from "./entities/lockstate";
 export { OperationResult } from "./entities/operationresult";
 export { RequestMessage } from "./entities/requestmessage";
