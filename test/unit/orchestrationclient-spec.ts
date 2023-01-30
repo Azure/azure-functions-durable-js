@@ -8,16 +8,14 @@ import "mocha";
 import nock = require("nock");
 import url = require("url");
 import uuidv1 = require("uuid/v1");
+import { Constants, DurableOrchestrationClient, EntityId } from "../../src/classes";
+import { DurableOrchestrationStatus } from "../../src/durableorchestrationstatus";
 import {
-    Constants,
-    DurableOrchestrationClient,
-    DurableOrchestrationStatus,
-    EntityId,
     EntityStateResponse,
     HttpManagementPayload,
     OrchestrationRuntimeStatus,
     PurgeHistoryResult,
-} from "../../src/classes";
+} from "../../src/types";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 
@@ -86,7 +84,7 @@ describe("Orchestration Client", () => {
             expect(response.status).to.equal(202);
             expect(responseBody).to.deep.equal(expectedPayload);
             expect(response.headers.get("Content-Type")).to.equal("application/json");
-            expect(response.headers.get("Location")).to.equal(expectedPayload.statusQueryGetUri);
+            expect(response.headers.get("Location")).to.equal(expectedPayload.statusQueryGetUrl);
             expect(response.headers.get("Retry-After")).to.equal("10");
         });
 
@@ -112,7 +110,7 @@ describe("Orchestration Client", () => {
             expect(response.status).to.equal(202);
             expect(responseBody).to.deep.equal(expectedPayload);
             expect(response.headers.get("Content-Type")).to.equal("application/json");
-            expect(response.headers.get("Location")).to.equal(expectedPayload.statusQueryGetUri);
+            expect(response.headers.get("Location")).to.equal(expectedPayload.statusQueryGetUrl);
             expect(response.headers.get("Retry-After")).to.equal("10");
         });
 
@@ -132,7 +130,7 @@ describe("Orchestration Client", () => {
             expect(response.status).to.equal(202);
             expect(responseBody).to.deep.equal(expectedPayload);
             expect(response.headers.get("Content-Type")).to.equal("application/json");
-            expect(response.headers.get("Location")).to.equal(expectedPayload.statusQueryGetUri);
+            expect(response.headers.get("Location")).to.equal(expectedPayload.statusQueryGetUrl);
             expect(response.headers.get("Retry-After")).to.equal("10");
         });
     });
@@ -174,7 +172,7 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Pending
             );
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                defaultClientInputData.managementUrls.statusQueryGetUrl.replace(
                     TestConstants.idPlaceholder,
                     defaultInstanceId
                 )
@@ -205,7 +203,7 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Pending
             );
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                defaultClientInputData.managementUrls.statusQueryGetUrl.replace(
                     TestConstants.idPlaceholder,
                     defaultInstanceId
                 ) + "&showHistory=true"
@@ -218,7 +216,9 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202, expectedStatus);
 
-            const result = await client.getStatus(defaultInstanceId, true);
+            const result = await client.getStatus(defaultInstanceId, {
+                showHistory: true,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
         });
@@ -236,7 +236,7 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Pending
             );
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                defaultClientInputData.managementUrls.statusQueryGetUrl.replace(
                     TestConstants.idPlaceholder,
                     defaultInstanceId
                 ) + "&showHistoryOutput=true"
@@ -249,7 +249,10 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202, expectedStatus);
 
-            const result = await client.getStatus(defaultInstanceId, false, true);
+            const result = await client.getStatus(defaultInstanceId, {
+                showHistory: false,
+                showHistoryOutput: true,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
         });
@@ -267,7 +270,7 @@ describe("Orchestration Client", () => {
                 OrchestrationRuntimeStatus.Pending
             );
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                defaultClientInputData.managementUrls.statusQueryGetUrl.replace(
                     TestConstants.idPlaceholder,
                     defaultInstanceId
                 ) + "&showInput=false"
@@ -280,7 +283,11 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202, expectedStatus);
 
-            const result = await client.getStatus(defaultInstanceId, false, false, false);
+            const result = await client.getStatus(defaultInstanceId, {
+                showHistory: false,
+                showHistoryOutput: false,
+                showInput: false,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
         });
@@ -301,7 +308,7 @@ describe("Orchestration Client", () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                defaultClientInputData.managementUrls.statusQueryGetUrl.replace(
                     TestConstants.idPlaceholder,
                     ""
                 )
@@ -351,7 +358,7 @@ describe("Orchestration Client", () => {
             ];
 
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.statusQueryGetUri
+                defaultClientInputData.managementUrls.statusQueryGetUrl
                     .replace(TestConstants.idPlaceholder, "")
                     .concat(`&createdTimeFrom=${createdTimeFrom.toISOString()}`)
                     .concat(`&createdTimeTo=${createdTimeTo.toISOString()}`)
@@ -396,7 +403,7 @@ describe("Orchestration Client", () => {
             ];
 
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.statusQueryGetUri
+                defaultClientInputData.managementUrls.statusQueryGetUrl
                     .replace(TestConstants.idPlaceholder, "")
                     .concat("&runtimeStatus=Failed,Terminated")
             );
@@ -427,9 +434,9 @@ describe("Orchestration Client", () => {
         it("calls expected webhook and returns expected result when instance exists", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedResult = new PurgeHistoryResult(1);
+            const expectedResult: PurgeHistoryResult = { instancesDeleted: 1 };
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                defaultClientInputData.managementUrls.statusQueryGetUrl.replace(
                     TestConstants.idPlaceholder,
                     defaultInstanceId
                 )
@@ -450,9 +457,9 @@ describe("Orchestration Client", () => {
         it("calls expected webhook and returns expected result when instance does not exist", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedResult = new PurgeHistoryResult(0);
+            const expectedResult: PurgeHistoryResult = { instancesDeleted: 0 };
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                defaultClientInputData.managementUrls.statusQueryGetUrl.replace(
                     TestConstants.idPlaceholder,
                     defaultInstanceId
                 )
@@ -491,14 +498,14 @@ describe("Orchestration Client", () => {
             ];
 
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.purgeHistoryDeleteUri
+                defaultClientInputData.managementUrls.purgeHistoryDeleteUrl
                     .replace(TestConstants.idPlaceholder, "")
                     .concat(`&createdTimeFrom=${createdTimeFrom.toISOString()}`)
                     .concat(`&createdTimeTo=${createdTimeTo.toISOString()}`)
                     .concat("&runtimeStatus=Failed,Terminated")
             );
 
-            const expectedResult = new PurgeHistoryResult(3);
+            const expectedResult: PurgeHistoryResult = { instancesDeleted: 3 };
             const scope = nock(expectedWebhookUrl.origin)
                 .delete(expectedWebhookUrl.pathname)
                 .query(() => {
@@ -526,13 +533,13 @@ describe("Orchestration Client", () => {
             ];
 
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.statusQueryGetUri
+                defaultClientInputData.managementUrls.statusQueryGetUrl
                     .replace(TestConstants.idPlaceholder, "")
                     .concat(`&createdTimeFrom=${createdTimeFrom.toISOString()}`)
                     .concat("&runtimeStatus=Failed,Terminated")
             );
 
-            const expectedResult = new PurgeHistoryResult(0);
+            const expectedResult: PurgeHistoryResult = { instancesDeleted: 0 };
             const scope = nock(expectedWebhookUrl.origin)
                 .delete(expectedWebhookUrl.pathname)
                 .query(() => {
@@ -566,7 +573,7 @@ describe("Orchestration Client", () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.sendEventPostUri
+                defaultClientInputData.managementUrls.sendEventPostUrl
                     .replace(TestConstants.idPlaceholder, defaultInstanceId)
                     .replace(TestConstants.eventNamePlaceholder, defaultTestEvent)
             );
@@ -578,11 +585,11 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.raiseEvent(
-                defaultInstanceId,
-                defaultTestEvent,
-                defaultTestData
-            );
+            const result = await client.raiseEvent({
+                instanceId: defaultInstanceId,
+                eventName: defaultTestEvent,
+                eventData: defaultTestData,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -592,7 +599,7 @@ describe("Orchestration Client", () => {
 
             const testTaskHub = "SpecialTaskHub";
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.sendEventPostUri
+                defaultClientInputData.managementUrls.sendEventPostUrl
                     .replace(TestConstants.idPlaceholder, defaultInstanceId)
                     .replace(TestConstants.eventNamePlaceholder, defaultTestEvent)
                     .replace(defaultTaskHub, testTaskHub)
@@ -604,12 +611,12 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.raiseEvent(
-                defaultInstanceId,
-                defaultTestEvent,
-                defaultTestData,
-                testTaskHub
-            );
+            const result = await client.raiseEvent({
+                instanceId: defaultInstanceId,
+                eventName: defaultTestEvent,
+                eventData: defaultTestData,
+                taskHubName: testTaskHub,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -619,7 +626,7 @@ describe("Orchestration Client", () => {
 
             const testConnection = "RainbowConnection";
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.sendEventPostUri
+                defaultClientInputData.managementUrls.sendEventPostUrl
                     .replace(TestConstants.idPlaceholder, defaultInstanceId)
                     .replace(TestConstants.eventNamePlaceholder, defaultTestEvent)
                     .replace(defaultConnection, testConnection)
@@ -631,13 +638,12 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.raiseEvent(
-                defaultInstanceId,
-                defaultTestEvent,
-                defaultTestData,
-                undefined,
-                testConnection
-            );
+            const result = await client.raiseEvent({
+                instanceId: defaultInstanceId,
+                eventName: defaultTestEvent,
+                eventData: defaultTestData,
+                connectionName: testConnection,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -647,7 +653,7 @@ describe("Orchestration Client", () => {
 
             const id = "badId";
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.sendEventPostUri
+                defaultClientInputData.managementUrls.sendEventPostUrl
                     .replace(TestConstants.idPlaceholder, id)
                     .replace(TestConstants.eventNamePlaceholder, defaultTestEvent)
             );
@@ -659,7 +665,11 @@ describe("Orchestration Client", () => {
                 .reply(404, undefined);
 
             await expect(
-                client.raiseEvent(id, defaultTestEvent, defaultTestData)
+                client.raiseEvent({
+                    instanceId: id,
+                    eventName: defaultTestEvent,
+                    eventData: defaultTestData,
+                })
             ).to.be.rejectedWith(`No instance with ID '${id}' found.`);
             expect(scope.isDone()).to.be.equal(true);
         });
@@ -683,10 +693,10 @@ describe("Orchestration Client", () => {
                 isTrue: true,
                 names: ["Bob", "Nancy", "Geraldine"],
             };
-            const expectedStateResponse = new EntityStateResponse<TestEntityState>(
-                true,
-                expectedEntityStateResponse
-            );
+            const expectedStateResponse: EntityStateResponse<TestEntityState> = {
+                entityExists: true,
+                entityState: expectedEntityStateResponse,
+            };
 
             const expectedWebhookUrl = new url.URL(
                 `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?${TestConstants.testCode}`
@@ -715,10 +725,10 @@ describe("Orchestration Client", () => {
                 isTrue: true,
                 names: ["Bob", "Nancy", "Geraldine"],
             };
-            const expectedStateResponse = new EntityStateResponse<TestEntityState>(
-                true,
-                expectedEntityStateResponse
-            );
+            const expectedStateResponse: EntityStateResponse<TestEntityState> = {
+                entityExists: true,
+                entityState: expectedEntityStateResponse,
+            };
 
             const expectedWebhookUrl = new url.URL(
                 `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?taskHub=${testTaskHub}&connection=${testConn}&${TestConstants.testCode}`
@@ -731,11 +741,10 @@ describe("Orchestration Client", () => {
                 )
                 .reply(200, expectedEntityStateResponse);
 
-            const result = await client.readEntityState<TestEntityState>(
-                defaultEntityId,
-                testTaskHub,
-                testConn
-            );
+            const result = await client.readEntityState<TestEntityState>(defaultEntityId, {
+                taskHubName: testTaskHub,
+                connectionName: testConn,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.deep.equal(expectedStateResponse);
         });
@@ -745,7 +754,6 @@ describe("Orchestration Client", () => {
 
             const expectedResponse: EntityStateResponse<unknown> = {
                 entityExists: false,
-                entityState: undefined,
             };
 
             const expectedWebhookUrl = new url.URL(
@@ -779,7 +787,7 @@ describe("Orchestration Client", () => {
 
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.rewindPostUri
+                defaultClientInputData.managementUrls.rewindPostUrl
                     .replace(TestConstants.idPlaceholder, defaultInstanceId)
                     .replace(TestConstants.reasonPlaceholder, testReason)
             );
@@ -801,7 +809,7 @@ describe("Orchestration Client", () => {
             const testId = "badId";
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.rewindPostUri
+                defaultClientInputData.managementUrls.rewindPostUrl
                     .replace(TestConstants.idPlaceholder, testId)
                     .replace(TestConstants.reasonPlaceholder, testReason)
             );
@@ -824,7 +832,7 @@ describe("Orchestration Client", () => {
             const testId = "badId";
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.rewindPostUri
+                defaultClientInputData.managementUrls.rewindPostUrl
                     .replace(TestConstants.idPlaceholder, testId)
                     .replace(TestConstants.reasonPlaceholder, testReason)
             );
@@ -847,7 +855,7 @@ describe("Orchestration Client", () => {
             const testId = "badId";
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.rewindPostUri
+                defaultClientInputData.managementUrls.rewindPostUrl
                     .replace(TestConstants.idPlaceholder, testId)
                     .replace(TestConstants.reasonPlaceholder, testReason)
             );
@@ -890,11 +898,10 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.signalEntity(
-                defaultEntityId,
-                defaultEntityOp,
-                testSignalData
-            );
+            const result = await client.signalEntity(defaultEntityId, {
+                operationName: defaultEntityOp,
+                operationContent: testSignalData,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -917,13 +924,12 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.signalEntity(
-                defaultEntityId,
-                defaultEntityOp,
-                testSignalData,
-                testTaskHub,
-                testConn
-            );
+            const result = await client.signalEntity(defaultEntityId, {
+                operationName: defaultEntityOp,
+                operationContent: testSignalData,
+                taskHubName: testTaskHub,
+                connectionName: testConn,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -944,7 +950,9 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.signalEntity(defaultEntityId, undefined, testSignalData);
+            const result = await client.signalEntity(defaultEntityId, {
+                operationContent: testSignalData,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -969,12 +977,20 @@ describe("Orchestration Client", () => {
                 Constants.DefaultLocalOrigin,
                 functionName
             );
+            const managementPayload: HttpManagementPayload = {
+                id: defaultInstanceId,
+                statusQueryGetUrl: "",
+                sendEventPostUrl: "",
+                terminatePostUrl: "",
+                rewindPostUrl: "",
+                purgeHistoryDeleteUrl: "",
+            };
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname)
                 .query((actualQueryObject: object) =>
                     urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
                 )
-                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "", ""));
+                .reply(202, managementPayload);
 
             const result = await client.startNew(functionName);
             expect(scope.isDone()).to.be.equal(true);
@@ -992,12 +1008,20 @@ describe("Orchestration Client", () => {
                 functionName,
                 defaultInstanceId
             );
+            const managementPayload: HttpManagementPayload = {
+                id: defaultInstanceId,
+                statusQueryGetUrl: "",
+                sendEventPostUrl: "",
+                terminatePostUrl: "",
+                rewindPostUrl: "",
+                purgeHistoryDeleteUrl: "",
+            };
             const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
                 .post(expectedWebhookUrl.pathname, JSON.stringify(testData))
                 .query((actualQueryObject: object) =>
                     urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
                 )
-                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "", ""));
+                .reply(202, managementPayload);
 
             const result = await client.startNew(functionName, {
                 instanceId: defaultInstanceId,
@@ -1042,7 +1066,7 @@ describe("Orchestration Client", () => {
 
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.terminatePostUri
+                defaultClientInputData.managementUrls.terminatePostUrl
                     .replace(TestConstants.idPlaceholder, defaultInstanceId)
                     .replace(TestConstants.reasonPlaceholder, testReason)
             );
@@ -1064,7 +1088,7 @@ describe("Orchestration Client", () => {
             const id = "badId";
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.terminatePostUri
+                defaultClientInputData.managementUrls.terminatePostUrl
                     .replace(TestConstants.idPlaceholder, id)
                     .replace(TestConstants.reasonPlaceholder, testReason)
             );
@@ -1087,7 +1111,7 @@ describe("Orchestration Client", () => {
             const id = "badId";
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(
-                defaultClientInputData.managementUrls.terminatePostUri
+                defaultClientInputData.managementUrls.terminatePostUrl
                     .replace(TestConstants.idPlaceholder, id)
                     .replace(TestConstants.reasonPlaceholder, testReason)
             );
@@ -1174,7 +1198,13 @@ describe("Orchestration Client", () => {
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
+
+            expect(res.status).to.equal(expectedResponse.status);
+            const body = await res.text();
+            expect(body).to.equal(expectedResponse.body);
+            expect(res.headers.get("Content-Type")).to.equal(
+                expectedResponse.headers["Content-Type"]
+            );
         });
 
         it("returns expected result for canceled instance", async () => {
@@ -1207,7 +1237,13 @@ describe("Orchestration Client", () => {
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
+
+            expect(res.status).to.equal(expectedResponse.status);
+            const body = await res.text();
+            expect(body).to.equal(expectedResponse.body);
+            expect(res.headers.get("Content-Type")).to.equal(
+                expectedResponse.headers["Content-Type"]
+            );
         });
 
         it("returns expected result for terminated instance", async () => {
@@ -1240,7 +1276,13 @@ describe("Orchestration Client", () => {
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
+
+            expect(res.status).to.equal(expectedResponse.status);
+            const body = await res.text();
+            expect(body).to.equal(expectedResponse.body);
+            expect(res.headers.get("Content-Type")).to.equal(
+                expectedResponse.headers["Content-Type"]
+            );
         });
 
         it("returns expected result for failed instance", async () => {
@@ -1273,7 +1315,13 @@ describe("Orchestration Client", () => {
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
+
+            expect(res.status).to.equal(expectedResponse.status);
+            const body = await res.text();
+            expect(body).to.equal(expectedResponse.body);
+            expect(res.headers.get("Content-Type")).to.equal(
+                expectedResponse.headers["Content-Type"]
+            );
         });
 
         it("continues polling for running instance", async () => {
@@ -1310,7 +1358,7 @@ describe("Orchestration Client", () => {
                 .get(/.*/)
                 .reply(202, runningStatus, {
                     "Content-Type": "application/json",
-                    Location: httpManagementPayload.statusQueryGetUri,
+                    Location: httpManagementPayload.statusQueryGetUrl,
                     "Retry-After": "10",
                 })
                 .get(/.*/)
@@ -1332,8 +1380,14 @@ describe("Orchestration Client", () => {
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
-            expect(scope.isDone()).to.be.equal(true);
+
+            expect(scope.isDone()).to.be.true;
+            expect(res.status).to.equal(expectedResponse.status);
+            const body = await res.text();
+            expect(body).to.equal(expectedResponse.body);
+            expect(res.headers.get("Content-Type")).to.equal(
+                expectedResponse.headers["Content-Type"]
+            );
         });
 
         it("returns check status response if timeout expires", async () => {
@@ -1360,7 +1414,7 @@ describe("Orchestration Client", () => {
                 .get(/.*/)
                 .reply(202, runningStatus, {
                     "Content-Type": "application/json",
-                    Location: httpManagementPayload.statusQueryGetUri,
+                    Location: httpManagementPayload.statusQueryGetUrl,
                     "Retry-After": "10",
                 });
 
@@ -1375,7 +1429,8 @@ describe("Orchestration Client", () => {
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
+
+            expect(res).to.deep.equal(expectedResponse);
 
             scope.persist(false);
         });
