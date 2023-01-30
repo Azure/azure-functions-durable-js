@@ -2,7 +2,6 @@ import {
     DurableOrchestrationBindingInfo,
     HistoryEvent,
     HistoryEventType,
-    IOrchestrationFunctionContext,
     OrchestratorState,
     Utils,
 } from "./classes";
@@ -10,6 +9,7 @@ import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import { LatestReplaySchema, ReplaySchema } from "./replaySchema";
 import { DurableOrchestrationBindingInfoReqFields } from "./durableorchestrationbindinginfo";
+import { OrchestrationContext } from "./types";
 
 /** @hidden */
 export class Orchestrator {
@@ -20,18 +20,18 @@ export class Orchestrator {
     // nicely with Orchestrator data being initialized in the constructor: state may preserved
     // across unit test runs.
     // As a result, we are currently constrained to initialize all of our data in the `handle` method.
-    constructor(public fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>) {}
+    constructor(public fn: (context: OrchestrationContext) => IterableIterator<unknown>) {}
 
     public listen(): (
         orchestrationTrigger: DurableOrchestrationBindingInfo,
-        context: IOrchestrationFunctionContext
+        context: OrchestrationContext
     ) => Promise<OrchestratorState> {
         return this.handle.bind(this);
     }
 
     private async handle(
         orchestrationTrigger: DurableOrchestrationBindingInfo,
-        context: IOrchestrationFunctionContext
+        context: OrchestrationContext
     ): Promise<OrchestratorState> {
         this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
