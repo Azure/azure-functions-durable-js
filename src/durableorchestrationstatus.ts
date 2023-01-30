@@ -1,12 +1,6 @@
-import { OrchestrationRuntimeStatus } from "./classes";
+import * as types from "./types";
 
-/**
- * Represents the status of a durable orchestration instance.
- *
- * Can be fetched using [[DurableOrchestrationClient]].[[getStatus]].
- */
-export class DurableOrchestrationStatus {
-    /** @hidden */
+export class DurableOrchestrationStatus implements types.DurableOrchestrationStatus {
     constructor(
         /** The orchestrator function name. */
         public readonly name: string,
@@ -43,7 +37,7 @@ export class DurableOrchestrationStatus {
         /**
          * The runtime status of the orchestration instance.
          */
-        public readonly runtimeStatus: OrchestrationRuntimeStatus,
+        public readonly runtimeStatus: types.OrchestrationRuntimeStatus,
         /**
          * The custom status payload (if any) that was set by
          * [[DurableOrchestrationClient]].[[setCustomStatus]].
