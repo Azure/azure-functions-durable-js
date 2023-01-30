@@ -6,7 +6,6 @@ import {
     HistoryEvent,
     HistoryEventType,
     IAction,
-    IOrchestrationFunctionContext,
     RequestMessage,
     ResponseMessage,
     SubOrchestrationInstanceCompletedEvent,
@@ -18,6 +17,7 @@ import { OrchestratorState } from "./orchestratorstate";
 import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "./task";
 import { ReplaySchema } from "./replaySchema";
 import { Utils } from "./utils";
+import { OrchestrationContext } from "./types";
 
 /**
  * @hidden
@@ -95,13 +95,13 @@ export class TaskOrchestrationExecutor {
      *  Returns void but communicates the resulting orchestrator state via the context object's handler
      */
     public async execute(
-        context: IOrchestrationFunctionContext,
+        context: OrchestrationContext,
         history: HistoryEvent[],
         schemaVersion: ReplaySchema,
-        fn: (context: IOrchestrationFunctionContext) => IterableIterator<unknown>
+        fn: (context: OrchestrationContext) => IterableIterator<unknown>
     ): Promise<OrchestratorState> {
         this.schemaVersion = schemaVersion;
-        this.context = context.df;
+        this.context = context.df as DurableOrchestrationContext;
         this.generator = fn(context) as Generator<TaskBase, any, any>;
 
         // Execute the orchestration, using the history for replay
