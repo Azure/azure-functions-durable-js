@@ -14,14 +14,9 @@ import {
     EntityTrigger,
     OrchestrationOptions,
     EntityOptions,
+    OrchestrationContext,
 } from "./types";
-import {
-    Entity,
-    EntityState,
-    IEntityFunctionContext,
-    IOrchestrationFunctionContext,
-    Orchestrator,
-} from "./classes";
+import { Entity, EntityState, IEntityFunctionContext, Orchestrator } from "./classes";
 import { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 import { OrchestratorState } from "./orchestratorstate";
 import { DurableOrchestrationInput } from "./testingUtils";
@@ -35,7 +30,7 @@ type EntityFunction<T> = FunctionHandler &
 type OrchestrationFunction = FunctionHandler &
     ((
         orchestrationTrigger: DurableOrchestrationInput,
-        context: IOrchestrationFunctionContext
+        context: OrchestrationContext
     ) => Promise<OrchestratorState>);
 
 /**
@@ -48,7 +43,7 @@ export function createOrchestrator(fn: OrchestrationHandler): OrchestrationFunct
 
     return async (
         orchestrationTrigger: DurableOrchestrationInput,
-        context: IOrchestrationFunctionContext
+        context: OrchestrationContext
     ): Promise<OrchestratorState> => {
         return await listener(context, orchestrationTrigger);
     };
