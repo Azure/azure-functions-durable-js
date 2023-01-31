@@ -1,10 +1,23 @@
-import { FunctionOptions, FunctionTrigger } from "@azure/functions";
+import { FunctionOptions, FunctionTrigger, InvocationContext } from "@azure/functions";
 import { TokenSource } from ".";
-import { IOrchestrationFunctionContext } from "../iorchestrationfunctioncontext";
+import { DurableOrchestrationContext } from "../classes";
 
+/**
+ * Type of a Generator that can be registered as an orchestration
+ */
 export type OrchestrationHandler = (
-    context: IOrchestrationFunctionContext
+    context: OrchestrationContext
 ) => Generator<unknown, unknown, any>;
+
+/**
+ * Context object passed to orchestration Functions.
+ */
+export interface OrchestrationContext extends InvocationContext {
+    /**
+     * Object containing all DF orchestration APIs and properties
+     */
+    df: DurableOrchestrationContext;
+}
 
 export interface OrchestrationOptions extends Partial<FunctionOptions> {
     handler: OrchestrationHandler;

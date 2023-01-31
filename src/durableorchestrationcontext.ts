@@ -24,15 +24,13 @@ import {
     AtomicTask,
     RetryableTask,
     DFTimerTask,
-    Task,
-    TimerTask,
     DFTask,
     LongTimerTask,
     CallHttpWithPollingTask,
 } from "./task";
 import moment = require("moment");
 import { ReplaySchema } from "./replaySchema";
-import { CallHttpOptions } from "./types";
+import { CallHttpOptions, Task, TimerTask } from "./types";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
