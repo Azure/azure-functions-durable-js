@@ -1,6 +1,3 @@
-variables: { MODULE_VERSION: "3.0.0-alpha.1", NODE_18: "18.x" }
-name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
-
 pr:
     branches:
         include:
