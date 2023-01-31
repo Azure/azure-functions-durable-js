@@ -5,7 +5,6 @@ export { Utils } from "./utils";
 export { Orchestrator } from "./orchestrator";
 export { Entity } from "./entity";
 
-export { IEntityFunctionContext } from "./ientityfunctioncontext";
 export { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 export { DurableEntityContext } from "./durableentitycontext";
 export { DurableOrchestrationBindingInfo } from "./durableorchestrationbindinginfo";
