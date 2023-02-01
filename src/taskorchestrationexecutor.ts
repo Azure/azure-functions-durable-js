@@ -1,6 +1,5 @@
 import {
     CallEntityAction,
-    DurableOrchestrationContext,
     EventRaisedEvent,
     EventSentEvent,
     HistoryEvent,
@@ -17,7 +16,7 @@ import { OrchestratorState } from "./orchestratorstate";
 import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "./task";
 import { ReplaySchema } from "./replaySchema";
 import { Utils } from "./utils";
-import { OrchestrationContext } from "./types";
+import { DurableOrchestrationContext, OrchestrationContext } from "./types";
 
 /**
  * @hidden

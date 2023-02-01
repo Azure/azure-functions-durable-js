@@ -8,8 +8,7 @@ import {
 } from "./classes";
 import { ReplaySchema } from "./replaySchema";
 import * as uuidv1 from "uuid/v1";
-import { DurableEntityContext } from "./durableentitycontext";
-import { EntityContext, OrchestrationContext } from "./types";
+import { DurableEntityContext, EntityContext, OrchestrationContext } from "./types";
 import * as types from "./types";
 
 export class DummyOrchestrationContext extends InvocationContext

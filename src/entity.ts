@@ -1,7 +1,6 @@
 import * as debug from "debug";
 import {
     DurableEntityBindingInfo,
-    DurableEntityContext,
     EntityId,
     EntityState,
     OperationResult,
@@ -10,7 +9,7 @@ import {
     Utils,
 } from "./classes";
 import { DurableEntityBindingInfoReqFields } from "./durableentitybindinginfo";
-import { EntityContext } from "./types";
+import { DurableEntityContext, EntityContext } from "./types";
 
 /** @hidden */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
