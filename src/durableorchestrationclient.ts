@@ -14,7 +14,6 @@ import {
     DurableOrchestrationStatus,
     EntityId,
     EntityStateResponse,
-    GetStatusInternalOptions,
     HttpCreationPayload,
     HttpManagementPayload,
     IHttpRequest,
@@ -1002,4 +1001,16 @@ export class DurableOrchestrationClient {
             }. Details: ${JSON.stringify(response.data)}`
         );
     }
+}
+
+interface GetStatusInternalOptions {
+    instanceId?: string;
+    taskHubName?: string;
+    connectionName?: string;
+    showHistory?: boolean;
+    showHistoryOutput?: boolean;
+    createdTimeFrom?: Date;
+    createdTimeTo?: Date;
+    runtimeStatus?: OrchestrationRuntimeStatus[];
+    showInput?: boolean;
 }
