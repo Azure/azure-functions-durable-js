@@ -49,7 +49,6 @@ export { DurableOrchestrationClient } from "./durableorchestrationclient";
 export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
 export { HttpCreationPayload } from "./httpcreationpayload";
 export { HttpManagementPayload } from "./httpmanagementpayload";
-export { GetStatusOptions } from "./getstatusoptions";
 
 export { IHttpRequest } from "./ihttprequest";
 export { IHttpResponse } from "./ihttpresponse";

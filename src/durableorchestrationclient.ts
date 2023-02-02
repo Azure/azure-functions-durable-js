@@ -14,7 +14,6 @@ import {
     DurableOrchestrationStatus,
     EntityId,
     EntityStateResponse,
-    GetStatusOptions,
     HttpCreationPayload,
     HttpManagementPayload,
     IHttpRequest,
@@ -215,7 +214,7 @@ export class DurableOrchestrationClient {
         showHistoryOutput?: boolean,
         showInput?: boolean
     ): Promise<DurableOrchestrationStatus> {
-        const options: GetStatusOptions = {
+        const options: GetStatusInternalOptions = {
             instanceId,
             showHistory,
             showHistoryOutput,
@@ -263,7 +262,7 @@ export class DurableOrchestrationClient {
         createdTimeTo: Date | undefined,
         runtimeStatus: OrchestrationRuntimeStatus[]
     ): Promise<DurableOrchestrationStatus[]> {
-        const options: GetStatusOptions = {
+        const options: GetStatusInternalOptions = {
             createdTimeFrom,
             createdTimeTo,
             runtimeStatus,
@@ -874,7 +873,7 @@ export class DurableOrchestrationClient {
      * to aggregate results during recursion.
      */
     private async getStatusInternal(
-        options: GetStatusOptions,
+        options: GetStatusInternalOptions,
         continuationToken?: string,
         prevData?: unknown[]
     ): Promise<AxiosResponse> {
@@ -1002,4 +1001,16 @@ export class DurableOrchestrationClient {
             }. Details: ${JSON.stringify(response.data)}`
         );
     }
+}
+
+interface GetStatusInternalOptions {
+    instanceId?: string;
+    taskHubName?: string;
+    connectionName?: string;
+    showHistory?: boolean;
+    showHistoryOutput?: boolean;
+    createdTimeFrom?: Date;
+    createdTimeTo?: Date;
+    runtimeStatus?: OrchestrationRuntimeStatus[];
+    showInput?: boolean;
 }
