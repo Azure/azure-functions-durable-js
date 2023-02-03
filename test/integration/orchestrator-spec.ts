@@ -2727,8 +2727,7 @@ describe("Orchestrator", () => {
                 );
 
                 const expectedErr =
-                    "Cannot initialize a CompoundTask with an empty childrens array. " +
-                    "When constructing a CompoundTask (such as Task.all() or Task.any()), you must speciify at leat one Task.";
+                    "When constructing a CompoundTask (such as Task.all() or Task.any()), you must specify at least one Task.";
 
                 let errored = false;
                 try {
