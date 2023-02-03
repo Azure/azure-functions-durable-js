@@ -166,9 +166,12 @@ export abstract class CompoundTask extends DFTask {
         children.map((c) => (c.parent = this));
         this.firstError = undefined;
 
-        // If the task has no children, then it's completed by definition.
+        // If the task has no children, throw an error
         if (children.length == 0) {
-            this.state = TaskState.Completed;
+            const message =
+                "Cannot initialize a CompoundTask with an empty childrens array. " +
+                "When constructing a CompoundTask (such as Task.all() or Task.any()), you must speciify at leat one Task.";
+            throw new Error(message);
         }
     }
 
