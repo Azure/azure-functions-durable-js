@@ -1,6 +1,0 @@
-{
-    "extension": ["ts"],
-    "spec": ["test/**/*.spec.ts"],
-    "package": "./package.json",
-    "r": ["esm", "ts-node/register", "source-map-support/register"]
-  }
