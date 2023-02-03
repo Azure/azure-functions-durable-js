@@ -28,10 +28,10 @@ import {
     LongTimerTask,
     CallHttpWithPollingTask,
 } from "./task";
-import moment = require("moment");
 import { ReplaySchema } from "./replaySchema";
 import { CallHttpOptions, Task, TimerTask } from "./types";
 import { SignalEntityAction } from "./actions/signalentityaction";
+import { DateTime, Duration } from "luxon";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -56,12 +56,8 @@ export class DurableOrchestrationContext {
         this.isReplaying = isReplaying;
         this.currentUtcDateTime = currentUtcDateTime;
         this.parentInstanceId = parentInstanceId;
-        this.longRunningTimerIntervalDuration = longRunningTimerIntervalDuration
-            ? moment.duration(longRunningTimerIntervalDuration)
-            : undefined;
-        this.maximumShortTimerDuration = maximumShortTimerDuration
-            ? moment.duration(maximumShortTimerDuration)
-            : undefined;
+        this.longRunningTimerIntervalDuration = longRunningTimerIntervalDuration;
+        this.maximumShortTimerDuration = maximumShortTimerDuration;
         this.defaultHttpAsyncRequestSleepTimeMillseconds = defaultHttpAsyncRequestSleepTimeMillseconds;
         this.schemaVersion = schemaVersion;
         this.input = input;
@@ -130,7 +126,7 @@ export class DurableOrchestrationContext {
      * This duration property is determined by the underlying storage
      * solution and passed to the SDK from the extension.
      */
-    private readonly maximumShortTimerDuration: moment.Duration | undefined;
+    private readonly maximumShortTimerDuration: string | undefined;
 
     /**
      * A duration property which defines the duration of smaller
@@ -140,7 +136,7 @@ export class DurableOrchestrationContext {
      * This duration property is determined by the underlying
      * storage solution and passed to the SDK from the extension.
      */
-    private readonly longRunningTimerIntervalDuration: moment.Duration | undefined;
+    private readonly longRunningTimerIntervalDuration: string | undefined;
 
     /**
      * Gets the current schema version that this execution is
@@ -381,7 +377,9 @@ export class DurableOrchestrationContext {
      */
     public createTimer(fireAt: Date): TimerTask {
         const timerAction = new CreateTimerAction(fireAt);
-        const durationUntilFire = moment.duration(moment(fireAt).diff(this.currentUtcDateTime));
+        const durationUntilFire: Duration = DateTime.fromJSDate(fireAt).diff(
+            DateTime.fromJSDate(this.currentUtcDateTime)
+        );
         if (this.schemaVersion >= ReplaySchema.V3) {
             if (!this.maximumShortTimerDuration || !this.longRunningTimerIntervalDuration) {
                 throw Error(
@@ -394,14 +392,14 @@ export class DurableOrchestrationContext {
                 );
             }
 
-            if (durationUntilFire > this.maximumShortTimerDuration) {
+            if (durationUntilFire > Duration.fromISO(this.maximumShortTimerDuration)) {
                 return new LongTimerTask(
                     false,
                     timerAction,
                     this,
                     this.taskOrchestratorExecutor,
-                    this.maximumShortTimerDuration.toISOString(),
-                    this.longRunningTimerIntervalDuration.toISOString()
+                    this.maximumShortTimerDuration,
+                    this.longRunningTimerIntervalDuration
                 );
             }
         }

@@ -1,9 +1,9 @@
 import { DurableHttpResponse, RetryOptions } from ".";
 import { IAction, CreateTimerAction, CallHttpAction } from "./classes";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
-import moment = require("moment");
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { Task, TimerTask } from "./types";
+import { Duration, DateTime } from "luxon";
 
 /**
  * @hidden
@@ -324,7 +324,7 @@ export class WhenAnyTask extends CompoundTask {
  */
 export class CallHttpWithPollingTask extends CompoundTask {
     protected action: CallHttpAction;
-    private readonly defaultHttpAsyncRequestSleepDuration: moment.Duration;
+    private readonly defaultHttpAsyncRequestSleepDuration: number;
 
     public constructor(
         id: TaskID,
@@ -336,10 +336,7 @@ export class CallHttpWithPollingTask extends CompoundTask {
         super([new AtomicTask(id, action)], action);
         this.id = id;
         this.action = action;
-        this.defaultHttpAsyncRequestSleepDuration = moment.duration(
-            defaultHttpAsyncRequestSleepTimeMillseconds,
-            "ms"
-        );
+        this.defaultHttpAsyncRequestSleepDuration = defaultHttpAsyncRequestSleepTimeMillseconds;
     }
 
     public trySetValue(child: TaskBase): void {
@@ -353,12 +350,12 @@ export class CallHttpWithPollingTask extends CompoundTask {
                 );
                 if (result.statusCode === 202 && result.getHeader("Location")) {
                     const retryAfterHeaderValue = result.getHeader("Retry-After");
-                    const delay: moment.Duration = retryAfterHeaderValue
-                        ? moment.duration(retryAfterHeaderValue, "s")
-                        : this.defaultHttpAsyncRequestSleepDuration;
+                    const delay: Duration = retryAfterHeaderValue
+                        ? Duration.fromObject({ seconds: parseInt(retryAfterHeaderValue) })
+                        : Duration.fromMillis(this.defaultHttpAsyncRequestSleepDuration);
 
                     const currentTime = this.orchestrationContext.currentUtcDateTime;
-                    const timerFireTime = moment(currentTime).add(delay).toDate();
+                    const timerFireTime = DateTime.fromJSDate(currentTime).plus(delay).toJSDate();
 
                     // this should be safe since both types returned by this call
                     // (DFTimerTask and LongTimerTask) are TaskBase-conforming
@@ -410,9 +407,9 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
     public id: TaskID;
     public action: CreateTimerAction;
     private readonly executor: TaskOrchestrationExecutor;
-    private readonly maximumTimerDuration: moment.Duration;
+    private readonly maximumTimerDuration: string;
     private readonly orchestrationContext: DurableOrchestrationContext;
-    private readonly longRunningTimerIntervalDuration: moment.Duration;
+    private readonly longRunningTimerIntervalDuration: string;
 
     public constructor(
         id: TaskID,
@@ -422,15 +419,19 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
         maximumTimerLength: string,
         longRunningTimerIntervalLength: string
     ) {
-        const maximumTimerDuration = moment.duration(maximumTimerLength);
-        const longRunningTimerIntervalDuration = moment.duration(longRunningTimerIntervalLength);
-        const currentTime = orchestrationContext.currentUtcDateTime;
-        const finalFireTime = action.fireAt;
-        const durationUntilFire = moment.duration(moment(finalFireTime).diff(currentTime));
+        const maximumTimerDuration: string = maximumTimerLength;
+        const longRunningTimerIntervalDuration: string = longRunningTimerIntervalLength;
+        const currentTime: Date = orchestrationContext.currentUtcDateTime;
+        const finalFireTime: Date = action.fireAt;
+        const durationUntilFire: Duration = DateTime.fromJSDate(finalFireTime).diff(
+            DateTime.fromJSDate(currentTime)
+        );
 
         const nextFireTime: Date =
-            durationUntilFire > maximumTimerDuration
-                ? moment(currentTime).add(longRunningTimerIntervalDuration).toDate()
+            durationUntilFire > Duration.fromISO(maximumTimerDuration)
+                ? DateTime.fromJSDate(currentTime)
+                      .plus(Duration.fromISO(longRunningTimerIntervalDuration))
+                      .toJSDate()
                 : finalFireTime;
 
         const nextTimerAction = new CreateTimerAction(nextFireTime);
@@ -479,10 +480,15 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
     }
 
     private getNextTimerTask(finalFireTime: Date, currentTime: Date): DFTimerTask {
-        const durationUntilFire = moment.duration(moment(finalFireTime).diff(currentTime));
+        const durationUntilFire: Duration = DateTime.fromJSDate(finalFireTime).diff(
+            DateTime.fromJSDate(currentTime)
+        );
+
         const nextFireTime: Date =
-            durationUntilFire > this.maximumTimerDuration
-                ? moment(currentTime).add(this.longRunningTimerIntervalDuration).toDate()
+            durationUntilFire > Duration.fromISO(this.maximumTimerDuration)
+                ? DateTime.fromJSDate(currentTime)
+                      .plus(Duration.fromISO(this.longRunningTimerIntervalDuration))
+                      .toJSDate()
                 : finalFireTime;
         return new DFTimerTask(false, new CreateTimerAction(nextFireTime));
     }

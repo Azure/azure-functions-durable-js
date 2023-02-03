@@ -883,7 +883,7 @@ describe("Orchestrator", () => {
                             httpRequest: {
                                 method: req.method,
                                 uri: req.uri,
-                                content: req.content,
+                                content: req.c,
                                 headers: req.headers,
                                 asynchronousPatternEnabled: req.asynchronousPatternEnabled,
                                 tokenSource: {
