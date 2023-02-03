@@ -50,9 +50,6 @@ export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
 export { HttpCreationPayload } from "./httpcreationpayload";
 export { HttpManagementPayload } from "./httpmanagementpayload";
 
-export { IHttpRequest } from "./ihttprequest";
-export { IHttpResponse } from "./ihttpresponse";
-
 export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
 export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
 export { PurgeHistoryResult } from "./purgehistoryresult";

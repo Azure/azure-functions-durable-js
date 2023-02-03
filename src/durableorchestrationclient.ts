@@ -16,8 +16,6 @@ import {
     EntityStateResponse,
     HttpCreationPayload,
     HttpManagementPayload,
-    IHttpRequest,
-    IHttpResponse,
     OrchestrationClientInputData,
     OrchestrationRuntimeStatus,
     PurgeHistoryResult,
@@ -175,7 +173,7 @@ export class DurableOrchestrationClient {
      *  containing instance management URLs.
      */
     public createCheckStatusResponse(
-        request: IHttpRequest | HttpRequest | undefined,
+        request: HttpRequest | undefined,
         instanceId: string
     ): HttpResponse {
         const httpManagementPayload = this.getClientResponseLinks(request, instanceId);
@@ -745,7 +743,7 @@ export class DurableOrchestrationClient {
         instanceId: string,
         timeoutInMilliseconds = 10000,
         retryIntervalInMilliseconds = 1000
-    ): Promise<IHttpResponse> {
+    ): Promise<HttpResponse> {
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
             throw new Error(
                 `Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`
@@ -784,19 +782,19 @@ export class DurableOrchestrationClient {
         }
     }
 
-    private createHttpResponse(statusCode: number, body: unknown): IHttpResponse {
+    private createHttpResponse(statusCode: number, body: unknown): HttpResponse {
         const bodyAsJson = JSON.stringify(body);
-        return {
+        return new HttpResponse({
             status: statusCode,
-            body: bodyAsJson,
+            jsonBody: bodyAsJson,
             headers: {
                 "Content-Type": "application/json",
             },
-        };
+        });
     }
 
     private getClientResponseLinks(
-        request: IHttpRequest | HttpRequest | undefined,
+        request: HttpRequest | undefined,
         instanceId: string
     ): HttpManagementPayload {
         const payload = { ...this.clientData.managementUrls };
@@ -806,9 +804,7 @@ export class DurableOrchestrationClient {
                 this.hasValidRequestUrl(request) &&
                 isURL(payload[key], this.urlValidationOptions)
             ) {
-                const requestUrl = new url.URL(
-                    (request as HttpRequest).url || (request as IHttpRequest).http.url
-                );
+                const requestUrl = new url.URL((request as HttpRequest).url);
                 const dataUrl = new url.URL(payload[key]);
                 payload[key] = payload[key].replace(dataUrl.origin, requestUrl.origin);
             }
@@ -819,13 +815,8 @@ export class DurableOrchestrationClient {
         return payload;
     }
 
-    private hasValidRequestUrl(request: IHttpRequest | HttpRequest | undefined): boolean {
-        const isHttpRequest = request !== undefined && (request as HttpRequest).url !== undefined;
-        const isIHttpRequest =
-            request !== undefined && (request as IHttpRequest).http !== undefined;
-        return (
-            isHttpRequest || (isIHttpRequest && (request as IHttpRequest).http.url !== undefined)
-        );
+    private hasValidRequestUrl(request: HttpRequest | undefined): boolean {
+        return request !== undefined && (request as HttpRequest).url !== undefined;
     }
 
     private extractUniqueWebhookOrigins(clientData: OrchestrationClientInputData): string[] {
