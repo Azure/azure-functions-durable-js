@@ -52,8 +52,16 @@ export interface CallHttpOptions {
      */
     tokenSource?: TokenSource;
     /**
-     * Specifies whether the DurableHttpRequest should handle the asynchronous pattern.
+     * Specifies whether to continue polling the request after receiving a 202 response.
+     * This replaces `asynchronousPatternEnabled`. If both are specified,
+     * `enablePolling` takes precedence.
+     *
      * @default true
+     */
+    enablePolling?: boolean;
+    /**
+     * @deprecated use `enablePolling` instead. If both are specified,
+     * `enablePolling` takes precedence.
      */
     asynchronousPatternEnabled?: boolean;
 }

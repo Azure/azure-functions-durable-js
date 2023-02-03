@@ -324,7 +324,7 @@ export class TestOrchestrations {
             body: input.content,
             headers: input.headers,
             tokenSource: input.tokenSource,
-            asynchronousPatternEnabled: input.asynchronousPatternEnabled,
+            enablePolling: input.asynchronousPatternEnabled,
         });
         return output;
     });
