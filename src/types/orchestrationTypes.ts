@@ -9,7 +9,7 @@ import { DurableOrchestrationContext } from "../classes";
 export type OrchestrationHandler<TReturn = any> = (
     context: OrchestrationContext
 ) => Generator<
-    Task, // orchestrations yield Task types
+    Task, // orchestrations can only yield Task types
     TReturn, // return type of the orchestration
     any // what the SDK passes back to the orchestration
 >;
