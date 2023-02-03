@@ -1,4 +1,5 @@
 import * as df from "../../src";
+import { OrchestrationContext } from "../../src";
 import { createOrchestrator } from "../../src/shim";
 
 export class TestOrchestrations {
@@ -117,6 +118,18 @@ export class TestOrchestrations {
         const totalBytes = results.reduce((prev: any, curr: any) => prev + curr, 0);
 
         return totalBytes;
+    });
+
+    public static TaskAllWithNoChildren: any = createOrchestrator(function* (
+        context: OrchestrationContext
+    ) {
+        return yield context.df.Task.all([]);
+    });
+
+    public static TaskAnyWithNoChildren: any = createOrchestrator(function* (
+        context: OrchestrationContext
+    ) {
+        return yield context.df.Task.any([]);
     });
 
     public static GetAndReleaseLock: any = createOrchestrator(function* (context: any) {

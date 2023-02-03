@@ -2713,6 +2713,41 @@ describe("Orchestrator", () => {
                 )
             );
         });
+
+        it("doesn't allow compound tasks with no children", async () => {
+            for (const orchestrator of [
+                TestOrchestrations.TaskAllWithNoChildren,
+                TestOrchestrations.TaskAnyWithNoChildren,
+            ]) {
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
+                    "",
+                    TestHistories.GetOrchestratorStart("CompoundTaskTest", moment().utc().toDate()),
+                    undefined
+                );
+
+                const expectedErr =
+                    "When constructing a CompoundTask (such as Task.all() or Task.any()), you must specify at least one Task.";
+
+                let errored = false;
+                try {
+                    await orchestrator(orchestrationInput, mockContext);
+                } catch (err) {
+                    errored = true;
+                    expect(err).to.be.an.instanceOf(OrchestrationFailureError);
+                    const orchestrationState = TestUtils.extractStateFromError(
+                        err as OrchestrationFailureError
+                    );
+                    expect(orchestrationState).to.be.an("object").that.deep.include({
+                        isDone: false,
+                        actions: [],
+                    });
+                    expect(orchestrationState.error).to.include(expectedErr);
+                }
+
+                expect(errored).to.be.true;
+            }
+        });
     });
 
     // rewind
