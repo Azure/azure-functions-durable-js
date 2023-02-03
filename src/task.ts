@@ -167,6 +167,7 @@ export abstract class CompoundTask extends DFTask {
         this.firstError = undefined;
 
         // If the task has no children, throw an error
+        // See issue here for why this isn't allowed: https://github.com/Azure/azure-functions-durable-js/issues/424
         if (children.length == 0) {
             const message =
                 "Cannot initialize a CompoundTask with an empty childrens array. " +
