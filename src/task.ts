@@ -170,8 +170,7 @@ export abstract class CompoundTask extends DFTask {
         // See issue here for why this isn't allowed: https://github.com/Azure/azure-functions-durable-js/issues/424
         if (children.length == 0) {
             const message =
-                "Cannot initialize a CompoundTask with an empty childrens array. " +
-                "When constructing a CompoundTask (such as Task.all() or Task.any()), you must speciify at leat one Task.";
+                "When constructing a CompoundTask (such as Task.all() or Task.any()), you must specify at least one Task.";
             throw new Error(message);
         }
     }
