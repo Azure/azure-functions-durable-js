@@ -10,7 +10,7 @@ export class SignalEntityAction implements IAction {
         if (!entityId) {
             throw new Error("Must provide EntityId to SignalEntityAction constructor");
         }
-        this.input = Utils.processInput(input);
+        this.input = input;
         Utils.throwIfEmpty(operation, "operation");
         this.instanceId = EntityId.getSchedulerIdFromEntityId(entityId);
     }

@@ -59,34 +59,32 @@ describe("Orchestrator", () => {
 
     it("doesn't allow yielding non-Task types", async () => {
         const orchestrator = TestOrchestrations.YieldInteger;
-        const mockContext = new MockContext({
-            context: new DurableOrchestrationBindingInfo(
-                TestHistories.StarterHistory(moment.utc().toDate())
-            ),
-        });
-
-        orchestrator(mockContext);
+        const mockContext = new DummyOrchestrationContext();
+        const orchestrationInput = new DurableOrchestrationInput(
+            "",
+            TestHistories.StarterHistory(moment.utc().toDate())
+        );
 
         const errorMsg =
             `Durable Functions programming constraint violation: Orchestration yielded data of type number.` +
             " Only Task types can be yielded. Please check your yield statements to make sure you only yield Task types resulting from calling Durable Functions APIs.";
 
-        const expectedErr = new OrchestrationFailureError(
-            false,
-            new OrchestratorState(
-                {
-                    isDone: false,
-                    actions: [],
-                    schemaVersion: ReplaySchema.V1,
-                    error: errorMsg,
-                    output: undefined,
-                },
-                true
-            )
-        );
-
-        expect(mockContext.doneValue).to.be.undefined;
-        expect(mockContext.err?.toString()).to.equal(expectedErr.toString());
+        let errored = false;
+        try {
+            await orchestrator(orchestrationInput, mockContext);
+        } catch (err) {
+            errored = true;
+            expect(err).to.be.an.instanceOf(OrchestrationFailureError);
+            const orchestrationState = TestUtils.extractStateFromError(
+                err as OrchestrationFailureError
+            );
+            expect(orchestrationState).to.be.an("object").that.deep.include({
+                isDone: false,
+                actions: [],
+            });
+            expect(orchestrationState.error).to.include(errorMsg);
+        }
+        expect(errored).to.be.true;
     });
 
     it("handles a simple orchestration function (no activity functions)", async () => {
@@ -1328,28 +1326,28 @@ describe("Orchestrator", () => {
     });
 
     describe("signalEntity()", () => {
-        it("scheduled a SignalEntity action", () => {
+        it("scheduled a SignalEntity action", async () => {
             const orchestrator = TestOrchestrations.signalEntity;
             const entityName = "Counter";
             const id = "1234";
             const expectedEntity = new EntityId(entityName, id);
             const operationName = "add";
             const operationArgument = 1;
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart("signalEntity", new Date()),
-                    {
-                        id,
-                        entityName,
-                        operationName,
-                        operationArgument,
-                    }
-                ),
-            });
+            const mockContext = new DummyOrchestrationContext();
+            const orchestrationInput = new DurableOrchestrationInput(
+                "",
+                TestHistories.GetOrchestratorStart("signalEntity", new Date()),
+                {
+                    id,
+                    entityName,
+                    operationName,
+                    operationArgument,
+                }
+            );
 
-            orchestrator(mockContext);
+            const result = await orchestrator(orchestrationInput, mockContext);
 
-            expect(mockContext.doneValue).to.deep.equal(
+            expect(result).to.deep.equal(
                 new OrchestratorState(
                     {
                         isDone: true,
@@ -1370,37 +1368,45 @@ describe("Orchestrator", () => {
             );
         });
 
-        it("doesn't allow signalEntity() to be yielded", () => {
+        it("doesn't allow signalEntity() to be yielded", async () => {
             const orchestrator = TestOrchestrations.signalEntityYield;
             const entityName = "Counter";
             const id = "1234";
             const expectedEntity = new EntityId(entityName, id);
             const operationName = "add";
             const operationArgument = 1;
-            const mockContext = new MockContext({
-                context: new DurableOrchestrationBindingInfo(
-                    TestHistories.GetOrchestratorStart("signalEntity", new Date()),
-                    {
-                        id,
-                        entityName,
-                        operationName,
-                        operationArgument,
-                    }
-                ),
-            });
+            const mockContext = new DummyOrchestrationContext();
+            const orchestrationInput = new DurableOrchestrationInput(
+                "",
+                TestHistories.GetOrchestratorStart("signalEntity", new Date()),
+                {
+                    id,
+                    entityName,
+                    operationName,
+                    operationArgument,
+                }
+            );
 
-            orchestrator(mockContext);
+            let errored = false;
+            try {
+                await orchestrator(orchestrationInput, mockContext);
+            } catch (err) {
+                errored = true;
+                const errorMsg =
+                    `Durable Functions programming constraint violation: Orchestration yielded data of type undefined.` +
+                    ' This is likely a result of yielding a "fire-and-forget API" such as signalEntity or continueAsNew.' +
+                    " These APIs should not be yielded as they are not blocking operations. Please remove the yield statement preceding those invocations." +
+                    " If you are not calling those APIs, please check your yield statements to make sure you only yield Task types resulting from calling Durable Functions APIs.";
 
-            const errorMsg =
-                `Durable Functions programming constraint violation: Orchestration yielded data of type undefined.` +
-                ' This is likely a result of yielding a "fire-and-forget API" such as signalEntity or continueAsNew.' +
-                " These APIs should not be yielded as they are not blocking operations. Please remove the yield statement preceding those invocations." +
-                " If you are not calling those APIs, please check your yield statements to make sure you only yield Task types resulting from calling Durable Functions APIs.";
+                expect(err).to.be.an.instanceOf(OrchestrationFailureError);
 
-            const expectedErr = new OrchestrationFailureError(
-                false,
-                new OrchestratorState(
-                    {
+                const orchestrationState = TestUtils.extractStateFromError(
+                    err as OrchestrationFailureError
+                );
+
+                expect(orchestrationState)
+                    .to.be.an("object")
+                    .that.deep.include({
                         isDone: false,
                         actions: [
                             [
@@ -1413,14 +1419,10 @@ describe("Orchestrator", () => {
                         ],
                         schemaVersion: ReplaySchema.V1,
                         error: errorMsg,
-                        output: undefined,
-                    },
-                    true
-                )
-            );
-
-            expect(mockContext.doneValue).to.be.undefined;
-            expect(mockContext.err?.toString()).to.equal(expectedErr.toString());
+                    });
+                expect(orchestrationState.error).to.include(errorMsg);
+            }
+            expect(errored).to.be.true;
         });
     });
 
