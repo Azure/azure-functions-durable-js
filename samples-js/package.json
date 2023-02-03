@@ -11,7 +11,7 @@
         "@azure/functions": "^4.0.0-alpha.6",
         "@azure/storage-blob": "^12.12.0",
         "axios": "^1.2.3",
-        "durable-functions": "^3.0.0-alpha.1",
+        "durable-functions": "^3.0.0-alpha.2",
         "luxon": "^3.2.1",
         "readdirp": "^3.6.0"
     }

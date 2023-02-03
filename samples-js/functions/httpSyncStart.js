@@ -4,17 +4,15 @@ const df = require("durable-functions");
 const timeout = "timeout";
 const retryInterval = "retryInterval";
 
-const clientInput = df.input.durableClient();
-
 app.http("httpSyncStart", {
     methods: ["POST"],
     route: "orchestrators/wait/{orchestratorName}",
     authLevel: "anonymous",
-    extraInputs: [clientInput],
+    extraInputs: [df.input.durableClient()],
     handler: async function (request, context) {
-        const client = df.getClient(context, clientInput);
+        const client = df.getClient(context);
         const body = await request.json();
-        const instanceId = await client.startNew(request.params.orchestratorName, undefined, body);
+        const instanceId = await client.startNew(request.params.orchestratorName, { input: body });
 
         context.log(`Started orchestration with ID = '${instanceId}'.`);
 
