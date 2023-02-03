@@ -1,10 +1,15 @@
+import { InvocationContext } from "@azure/functions";
 import { expect } from "chai";
 import chai = require("chai");
 import chaiAsPromised = require("chai-as-promised");
 import "mocha";
 import "process";
-import { getClient } from "../../src";
-import { Constants } from "../../src/classes";
+import { DurableClientInput, getClient, input } from "../../src";
+import {
+    Constants,
+    DurableOrchestrationClient,
+    OrchestrationClientInputData,
+} from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 
@@ -15,50 +20,52 @@ describe("getClient()", () => {
     const defaultTaskHub = "TestTaskHub";
     const defaultConnection = "Storage";
 
-    const defaultClientInputData = TestUtils.createOrchestrationClientInputData(
+    const defaultClientInputOptions: DurableClientInput = input.durableClient();
+
+    const defaultClientInputData: OrchestrationClientInputData = TestUtils.createOrchestrationClientInputData(
         TestConstants.idPlaceholder,
         Constants.DefaultLocalOrigin,
         defaultTaskHub,
         defaultConnection
     );
 
-    const v1ClientInputData = TestUtils.createV1OrchestrationClientInputData(
+    const v1ClientInputData: OrchestrationClientInputData = TestUtils.createV1OrchestrationClientInputData(
         TestConstants.idPlaceholder,
         Constants.DefaultLocalOrigin,
         defaultTaskHub,
         defaultConnection
     );
 
-    const defaultContext = {
-        bindings: {
-            starter: defaultClientInputData,
+    const defaultContext: InvocationContext = new InvocationContext({
+        options: {
+            extraInputs: [defaultClientInputOptions],
         },
-    };
+    });
+    defaultContext.extraInputs.set(defaultClientInputOptions, defaultClientInputData);
 
-    const v1Context = {
-        bindings: {
-            starter: v1ClientInputData,
+    const v1Context: InvocationContext = new InvocationContext({
+        options: {
+            extraInputs: [defaultClientInputOptions],
         },
-    };
+    });
+    v1Context.extraInputs.set(defaultClientInputOptions, v1ClientInputData);
 
-    it("throws if context.bindings is undefined", async () => {
+    it("throws if context.options is undefined", async () => {
         expect(() => {
-            getClient({});
+            const context = new InvocationContext();
+            getClient(context);
         }).to.throw(
-            "An orchestration client function must have an orchestrationClient input binding. Check your function.json definition."
+            "Could not find a registered durable client input binding. Check your extraInputs definition when registering your function."
         );
     });
 
-    it("throws if context.bindings does not contain valid orchestrationClient input binding", async () => {
+    it("throws if context.options does not contain valid durableClient input binding", async () => {
         expect(() => {
-            const badContext = {
-                bindings: {
-                    orchestrationClient: { id: "" },
-                },
-            };
+            const badInput = { name: "", type: "notDurableInput" };
+            const badContext = new InvocationContext({ options: { extraInputs: [badInput] } });
             getClient(badContext);
         }).to.throw(
-            "An orchestration client function must have an orchestrationClient input binding. Check your function.json definition."
+            "Could not find a registered durable client input binding. Check your extraInputs definition when registering your function."
         );
     });
 
@@ -85,16 +92,20 @@ describe("getClient()", () => {
         it("corrects API endpoints if WEBSITE_HOSTNAME environment variable not found", async () => {
             delete process.env.WEBSITE_HOSTNAME;
 
-            const badContext = {
-                bindings: {
-                    starter: TestUtils.createOrchestrationClientInputData(
-                        TestConstants.idPlaceholder,
-                        "http://0.0.0.0:12345",
-                        defaultTaskHub,
-                        defaultConnection
-                    ),
+            const badClientData: OrchestrationClientInputData = TestUtils.createOrchestrationClientInputData(
+                TestConstants.idPlaceholder,
+                "http://0.0.0.0:12345",
+                defaultTaskHub,
+                defaultConnection
+            );
+
+            const clientInput: DurableClientInput = input.durableClient();
+            const badContext: InvocationContext = new InvocationContext({
+                options: {
+                    extraInputs: [clientInput],
                 },
-            };
+            });
+            badContext.extraInputs.set(clientInput, badClientData);
 
             const client = getClient(badContext);
 
@@ -106,16 +117,20 @@ describe("getClient()", () => {
             // Azure Functions Core Tools sets WEBSITE_HOSTNAME to 0.0.0.0:{port} on startup
             process.env.WEBSITE_HOSTNAME = "0.0.0.0:12345";
 
-            const badContext = {
-                bindings: {
-                    starter: TestUtils.createOrchestrationClientInputData(
-                        TestConstants.idPlaceholder,
-                        `http://${process.env.WEBSITE_HOSTNAME}`,
-                        defaultTaskHub,
-                        defaultConnection
-                    ),
+            const badClientData: OrchestrationClientInputData = TestUtils.createOrchestrationClientInputData(
+                TestConstants.idPlaceholder,
+                `http://${process.env.WEBSITE_HOSTNAME}`,
+                defaultTaskHub,
+                defaultConnection
+            );
+
+            const clientInput: DurableClientInput = input.durableClient();
+            const badContext: InvocationContext = new InvocationContext({
+                options: {
+                    extraInputs: [clientInput],
                 },
-            };
+            });
+            badContext.extraInputs.set(clientInput, badClientData);
 
             const client = getClient(badContext);
 
