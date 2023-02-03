@@ -305,15 +305,19 @@ export class DurableOrchestrationContext {
             content = JSON.stringify(content);
         }
 
+        let enablePolling = true;
+        if (options.enablePolling !== undefined) {
+            enablePolling = options.enablePolling;
+        } else if (options.asynchronousPatternEnabled !== undefined) {
+            enablePolling = options.asynchronousPatternEnabled;
+        }
         const request = new DurableHttpRequest(
             options.method,
             options.url,
             content as string,
             options.headers,
             options.tokenSource,
-            options.asynchronousPatternEnabled === undefined
-                ? true
-                : options.asynchronousPatternEnabled
+            enablePolling
         );
         const newAction = new CallHttpAction(request);
         if (this.schemaVersion >= ReplaySchema.V3 && request.asynchronousPatternEnabled) {
