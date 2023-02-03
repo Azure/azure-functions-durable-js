@@ -2714,7 +2714,7 @@ describe("Orchestrator", () => {
             );
         });
 
-        it("Task.all and Task.any throw if constructed with no children", async () => {
+        it("doesn't allow compound tasks with no children", async () => {
             for (const orchestrator of [
                 TestOrchestrations.TaskAllWithNoChildren,
                 TestOrchestrations.TaskAnyWithNoChildren,
