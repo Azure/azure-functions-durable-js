@@ -19,7 +19,7 @@ describe("APIs to register functions", () => {
     const defaultEntityHandler: EntityHandler<string> = function (context: EntityContext<string>) {
         context.df.return("Hello world");
     };
-    const defautlActivityFunction: ActivityHandler = function () {
+    const defaultActivityFunction: ActivityHandler = function () {
         return "hello world";
     };
 
@@ -74,7 +74,7 @@ describe("APIs to register functions", () => {
     describe("app.activity", () => {
         it("registers an activity function with options object", () => {
             const expectedFunctionName = "testFunc";
-            app.activity(expectedFunctionName, { handler: defautlActivityFunction });
+            app.activity(expectedFunctionName, { handler: defaultActivityFunction });
 
             expect(appStub.callCount).to.equal(1);
             expect(appStub.args[0][0]).to.equal(expectedFunctionName);
@@ -88,7 +88,7 @@ describe("APIs to register functions", () => {
             };
 
             app.activity("testFunc", {
-                handler: defautlActivityFunction,
+                handler: defaultActivityFunction,
                 extraInputs: [extraInput],
             });
 
