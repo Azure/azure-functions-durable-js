@@ -30,7 +30,13 @@ import {
 } from "./task";
 import moment = require("moment");
 import { ReplaySchema } from "./replaySchema";
-import { CallHttpOptions, Task, TimerTask } from "./types";
+import {
+    CallActivityInput,
+    CallHttpOptions,
+    CallSubOrchestratorInput,
+    Task,
+    TimerTask,
+} from "./types";
 import { SignalEntityAction } from "./actions/signalentityaction";
 
 /**
@@ -203,8 +209,25 @@ export class DurableOrchestrationContext {
      * function.
      * @returns A Durable Task that completes when the called activity
      * function completes or fails.
+     *
+     * @deprecated this version of `callActivity()` is deprecated. Pass an object
+     * returned from `df.app.activity()` as the first argument instead.
      */
-    public callActivity(name: string, input?: unknown): Task {
+    public callActivity(name: string, input?: unknown): Task;
+
+    /**
+     * Schedules an activity function for execution
+     *
+     * @param activity The activity object returned from a `df.app.activity()` call.
+     * @param input The JSON-serializable input to pass to the activity
+     * function.
+     * @returns A Durable Task that completes when the called activity
+     * function completes or fails.
+     */
+    public callActivity(activity: CallActivityInput, input?: unknown): Task;
+
+    public callActivity(nameOrOptions: string | CallActivityInput, input?: unknown): Task {
+        const name = typeof nameOrOptions === "string" ? nameOrOptions : nameOrOptions.name;
         const newAction = new CallActivityAction(name, input);
         const task = new AtomicTask(false, newAction);
         return task;
@@ -218,8 +241,32 @@ export class DurableOrchestrationContext {
      * @param retryOptions The retry options for the activity function.
      * @param input The JSON-serializable input to pass to the activity
      * function.
+     *
+     *  @deprecated this version of `callActivity()` is deprecated. Pass an object
+     * returned from `df.app.activity()` as the first argument instead.
      */
-    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
+    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task;
+
+    /**
+     * Schedules an activity function for execution with retry options.
+     *
+     * @param activity The activity object returned from a `df.app.activity()` call.
+     * @param retryOptions The retry options for the activity function.
+     * @param input The JSON-serializable input to pass to the activity
+     * function.
+     */
+    public callActivityWithRetry(
+        activity: CallActivityInput,
+        retryOptions: RetryOptions,
+        input?: unknown
+    ): Task;
+
+    public callActivityWithRetry(
+        nameOrOptions: string | CallActivityInput,
+        retryOptions: RetryOptions,
+        input?: unknown
+    ): Task {
+        const name = typeof nameOrOptions === "string" ? nameOrOptions : nameOrOptions.name;
         const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
         const backingTask = new AtomicTask(false, newAction);
         const task = new RetryableTask(backingTask, retryOptions, this.taskOrchestratorExecutor);
@@ -262,8 +309,34 @@ export class DurableOrchestrationContext {
      * @param instanceId A unique ID to use for the sub-orchestration instance.
      * If `instanceId` is not specified, the extension will generate an id in
      * the format `<calling orchestrator instance ID>:<#>`
+     *
+     * @deprecated this version of `callSubOrchestrator()` is deprecated. Pass an object
+     * returned from `df.app.orchestration()` as the first argument instead.
      */
-    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
+    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task;
+
+    /**
+     * Schedules an orchestration function for execution.
+     *
+     * @param orchestration The orchestration object returned from `df.app.orchestration()`.
+     * @param input The JSON-serializable input to pass to the orchestrator
+     * function.
+     * @param instanceId A unique ID to use for the sub-orchestration instance.
+     * If `instanceId` is not specified, the extension will generate an id in
+     * the format `<calling orchestrator instance ID>:<#>`
+     */
+    public callSubOrchestrator(
+        orchestration: CallSubOrchestratorInput,
+        input?: unknown,
+        instanceId?: string
+    ): Task;
+
+    public callSubOrchestrator(
+        nameOrOptions: string | CallSubOrchestratorInput,
+        input?: unknown,
+        instanceId?: string
+    ): Task {
+        const name = typeof nameOrOptions === "string" ? nameOrOptions : nameOrOptions.name;
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"
@@ -284,13 +357,50 @@ export class DurableOrchestrationContext {
      * @param input The JSON-serializable input to pass to the orchestrator
      * function.
      * @param instanceId A unique ID to use for the sub-orchestration instance.
+     *
+     * @deprecated this version of `callSubOrchestratorWithRetry()` is deprecated. Pass an object
+     * returned from `df.app.orchestration()` as the first argument instead.
      */
     public callSubOrchestratorWithRetry(
         name: string,
         retryOptions: RetryOptions,
         input?: unknown,
         instanceId?: string
+    ): Task;
+
+    /**
+     * Schedules an orchestrator function for execution with retry options.
+     *
+     * @param orchestration The orchestration object returned from `df.app.orchestration()`.
+     * @param retryOptions The retry options for the orchestrator function.
+     * @param input The JSON-serializable input to pass to the orchestrator
+     * function.
+     * @param instanceId A unique ID to use for the sub-orchestration instance.
+     */
+    public callSubOrchestratorWithRetry(
+        orchestration: CallSubOrchestratorInput,
+        retryOptions: RetryOptions,
+        input?: unknown,
+        instanceId?: string
+    ): Task;
+
+    /**
+     * Schedules an orchestrator function named `name` for execution with retry
+     * options.
+     *
+     * @param name The name of the orchestrator function to call.
+     * @param retryOptions The retry options for the orchestrator function.
+     * @param input The JSON-serializable input to pass to the orchestrator
+     * function.
+     * @param instanceId A unique ID to use for the sub-orchestration instance.
+     */
+    public callSubOrchestratorWithRetry(
+        nameOrOptions: string | CallSubOrchestratorInput,
+        retryOptions: RetryOptions,
+        input?: unknown,
+        instanceId?: string
     ): Task {
+        const name = typeof nameOrOptions === "string" ? nameOrOptions : nameOrOptions.name;
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"

@@ -16,8 +16,11 @@ import {
     EntityOptions,
     OrchestrationContext,
     EntityContext,
+    CallSubOrchestratorInput,
+    RegisterEntityResult,
+    CallActivityInput,
 } from "./types";
-import { Entity, EntityState, Orchestrator } from "./classes";
+import { Entity, EntityId, EntityState, Orchestrator } from "./classes";
 import { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 import { OrchestratorState } from "./orchestratorstate";
 import { DurableOrchestrationInput } from "./testingUtils";
@@ -71,7 +74,10 @@ export namespace app {
      * @param handler the generator function that should act as an orchestrator
      *
      */
-    export function orchestration(functionName: string, handler: OrchestrationHandler): void;
+    export function orchestration(
+        functionName: string,
+        handler: OrchestrationHandler
+    ): CallSubOrchestratorInput;
 
     /**
      * Registers a generator function as a Durable Orchestrator for your Function App.
@@ -80,12 +86,15 @@ export namespace app {
      * @param options the configuration options object describing the handler for this orchestrator
      *
      */
-    export function orchestration(functionName: string, options: OrchestrationOptions): void;
+    export function orchestration(
+        functionName: string,
+        options: OrchestrationOptions
+    ): CallSubOrchestratorInput;
 
     export function orchestration(
         functionName: string,
         handlerOrOptions: OrchestrationHandler | OrchestrationOptions
-    ): void {
+    ): CallSubOrchestratorInput {
         const options: OrchestrationOptions =
             typeof handlerOrOptions === "function"
                 ? { handler: handlerOrOptions }
@@ -96,6 +105,10 @@ export namespace app {
             ...options,
             handler: createOrchestrator(options.handler),
         });
+
+        return {
+            name: functionName,
+        };
     }
 
     /**
@@ -105,7 +118,10 @@ export namespace app {
      * @param handler the function that should act as an entity
      *
      */
-    export function entity<T = unknown>(functionName: string, handler: EntityHandler<T>): void;
+    export function entity<T = unknown>(
+        functionName: string,
+        handler: EntityHandler<T>
+    ): RegisterEntityResult;
 
     /**
      * Registers a function as a Durable Entity for your Function App.
@@ -114,12 +130,15 @@ export namespace app {
      * @param options the configuration options object describing the handler for this entity
      *
      */
-    export function entity<T = unknown>(functionName: string, options: EntityOptions<T>): void;
+    export function entity<T = unknown>(
+        functionName: string,
+        options: EntityOptions<T>
+    ): RegisterEntityResult;
 
     export function entity<T = unknown>(
         functionName: string,
         handlerOrOptions: EntityHandler<T> | EntityOptions<T>
-    ): void {
+    ): RegisterEntityResult {
         const options: EntityOptions<T> =
             typeof handlerOrOptions === "function"
                 ? { handler: handlerOrOptions }
@@ -130,6 +149,12 @@ export namespace app {
             ...options,
             handler: createEntityFunction(options.handler),
         });
+
+        return {
+            getEntityId: (key: string) => {
+                return new EntityId(functionName, key);
+            },
+        };
     }
 
     /**
@@ -138,11 +163,15 @@ export namespace app {
      * @param functionName the name of your new activity function
      * @param options the configuration options for this activity, specifying the handler and the inputs and outputs
      */
-    export function activity(functionName: string, options: ActivityOptions): void {
+    export function activity(functionName: string, options: ActivityOptions): CallActivityInput {
         azFuncApp.generic(functionName, {
             trigger: trigger.activity(),
             ...options,
         });
+
+        return {
+            name: functionName,
+        };
     }
 }
 
