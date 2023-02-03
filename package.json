@@ -1,6 +1,6 @@
 {
     "name": "durable-functions",
-    "version": "3.0.0-alpha.1",
+    "version": "3.0.0-alpha.2",
     "description": "Durable Functions library for Node.js Azure Functions",
     "license": "MIT",
     "repository": {
@@ -42,7 +42,7 @@
         "e2etst": "npm run "
     },
     "dependencies": {
-        "@azure/functions": "^4.0.0-alpha.6",
+        "@azure/functions": "^4.0.0-alpha.7",
         "axios": "^0.21.1",
         "debug": "~2.6.9",
         "lodash": "^4.17.15",

@@ -5,8 +5,6 @@ export { Utils } from "./utils";
 export { Orchestrator } from "./orchestrator";
 export { Entity } from "./entity";
 
-export { IEntityFunctionContext } from "./ientityfunctioncontext";
-export { IOrchestrationFunctionContext } from "./iorchestrationfunctioncontext";
 export { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 export { DurableEntityContext } from "./durableentitycontext";
 export { DurableOrchestrationBindingInfo } from "./durableorchestrationbindinginfo";
@@ -51,7 +49,6 @@ export { DurableOrchestrationClient } from "./durableorchestrationclient";
 export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
 export { HttpCreationPayload } from "./httpcreationpayload";
 export { HttpManagementPayload } from "./httpmanagementpayload";
-export { GetStatusOptions } from "./getstatusoptions";
 
 export { IHttpRequest } from "./ihttprequest";
 export { IHttpResponse } from "./ihttpresponse";

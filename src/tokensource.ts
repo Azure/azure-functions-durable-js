@@ -31,6 +31,3 @@ export class ManagedIdentityTokenSource {
         public readonly resource: string
     ) {}
 }
-
-// Over time we will likely add more implementations
-export type TokenSource = ManagedIdentityTokenSource;
