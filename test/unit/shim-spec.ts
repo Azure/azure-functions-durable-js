@@ -81,6 +81,7 @@ describe("APIs to register functions", () => {
             expect(appStub.args[0][1].trigger.type).equal("activityTrigger");
             expect(appStub.args[0][1].handler).to.be.a("function");
         });
+
         it("passes along extra options", () => {
             const extraInput: FunctionInput = {
                 type: "someType",
@@ -102,11 +103,13 @@ describe("APIs to register functions", () => {
             expect(options.type).to.equal("orchestrationTrigger");
             expect(options.name).to.be.a("string");
         });
+
         it("returns entity trigger object", () => {
             const options = trigger.entity();
             expect(options.type).to.equal("entityTrigger");
             expect(options.name).to.be.a("string");
         });
+
         it("returns activity trigger object", () => {
             const options = trigger.activity();
             expect(options.type).to.equal("activityTrigger");
