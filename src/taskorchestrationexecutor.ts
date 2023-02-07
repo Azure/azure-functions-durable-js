@@ -390,10 +390,17 @@ export class TaskOrchestrationExecutor {
                 newTask = generatorResult.value;
             } else {
                 // non-task was yielded. This isn't supported
-                throw Error(
-                    `Orchestration yielded data of type ${typeof generatorResult.value}. Only Task types can be yielded.` +
-                        "Please refactor your orchestration to yield only Tasks."
-                );
+                let errorMsg = `Durable Functions programming constraint violation: Orchestration yielded data of type ${typeof generatorResult.value}.`;
+                errorMsg +=
+                    typeof generatorResult.value === "undefined"
+                        ? ' This is likely a result of yielding a "fire-and-forget API" such as signalEntity or continueAsNew.' +
+                          " These APIs should not be yielded as they are not blocking operations. Please remove the yield statement preceding those invocations." +
+                          " If you are not calling those APIs, p"
+                        : " Only Task types can be yielded. P";
+                errorMsg +=
+                    "lease check your yield statements to make sure you only yield Task types resulting from calling Durable Functions APIs.";
+
+                throw Error(errorMsg);
             }
         } catch (exception) {
             // The generator threw an exception
@@ -430,6 +437,13 @@ export class TaskOrchestrationExecutor {
     public addToActions(action: IAction): void {
         if (!this.willContinueAsNew) {
             this.actions.push(action);
+        }
+    }
+
+    public recordFireAndForgetAction(action: IAction): void {
+        if (!this.willContinueAsNew) {
+            this.addToActions(action);
+            this.sequenceNumber++;
         }
     }
 
