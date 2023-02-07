@@ -11,12 +11,12 @@
         "test": "echo \"No tests yet...\""
     },
     "devDependencies": {
-        "@azure/functions": "^4.0.0-alpha.7",
         "@types/luxon": "^3.2.0",
         "@types/node": "16.x",
         "typescript": "^4.0.0"
     },
     "dependencies": {
+        "@azure/functions": "^4.0.0-alpha.7",
         "durable-functions": "^3.0.0-alpha.2",
         "luxon": "^3.2.1"
     }
