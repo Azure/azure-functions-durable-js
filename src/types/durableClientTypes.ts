@@ -1,15 +1,7 @@
 import { FunctionInput, HttpRequest, HttpResponse } from "@azure/functions";
-import {
-    EntityId,
-    EntityStateResponse,
-    HttpManagementPayload,
-    IHttpResponse,
-    OrchestrationClientInputData,
-} from "../classes";
+import { EntityId, EntityStateResponse, OrchestrationClientInputData } from "../classes";
 import { DurableOrchestrationStatus } from "../durableorchestrationstatus";
-import { IHttpRequest } from "../ihttprequest";
 import { OrchestrationRuntimeStatus } from "../orchestrationruntimestatus";
-import { PurgeHistoryResult } from "../purgehistoryresult";
 
 export interface DurableClientInput extends FunctionInput {
     type: "durableClient";
@@ -40,10 +32,7 @@ export declare class DurableClient {
      * @returns An HTTP 202 response with a Location header and a payload
      *  containing instance management URLs.
      */
-    createCheckStatusResponse(
-        request: IHttpRequest | HttpRequest | undefined,
-        instanceId: string
-    ): HttpResponse;
+    createCheckStatusResponse(request: HttpRequest | undefined, instanceId: string): HttpResponse;
 
     /**
      * Creates an [[HttpManagementPayload]] object that contains instance
@@ -229,7 +218,7 @@ export declare class DurableClient {
         instanceId: string,
         timeoutInMilliseconds: number,
         retryIntervalInMilliseconds: number
-    ): Promise<IHttpResponse>;
+    ): Promise<HttpResponse>;
 }
 
 /**
