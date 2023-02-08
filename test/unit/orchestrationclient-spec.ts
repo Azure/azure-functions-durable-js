@@ -90,32 +90,6 @@ describe("Orchestration Client", () => {
             expect(response.headers.get("Retry-After")).to.equal("10");
         });
 
-        it(`returns a proper response object from request.http.url`, async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
-            const requestObj = {
-                http: {
-                    url: defaultRequestUrl,
-                    method: "GET",
-                },
-            };
-
-            const response = client.createCheckStatusResponse(requestObj, defaultInstanceId);
-            const responseBody = await response.json();
-
-            const expectedPayload = TestUtils.createHttpManagementPayload(
-                defaultInstanceId,
-                Constants.DefaultLocalOrigin,
-                defaultTaskHub,
-                defaultConnection
-            );
-
-            expect(response.status).to.equal(202);
-            expect(responseBody).to.deep.equal(expectedPayload);
-            expect(response.headers.get("Content-Type")).to.equal("application/json");
-            expect(response.headers.get("Location")).to.equal(expectedPayload.statusQueryGetUri);
-            expect(response.headers.get("Retry-After")).to.equal("10");
-        });
-
         it("returns a proper response object when request is undefined", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
@@ -1160,21 +1134,17 @@ describe("Orchestration Client", () => {
 
             nock(Constants.DefaultLocalOrigin).get(/.*/).reply(202, expectedStatus);
 
-            const expectedResponse = {
-                status: 200,
-                body: JSON.stringify(expectedOutput),
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            };
-
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
+
+            const body = await res.json();
+            expect(res.status).to.equal(200);
+            expect(body).to.equal(JSON.stringify(expectedOutput));
+            expect(res.headers.get("Content-Type")).to.equal("application/json");
         });
 
         it("returns expected result for canceled instance", async () => {
@@ -1193,13 +1163,6 @@ describe("Orchestration Client", () => {
             nock(Constants.DefaultLocalOrigin).get(/.*/).reply(202, expectedStatus);
 
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
-            const expectedResponse = {
-                status: 200,
-                body: expectedStatusAsJson,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            };
 
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
@@ -1207,7 +1170,11 @@ describe("Orchestration Client", () => {
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
+
+            const body = await res.json();
+            expect(res.status).to.equal(200);
+            expect(body).to.equal(expectedStatusAsJson);
+            expect(res.headers.get("Content-Type")).to.equal("application/json");
         });
 
         it("returns expected result for terminated instance", async () => {
@@ -1226,13 +1193,6 @@ describe("Orchestration Client", () => {
             nock(Constants.DefaultLocalOrigin).get(/.*/).reply(202, expectedStatus);
 
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
-            const expectedResponse = {
-                status: 200,
-                body: expectedStatusAsJson,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            };
 
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
@@ -1240,7 +1200,11 @@ describe("Orchestration Client", () => {
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
+
+            const body = await res.json();
+            expect(res.status).to.equal(200);
+            expect(body).to.equal(expectedStatusAsJson);
+            expect(res.headers.get("Content-Type")).to.equal("application/json");
         });
 
         it("returns expected result for failed instance", async () => {
@@ -1259,13 +1223,6 @@ describe("Orchestration Client", () => {
             nock(Constants.DefaultLocalOrigin).get(/.*/).reply(202, expectedStatus);
 
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
-            const expectedResponse = {
-                status: 500,
-                body: expectedStatusAsJson,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            };
 
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
@@ -1273,7 +1230,11 @@ describe("Orchestration Client", () => {
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
+
+            const body = await res.json();
+            expect(res.status).to.equal(500);
+            expect(body).to.equal(expectedStatusAsJson);
+            expect(res.headers.get("Content-Type")).to.equal("application/json");
         });
 
         it("continues polling for running instance", async () => {
@@ -1318,21 +1279,17 @@ describe("Orchestration Client", () => {
                     "Content-Type": "application/json",
                 });
 
-            const expectedResponse = {
-                status: 200,
-                body: JSON.stringify(expectedOutput),
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            };
-
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
                 defaultTimeout,
                 defaultInterval
             );
-            expect(res).to.be.deep.equal(expectedResponse);
+
+            const body = await res.json();
+            expect(res.status).to.equal(200);
+            expect(body).to.equal(JSON.stringify(expectedOutput));
+            expect(res.headers.get("Content-Type")).to.equal("application/json");
             expect(scope.isDone()).to.be.equal(true);
         });
 
