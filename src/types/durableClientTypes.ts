@@ -13,7 +13,7 @@ export interface DurableClientInput extends FunctionInput {
  * Client for starting, querying, terminating and raising events to
  * orchestration instances.
  */
-export interface DurableClient {
+export declare class DurableClient {
     /**
      * The name of the task hub configured on this orchestration client
      * instance.
