@@ -1,11 +1,5 @@
-/**
- * Class to hold statistics about this execution of purge history.
- */
-export class PurgeHistoryResult {
-    constructor(
-        /**
-         * The number of deleted instances.
-         */
-        public readonly instancesDeleted: number
-    ) {}
+import * as types from "./types";
+
+export class PurgeHistoryResult implements types.PurgeHistoryResult {
+    constructor(public readonly instancesDeleted: number) {}
 }

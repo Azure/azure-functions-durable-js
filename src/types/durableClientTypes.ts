@@ -20,3 +20,49 @@ export interface StartNewOptions {
      */
     input?: unknown;
 }
+
+/**
+ * Class to hold statistics about this execution of purge history.
+ * The return type of DurableClient.purgeHistory()
+ */
+export declare class PurgeHistoryResult {
+    /**
+     * The number of deleted instances.
+     */
+    readonly instancesDeleted: number;
+
+    /**
+     * @param instancesDeleted The number of deleted instances
+     */
+    constructor(instancesDeleted: number);
+}
+
+/**
+ * Data structure containing instance management HTTP endpoints.
+ */
+export declare class HttpManagementPayload {
+    /**
+     * The ID of the orchestration instance.
+     */
+    readonly id: string;
+    /**
+     * The HTTP GET status query endpoint URL.
+     */
+    readonly statusQueryGetUri: string;
+    /**
+     * The HTTP POST external event sending endpoint URL.
+     */
+    readonly sendEventPostUri: string;
+    /**
+     * The HTTP POST instance termination endpoint URL.
+     */
+    readonly terminatePostUri: string;
+    /**
+     * The HTTP POST instance rewind endpoint URL.
+     */
+    readonly rewindPostUri: string;
+    /**
+     * The HTTP DELETE purge endpoint URL.
+     */
+    readonly purgeHistoryDeleteUri: string;
+}

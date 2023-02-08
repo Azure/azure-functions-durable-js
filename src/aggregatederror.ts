@@ -1,22 +1,9 @@
+import * as types from "./types";
+
 /** @hidden */
 const separator = "-----------------------------------";
 
-/**
- * A specific error thrown when context.df.Task.all() fails. Its message
- * contains an aggregation of all the exceptions that failed. It should follow the
- * below format:
- *
- * context.df.Task.all() encountered the below error messages:
- *
- * Name: DurableError
- * Message: The activity function "ActivityA" failed.
- * StackTrace: <stacktrace>
- * -----------------------------------
- * Name: DurableError
- * Message: The activity function "ActivityB" failed.
- * StackTrace: <stacktrace>
- */
-export class AggregatedError extends Error {
+export class AggregatedError extends Error implements types.AggregatedError {
     public errors: Error[];
 
     constructor(errors: Error[]) {

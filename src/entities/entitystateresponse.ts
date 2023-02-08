@@ -1,12 +1,5 @@
-/**
- * The response returned by [[DurableOrchestrationClient]].[[readEntityState]].
- */
-export class EntityStateResponse<T> {
-    constructor(
-        /** Whether this entity exists or not. */
-        public entityExists: boolean,
+import * as types from "../types";
 
-        /** The current state of the entity, if it exists, or default value otherwise. */
-        public entityState?: T
-    ) {}
+export class EntityStateResponse<T> implements types.EntityStateResponse<T> {
+    constructor(public entityExists: boolean, public entityState?: T) {}
 }

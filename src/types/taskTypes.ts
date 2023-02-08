@@ -73,3 +73,31 @@ export interface TimerTask extends Task {
      */
     cancel: () => void;
 }
+
+/**
+ * A specific error thrown when context.df.Task.all() fails. Its message
+ * contains an aggregation of all the exceptions that failed. It should follow the
+ * below format:
+ *
+ * context.df.Task.all() encountered the below error messages:
+ *
+ * Name: DurableError
+ * Message: The activity function "ActivityA" failed.
+ * StackTrace: <stacktrace>
+ * -----------------------------------
+ * Name: DurableError
+ * Message: The activity function "ActivityB" failed.
+ * StackTrace: <stacktrace>
+ */
+export declare class AggregatedError extends Error {
+    /**
+     * The list of errors nested inside this `AggregatedError`
+     */
+    errors: Error[];
+
+    /**
+     * Construct an `AggregatedError` using a list of errors
+     * @param errors List of errors.
+     */
+    constructor(errors: Error[]);
+}
