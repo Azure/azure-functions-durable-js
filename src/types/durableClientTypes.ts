@@ -38,27 +38,6 @@ export declare class PurgeHistoryResult {
 }
 
 /**
- * The response returned by DurableClient.readEntityState().
- */
-export declare class EntityStateResponse<T> {
-    /**
-     * Whether this entity exists or not.
-     */
-    entityExists: boolean;
-    /**
-     * The current state of the entity, if it exists, or default value otherwise.
-     */
-    entityState?: T;
-
-    /**
-     *
-     * @param entityExists Whether this entity exists or not.
-     * @param entityState The current state of the entity, if it exists, or default value otherwise.
-     */
-    constructor(entityExists: boolean, entityState?: T);
-}
-
-/**
  * Data structure containing instance management HTTP endpoints.
  */
 export declare class HttpManagementPayload {
