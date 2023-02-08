@@ -1,5 +1,11 @@
 import { FunctionInput, HttpRequest, HttpResponse } from "@azure/functions";
-import { EntityId, EntityStateResponse, HttpManagementPayload, IHttpResponse } from "../classes";
+import {
+    EntityId,
+    EntityStateResponse,
+    HttpManagementPayload,
+    IHttpResponse,
+    OrchestrationClientInputData,
+} from "../classes";
 import { DurableOrchestrationStatus } from "../durableorchestrationstatus";
 import { IHttpRequest } from "../ihttprequest";
 import { OrchestrationRuntimeStatus } from "../orchestrationruntimestatus";
@@ -14,6 +20,8 @@ export interface DurableClientInput extends FunctionInput {
  * orchestration and entity instances.
  */
 export declare class DurableClient {
+    constructor(clientData: OrchestrationClientInputData);
+
     /**
      * The name of the task hub configured on this orchestration client
      * instance.
