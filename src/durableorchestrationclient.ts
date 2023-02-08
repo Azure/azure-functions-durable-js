@@ -21,7 +21,7 @@ import {
     PurgeHistoryResult,
     Utils,
 } from "./classes";
-import { StartNewOptions, DurableClientInput } from "./types";
+import { StartNewOptions, DurableClientInput, DurableClient } from "./types";
 import { WebhookUtils } from "./webhookutils";
 
 /** @hidden */
@@ -33,7 +33,7 @@ const URL = url.URL;
  *  calls this method.
  *
  */
-export function getClient(context: InvocationContext): DurableOrchestrationClient {
+export function getClient(context: InvocationContext): DurableClient {
     const foundInput: FunctionInput | undefined = context.options.extraInputs.find(
         isDurableClientInput
     );
@@ -109,11 +109,7 @@ function correctUrls(obj: { [key: string]: string }): { [key: string]: string } 
  * Client for starting, querying, terminating and raising events to
  * orchestration instances.
  */
-export class DurableOrchestrationClient {
-    /**
-     * The name of the task hub configured on this orchestration client
-     * instance.
-     */
+export class DurableOrchestrationClient implements DurableClient {
     public readonly taskHubName: string;
     /** @hidden */
     public readonly uniqueWebhookOrigins: string[];
@@ -163,20 +159,14 @@ export class DurableOrchestrationClient {
         this.uniqueWebhookOrigins = this.extractUniqueWebhookOrigins(this.clientData);
     }
 
-    /**
-     * Creates an HTTP response that is useful for checking the status of the
-     * specified instance.
-     * @param request The HTTP request that triggered the current orchestration
-     *  instance.
-     * @param instanceId The ID of the orchestration instance to check.
-     * @returns An HTTP 202 response with a Location header and a payload
-     *  containing instance management URLs.
-     */
     public createCheckStatusResponse(
         request: HttpRequest | undefined,
         instanceId: string
     ): HttpResponse {
-        const httpManagementPayload = this.getClientResponseLinks(request, instanceId);
+        const httpManagementPayload: HttpManagementPayload = this.getClientResponseLinks(
+            request,
+            instanceId
+        );
 
         return new HttpResponse({
             status: 202,
@@ -189,23 +179,10 @@ export class DurableOrchestrationClient {
         });
     }
 
-    /**
-     * Creates an [[HttpManagementPayload]] object that contains instance
-     * management HTTP endpoints.
-     * @param instanceId The ID of the orchestration instance to check.
-     */
     public createHttpManagementPayload(instanceId: string): HttpManagementPayload {
         return this.getClientResponseLinks(undefined, instanceId);
     }
 
-    /**
-     * Gets the status of the specified orchestration instance.
-     * @param instanceId The ID of the orchestration instance to query.
-     * @param showHistory Boolean marker for including execution history in the
-     *  response.
-     * @param showHistoryOutput Boolean marker for including input and output
-     *  in the execution history response.
-     */
     public async getStatus(
         instanceId: string,
         showHistory?: boolean,
@@ -232,9 +209,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Gets the status of all orchestration instances.
-     */
     public async getStatusAll(): Promise<DurableOrchestrationStatus[]> {
         const response = await this.getStatusInternal({});
         switch (response.status) {
@@ -245,16 +219,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Gets the status of all orchestration instances that match the specified
-     * conditions.
-     * @param createdTimeFrom Return orchestration instances which were created
-     *  after this Date.
-     * @param createdTimeTo Return orchestration instances which were created
-     *  before this DateTime.
-     * @param runtimeStatus Return orchestration instances which match any of
-     *  the runtimeStatus values in this array.
-     */
     public async getStatusBy(
         createdTimeFrom: Date | undefined,
         createdTimeTo: Date | undefined,
@@ -275,10 +239,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Purge the history for a specific orchestration instance.
-     * @param instanceId The ID of the orchestration instance to purge.
-     */
     public async purgeInstanceHistory(instanceId: string): Promise<PurgeHistoryResult> {
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
@@ -302,15 +262,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Purge the orchestration history for instances that match the conditions.
-     * @param createdTimeFrom Start creation time for querying instances for
-     *  purging.
-     * @param createdTimeTo End creation time for querying instances for
-     *  purging.
-     * @param runtimeStatus List of runtime statuses for querying instances for
-     *  purging. Only Completed, Terminated or Failed will be processed.
-     */
     public async purgeInstanceHistoryBy(
         createdTimeFrom: Date,
         createdTimeTo?: Date,
@@ -379,26 +330,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Sends an event notification message to a waiting orchestration instance.
-     * @param instanceId The ID of the orchestration instance that will handle
-     *  the event.
-     * @param eventName The name of the event.
-     * @param eventData The JSON-serializable data associated with the event.
-     * @param taskHubName The TaskHubName of the orchestration that will handle
-     *  the event.
-     * @param connectionName The name of the connection string associated with
-     *  `taskHubName.`
-     * @returns A promise that resolves when the event notification message has
-     *  been enqueued.
-     *
-     * In order to handle the event, the target orchestration instance must be
-     * waiting for an event named `eventName` using
-     * [[waitForExternalEvent]].
-     *
-     * If the specified instance is not found or not running, this operation
-     * will have no effect.
-     */
     public async raiseEvent(
         instanceId: string,
         eventName: string,
@@ -455,17 +386,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Tries to read the current state of an entity. Returnes undefined if the
-     * entity does not exist, or if the JSON-serialized state of the entity is
-     * larger than 16KB.
-     * @param T The JSON-serializable type of the entity.
-     * @param entityId The target entity.
-     * @param taskHubName The TaskHubName of the target entity.
-     * @param connectionName The name of the connection string associated with
-     * [taskHubName].
-     * @returns A response containing the current state of the entity.
-     */
     public async readEntityState<T>(
         entityId: EntityId,
         taskHubName?: string,
@@ -517,14 +437,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Rewinds the specified failed orchestration instance with a reason.
-     * @param instanceId The ID of the orchestration instance to rewind.
-     * @param reason The reason for rewinding the orchestration instance.
-     * @returns A promise that resolves when the rewind message is enqueued.
-     *
-     * This feature is currently in preview.
-     */
     public async rewind(
         instanceId: string,
         reason: string,
@@ -574,14 +486,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Signals an entity to perform an operation.
-     * @param entityId The target entity.
-     * @param operationName The name of the operation.
-     * @param operationContent The content for the operation.
-     * @param taskHubName The TaskHubName of the target entity.
-     * @param connectionName The name of the connection string associated with [taskHubName].
-     */
     public async signalEntity(
         entityId: EntityId,
         operationName?: string,
@@ -640,16 +544,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Starts a new instance of the specified orchestrator function.
-     *
-     * If an orchestration instance with the specified ID already exists, the
-     * existing instance will be silently replaced by this new instance.
-     * @param orchestratorFunctionName The name of the orchestrator function to
-     *  start.
-     * @param options optional object to control the scheduled orchestrator (e.g provide input, instanceID)
-     * @returns The ID of the new orchestration instance.
-     */
     public async startNew(
         orchestratorFunctionName: string,
         options?: StartNewOptions
@@ -684,16 +578,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Terminates a running orchestration instance.
-     * @param instanceId The ID of the orchestration instance to terminate.
-     * @param reason The reason for terminating the orchestration instance.
-     * @returns A promise that resolves when the terminate message is enqueued.
-     *
-     * Terminating an orchestration instance has no effect on any in-flight
-     * activity function executions or sub-orchestrations that were started
-     * by the current orchestration instance.
-     */
     public async terminate(instanceId: string, reason: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
         let requestUrl: string;
@@ -722,22 +606,6 @@ export class DurableOrchestrationClient {
         }
     }
 
-    /**
-     * Creates an HTTP response which either contains a payload of management
-     * URLs for a non-completed instance or contains the payload containing
-     * the output of the completed orchestration.
-     *
-     * If the orchestration does not complete within the specified timeout,
-     * then the HTTP response will be identical to that of
-     * [[createCheckStatusResponse]].
-     *
-     * @param request The HTTP request that triggered the current function.
-     * @param instanceId The unique ID of the instance to check.
-     * @param timeoutInMilliseconds Total allowed timeout for output from the
-     *  durable function. The default value is 10 seconds.
-     * @param retryIntervalInMilliseconds The timeout between checks for output
-     *  from the durable function. The default value is 1 second.
-     */
     public async waitForCompletionOrCreateCheckStatusResponse(
         request: HttpRequest,
         instanceId: string,
