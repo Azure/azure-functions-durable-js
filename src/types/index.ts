@@ -81,5 +81,5 @@ export declare class DurableError extends Error {
      * Constructs a `DurableError` instance.
      * @param message error message.
      */
-    constructor(message?: string);
+    constructor(message: string | undefined);
 }
