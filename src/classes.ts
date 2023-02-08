@@ -6,7 +6,6 @@ export { Orchestrator } from "./orchestrator";
 export { Entity } from "./entity";
 
 export { DurableEntityBindingInfo } from "./durableentitybindinginfo";
-export { DurableEntityContext } from "./durableentitycontext";
 export { DurableOrchestrationBindingInfo } from "./durableorchestrationbindinginfo";
 export { DurableOrchestrationContext } from "./durableorchestrationcontext";
 
