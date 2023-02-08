@@ -1,6 +1,6 @@
 import { expect } from "chai";
+import { DateTime } from "luxon";
 import "mocha";
-import moment = require("moment");
 import uuidv1 = require("uuid/v1");
 import { isUUID } from "validator";
 import { GuidManager } from "../../src/classes";
@@ -22,7 +22,7 @@ describe("GuidManager", () => {
         it("returns consistent GUID for namespace and name", () => {
             const namespace = GuidManager.UrlNamespaceValue;
             const instanceId = uuidv1();
-            const currentUtcDateTime = moment.utc().toDate().valueOf();
+            const currentUtcDateTime = DateTime.utc().toJSDate().valueOf();
 
             const name1 = `${instanceId}_${currentUtcDateTime}_0`;
             const name2 = `${instanceId}_${currentUtcDateTime}_12`;

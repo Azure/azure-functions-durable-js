@@ -470,8 +470,8 @@ export class LongTimerTask extends WhenAllTask implements TimerTask {
      * The sub-timer that just completed
      */
     public trySetValue(child: DFTimerTask): void {
-        const currentTime = this.orchestrationContext.currentUtcDateTime;
-        const finalFireTime = this.action.fireAt;
+        const currentTime: Date = this.orchestrationContext.currentUtcDateTime;
+        const finalFireTime: Date = this.action.fireAt;
         if (finalFireTime > currentTime) {
             const nextTimer: DFTimerTask = this.getNextTimerTask(finalFireTime, currentTime);
             this.addNewChild(nextTimer);

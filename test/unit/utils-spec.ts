@@ -154,6 +154,63 @@ describe("Utils", () => {
             }).to.not.throw();
         });
     });
+
+    describe("durationFromString()", () => {
+        it("throws on negative duration", () => {
+            expect(() => {
+                Utils.durationFromString("-14.00:00:00");
+            }).to.throw();
+        });
+        it("correctly parses empty duration", () => {
+            expect(Utils.durationFromString("00:00:00").toObject())
+                .to.be.an("object")
+                .that.contains({
+                    hours: 0,
+                    minutes: 0,
+                    seconds: 0,
+                });
+        });
+        it("correctly parses iso time string", () => {
+            expect(Utils.durationFromString("01:02:03").toObject())
+                .to.be.an("object")
+                .that.contains({
+                    hours: 1,
+                    minutes: 2,
+                    seconds: 3,
+                });
+        });
+        it("correctly parses milliseconds", () => {
+            expect(Utils.durationFromString("00:00:00.2500000").toObject())
+                .to.be.an("object")
+                .that.contains({
+                    hours: 0,
+                    minutes: 0,
+                    seconds: 0,
+                    milliseconds: 250,
+                });
+        });
+        it("correctly parses days and milliseconds", () => {
+            expect(Utils.durationFromString("99.23:59:59.9990000").toObject())
+                .to.be.an("object")
+                .that.contains({
+                    days: 99,
+                    hours: 23,
+                    minutes: 59,
+                    seconds: 59,
+                    milliseconds: 999,
+                });
+        });
+        it("correctly parses days only", () => {
+            expect(Utils.durationFromString("14.00:00:00").toObject())
+                .to.be.an("object")
+                .that.contains({
+                    days: 14,
+                    hours: 0,
+                    minutes: 0,
+                    seconds: 0,
+                });
+        });
+    });
 });
 
 class TestType {

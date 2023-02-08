@@ -1,3 +1,5 @@
+import { Duration } from "luxon";
+
 /** @hidden */
 export class Utils {
     public static processInput<T>(input: string | T): string | T {
@@ -117,5 +119,50 @@ export class Utils {
         if (typeof value !== "number") {
             throw new TypeError(`${name}: Expected number but got ${typeof value}`);
         }
+    }
+
+    /**
+     * @hidden
+     * Converts a string in the format `[-][d.]hh:mm:ss[.fffffff]`
+     * to a `Duration` object
+     * (This is the format the default .NET serializer uses, and the
+     * format coming from the Durable extension)
+     * @param input the formatted string
+     */
+    public static durationFromString(input: string): Duration {
+        if (input[0] === "-") {
+            // We should not be getting negative durations
+            throw new Error("Received negative duration. Negative durations are not supported.");
+        }
+
+        const parts = input.split(".");
+        // the middle part that's always there
+        let isoTimeString: string;
+        // optional number of days
+        let days = 0;
+        // optional number of milliseconds
+        let millis = 0;
+
+        if (parts[0].includes(":")) {
+            // no days, straight to hours
+            isoTimeString = parts[0];
+            // add millis if they exist
+            if (parts.length > 1) {
+                const fractionalStr = `0.${parts[1]}`;
+                millis = parseFloat(fractionalStr) * 1000;
+            }
+        } else {
+            // we have days
+            days = parseInt(parts[0]);
+            // second part is iso time string
+            isoTimeString = parts[1];
+            // add millis if they exist
+            if (parts.length > 2) {
+                const fractionalStr = `0.${parts[2]}`;
+                millis = parseFloat(fractionalStr) * 1000;
+            }
+        }
+
+        return Duration.fromISOTime(isoTimeString).plus({ days, milliseconds: millis });
     }
 }

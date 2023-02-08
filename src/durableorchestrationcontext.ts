@@ -14,6 +14,7 @@ import {
     GuidManager,
     HistoryEvent,
     WaitForExternalEventAction,
+    Utils,
 } from "./classes";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import { WhenAllAction } from "./actions/whenallaction";
@@ -56,12 +57,16 @@ export class DurableOrchestrationContext {
         this.isReplaying = isReplaying;
         this.currentUtcDateTime = currentUtcDateTime;
         this.parentInstanceId = parentInstanceId;
-        this.longRunningTimerIntervalDuration = longRunningTimerIntervalDuration;
-        this.maximumShortTimerDuration = maximumShortTimerDuration;
         this.defaultHttpAsyncRequestSleepTimeMillseconds = defaultHttpAsyncRequestSleepTimeMillseconds;
         this.schemaVersion = schemaVersion;
         this.input = input;
         this.newGuidCounter = 0;
+        this.longRunningTimerIntervalDuration = longRunningTimerIntervalDuration
+            ? Utils.durationFromString(longRunningTimerIntervalDuration)
+            : undefined;
+        this.maximumShortTimerDuration = maximumShortTimerDuration
+            ? Utils.durationFromString(maximumShortTimerDuration)
+            : undefined;
     }
 
     private input: unknown;
@@ -126,7 +131,7 @@ export class DurableOrchestrationContext {
      * This duration property is determined by the underlying storage
      * solution and passed to the SDK from the extension.
      */
-    private readonly maximumShortTimerDuration: string | undefined;
+    private readonly maximumShortTimerDuration: Duration | undefined;
 
     /**
      * A duration property which defines the duration of smaller
@@ -136,7 +141,7 @@ export class DurableOrchestrationContext {
      * This duration property is determined by the underlying
      * storage solution and passed to the SDK from the extension.
      */
-    private readonly longRunningTimerIntervalDuration: string | undefined;
+    private readonly longRunningTimerIntervalDuration: Duration | undefined;
 
     /**
      * Gets the current schema version that this execution is
@@ -392,14 +397,14 @@ export class DurableOrchestrationContext {
                 );
             }
 
-            if (durationUntilFire > Duration.fromISO(this.maximumShortTimerDuration)) {
+            if (durationUntilFire > this.maximumShortTimerDuration) {
                 return new LongTimerTask(
                     false,
                     timerAction,
                     this,
                     this.taskOrchestratorExecutor,
-                    this.maximumShortTimerDuration,
-                    this.longRunningTimerIntervalDuration
+                    this.maximumShortTimerDuration.toISO(),
+                    this.longRunningTimerIntervalDuration.toISO()
                 );
             }
         }
