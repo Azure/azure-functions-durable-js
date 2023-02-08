@@ -57,16 +57,16 @@ export class DurableOrchestrationContext {
         this.isReplaying = isReplaying;
         this.currentUtcDateTime = currentUtcDateTime;
         this.parentInstanceId = parentInstanceId;
-        this.defaultHttpAsyncRequestSleepTimeMillseconds = defaultHttpAsyncRequestSleepTimeMillseconds;
-        this.schemaVersion = schemaVersion;
-        this.input = input;
-        this.newGuidCounter = 0;
         this.longRunningTimerIntervalDuration = longRunningTimerIntervalDuration
             ? Utils.durationFromString(longRunningTimerIntervalDuration)
             : undefined;
         this.maximumShortTimerDuration = maximumShortTimerDuration
             ? Utils.durationFromString(maximumShortTimerDuration)
             : undefined;
+        this.defaultHttpAsyncRequestSleepTimeMillseconds = defaultHttpAsyncRequestSleepTimeMillseconds;
+        this.schemaVersion = schemaVersion;
+        this.input = input;
+        this.newGuidCounter = 0;
     }
 
     private input: unknown;
