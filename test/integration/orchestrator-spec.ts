@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect } from "chai";
 import "mocha";
-import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
 import { DummyOrchestrationContext, ManagedIdentityTokenSource } from "../../src";
 import { SignalEntityAction } from "../../src/actions/signalentityaction";
@@ -31,6 +30,7 @@ import { DurableOrchestrationInput } from "../../src/testingUtils";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 import { TestUtils } from "../testobjects/testutils";
+import { DateTime } from "luxon";
 
 describe("Orchestrator", () => {
     const falsyValues = [false, 0, "", null, undefined, NaN];
@@ -40,7 +40,7 @@ describe("Orchestrator", () => {
         const mockContext = new DummyOrchestrationContext();
         const orchestrationInput = new DurableOrchestrationInput(
             "",
-            TestHistories.StarterHistory(moment.utc().toDate())
+            TestHistories.StarterHistory(DateTime.utc().toJSDate())
         );
         const result = await orchestrator(orchestrationInput, mockContext);
 
@@ -62,7 +62,7 @@ describe("Orchestrator", () => {
         const mockContext = new DummyOrchestrationContext();
         const orchestrationInput = new DurableOrchestrationInput(
             "",
-            TestHistories.StarterHistory(moment.utc().toDate())
+            TestHistories.StarterHistory(DateTime.utc().toJSDate())
         );
 
         const errorMsg =
@@ -93,7 +93,7 @@ describe("Orchestrator", () => {
         const mockContext = new DummyOrchestrationContext();
         const orchestrationInput = new DurableOrchestrationInput(
             "",
-            TestHistories.GetOrchestratorStart("SayHelloInline", moment.utc().toDate(), name),
+            TestHistories.GetOrchestratorStart("SayHelloInline", DateTime.utc().toJSDate(), name),
             name
         );
         const result = await orchestrator(orchestrationInput, mockContext);
@@ -122,7 +122,7 @@ describe("Orchestrator", () => {
                     "",
                     TestHistories.GetOrchestratorStart(
                         "PassThrough",
-                        moment.utc().toDate(),
+                        DateTime.utc().toJSDate(),
                         falsyValue
                     ),
                     falsyValue
@@ -156,7 +156,11 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 id,
-                TestHistories.GetOrchestratorStart("SayHelloInline", moment.utc().toDate(), name),
+                TestHistories.GetOrchestratorStart(
+                    "SayHelloInline",
+                    DateTime.utc().toJSDate(),
+                    name
+                ),
                 name
             );
             await orchestrator(orchestrationInput, mockContext);
@@ -170,7 +174,7 @@ describe("Orchestrator", () => {
 
             const mockHistory = TestHistories.GetSayHelloWithActivityReplayOne(
                 "SayHelloWithActivity",
-                moment.utc().toDate(),
+                DateTime.utc().toJSDate(),
                 name
             );
 
@@ -194,7 +198,7 @@ describe("Orchestrator", () => {
                 "",
                 TestHistories.GetSayHelloWithActivityReplayOne(
                     "SayHelloWithActivity",
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     name
                 ),
                 name,
@@ -214,8 +218,10 @@ describe("Orchestrator", () => {
         it("updates currentUtcDateTime to the most recent OrchestratorStarted timestamp", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";
-            const startTimestamp = moment.utc().toDate();
-            const nextTimestamp = moment(startTimestamp).add(1, "s").toDate();
+            const startTimestamp = DateTime.utc().toJSDate();
+            const nextTimestamp = DateTime.fromJSDate(startTimestamp)
+                .plus({ seconds: 1 })
+                .toJSDate();
 
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
@@ -235,7 +241,7 @@ describe("Orchestrator", () => {
 
         it("uses existing currentUtcDateTime if OrchestratorStarted events are exhausted", async () => {
             const orchestrator = TestOrchestrations.TimestampExhaustion;
-            const startTimestamp = moment.utc().toDate();
+            const startTimestamp = DateTime.utc().toJSDate();
 
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
@@ -258,7 +264,10 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetOrchestratorStart("ThrowsExceptionInline", moment.utc().toDate())
+                TestHistories.GetOrchestratorStart(
+                    "ThrowsExceptionInline",
+                    DateTime.utc().toJSDate()
+                )
             );
             const expectedErr = "Exception from Orchestrator";
             let errored = false;
@@ -283,7 +292,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationTrigger = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetThrowsExceptionFromActivityReplayOne(moment.utc().toDate())
+                TestHistories.GetThrowsExceptionFromActivityReplayOne(DateTime.utc().toJSDate())
             );
             const expectedErr = "Activity function 'ThrowsErrorActivity' failed.";
             let errored = false;
@@ -318,7 +327,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationTrigger = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetThrowsExceptionFromActivityReplayOne(moment.utc().toDate()),
+                TestHistories.GetThrowsExceptionFromActivityReplayOne(DateTime.utc().toJSDate()),
                 name
             );
             const result = await orchestrator(orchestrationTrigger, mockContext);
@@ -348,7 +357,7 @@ describe("Orchestrator", () => {
                 "",
                 TestHistories.GetOrchestratorStart(
                     "SayHelloWithActivity",
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     name
                 ),
                 name
@@ -374,7 +383,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetOrchestratorStart("CallActivityNoInput", moment.utc().toDate())
+                TestHistories.GetOrchestratorStart("CallActivityNoInput", DateTime.utc().toJSDate())
             );
 
             const result = await orchestrator(orchestrationInput, mockContext);
@@ -401,7 +410,7 @@ describe("Orchestrator", () => {
                         "",
                         TestHistories.GetOrchestratorStart(
                             "SayHelloWithActivity",
-                            moment.utc().toDate(),
+                            DateTime.utc().toJSDate(),
                             falsyValue
                         ),
                         falsyValue
@@ -429,7 +438,7 @@ describe("Orchestrator", () => {
                         "",
                         TestHistories.GetSayHelloWithActivityReplayOne(
                             "SayHelloWithActivity",
-                            moment.utc().toDate(),
+                            DateTime.utc().toJSDate(),
                             falsyValue
                         ),
                         falsyValue
@@ -460,7 +469,7 @@ describe("Orchestrator", () => {
                 "",
                 TestHistories.GetSayHelloWithActivityReplayOne(
                     "SayHelloWithActivity",
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     name
                 ),
                 name
@@ -489,7 +498,7 @@ describe("Orchestrator", () => {
                 "",
                 TestHistories.GetSayHelloWithActivityReplayOne(
                     "CallActivityYieldTwice",
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     name
                 ),
                 name
@@ -515,7 +524,10 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetHelloSequenceReplayFinal("SayHelloSequence", moment.utc().toDate())
+                TestHistories.GetHelloSequenceReplayFinal(
+                    "SayHelloSequence",
+                    DateTime.utc().toJSDate()
+                )
             );
 
             const result = await orchestrator(orchestrationInput, mockContext);
@@ -546,7 +558,7 @@ describe("Orchestrator", () => {
                 "",
                 TestHistories.GetOrchestratorStart(
                     "SayHelloWithActivityRetryOptionsUndefined",
-                    moment.utc().toDate()
+                    DateTime.utc().toJSDate()
                 )
             );
             const expectedErr =
@@ -580,7 +592,7 @@ describe("Orchestrator", () => {
                 "",
                 TestHistories.GetOrchestratorStart(
                     "SayHelloWithActivityRetry",
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     name
                 ),
                 name
@@ -617,7 +629,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
                 TestHistories.GetSayHelloWithActivityRetryRetryOne(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     name,
                     retryOptions.firstRetryIntervalInMilliseconds
                 ),
@@ -645,7 +657,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetSayHelloWithActivityRetryFailOne(moment.utc().toDate(), name),
+                TestHistories.GetSayHelloWithActivityRetryFailOne(DateTime.utc().toJSDate(), name),
                 name
             );
 
@@ -680,7 +692,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
                 TestHistories.GetSayHelloWithActivityRetryRetryTwo(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     name,
                     retryOptions.firstRetryIntervalInMilliseconds
                 ),
@@ -718,7 +730,7 @@ describe("Orchestrator", () => {
                 "",
                 TestHistories.GetSayHelloWithActivityReplayOne(
                     "SayHelloWithActivityRetry",
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     name
                 ),
                 name
@@ -754,7 +766,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
                 TestHistories.GetSayHelloWithActivityRetryFanout(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     retryOptions.firstRetryIntervalInMilliseconds,
                     4
                 ),
@@ -794,7 +806,7 @@ describe("Orchestrator", () => {
             const name = "World";
             const retryInterval = 10000;
             const retryOptions = new RetryOptions(retryInterval, 2);
-            const startingTime = moment.utc().toDate();
+            const startingTime = DateTime.utc().toJSDate();
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
@@ -817,7 +829,9 @@ describe("Orchestrator", () => {
                         ],
                         output: [
                             startingTime,
-                            moment(startingTime).add(1, "m").add(30, "s").toDate(),
+                            DateTime.fromJSDate(startingTime)
+                                .plus({ minutes: 1, seconds: 30 })
+                                .toJSDate(),
                         ],
                         schemaVersion: ReplaySchema.V1,
                     },
@@ -834,7 +848,11 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetOrchestratorStart("SendHttpRequest", moment.utc().toDate(), req),
+                TestHistories.GetOrchestratorStart(
+                    "SendHttpRequest",
+                    DateTime.utc().toJSDate(),
+                    req
+                ),
                 req
             );
 
@@ -865,7 +883,11 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetOrchestratorStart("SendHttpRequest", moment.utc().toDate(), req),
+                TestHistories.GetOrchestratorStart(
+                    "SendHttpRequest",
+                    DateTime.utc().toJSDate(),
+                    req
+                ),
                 req
             );
 
@@ -883,7 +905,7 @@ describe("Orchestrator", () => {
                             httpRequest: {
                                 method: req.method,
                                 uri: req.uri,
-                                content: req.c,
+                                content: req.content,
                                 headers: req.headers,
                                 asynchronousPatternEnabled: req.asynchronousPatternEnabled,
                                 tokenSource: {
@@ -909,7 +931,7 @@ describe("Orchestrator", () => {
                 "",
                 TestHistories.GetSendHttpRequestReplayOne(
                     "SendHttpRequest",
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     req,
                     res
                 ),
@@ -955,7 +977,7 @@ describe("Orchestrator", () => {
                 const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetCompletedHttpRequestWithPolling(
-                        moment.utc().toDate(),
+                        DateTime.utc().toJSDate(),
                         req,
                         res,
                         30000
@@ -994,7 +1016,7 @@ describe("Orchestrator", () => {
                 const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetCompletedHttpRequestWithPolling(
-                        moment.utc().toDate(),
+                        DateTime.utc().toJSDate(),
                         req,
                         res,
                         30000
@@ -1032,7 +1054,7 @@ describe("Orchestrator", () => {
                     "",
                     TestHistories.GetSendHttpRequestReplayOne(
                         "SendHttpRequest",
-                        moment.utc().toDate(),
+                        DateTime.utc().toJSDate(),
                         req,
                         fakeRedirectResponse
                     ),
@@ -1067,7 +1089,7 @@ describe("Orchestrator", () => {
                     "",
                     TestHistories.GetSendHttpRequestReplayOne(
                         "SendHttpRequest",
-                        moment.utc().toDate(),
+                        DateTime.utc().toJSDate(),
                         req,
                         fakeRedirectResponse
                     ),
@@ -1103,7 +1125,11 @@ describe("Orchestrator", () => {
                 const mockContext = new DummyOrchestrationContext();
                 const orchestrationInput = new DurableOrchestrationInput(
                     "",
-                    TestHistories.GetPendingHttpPollingRequest(moment.utc().toDate(), req, 30000),
+                    TestHistories.GetPendingHttpPollingRequest(
+                        DateTime.utc().toJSDate(),
+                        req,
+                        30000
+                    ),
                     req,
                     undefined,
                     undefined,
@@ -1135,7 +1161,7 @@ describe("Orchestrator", () => {
                     "",
                     TestHistories.GetSendHttpRequestReplayOne(
                         "SendHttpRequest",
-                        moment.utc().toDate(),
+                        DateTime.utc().toJSDate(),
                         req,
                         redirectResponse
                     ),
@@ -1177,7 +1203,7 @@ describe("Orchestrator", () => {
                     "",
                     TestHistories.GetSendHttpRequestReplayOne(
                         "SendHttpRequest",
-                        moment.utc().toDate(),
+                        DateTime.utc().toJSDate(),
                         req,
                         redirectResponse
                     ),
@@ -1214,7 +1240,7 @@ describe("Orchestrator", () => {
                 const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetCallHttpWithPollingFailedRequest(
-                        moment.utc().toDate(),
+                        DateTime.utc().toJSDate(),
                         req,
                         30000
                     ),
@@ -1249,7 +1275,7 @@ describe("Orchestrator", () => {
                 const orchestrationInput = new DurableOrchestrationInput(
                     "",
                     TestHistories.GetCallHttpWithPollingFailedRequest(
-                        moment.utc().toDate(),
+                        DateTime.utc().toJSDate(),
                         req,
                         30000
                     ),
@@ -1273,7 +1299,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetOrchestratorStart("CallEntityGet", moment.utc().toDate()),
+                TestHistories.GetOrchestratorStart("CallEntityGet", DateTime.utc().toJSDate()),
                 expectedEntity,
                 instanceId
             );
@@ -1300,7 +1326,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 instanceId,
-                TestHistories.GetCallEntitySet(moment.utc().toDate(), expectedEntity),
+                TestHistories.GetCallEntitySet(DateTime.utc().toJSDate(), expectedEntity),
                 expectedEntity,
                 undefined,
                 undefined,
@@ -1437,7 +1463,7 @@ describe("Orchestrator", () => {
                 id,
                 TestHistories.GetOrchestratorStart(
                     "SayHelloWithSubOrchestrator",
-                    moment.utc().toDate()
+                    DateTime.utc().toJSDate()
                 ),
                 name
             );
@@ -1468,7 +1494,7 @@ describe("Orchestrator", () => {
                 "",
                 TestHistories.GetOrchestratorStart(
                     "SayHelloWithSubOrchestrator",
-                    moment.utc().toDate()
+                    DateTime.utc().toJSDate()
                 ),
                 name,
                 id
@@ -1505,7 +1531,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
                 TestHistories.GetMultipleSubOrchestratorNoIdsSubOrchestrationsFinished(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     orchestrator,
                     [
                         "SayHelloWithActivity",
@@ -1571,7 +1597,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 id,
                 TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     "SayHelloWithSubOrchestrator",
                     "SayHelloWithActivity",
                     childId,
@@ -1606,7 +1632,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 id,
                 TestHistories.GetSayHelloWithSubOrchestratorFail(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     "SayHelloWithSubOrchestrator",
                     "SayHelloWithActivity",
                     childId,
@@ -1651,7 +1677,7 @@ describe("Orchestrator", () => {
                 id,
                 TestHistories.GetOrchestratorStart(
                     "SayHelloWithSubOrchestratorRetryNoOptions",
-                    moment.utc().toDate()
+                    DateTime.utc().toJSDate()
                 ),
                 undefined
             );
@@ -1688,7 +1714,7 @@ describe("Orchestrator", () => {
                 id,
                 TestHistories.GetOrchestratorStart(
                     "SayHelloWithSubOrchestratorRetry",
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     name
                 ),
                 name
@@ -1728,7 +1754,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 id,
                 TestHistories.GetSayHelloWithSubOrchestratorRetryRetryOne(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     childId,
                     name,
                     retryOptions.firstRetryIntervalInMilliseconds
@@ -1769,7 +1795,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 id,
                 TestHistories.GetSayHelloWithSubOrchestratorRetryFailOne(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     childId,
                     name
                 ),
@@ -1810,7 +1836,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 id,
                 TestHistories.GetSayHelloWithSubOrchestratorRetryRetryTwo(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     childId,
                     name,
                     retryOptions.firstRetryIntervalInMilliseconds
@@ -1860,7 +1886,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 id,
                 TestHistories.GetSayHelloWithSubOrchestratorReplayOne(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     "SayHelloWithSubOrchestratorRetry",
                     "SayHelloInline",
                     childId,
@@ -1900,7 +1926,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
                 TestHistories.GetSayHelloWithSuborchestratorRetryFanout(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     retryOptions.firstRetryIntervalInMilliseconds,
                     4
                 ),
@@ -1942,7 +1968,10 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetOrchestratorStart("ContinueAsNewCounter", moment.utc().toDate()),
+                TestHistories.GetOrchestratorStart(
+                    "ContinueAsNewCounter",
+                    DateTime.utc().toJSDate()
+                ),
                 { value: 5 }
             );
 
@@ -1966,8 +1995,8 @@ describe("Orchestrator", () => {
     describe("createTimer()", () => {
         it("schedules a timer", async () => {
             const orchestrator = TestOrchestrations.WaitOnTimer;
-            const startTime = moment.utc().toDate();
-            const fireAt = moment(startTime).add(5, "m").toDate();
+            const startTime = DateTime.utc().toJSDate();
+            const fireAt = DateTime.fromJSDate(startTime).plus({ minutes: 5 }).toJSDate();
 
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
@@ -1993,8 +2022,8 @@ describe("Orchestrator", () => {
 
         it("proceeds after a timer fires", async () => {
             const orchestrator = TestOrchestrations.WaitOnTimer;
-            const startTimestamp = moment.utc().toDate();
-            const fireAt = moment(startTimestamp).add(5, "m").toDate();
+            const startTimestamp = DateTime.utc().toJSDate();
+            const fireAt = DateTime.fromJSDate(startTimestamp).plus({ minutes: 5 }).toJSDate();
 
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
@@ -2021,8 +2050,8 @@ describe("Orchestrator", () => {
         describe("long timers", () => {
             it("schedules long timers", async () => {
                 const orchestrator = TestOrchestrations.WaitOnTimer;
-                const startTime = moment.utc().toDate();
-                const fireAt = moment(startTime).add(10, "d").toDate();
+                const startTime = DateTime.utc().toJSDate();
+                const fireAt = DateTime.fromJSDate(startTime).plus({ days: 10 }).toJSDate();
 
                 const mockContext = new DummyOrchestrationContext();
                 const orchestrationInput = new DurableOrchestrationInput(
@@ -2052,8 +2081,8 @@ describe("Orchestrator", () => {
 
             it("waits for sub-timers of long timer", async () => {
                 const orchestrator = TestOrchestrations.WaitOnTimer;
-                const startTime = moment.utc().toDate();
-                const fireAt = moment(startTime).add(10, "days").toDate();
+                const startTime = DateTime.utc().toJSDate();
+                const fireAt = DateTime.fromJSDate(startTime).plus({ days: 10 }).toJSDate();
 
                 const mockContext = new DummyOrchestrationContext();
                 const orchestrationInput = new DurableOrchestrationInput(
@@ -2083,8 +2112,8 @@ describe("Orchestrator", () => {
 
             it("proceeds after long timer fires", async () => {
                 const orchestrator = TestOrchestrations.WaitOnTimer;
-                const startTimestamp = moment.utc().toDate();
-                const fireAt = moment(startTimestamp).add(10, "d").toDate();
+                const startTimestamp = DateTime.utc().toJSDate();
+                const fireAt = DateTime.fromJSDate(startTimestamp).plus({ days: 10 }).toJSDate();
 
                 const mockContext = new DummyOrchestrationContext();
                 const orchestrationInput = new DurableOrchestrationInput(
@@ -2117,7 +2146,7 @@ describe("Orchestrator", () => {
     describe("newGuid()", () => {
         it("generates consistent GUIDs", async () => {
             const orchestrator = TestOrchestrations.GuidGenerator;
-            const currentUtcDateTime = moment.utc().toDate();
+            const currentUtcDateTime = DateTime.utc().toJSDate();
             const instanceId = uuidv1();
 
             const mockContext1 = new DummyOrchestrationContext();
@@ -2145,7 +2174,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetOrchestratorStart("CheckForLocksNone", moment.utc().toDate())
+                TestHistories.GetOrchestratorStart("CheckForLocksNone", DateTime.utc().toJSDate())
             );
 
             const expectedLockState = new LockState(false, [
@@ -2181,7 +2210,7 @@ describe("Orchestrator", () => {
                 "",
                 TestHistories.GetSayHelloWithActivityReplayOne(
                     "SayHelloWithCustomStatus",
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     name
                 ),
                 name
@@ -2213,7 +2242,10 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetOrchestratorStart("WaitForExternalEvent,", moment.utc().toDate()),
+                TestHistories.GetOrchestratorStart(
+                    "WaitForExternalEvent,",
+                    DateTime.utc().toJSDate()
+                ),
                 undefined
             );
 
@@ -2246,7 +2278,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
                 TestHistories.GetWaitForExternalEventEventReceived(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     "start",
                     name
                 ),
@@ -2283,7 +2315,7 @@ describe("Orchestrator", () => {
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
                 TestHistories.GetWaitForExternalEventEventReceived(
-                    moment.utc().toDate(),
+                    DateTime.utc().toJSDate(),
                     "wrongEvent",
                     name
                 ),
@@ -2320,7 +2352,10 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetFanOutFanInDiskUsageReplayOne(moment.utc().toDate(), filePaths),
+                TestHistories.GetFanOutFanInDiskUsageReplayOne(
+                    DateTime.utc().toJSDate(),
+                    filePaths
+                ),
                 "C:\\Dev"
             );
 
@@ -2348,7 +2383,10 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetFanOutFanInDiskUsagePartComplete(moment.utc().toDate(), filePaths),
+                TestHistories.GetFanOutFanInDiskUsagePartComplete(
+                    DateTime.utc().toJSDate(),
+                    filePaths
+                ),
                 "C:\\Dev"
             );
 
@@ -2376,7 +2414,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetFanOutFanInDiskUsageComplete(moment.utc().toDate(), filePaths),
+                TestHistories.GetFanOutFanInDiskUsageComplete(DateTime.utc().toJSDate(), filePaths),
                 "C:\\Dev"
             );
 
@@ -2404,7 +2442,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetFanOutFanInDiskUsageFaulted(moment.utc().toDate(), filePaths),
+                TestHistories.GetFanOutFanInDiskUsageFaulted(DateTime.utc().toJSDate(), filePaths),
                 "C:\\Dev"
             );
 
@@ -2442,7 +2480,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetAnyAOrB(moment.utc().toDate(), completeInOrder),
+                TestHistories.GetAnyAOrB(DateTime.utc().toJSDate(), completeInOrder),
                 completeInOrder
             );
 
@@ -2472,7 +2510,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetAnyAOrB(moment.utc().toDate(), completeInOrder),
+                TestHistories.GetAnyAOrB(DateTime.utc().toJSDate(), completeInOrder),
                 completeInOrder
             );
 
@@ -2502,7 +2540,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetAnyAOrB(moment.utc().toDate(), completeInOrder),
+                TestHistories.GetAnyAOrB(DateTime.utc().toJSDate(), completeInOrder),
                 completeInOrder
             );
 
@@ -2529,7 +2567,7 @@ describe("Orchestrator", () => {
         it("Task.any called with one TaskSet and one timer where TaskSet wins", async () => {
             const orchestrator = TestOrchestrations.AnyWithTaskSet;
             const eventsWin = true;
-            const initialTime = moment.utc().toDate();
+            const initialTime = DateTime.utc().toJSDate();
             let mockContext = new DummyOrchestrationContext();
             let orchestrationInput = new DurableOrchestrationInput(
                 "",
@@ -2546,7 +2584,11 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
+                                new CreateTimerAction(
+                                    DateTime.fromJSDate(initialTime)
+                                        .plus({ seconds: 300 })
+                                        .toJSDate()
+                                ),
                             ],
                         ],
                         output: undefined,
@@ -2572,7 +2614,11 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
+                                new CreateTimerAction(
+                                    DateTime.fromJSDate(initialTime)
+                                        .plus({ seconds: 300 })
+                                        .toJSDate()
+                                ),
                             ],
                             [new CallActivityAction("Hello", "Tokyo")],
                         ],
@@ -2587,7 +2633,7 @@ describe("Orchestrator", () => {
         it("Task.any called with one TaskSet and one timer where timer wins", async () => {
             const orchestrator = TestOrchestrations.AnyWithTaskSet;
             const eventsWin = false;
-            const initialTime = moment.utc().toDate();
+            const initialTime = DateTime.utc().toJSDate();
             let mockContext = new DummyOrchestrationContext();
             let orchestrationInput = new DurableOrchestrationInput(
                 "",
@@ -2604,7 +2650,11 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
+                                new CreateTimerAction(
+                                    DateTime.fromJSDate(initialTime)
+                                        .plus({ seconds: 300 })
+                                        .toJSDate()
+                                ),
                             ],
                         ],
                         output: undefined,
@@ -2630,7 +2680,11 @@ describe("Orchestrator", () => {
                             [
                                 new WaitForExternalEventAction("firstRequiredEvent"),
                                 new WaitForExternalEventAction("secondRequiredEvent"),
-                                new CreateTimerAction(moment(initialTime).add(300, "s").toDate()),
+                                new CreateTimerAction(
+                                    DateTime.fromJSDate(initialTime)
+                                        .plus({ seconds: 300 })
+                                        .toJSDate()
+                                ),
                             ],
                         ],
                         output: ["timeout"],
@@ -2647,7 +2701,7 @@ describe("Orchestrator", () => {
             const mockContext = new DummyOrchestrationContext();
             const orchestrationInput = new DurableOrchestrationInput(
                 "",
-                TestHistories.GetAnyAOrB(moment.utc().toDate(), completeInOrder),
+                TestHistories.GetAnyAOrB(DateTime.utc().toJSDate(), completeInOrder),
                 completeInOrder
             );
 
@@ -2673,7 +2727,7 @@ describe("Orchestrator", () => {
 
         it("Timer in combination with Task.any() executes deterministically", async () => {
             const orchestrator = TestOrchestrations.TimerActivityRace;
-            const currentTime = moment.utc().toDate();
+            const currentTime = DateTime.utc().toJSDate();
 
             // first iteration
             let mockContext = new DummyOrchestrationContext();
@@ -2691,7 +2745,9 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CreateTimerAction(
+                                    DateTime.fromJSDate(currentTime).plus({ seconds: 1 }).toJSDate()
+                                ),
                                 new CallActivityAction("TaskA"),
                             ],
                         ],
@@ -2718,7 +2774,9 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CreateTimerAction(
+                                    DateTime.fromJSDate(currentTime).plus({ seconds: 1 }).toJSDate()
+                                ),
                                 new CallActivityAction("TaskA"),
                             ],
                             [new CallActivityAction("TaskB")],
@@ -2746,7 +2804,9 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CreateTimerAction(
+                                    DateTime.fromJSDate(currentTime).plus({ seconds: 1 }).toJSDate()
+                                ),
                                 new CallActivityAction("TaskA"),
                             ],
                             [new CallActivityAction("TaskB")],
@@ -2774,7 +2834,9 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [
                             [
-                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CreateTimerAction(
+                                    DateTime.fromJSDate(currentTime).plus({ seconds: 1 }).toJSDate()
+                                ),
                                 new CallActivityAction("TaskA"),
                             ],
                             [new CallActivityAction("TaskB")],
@@ -2789,7 +2851,7 @@ describe("Orchestrator", () => {
 
         it("Timer in combination with Task.any() timer wins", async () => {
             const orchestrator = TestOrchestrations.TimerActivityRace;
-            const currentTime = moment.utc().toDate();
+            const currentTime = DateTime.utc().toJSDate();
 
             // first iteration
             let mockContext = new DummyOrchestrationContext();
@@ -2807,7 +2869,9 @@ describe("Orchestrator", () => {
                         isDone: false,
                         actions: [
                             [
-                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CreateTimerAction(
+                                    DateTime.fromJSDate(currentTime).plus({ seconds: 1 }).toJSDate()
+                                ),
                                 new CallActivityAction("TaskA"),
                             ],
                         ],
@@ -2834,7 +2898,9 @@ describe("Orchestrator", () => {
                         isDone: true,
                         actions: [
                             [
-                                new CreateTimerAction(moment(currentTime).add(1, "s").toDate()),
+                                new CreateTimerAction(
+                                    DateTime.fromJSDate(currentTime).plus({ seconds: 1 }).toJSDate()
+                                ),
                                 new CallActivityAction("TaskA"),
                             ],
                         ],
@@ -2854,7 +2920,10 @@ describe("Orchestrator", () => {
                 const mockContext = new DummyOrchestrationContext();
                 const orchestrationInput = new DurableOrchestrationInput(
                     "",
-                    TestHistories.GetOrchestratorStart("CompoundTaskTest", moment().utc().toDate()),
+                    TestHistories.GetOrchestratorStart(
+                        "CompoundTaskTest",
+                        DateTime.utc().toJSDate()
+                    ),
                     undefined
                 );
 
