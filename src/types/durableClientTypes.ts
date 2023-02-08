@@ -11,7 +11,7 @@ export interface DurableClientInput extends FunctionInput {
 
 /**
  * Client for starting, querying, terminating and raising events to
- * orchestration instances.
+ * orchestration and entity instances.
  */
 export declare class DurableClient {
     /**
