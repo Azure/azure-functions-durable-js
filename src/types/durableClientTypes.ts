@@ -20,3 +20,73 @@ export interface StartNewOptions {
      */
     input?: unknown;
 }
+
+/**
+ * Class to hold statistics about this execution of purge history.
+ * The return type of DurableClient.purgeHistory()
+ */
+export declare class PurgeHistoryResult {
+    /**
+     * The number of deleted instances.
+     */
+    readonly instancesDeleted: number;
+
+    /**
+     * @param instancesDeleted The number of deleted instances
+     */
+    constructor(instancesDeleted: number);
+}
+
+/**
+ * The response returned by DurableClient.readEntityState().
+ */
+export declare class EntityStateResponse<T> {
+    /**
+     * Whether this entity exists or not.
+     */
+    entityExists: boolean;
+    /**
+     * The current state of the entity, if it exists, or default value otherwise.
+     */
+    entityState?: T;
+
+    /**
+     *
+     * @param entityExists Whether this entity exists or not.
+     * @param entityState The current state of the entity, if it exists, or default value otherwise.
+     */
+    constructor(entityExists: boolean, entityState?: T);
+}
+
+/**
+ * Data structure containing instance management HTTP endpoints.
+ */
+export declare class HttpManagementPayload {
+    /**
+     * The ID of the orchestration instance.
+     */
+    readonly id: string;
+    /**
+     * The HTTP GET status query endpoint URL.
+     */
+    readonly statusQueryGetUri: string;
+    /**
+     * The HTTP POST external event sending endpoint URL.
+     */
+    readonly sendEventPostUri: string;
+    /**
+     * The HTTP POST instance termination endpoint URL.
+     */
+    readonly terminatePostUri: string;
+    /**
+     * The HTTP POST instance rewind endpoint URL.
+     */
+    readonly rewindPostUri: string;
+    /**
+     * The HTTP DELETE purge endpoint URL.
+     */
+    readonly purgeHistoryDeleteUri: string;
+
+    /** @hidden */
+    [key: string]: string;
+}

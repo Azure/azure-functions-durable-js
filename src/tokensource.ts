@@ -1,3 +1,5 @@
+import * as types from "./types";
+
 /**
  * Token Source implementation for [Azure Managed Identities](https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/overview).
  *
@@ -15,7 +17,7 @@
  * });
  * ```
  */
-export class ManagedIdentityTokenSource {
+export class ManagedIdentityTokenSource implements types.ManagedIdentityTokenSource {
     /** @hidden */
     public readonly kind: string = "AzureManagedIdentity";
 

@@ -10,9 +10,9 @@ import {
     EntityStateResponse,
     HttpManagementPayload,
     OrchestrationClientInputData,
-    OrchestrationRuntimeStatus,
     PurgeHistoryResult,
 } from "../../src/classes";
+import { OrchestrationRuntimeStatus } from "../../src/types";
 
 chai.use(chaiString);
 const expect = chai.expect;

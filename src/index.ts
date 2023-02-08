@@ -3,7 +3,6 @@ import {
     DurableHttpResponse,
     EntityId,
     EntityStateResponse,
-    OrchestrationRuntimeStatus,
     RetryOptions,
     DummyOrchestrationContext,
 } from "./classes";
@@ -20,7 +19,6 @@ export {
     EntityStateResponse,
     getClient,
     ManagedIdentityTokenSource,
-    OrchestrationRuntimeStatus,
     RetryOptions,
     DummyOrchestrationContext,
     app,

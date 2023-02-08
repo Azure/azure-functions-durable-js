@@ -1,7 +1,9 @@
+import * as types from "./types";
+
 /**
  * Data structure containing instance management HTTP endpoints.
  */
-export class HttpManagementPayload {
+export class HttpManagementPayload implements types.HttpManagementPayload {
     /** @hidden */
     [key: string]: string;
 

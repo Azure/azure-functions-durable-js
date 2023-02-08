@@ -19,11 +19,10 @@ import {
     IHttpRequest,
     IHttpResponse,
     OrchestrationClientInputData,
-    OrchestrationRuntimeStatus,
     PurgeHistoryResult,
     Utils,
 } from "./classes";
-import { StartNewOptions, DurableClientInput } from "./types";
+import { StartNewOptions, DurableClientInput, OrchestrationRuntimeStatus } from "./types";
 import { WebhookUtils } from "./webhookutils";
 
 /** @hidden */

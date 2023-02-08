@@ -1,10 +1,11 @@
 import { Utils } from "./utils";
+import * as types from "./types";
 
 /**
  * Defines retry policies that can be passed as parameters to various
  * operations.
  */
-export class RetryOptions {
+export class RetryOptions implements types.RetryOptions {
     /** Gets or sets the backoff coefficient. */
     public backoffCoefficient: number;
     /** Gets or sets the max retry interval (ms). */

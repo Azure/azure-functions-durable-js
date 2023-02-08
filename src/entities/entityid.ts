@@ -1,11 +1,9 @@
 // tslint:disable:member-access
 
 import { Utils } from "../utils";
+import * as types from "../types";
 
-/**
- * A unique identifier for an entity, consisting of entity class and entity key.
- */
-export class EntityId {
+export class EntityId implements types.EntityId {
     /** @hidden */
     static getEntityIdFromSchedulerId(schedulerId: string): EntityId {
         const pos = schedulerId.indexOf("@", 1);
