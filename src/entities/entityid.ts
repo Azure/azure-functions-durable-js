@@ -17,14 +17,9 @@ export class EntityId implements types.EntityId {
         return `@${entityId.name.toLowerCase()}@${entityId.key}`;
     }
 
-    /**
-     * Create an entity id for an entity.
-     */
     constructor(
         // TODO: consider how to name these fields more accurately without interfering with JSON serialization
-        /** The name of the entity class. */
         public readonly name: string,
-        /** The entity key. Uniquely identifies an entity among all instances of the same class. */
         public readonly key: string
     ) {
         Utils.throwIfEmpty(name, "name");

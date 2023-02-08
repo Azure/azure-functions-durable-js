@@ -12,21 +12,8 @@ import { DurableEntityContext } from "./durableentitycontext";
 import { EntityContext, OrchestrationContext } from "./types";
 import * as types from "./types";
 
-/**
- * An orchestration context with dummy default values to facilitate mocking/stubbing the
- * Durable Functions API.
- */
 export class DummyOrchestrationContext extends InvocationContext
     implements OrchestrationContext, types.DummyOrchestrationContext {
-    /**
-     * Creates a new instance of a dummy orchestration context.
-     * All parameters are optional but are exposed to enable flexibility
-     * in the testing process.
-     *
-     * @param functionName The name of the orchestration function
-     * @param invocationId The ID of this particular invocation of the orchestration
-     * @param logHandler A handler to emit logs coming from the orchestration function
-     */
     constructor(
         functionName = "dummyContextFunctionName",
         invocationId: string = uuidv1(),
@@ -96,15 +83,6 @@ export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
 
 export class DummyEntityContext<T> extends InvocationContext
     implements EntityContext<T>, types.DummyEntityContext<T> {
-    /**
-     * Creates a new instance of a dummy entity context.
-     * All parameters are optional but are exposed to enable flexibility
-     * in the testing process.
-     *
-     * @param functionName The name of the entity function
-     * @param invocationId The ID of this particular invocation of the entity function
-     * @param logHandler A handler to emit logs coming from the entity function
-     */
     constructor(
         functionName = "dummyContextFunctionName",
         invocationId: string = uuidv1(),
