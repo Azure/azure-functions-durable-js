@@ -20,6 +20,9 @@ export declare class DurableClient {
      */
     readonly taskHubName: string;
 
+    /** @hidden */
+    public readonly uniqueWebhookOrigins: string[];
+
     /**
      * Creates an HTTP response that is useful for checking the status of the
      * specified instance.
