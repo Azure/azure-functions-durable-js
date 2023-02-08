@@ -1,4 +1,4 @@
-import { OrchestrationRuntimeStatus } from "./types";
+import { OrchestrationRuntimeStatus } from "./classes";
 import * as types from "./types";
 
 export class DurableOrchestrationStatus implements types.DurableOrchestrationStatus {

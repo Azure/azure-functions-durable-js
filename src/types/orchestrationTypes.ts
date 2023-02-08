@@ -156,7 +156,7 @@ export declare class DurableOrchestrationStatus {
 /**
  * The status of an orchestration instance.
  */
-export enum OrchestrationRuntimeStatus {
+export declare enum OrchestrationRuntimeStatus {
     /**
      * The orchestration instance has started running.
      */

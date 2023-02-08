@@ -15,9 +15,9 @@ import {
     EntityId,
     EntityStateResponse,
     HttpManagementPayload,
+    OrchestrationRuntimeStatus,
     PurgeHistoryResult,
 } from "../../src/classes";
-import { OrchestrationRuntimeStatus } from "../../src/types";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 

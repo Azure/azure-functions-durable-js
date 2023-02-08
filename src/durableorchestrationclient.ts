@@ -21,8 +21,9 @@ import {
     OrchestrationClientInputData,
     PurgeHistoryResult,
     Utils,
+    OrchestrationRuntimeStatus,
 } from "./classes";
-import { StartNewOptions, DurableClientInput, OrchestrationRuntimeStatus } from "./types";
+import { StartNewOptions, DurableClientInput } from "./types";
 import { WebhookUtils } from "./webhookutils";
 
 /** @hidden */
