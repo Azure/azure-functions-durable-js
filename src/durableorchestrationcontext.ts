@@ -203,9 +203,6 @@ export class DurableOrchestrationContext {
      * function.
      * @returns A Durable Task that completes when the called activity
      * function completes or fails.
-     *
-     * @deprecated this version of `callActivity()` is deprecated. Pass an object
-     * returned from `df.app.activity()` as the first argument instead.
      */
     public callActivity(name: string, input?: unknown): Task;
 
@@ -235,9 +232,6 @@ export class DurableOrchestrationContext {
      * @param retryOptions The retry options for the activity function.
      * @param input The JSON-serializable input to pass to the activity
      * function.
-     *
-     *  @deprecated this version of `callActivity()` is deprecated. Pass an object
-     * returned from `df.app.activity()` as the first argument instead.
      */
     public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task;
 
@@ -303,9 +297,6 @@ export class DurableOrchestrationContext {
      * @param instanceId A unique ID to use for the sub-orchestration instance.
      * If `instanceId` is not specified, the extension will generate an id in
      * the format `<calling orchestrator instance ID>:<#>`
-     *
-     * @deprecated this version of `callSubOrchestrator()` is deprecated. Pass an object
-     * returned from `df.app.orchestration()` as the first argument instead.
      */
     public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task;
 
@@ -351,9 +342,6 @@ export class DurableOrchestrationContext {
      * @param input The JSON-serializable input to pass to the orchestrator
      * function.
      * @param instanceId A unique ID to use for the sub-orchestration instance.
-     *
-     * @deprecated this version of `callSubOrchestratorWithRetry()` is deprecated. Pass an object
-     * returned from `df.app.orchestration()` as the first argument instead.
      */
     public callSubOrchestratorWithRetry(
         name: string,
