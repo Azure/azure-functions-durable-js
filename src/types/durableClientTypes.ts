@@ -65,7 +65,4 @@ export declare class HttpManagementPayload {
      * The HTTP DELETE purge endpoint URL.
      */
     readonly purgeHistoryDeleteUri: string;
-
-    /** @hidden */
-    [key: string]: string;
 }

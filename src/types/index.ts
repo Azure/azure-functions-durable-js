@@ -32,9 +32,6 @@ export declare class ManagedIdentityTokenSource {
      * For example, `https://management.core.windows.net/` or `https://graph.microsoft.com/`.
      */
     readonly resource: string;
-
-    /** @hidden */
-    kind: string;
 }
 
 // Over time we will likely add more implementations
@@ -53,7 +50,7 @@ export declare class RetryOptions {
      */
     constructor(firstRetryIntervalInMilliseconds: number, maxNumberOfAttempts: number);
     /**
-     * The retry backoff coefficinet
+     * The retry backoff coefficient
      */
     backoffCoefficient: number;
     /**
