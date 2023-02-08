@@ -67,27 +67,12 @@ export interface CallHttpOptions {
 }
 
 /**
- * Options object passed to `context.df.callActivity()`
- * or `context.df.callActivityWithRetry()`
+ * The return value of `df.app.orchestration()`
  *
- * Normally, you should not be creating this object yourself. This is given to you
- * as the return value of registering your activity using `df.app.activity()`.
- */
-export interface CallActivityInput {
-    /**
-     * The name of the Activty function to call
-     */
-    name: string;
-}
-
-/**
- * Options object passed to `context.df.callSubOrchestrator()`
+ * This object can be passed to `context.df.callSubOrchestrator()`
  * or `context.df.callSubOrchestratorWithRetry()`.
- *
- * Normally, you should not be creating this object yourself. This is given to you
- * as the return value of registering your orchestration using `df.app.orchestration()`.
  */
-export interface CallSubOrchestratorInput {
+export interface Orchestration {
     /**
      * The name of the SubOrchestrator to call
      */

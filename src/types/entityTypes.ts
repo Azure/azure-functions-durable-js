@@ -25,7 +25,7 @@ export interface EntityContext<T> extends InvocationContext {
 /**
  * The return value of a call to `df.app.entity()`
  */
-export interface RegisterEntityResult {
+export interface Entity {
     /**
      * Returns a new `EntityId` instance with the specified key. Can be passed to entity operation APIs.
      *

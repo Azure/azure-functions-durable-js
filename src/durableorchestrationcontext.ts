@@ -30,13 +30,7 @@ import {
 } from "./task";
 import moment = require("moment");
 import { ReplaySchema } from "./replaySchema";
-import {
-    CallActivityInput,
-    CallHttpOptions,
-    CallSubOrchestratorInput,
-    Task,
-    TimerTask,
-} from "./types";
+import { Activity, CallHttpOptions, Orchestration, Task, TimerTask } from "./types";
 import { SignalEntityAction } from "./actions/signalentityaction";
 
 /**
@@ -224,9 +218,9 @@ export class DurableOrchestrationContext {
      * @returns A Durable Task that completes when the called activity
      * function completes or fails.
      */
-    public callActivity(activity: CallActivityInput, input?: unknown): Task;
+    public callActivity(activity: Activity, input?: unknown): Task;
 
-    public callActivity(nameOrOptions: string | CallActivityInput, input?: unknown): Task {
+    public callActivity(nameOrOptions: string | Activity, input?: unknown): Task {
         const name = typeof nameOrOptions === "string" ? nameOrOptions : nameOrOptions.name;
         const newAction = new CallActivityAction(name, input);
         const task = new AtomicTask(false, newAction);
@@ -256,13 +250,13 @@ export class DurableOrchestrationContext {
      * function.
      */
     public callActivityWithRetry(
-        activity: CallActivityInput,
+        activity: Activity,
         retryOptions: RetryOptions,
         input?: unknown
     ): Task;
 
     public callActivityWithRetry(
-        nameOrOptions: string | CallActivityInput,
+        nameOrOptions: string | Activity,
         retryOptions: RetryOptions,
         input?: unknown
     ): Task {
@@ -326,13 +320,13 @@ export class DurableOrchestrationContext {
      * the format `<calling orchestrator instance ID>:<#>`
      */
     public callSubOrchestrator(
-        orchestration: CallSubOrchestratorInput,
+        orchestration: Orchestration,
         input?: unknown,
         instanceId?: string
     ): Task;
 
     public callSubOrchestrator(
-        nameOrOptions: string | CallSubOrchestratorInput,
+        nameOrOptions: string | Orchestration,
         input?: unknown,
         instanceId?: string
     ): Task {
@@ -378,7 +372,7 @@ export class DurableOrchestrationContext {
      * @param instanceId A unique ID to use for the sub-orchestration instance.
      */
     public callSubOrchestratorWithRetry(
-        orchestration: CallSubOrchestratorInput,
+        orchestration: Orchestration,
         retryOptions: RetryOptions,
         input?: unknown,
         instanceId?: string
@@ -395,7 +389,7 @@ export class DurableOrchestrationContext {
      * @param instanceId A unique ID to use for the sub-orchestration instance.
      */
     public callSubOrchestratorWithRetry(
-        nameOrOptions: string | CallSubOrchestratorInput,
+        nameOrOptions: string | Orchestration,
         retryOptions: RetryOptions,
         input?: unknown,
         instanceId?: string

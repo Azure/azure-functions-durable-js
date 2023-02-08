@@ -17,3 +17,17 @@ export interface ActivityOptions extends Partial<FunctionOptions> {
 export interface ActivityTrigger extends FunctionTrigger {
     type: "activityTrigger";
 }
+
+/**
+ * The result of `df.app.activity()`
+ *
+ * This can be passed to `context.df.callActivity()`
+ * or `context.df.callActivityWithRetry()` in orchestrations.
+ *
+ */
+export interface Activity {
+    /**
+     * The name of the Activty function to call
+     */
+    name: string;
+}
