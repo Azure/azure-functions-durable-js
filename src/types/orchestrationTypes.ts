@@ -1,6 +1,8 @@
 import { FunctionOptions, FunctionTrigger, InvocationContext, LogHandler } from "@azure/functions";
 import { Task, TimerTask, TokenSource } from ".";
-import { EntityId, RetryOptions } from "../classes";
+import { EntityId, HistoryEvent, RetryOptions } from "../classes";
+import { ReplaySchema } from "../replaySchema";
+import { TaskOrchestrationExecutor } from "../taskorchestrationexecutor";
 
 /**
  * Type of a Generator that can be registered as an orchestration
@@ -90,6 +92,20 @@ export interface CallHttpOptions {
  * Provides functionality for application code implementing an orchestration operation.
  */
 export declare class DurableOrchestrationContext {
+    constructor(
+        state: HistoryEvent[],
+        instanceId: string,
+        currentUtcDateTime: Date,
+        isReplaying: boolean,
+        parentInstanceId: string | undefined,
+        longRunningTimerIntervalDuration: string | undefined,
+        maximumShortTimerDuration: string | undefined,
+        defaultHttpAsyncRequestSleepTimeMillseconds: number | undefined,
+        schemaVersion: ReplaySchema,
+        input: unknown,
+        taskOrchestratorExecutor: TaskOrchestrationExecutor
+    );
+
     /**
      * The ID of the current orchestration instance.
      *
