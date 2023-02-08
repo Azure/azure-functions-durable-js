@@ -89,7 +89,7 @@ export interface CallHttpOptions {
 /**
  * Provides functionality for application code implementing an orchestration operation.
  */
-export interface DurableOrchestrationContext {
+export declare class DurableOrchestrationContext {
     /**
      * The ID of the current orchestration instance.
      *
@@ -190,6 +190,16 @@ export interface DurableOrchestrationContext {
      * @param operationInput The input for the operation.
      */
     callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task;
+
+    /**
+     * Send a signal operation to a Durable Entity, passing an argument, without
+     * waiting for a response. A fire-and-forget operation.
+     *
+     * @param entityId ID of the target entity.
+     * @param operationName The name of the operation.
+     * @param operationInput (optional) input for the operation.
+     */
+    signalEntity(entityId: EntityId, operationName: string, operationInput?: unknown): void;
 
     /**
      * Schedules an orchestration function named `name` for execution.

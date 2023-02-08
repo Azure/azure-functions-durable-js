@@ -30,19 +30,15 @@ import {
 } from "./task";
 import moment = require("moment");
 import { ReplaySchema } from "./replaySchema";
-import {
-    CallHttpOptions,
-    Task,
-    TimerTask,
-    DurableOrchestrationContext as DurableOrchestrationContextInterface,
-} from "./types";
+import { CallHttpOptions, Task, TimerTask } from "./types";
+import * as types from "./types";
 import { SignalEntityAction } from "./actions/signalentityaction";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
  * function-based activities.
  */
-export class DurableOrchestrationContext implements DurableOrchestrationContextInterface {
+export class DurableOrchestrationContext implements types.DurableOrchestrationContext {
     constructor(
         state: HistoryEvent[],
         instanceId: string,
@@ -175,30 +171,11 @@ export class DurableOrchestrationContext implements DurableOrchestrationContextI
         const task = new AtomicTask(false, newAction);
         return task;
     }
-
-    /**
-     * Send a signal operation to a Durable Entity, passing an argument, without
-     * waiting for a response. A fire-and-forget operation.
-     *
-     * @param entityId ID of the target entity.
-     * @param operationName The name of the operation.
-     * @param operationInput (optional) input for the operation.
-     */
     public signalEntity(entityId: EntityId, operationName: string, operationInput?: unknown): void {
         const action = new SignalEntityAction(entityId, operationName, operationInput);
         this.taskOrchestratorExecutor.recordFireAndForgetAction(action);
     }
 
-    /**
-     * Schedules an orchestration function named `name` for execution.
-     *
-     * @param name The name of the orchestrator function to call.
-     * @param input The JSON-serializable input to pass to the orchestrator
-     * function.
-     * @param instanceId A unique ID to use for the sub-orchestration instance.
-     * If `instanceId` is not specified, the extension will generate an id in
-     * the format `<calling orchestrator instance ID>:<#>`
-     */
     public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
         if (!name) {
             throw new Error(
