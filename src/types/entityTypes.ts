@@ -27,13 +27,13 @@ export interface EntityContext<T> extends InvocationContext {
  */
 export declare class DummyEntityContext<T> extends InvocationContext implements EntityContext<T> {
     /**
-     * Creates a new instance of a dummy orchestration context.
+     * Creates a new instance of a dummy entity context.
      * All parameters are optional but are exposed to enable flexibility
      * in the testing process.
      *
-     * @param functionName The name of the orchestration function
-     * @param invocationId The ID of this particular invocation of the orchestration
-     * @param logHandler A handler to emit logs coming from the orchestration function
+     * @param functionName The name of the entity function
+     * @param invocationId The ID of this particular invocation of the entity function
+     * @param logHandler A handler to emit logs coming from the entity function
      */
     constructor(functionName?: string, invocationId?: string, logHandler?: LogHandler);
 
