@@ -13,10 +13,11 @@
     ],
     "files": [
         "lib/src",
+        "types/",
         "_manifest"
     ],
     "main": "lib/src/index.js",
-    "typings": "lib/src/index.d.ts",
+    "types": "types/index.d.ts",
     "engines": {
         "node": ">=18.0"
     },

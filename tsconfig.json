@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "strictNullChecks": true,
-        "declaration": true,
+        "declaration": false,
         "module": "commonjs",
         "moduleResolution": "node",
         "noImplicitAny": true,
@@ -12,8 +12,12 @@
         "sourceMap": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "strictBindCallApply": true
+        "strictBindCallApply": true,
+        "baseUrl": "./",
+        "paths": {
+            "durable-functions": ["types"]
+        }
     },
-    "include": ["src/**/*", "test/**/*"],
+    "include": ["src/**/*", "test/**/*", "types/*"],
     "exclude": ["node_modules", "test/test-app"]
 }
