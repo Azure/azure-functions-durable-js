@@ -9,7 +9,7 @@ import {
     Utils,
 } from "./classes";
 import { DurableEntityBindingInfoReqFields } from "./durableentitybindinginfo";
-import { DurableEntityContext, EntityContext } from "./types";
+import { DurableEntityContext, EntityContext } from "durable-functions";
 
 /** @hidden */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

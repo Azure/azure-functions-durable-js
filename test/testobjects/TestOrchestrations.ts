@@ -1,5 +1,5 @@
 import * as df from "../../src";
-import { OrchestrationContext } from "../../src";
+import { OrchestrationContext } from "durable-functions";
 import { createOrchestrator } from "../../src/shim";
 
 export class TestOrchestrations {

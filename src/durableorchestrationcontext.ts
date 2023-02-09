@@ -30,8 +30,8 @@ import {
 } from "./task";
 import moment = require("moment");
 import { ReplaySchema } from "./replaySchema";
-import { CallHttpOptions, Task, TimerTask } from "./types";
-import * as types from "./types";
+import { CallHttpOptions, Task, TimerTask } from "durable-functions";
+import * as types from "durable-functions";
 import { SignalEntityAction } from "./actions/signalentityaction";
 
 /**

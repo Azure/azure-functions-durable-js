@@ -3,7 +3,7 @@ import { IAction, CreateTimerAction, CallHttpAction } from "./classes";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import moment = require("moment");
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
-import { Task, TimerTask } from "./types";
+import { Task, TimerTask } from "durable-functions";
 
 /**
  * @hidden

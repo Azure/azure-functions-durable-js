@@ -4,7 +4,7 @@ import chai = require("chai");
 import chaiAsPromised = require("chai-as-promised");
 import "mocha";
 import "process";
-import { DurableClientInput, getClient, input } from "../../src";
+import { DurableClientInput } from "durable-functions";
 import {
     Constants,
     DurableOrchestrationClient,
@@ -12,6 +12,7 @@ import {
 } from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
+import { getClient, input } from "../../src";
 
 chai.use(chaiAsPromised);
 
