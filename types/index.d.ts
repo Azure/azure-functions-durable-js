@@ -1,8 +1,23 @@
+import { InvocationContext } from "@azure/functions";
+import { DurableClient } from "./durableClientTypes";
+
 export * from "./activityTypes";
 export * from "./durableClientTypes";
 export * from "./entityTypes";
 export * from "./orchestrationTypes";
 export * from "./taskTypes";
+
+export * as app from "./app";
+export * as trigger from "./trigger";
+export * as input from "./input";
+
+/**
+ * Returns an OrchestrationClient instance.
+ * @param context The context object of the Azure function whose body
+ *  calls this method.
+ *
+ */
+export function getClient(context: InvocationContext): DurableClient;
 
 /**
  * Token Source implementation for [Azure Managed Identities](https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/overview).
