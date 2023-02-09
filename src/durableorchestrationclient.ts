@@ -27,12 +27,6 @@ import { WebhookUtils } from "./webhookutils";
 /** @hidden */
 const URL = url.URL;
 
-/**
- * Returns an OrchestrationClient instance.
- * @param context The context object of the Azure function whose body
- *  calls this method.
- *
- */
 export function getClient(context: InvocationContext): DurableClient {
     const foundInput: FunctionInput | undefined = context.options.extraInputs.find(
         isDurableClientInput
