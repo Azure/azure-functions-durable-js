@@ -72,7 +72,7 @@ export interface CallHttpOptions {
  * This object can be passed to `context.df.callSubOrchestrator()`
  * or `context.df.callSubOrchestratorWithRetry()`.
  */
-export interface Orchestration {
+export interface RegisteredOrchestration {
     /**
      * The name of the SubOrchestrator to call
      */

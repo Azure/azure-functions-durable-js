@@ -25,7 +25,7 @@ export interface ActivityTrigger extends FunctionTrigger {
  * or `context.df.callActivityWithRetry()` in orchestrations.
  *
  */
-export interface Activity {
+export interface RegisteredActivity {
     /**
      * The name of the Activty function to call
      */
