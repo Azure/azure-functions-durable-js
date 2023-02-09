@@ -1,5 +1,5 @@
 import { OrchestrationRuntimeStatus } from "./classes";
-import * as types from "./types";
+import * as types from "durable-functions";
 
 export class DurableOrchestrationStatus implements types.DurableOrchestrationStatus {
     /** @hidden */

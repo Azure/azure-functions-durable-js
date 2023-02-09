@@ -1,4 +1,4 @@
-import { TokenSource } from "./types";
+import { TokenSource } from "durable-functions";
 
 /**
  * Data structure representing a durable HTTP request.

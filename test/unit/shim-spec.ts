@@ -1,15 +1,13 @@
 import { app as AzFuncApp, FunctionInput } from "@azure/functions";
 import { expect } from "chai";
 import sinon = require("sinon");
+import { app, input, trigger } from "../../src";
 import {
     ActivityHandler,
-    app,
     EntityContext,
     EntityHandler,
-    input,
     OrchestrationHandler,
-    trigger,
-} from "../../src";
+} from "durable-functions";
 
 describe("APIs to register functions", () => {
     const appStub = sinon.stub(AzFuncApp, "generic");

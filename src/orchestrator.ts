@@ -9,7 +9,7 @@ import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import { LatestReplaySchema, ReplaySchema } from "./replaySchema";
 import { DurableOrchestrationBindingInfoReqFields } from "./durableorchestrationbindinginfo";
-import { OrchestrationContext } from "./types";
+import { OrchestrationContext } from "durable-functions";
 
 /** @hidden */
 export class Orchestrator {

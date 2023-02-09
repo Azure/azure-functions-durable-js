@@ -1,4 +1,4 @@
-import * as types from "./types";
+import * as types from "durable-functions";
 
 export class HttpManagementPayload implements types.HttpManagementPayload {
     /** @hidden */

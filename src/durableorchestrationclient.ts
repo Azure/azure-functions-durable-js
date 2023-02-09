@@ -21,7 +21,7 @@ import {
     PurgeHistoryResult,
     Utils,
 } from "./classes";
-import { StartNewOptions, DurableClientInput, DurableClient } from "./types";
+import { StartNewOptions, DurableClientInput, DurableClient } from "durable-functions";
 import { WebhookUtils } from "./webhookutils";
 
 /** @hidden */
