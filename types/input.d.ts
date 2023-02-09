@@ -1,4 +1,4 @@
-import { DurableClientInput } from "./durableClientTypes";
+import { DurableClientInput } from "./durableClient";
 
 /**
  * @returns a durable client input configuration object

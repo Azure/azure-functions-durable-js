@@ -1,6 +1,6 @@
 import { FunctionOptions, FunctionTrigger, InvocationContext, LogHandler } from "@azure/functions";
 import { RetryOptions, Task, TimerTask, TokenSource } from ".";
-import { EntityId } from "./entityTypes";
+import { EntityId } from "./entity";
 
 /**
  * Type of a Generator that can be registered as an orchestration

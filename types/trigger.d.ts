@@ -1,6 +1,6 @@
-import { ActivityTrigger } from "./activityTypes";
-import { EntityTrigger } from "./entityTypes";
-import { OrchestrationTrigger } from "./orchestrationTypes";
+import { ActivityTrigger } from "./activity";
+import { EntityTrigger } from "./entity";
+import { OrchestrationTrigger } from "./orchestration";
 
 /**
  * @returns a durable activity trigger

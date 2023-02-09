@@ -1,6 +1,6 @@
 import { FunctionInput, HttpRequest, HttpResponse } from "@azure/functions";
-import { EntityId, EntityStateResponse } from "./entityTypes";
-import { DurableOrchestrationStatus, OrchestrationRuntimeStatus } from "./orchestrationTypes";
+import { EntityId, EntityStateResponse } from "./entity";
+import { DurableOrchestrationStatus, OrchestrationRuntimeStatus } from "./orchestration";
 
 export interface DurableClientInput extends FunctionInput {
     type: "durableClient";

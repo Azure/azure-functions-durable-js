@@ -1,6 +1,6 @@
-import { ActivityOptions } from "./activityTypes";
-import { EntityHandler, EntityOptions } from "./entityTypes";
-import { OrchestrationHandler, OrchestrationOptions } from "./orchestrationTypes";
+import { ActivityOptions } from "./activity";
+import { EntityHandler, EntityOptions } from "./entity";
+import { OrchestrationHandler, OrchestrationOptions } from "./orchestration";
 
 /**
  * Registers a generator function as a Durable Orchestrator for your Function App.

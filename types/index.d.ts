@@ -1,11 +1,11 @@
 import { InvocationContext } from "@azure/functions";
-import { DurableClient } from "./durableClientTypes";
+import { DurableClient } from "./durableClient";
 
-export * from "./activityTypes";
-export * from "./durableClientTypes";
-export * from "./entityTypes";
-export * from "./orchestrationTypes";
-export * from "./taskTypes";
+export * from "./activity";
+export * from "./durableClient";
+export * from "./entity";
+export * from "./orchestration";
+export * from "./task";
 
 export * as app from "./app";
 export * as trigger from "./trigger";
