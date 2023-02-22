@@ -255,17 +255,6 @@ export interface GetStatusOptions {
 }
 
 /**
- * Interface to hold statistics about this execution of purge history.
- * The return type of DurableClient.purgeHistory()
- */
-export interface PurgeHistoryResult {
-    /**
-     * The number of deleted instances.
-     */
-    readonly instancesDeleted: number;
-}
-
-/**
  * Options object passed to DurableClient.raiseEvent()
  */
 export interface RaiseEventOptions extends TaskHubOptions {
