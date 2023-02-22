@@ -166,13 +166,9 @@ export declare class DurableOrchestrationContext {
      * Schedules an orchestration function named `name` for execution.
      *
      * @param name The name of the orchestrator function to call.
-     * @param input The JSON-serializable input to pass to the orchestrator
-     * function.
-     * @param instanceId A unique ID to use for the sub-orchestration instance.
-     * If `instanceId` is not specified, the extension will generate an id in
-     * the format `<calling orchestrator instance ID>:<#>`
+     * @param options optional object to control the scheduled orchestrator (e.g provide input, instanceID)
      */
-    callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task;
+    callSubOrchestrator(name: string, options?: CallSubOrchestratorOptions): Task;
 
     /**
      * Schedules an orchestrator function named `name` for execution with retry
@@ -180,15 +176,12 @@ export declare class DurableOrchestrationContext {
      *
      * @param name The name of the orchestrator function to call.
      * @param retryOptions The retry options for the orchestrator function.
-     * @param input The JSON-serializable input to pass to the orchestrator
-     * function.
-     * @param instanceId A unique ID to use for the sub-orchestration instance.
+     * @param options optional object to control the scheduled orchestrator (e.g provide input, instanceID)
      */
     callSubOrchestratorWithRetry(
         name: string,
         retryOptions: RetryOptions,
-        input?: unknown,
-        instanceId?: string
+        options?: CallSubOrchestratorOptions
     ): Task;
 
     /**
