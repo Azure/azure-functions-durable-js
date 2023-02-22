@@ -1,5 +1,5 @@
 import * as df from "../../src";
-import { OrchestrationContext } from "durable-functions";
+import { OrchestrationContext, OrchestrationHandler } from "durable-functions";
 import { createOrchestrator } from "../../src/shim";
 
 export class TestOrchestrations {
@@ -267,18 +267,23 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SayHelloWithSubOrchestrator: any = createOrchestrator(function* (context: any) {
+    public static SayHelloWithSubOrchestrator = createOrchestrator(function* (
+        context: OrchestrationContext
+    ) {
         const input = context.df.getInput();
         const childId = context.df.instanceId + ":0";
-        const output = yield context.df.callSubOrchestrator("SayHelloWithActivity", input, childId);
+        const output = yield context.df.callSubOrchestrator("SayHelloWithActivity", {
+            input,
+            instanceId: childId,
+        });
         return output;
     });
 
-    public static SayHelloWithSubOrchestratorNoSubId: any = createOrchestrator(function* (
-        context: any
+    public static SayHelloWithSubOrchestratorNoSubId = createOrchestrator(function* (
+        context: OrchestrationContext
     ) {
         const input = context.df.getInput();
-        const output = yield context.df.callSubOrchestrator("SayHelloWithActivity", input);
+        const output = yield context.df.callSubOrchestrator("SayHelloWithActivity", { input });
         return output;
     });
 
@@ -288,10 +293,18 @@ export class TestOrchestrations {
         const input = context.df.getInput();
         const subOrchName1 = "SayHelloWithActivity";
         const subOrchName2 = "SayHelloInline";
-        const output = context.df.callSubOrchestrator(subOrchName1, `${input}_${subOrchName1}_0`);
-        const output2 = context.df.callSubOrchestrator(subOrchName2, `${input}_${subOrchName2}_1`);
-        const output3 = context.df.callSubOrchestrator(subOrchName1, `${input}_${subOrchName1}_2`);
-        const output4 = context.df.callSubOrchestrator(subOrchName2, `${input}_${subOrchName2}_3`);
+        const output = context.df.callSubOrchestrator(subOrchName1, {
+            input: `${input}_${subOrchName1}_0`,
+        });
+        const output2 = context.df.callSubOrchestrator(subOrchName2, {
+            input: `${input}_${subOrchName2}_1`,
+        });
+        const output3 = context.df.callSubOrchestrator(subOrchName1, {
+            input: `${input}_${subOrchName1}_2`,
+        });
+        const output4 = context.df.callSubOrchestrator(subOrchName2, {
+            input: `${input}_${subOrchName2}_3`,
+        });
         return yield context.df.Task.all([output, output2, output3, output4]);
     });
 
@@ -304,8 +317,7 @@ export class TestOrchestrations {
         const output = yield context.df.callSubOrchestratorWithRetry(
             "SayHelloInline",
             retryOptions,
-            input,
-            childId
+            { input, instanceId: childId }
         );
         return output;
     });
@@ -316,10 +328,14 @@ export class TestOrchestrations {
         const retryOptions = new df.RetryOptions(100, 5);
         const output = [];
         output.push(
-            context.df.callSubOrchestratorWithRetry("SayHelloInline", retryOptions, "Tokyo")
+            context.df.callSubOrchestratorWithRetry("SayHelloInline", retryOptions, {
+                input: "Tokyo",
+            })
         );
         output.push(
-            context.df.callSubOrchestratorWithRetry("SayHelloInline", retryOptions, "Seattle")
+            context.df.callSubOrchestratorWithRetry("SayHelloInline", retryOptions, {
+                input: "Seattle",
+            })
         );
         return yield context.df.Task.all(output);
     });
@@ -328,12 +344,10 @@ export class TestOrchestrations {
         context: any
     ) {
         const childId = context.df.instanceId + ":0";
-        const output = yield context.df.callSubOrchestratorWithRetry(
-            "SayHelloInline",
-            undefined,
-            "World",
-            childId
-        );
+        const output = yield context.df.callSubOrchestratorWithRetry("SayHelloInline", undefined, {
+            input: "World",
+            instanceId: childId,
+        });
         return output;
     });
 

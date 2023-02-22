@@ -192,7 +192,9 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202, expectedStatus);
 
-            const result = await client.getStatus(defaultInstanceId, true);
+            const result = await client.getStatus(defaultInstanceId, {
+                showHistory: true,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
         });
@@ -223,7 +225,10 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202, expectedStatus);
 
-            const result = await client.getStatus(defaultInstanceId, false, true);
+            const result = await client.getStatus(defaultInstanceId, {
+                showHistory: false,
+                showHistoryOutput: true,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
         });
@@ -254,7 +259,11 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202, expectedStatus);
 
-            const result = await client.getStatus(defaultInstanceId, false, false, false);
+            const result = await client.getStatus(defaultInstanceId, {
+                showHistory: false,
+                showHistoryOutput: false,
+                showInput: false,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
         });
@@ -352,11 +361,11 @@ describe("Orchestration Client", () => {
                 )
                 .reply(200, expectedStatuses);
 
-            const result = await client.getStatusBy(
+            const result = await client.getStatusBy({
                 createdTimeFrom,
                 createdTimeTo,
-                runtimeStatuses
-            );
+                runtimeStatus: runtimeStatuses,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatuses));
         });
@@ -383,7 +392,7 @@ describe("Orchestration Client", () => {
                 )
                 .reply(200, expectedStatuses);
 
-            const result = await client.getStatusBy(undefined, undefined, runtimeStatuses);
+            const result = await client.getStatusBy({ runtimeStatus: runtimeStatuses });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.deep.equal(expectedStatuses);
         });
@@ -480,11 +489,11 @@ describe("Orchestration Client", () => {
                 })
                 .reply(200, expectedResult);
 
-            const result = await client.purgeInstanceHistoryBy(
+            const result = await client.purgeInstanceHistoryBy({
                 createdTimeFrom,
                 createdTimeTo,
-                runtimeStatuses
-            );
+                runtimeStatus: runtimeStatuses,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.deep.equal(expectedResult);
         });
@@ -514,11 +523,10 @@ describe("Orchestration Client", () => {
                 })
                 .reply(404);
 
-            const result = await client.purgeInstanceHistoryBy(
+            const result = await client.purgeInstanceHistoryBy({
                 createdTimeFrom,
-                undefined,
-                runtimeStatuses
-            );
+                runtimeStatus: runtimeStatuses,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.deep.equal(expectedResult);
         });
@@ -552,11 +560,11 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.raiseEvent(
-                defaultInstanceId,
-                defaultTestEvent,
-                defaultTestData
-            );
+            const result = await client.raiseEvent({
+                instanceId: defaultInstanceId,
+                eventName: defaultTestEvent,
+                eventData: defaultTestData,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -578,12 +586,12 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.raiseEvent(
-                defaultInstanceId,
-                defaultTestEvent,
-                defaultTestData,
-                testTaskHub
-            );
+            const result = await client.raiseEvent({
+                instanceId: defaultInstanceId,
+                eventName: defaultTestEvent,
+                eventData: defaultTestData,
+                taskHubName: testTaskHub,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -605,13 +613,12 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.raiseEvent(
-                defaultInstanceId,
-                defaultTestEvent,
-                defaultTestData,
-                undefined,
-                testConnection
-            );
+            const result = await client.raiseEvent({
+                instanceId: defaultInstanceId,
+                eventName: defaultTestEvent,
+                eventData: defaultTestData,
+                connectionName: testConnection,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -633,7 +640,11 @@ describe("Orchestration Client", () => {
                 .reply(404, undefined);
 
             await expect(
-                client.raiseEvent(id, defaultTestEvent, defaultTestData)
+                client.raiseEvent({
+                    instanceId: id,
+                    eventName: defaultTestEvent,
+                    eventData: defaultTestData,
+                })
             ).to.be.rejectedWith(`No instance with ID '${id}' found.`);
             expect(scope.isDone()).to.be.equal(true);
         });
@@ -705,11 +716,10 @@ describe("Orchestration Client", () => {
                 )
                 .reply(200, expectedEntityStateResponse);
 
-            const result = await client.readEntityState<TestEntityState>(
-                defaultEntityId,
-                testTaskHub,
-                testConn
-            );
+            const result = await client.readEntityState<TestEntityState>(defaultEntityId, {
+                taskHubName: testTaskHub,
+                connectionName: testConn,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.deep.equal(expectedStateResponse);
         });
@@ -864,11 +874,10 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.signalEntity(
-                defaultEntityId,
-                defaultEntityOp,
-                testSignalData
-            );
+            const result = await client.signalEntity(defaultEntityId, {
+                operationName: defaultEntityOp,
+                operationContent: testSignalData,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -891,13 +900,12 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.signalEntity(
-                defaultEntityId,
-                defaultEntityOp,
-                testSignalData,
-                testTaskHub,
-                testConn
-            );
+            const result = await client.signalEntity(defaultEntityId, {
+                operationName: defaultEntityOp,
+                operationContent: testSignalData,
+                taskHubName: testTaskHub,
+                connectionName: testConn,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -918,7 +926,9 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.signalEntity(defaultEntityId, undefined, testSignalData);
+            const result = await client.signalEntity(defaultEntityId, {
+                operationContent: testSignalData,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -1107,8 +1117,10 @@ describe("Orchestration Client", () => {
                 client.waitForCompletionOrCreateCheckStatusResponse(
                     defaultRequest,
                     defaultInstanceId,
-                    defaultTimeout,
-                    badInterval
+                    {
+                        timeoutInMilliseconds: defaultTimeout,
+                        retryIntervalInMilliseconds: badInterval,
+                    }
                 )
             ).to.be.rejectedWith(
                 `Total timeout ${defaultTimeout} (ms) should be bigger than retry timeout ${badInterval} (ms)`
@@ -1137,8 +1149,10 @@ describe("Orchestration Client", () => {
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
-                defaultTimeout,
-                defaultInterval
+                {
+                    timeoutInMilliseconds: defaultTimeout,
+                    retryIntervalInMilliseconds: defaultInterval,
+                }
             );
 
             const body = await res.json();
@@ -1167,8 +1181,10 @@ describe("Orchestration Client", () => {
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
-                defaultTimeout,
-                defaultInterval
+                {
+                    timeoutInMilliseconds: defaultTimeout,
+                    retryIntervalInMilliseconds: defaultInterval,
+                }
             );
 
             const body = await res.json();
@@ -1197,8 +1213,10 @@ describe("Orchestration Client", () => {
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
-                defaultTimeout,
-                defaultInterval
+                {
+                    timeoutInMilliseconds: defaultTimeout,
+                    retryIntervalInMilliseconds: defaultInterval,
+                }
             );
 
             const body = await res.json();
@@ -1227,8 +1245,10 @@ describe("Orchestration Client", () => {
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
-                defaultTimeout,
-                defaultInterval
+                {
+                    timeoutInMilliseconds: defaultTimeout,
+                    retryIntervalInMilliseconds: defaultInterval,
+                }
             );
 
             const body = await res.json();
@@ -1282,8 +1302,10 @@ describe("Orchestration Client", () => {
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
-                defaultTimeout,
-                defaultInterval
+                {
+                    timeoutInMilliseconds: defaultTimeout,
+                    retryIntervalInMilliseconds: defaultInterval,
+                }
             );
 
             const body = await res.json();
@@ -1329,8 +1351,10 @@ describe("Orchestration Client", () => {
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
                 defaultInstanceId,
-                defaultTimeout,
-                defaultInterval
+                {
+                    timeoutInMilliseconds: defaultTimeout,
+                    retryIntervalInMilliseconds: defaultInterval,
+                }
             );
             expect(res).to.be.deep.equal(expectedResponse);
 
