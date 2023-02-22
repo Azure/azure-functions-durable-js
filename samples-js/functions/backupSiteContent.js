@@ -16,7 +16,7 @@ df.app.orchestration("backupSiteContent", function* (context) {
     const rootDirAbs = path.resolve(rootDir);
     const files = yield context.df.callActivity(getFileListActivityName, rootDirAbs);
 
-    // Backup Files and save Promises into array
+    // Backup Files and save Tasks into array
     const tasks = [];
     for (const file of files) {
         const input = {
