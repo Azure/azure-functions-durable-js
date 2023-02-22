@@ -318,12 +318,12 @@ export interface SelectionOptions {
      * Select orchestration instances which were created
      * after this Date.
      */
-    createdTimeFrom: Date | undefined;
+    createdTimeFrom?: Date;
     /**
      * Select orchestration instances which were created
      * before this DateTime.
      */
-    createdTimeTo: Date | undefined;
+    createdTimeTo?: Date;
     /**
      * Select orchestration instances which match any of
      * the runtimeStatus values in this array
