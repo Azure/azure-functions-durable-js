@@ -41,17 +41,9 @@ export declare class DurableClient {
     /**
      * Gets the status of the specified orchestration instance.
      * @param instanceId The ID of the orchestration instance to query.
-     * @param showHistory Boolean marker for including execution history in the
-     *  response.
-     * @param showHistoryOutput Boolean marker for including input and output
-     *  in the execution history response.
+     * @param options options object specifying optional extra configuration options
      */
-    getStatus(
-        instanceId: string,
-        showHistory?: boolean,
-        showHistoryOutput?: boolean,
-        showInput?: boolean
-    ): Promise<DurableOrchestrationStatus>;
+    getStatus(instanceId: string, options?: GetStatusOptions): Promise<DurableOrchestrationStatus>;
 
     /**
      * Gets the status of all orchestration instances.
@@ -61,18 +53,11 @@ export declare class DurableClient {
     /**
      * Gets the status of all orchestration instances that match the specified
      * conditions.
-     * @param createdTimeFrom Return orchestration instances which were created
-     *  after this Date.
-     * @param createdTimeTo Return orchestration instances which were created
-     *  before this DateTime.
-     * @param runtimeStatus Return orchestration instances which match any of
-     *  the runtimeStatus values in this array.
+     *
+     * @param selectionOptions the SelectionOptions object specifying which
+     * orchestrations to retrieve.
      */
-    getStatusBy(
-        createdTimeFrom: Date | undefined,
-        createdTimeTo: Date | undefined,
-        runtimeStatus: OrchestrationRuntimeStatus[]
-    ): Promise<DurableOrchestrationStatus[]>;
+    getStatusBy(selectionOptions: SelectionOptions): Promise<DurableOrchestrationStatus[]>;
 
     /**
      * Purge the history for a specific orchestration instance.
@@ -82,29 +67,17 @@ export declare class DurableClient {
 
     /**
      * Purge the orchestration history for instances that match the conditions.
-     * @param createdTimeFrom Start creation time for querying instances for
-     *  purging.
-     * @param createdTimeTo End creation time for querying instances for
-     *  purging.
-     * @param runtimeStatus List of runtime statuses for querying instances for
-     *  purging. Only Completed, Terminated or Failed will be processed.
+     * @param selectionOptions the SelectionsOptions object specifying which
+     * orchestrations to purge.
      */
-    purgeInstanceHistoryBy(
-        createdTimeFrom: Date,
-        createdTimeTo?: Date,
-        runtimeStatus?: OrchestrationRuntimeStatus[]
-    ): Promise<PurgeHistoryResult>;
+    purgeInstanceHistoryBy(selectionOptions: SelectionOptions): Promise<PurgeHistoryResult>;
 
     /**
      * Sends an event notification message to a waiting orchestration instance.
-     * @param instanceId The ID of the orchestration instance that will handle
-     *  the event.
-     * @param eventName The name of the event.
-     * @param eventData The JSON-serializable data associated with the event.
-     * @param taskHubName The TaskHubName of the orchestration that will handle
-     *  the event.
-     * @param connectionName The name of the connection string associated with
-     *  `taskHubName.`
+     *
+     * @param options RaiseEventOptions object specifying which orchestration to
+     * send event to and the event data.
+     *
      * @returns A promise that resolves when the event notification message has
      *  been enqueued.
      *
@@ -115,61 +88,46 @@ export declare class DurableClient {
      * If the specified instance is not found or not running, this operation
      * will have no effect.
      */
-    raiseEvent(
-        instanceId: string,
-        eventName: string,
-        eventData: unknown,
-        taskHubName?: string,
-        connectionName?: string
-    ): Promise<void>;
+    raiseEvent(options: RaiseEventOptions): Promise<void>;
 
     /**
-     * Tries to read the current state of an entity. Returnes undefined if the
+     * Tries to read the current state of an entity. Returns undefined if the
      * entity does not exist, or if the JSON-serialized state of the entity is
      * larger than 16KB.
-     * @param T The JSON-serializable type of the entity.
+     *
+     * @param T The JSON-serializable type of the entity state.
      * @param entityId The target entity.
-     * @param taskHubName The TaskHubName of the target entity.
-     * @param connectionName The name of the connection string associated with
-     * [taskHubName].
+     * @param options optional object providing the TaskHubName of the target entity
+     *  and the name of its associated connection string
+     *
      * @returns A response containing the current state of the entity.
      */
     readEntityState<T>(
         entityId: EntityId,
-        taskHubName?: string,
-        connectionName?: string
+        options?: TaskHubOptions
     ): Promise<EntityStateResponse<T>>;
 
     /**
      * Rewinds the specified failed orchestration instance with a reason.
+     *
      * @param instanceId The ID of the orchestration instance to rewind.
      * @param reason The reason for rewinding the orchestration instance.
+     * @param options object providing TaskHubName of the orchestration instance and
+     *  the name of its associated connection string
+     *
      * @returns A promise that resolves when the rewind message is enqueued.
      *
      * This feature is currently in preview.
      */
-    rewind(
-        instanceId: string,
-        reason: string,
-        taskHubName?: string,
-        connectionName?: string
-    ): Promise<void>;
+    rewind(instanceId: string, reason: string, options?: TaskHubOptions): Promise<void>;
 
     /**
      * Signals an entity to perform an operation.
+     *
      * @param entityId The target entity.
-     * @param operationName The name of the operation.
-     * @param operationContent The content for the operation.
-     * @param taskHubName The TaskHubName of the target entity.
-     * @param connectionName The name of the connection string associated with [taskHubName].
+     * @param options options object providing configurations the signal to the entity
      */
-    signalEntity(
-        entityId: EntityId,
-        operationName?: string,
-        operationContent?: unknown,
-        taskHubName?: string,
-        connectionName?: string
-    ): Promise<void>;
+    signalEntity(entityId: EntityId, options?: SignalEntityOptions): Promise<void>;
 
     /**
      * Starts a new instance of the specified orchestrator function.
@@ -205,16 +163,13 @@ export declare class DurableClient {
      *
      * @param request The HTTP request that triggered the current function.
      * @param instanceId The unique ID of the instance to check.
-     * @param timeoutInMilliseconds Total allowed timeout for output from the
-     *  durable function. The default value is 10 seconds.
-     * @param retryIntervalInMilliseconds The timeout between checks for output
-     *  from the durable function. The default value is 1 second.
+     * @param waitOptions options object specifying the timeouts for how long
+     * to wait for output from the durable function and how often to check for output.
      */
     waitForCompletionOrCreateCheckStatusResponse(
         request: HttpRequest,
         instanceId: string,
-        timeoutInMilliseconds: number,
-        retryIntervalInMilliseconds: number
+        waitOptions?: WaitForCompletionOptions
     ): Promise<HttpResponse>;
 }
 
@@ -351,4 +306,49 @@ export interface TaskHubOptions {
      * The name of the connection string associated with `taskHubName.`
      */
     connectionName?: string;
+}
+
+/**
+ * Options object passed to DurableClient APIs
+ * to select certain orchestrations on which to perform
+ * actions
+ */
+export interface SelectionOptions {
+    /**
+     * Select orchestration instances which were created
+     * after this Date.
+     */
+    createdTimeFrom: Date | undefined;
+    /**
+     * Select orchestration instances which were created
+     * before this DateTime.
+     */
+    createdTimeTo: Date | undefined;
+    /**
+     * Select orchestration instances which match any of
+     * the runtimeStatus values in this array
+     */
+    runtimeStatus?: OrchestrationRuntimeStatus[];
+}
+
+/**
+ * Options object passed to the `durableClient.waitForCompletionOrCreateCheckStatusResponse()`
+ * method to specify timeouts for how long to wait for output from the durable function
+ *  and how often to check for output.
+ */
+export interface WaitForCompletionOptions {
+    /**
+     * Total allowed timeout for output from the
+     * durable function.
+     *
+     * @default 10000 (10 seconds)
+     */
+    timeoutInMilliseconds?: number;
+    /**
+     * The timeout between checks for output
+     * from the durable function.
+     *
+     * @default 1000 (1 second)
+     */
+    retryIntervalInMilliseconds?: number;
 }
