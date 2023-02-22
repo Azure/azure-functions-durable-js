@@ -48,45 +48,6 @@ export interface OrchestrationTrigger extends FunctionTrigger {
 }
 
 /**
- * Options object provided to `callHttp()` methods on orchestration contexts
- */
-export interface CallHttpOptions {
-    /**
-     * The HTTP request method.
-     */
-    method: string;
-    /**
-     * The HTTP request URL.
-     */
-    url: string;
-    /**
-     * The HTTP request body.
-     */
-    body?: string | object;
-    /**
-     * The HTTP request headers.
-     */
-    headers?: { [key: string]: string };
-    /**
-     * The source of the OAuth token to add to the request.
-     */
-    tokenSource?: TokenSource;
-    /**
-     * Specifies whether to continue polling the request after receiving a 202 response.
-     * This replaces `asynchronousPatternEnabled`. If both are specified,
-     * `enablePolling` takes precedence.
-     *
-     * @default true
-     */
-    enablePolling?: boolean;
-    /**
-     * @deprecated use `enablePolling` instead. If both are specified,
-     * `enablePolling` takes precedence.
-     */
-    asynchronousPatternEnabled?: boolean;
-}
-
-/**
  * Provides functionality for application code implementing an orchestration operation.
  */
 export declare class DurableOrchestrationContext {
@@ -414,4 +375,59 @@ export declare enum OrchestrationRuntimeStatus {
      * running.
      */
     Pending = "Pending",
+}
+
+/**
+ * Options object passed to the `context.df.callSubOrchestrator()` method
+ */
+export interface CallSubOrchestratorOptions {
+    /**
+     * The JSON-serializable input to pass to the orchestrator function.
+     */
+    input?: unknown;
+    /**
+     * A unique ID to use for the sub-orchestration instance.
+     * If `instanceId` is not specified, the extension will generate an id in
+     * the format `<calling orchestrator instance ID>:<#>`
+     */
+    instanceId?: string;
+}
+
+/**
+ * Options object provided to `callHttp()` methods on orchestration contexts
+ */
+export interface CallHttpOptions {
+    /**
+     * The HTTP request method.
+     */
+    method: string;
+    /**
+     * The HTTP request URL.
+     */
+    url: string;
+    /**
+     * The HTTP request body.
+     */
+    body?: string | object;
+    /**
+     * The HTTP request headers.
+     */
+    headers?: { [key: string]: string };
+    /**
+     * The source of the OAuth token to add to the request.
+     */
+    tokenSource?: TokenSource;
+    /**
+     * Specifies whether to continue polling the request after receiving a 202 response.
+     * This replaces `asynchronousPatternEnabled`. If both are specified,
+     * `enablePolling` takes precedence.
+     *
+     * @default true
+     */
+    enablePolling?: boolean;
+    /**
+     * @deprecated use `enablePolling` instead. If both are specified,
+     * `enablePolling` takes precedence.
+     */
+    asynchronousPatternEnabled?: boolean;
 }
