@@ -1,5 +1,5 @@
 import * as df from "../../src";
-import { OrchestrationContext, OrchestrationHandler } from "durable-functions";
+import { OrchestrationContext } from "durable-functions";
 import { createOrchestrator } from "../../src/shim";
 
 export class TestOrchestrations {
@@ -279,7 +279,7 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SayHelloWithSubOrchestratorNoSubId = createOrchestrator(function* (
+    public static SayHelloWithSubOrchestratorNoSubId: any = createOrchestrator(function* (
         context: OrchestrationContext
     ) {
         const input = context.df.getInput();
