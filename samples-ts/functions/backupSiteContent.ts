@@ -25,7 +25,7 @@ const backupSiteContentOrchestration: OrchestrationHandler = function* (
     const rootDirAbs: string = path.resolve(rootDir);
     const files: string[] = yield context.df.callActivity(getFileListActivityName, rootDirAbs);
 
-    // Backup Files and save Promises into array
+    // Backup Files and save Tasks into array
     const tasks: Task[] = [];
     for (const file of files) {
         const input = {
