@@ -54,10 +54,10 @@ export declare class DurableClient {
      * Gets the status of all orchestration instances that match the specified
      * conditions.
      *
-     * @param selectionOptions the SelectionOptions object specifying which
+     * @param filterOptions the OrchestrationFilter object specifying which
      * orchestrations to retrieve.
      */
-    getStatusBy(selectionOptions: SelectionOptions): Promise<DurableOrchestrationStatus[]>;
+    getStatusBy(filterOptions: OrchestrationFilter): Promise<DurableOrchestrationStatus[]>;
 
     /**
      * Purge the history for a specific orchestration instance.
@@ -67,10 +67,10 @@ export declare class DurableClient {
 
     /**
      * Purge the orchestration history for instances that match the conditions.
-     * @param selectionOptions the SelectionsOptions object specifying which
+     * @param filterOptions the OrchestrationFilter object specifying which
      * orchestrations to purge.
      */
-    purgeInstanceHistoryBy(selectionOptions: SelectionOptions): Promise<PurgeHistoryResult>;
+    purgeInstanceHistoryBy(filterOptions: OrchestrationFilter): Promise<PurgeHistoryResult>;
 
     /**
      * Sends an event notification message to a waiting orchestration instance.
@@ -290,10 +290,10 @@ export interface TaskHubOptions {
 
 /**
  * Options object passed to DurableClient APIs
- * to select certain orchestrations on which to perform
+ * to filter orchestrations on which to perform
  * actions
  */
-export interface SelectionOptions {
+export interface OrchestrationFilter {
     /**
      * Select orchestration instances which were created
      * after this Date.

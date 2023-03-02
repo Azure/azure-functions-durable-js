@@ -26,7 +26,7 @@ import {
     DurableClientInput,
     DurableClient,
     GetStatusOptions,
-    SelectionOptions,
+    OrchestrationFilter,
     TaskHubOptions,
     SignalEntityOptions,
     WaitForCompletionOptions,
@@ -219,9 +219,9 @@ export class DurableOrchestrationClient implements DurableClient {
     }
 
     public async getStatusBy(
-        selectionOptions: SelectionOptions
+        filterOptions: OrchestrationFilter
     ): Promise<DurableOrchestrationStatus[]> {
-        const response = await this.getStatusInternal(selectionOptions);
+        const response = await this.getStatusInternal(filterOptions);
         switch (response.status) {
             case 200:
                 return response.data as DurableOrchestrationStatus[];
@@ -254,10 +254,10 @@ export class DurableOrchestrationClient implements DurableClient {
     }
 
     public async purgeInstanceHistoryBy(
-        selectionOptions: SelectionOptions
+        filterOptions: OrchestrationFilter
     ): Promise<PurgeHistoryResult> {
         let requestUrl: string;
-        const { createdTimeFrom, createdTimeTo, runtimeStatus } = selectionOptions;
+        const { createdTimeFrom, createdTimeTo, runtimeStatus } = filterOptions;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             let path = new URL("instances/", this.clientData.rpcBaseUrl).href;
