@@ -222,11 +222,7 @@ export class DurableOrchestrationClient implements DurableClient {
     public async getStatusBy(
         selectionOptions: SelectionOptions
     ): Promise<DurableOrchestrationStatus[]> {
-        const internalOptions: GetStatusInternalOptions = {
-            ...selectionOptions,
-        };
-
-        const response = await this.getStatusInternal(internalOptions);
+        const response = await this.getStatusInternal(selectionOptions);
         switch (response.status) {
             case 200:
                 return response.data as DurableOrchestrationStatus[];
