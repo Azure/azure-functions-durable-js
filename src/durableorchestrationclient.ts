@@ -599,8 +599,14 @@ export class DurableOrchestrationClient implements DurableClient {
         instanceId: string,
         waitOptions: WaitForCompletionOptions = {}
     ): Promise<HttpResponse> {
-        const timeoutInMilliseconds: number = waitOptions.timeoutInMilliseconds || 10000;
-        const retryIntervalInMilliseconds: number = waitOptions.retryIntervalInMilliseconds || 1000;
+        const timeoutInMilliseconds: number =
+            waitOptions.timeoutInMilliseconds !== undefined
+                ? waitOptions.timeoutInMilliseconds
+                : 10000;
+        const retryIntervalInMilliseconds: number =
+            waitOptions.retryIntervalInMilliseconds !== undefined
+                ? waitOptions.retryIntervalInMilliseconds
+                : 1000;
 
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
             throw new Error(
