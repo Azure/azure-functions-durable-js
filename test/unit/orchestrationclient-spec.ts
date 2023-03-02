@@ -560,11 +560,11 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.raiseEvent({
-                instanceId: defaultInstanceId,
-                eventName: defaultTestEvent,
-                eventData: defaultTestData,
-            });
+            const result = await client.raiseEvent(
+                defaultInstanceId,
+                defaultTestEvent,
+                defaultTestData
+            );
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -586,12 +586,14 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.raiseEvent({
-                instanceId: defaultInstanceId,
-                eventName: defaultTestEvent,
-                eventData: defaultTestData,
-                taskHubName: testTaskHub,
-            });
+            const result = await client.raiseEvent(
+                defaultInstanceId,
+                defaultTestEvent,
+                defaultTestData,
+                {
+                    taskHubName: testTaskHub,
+                }
+            );
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -613,12 +615,14 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.raiseEvent({
-                instanceId: defaultInstanceId,
-                eventName: defaultTestEvent,
-                eventData: defaultTestData,
-                connectionName: testConnection,
-            });
+            const result = await client.raiseEvent(
+                defaultInstanceId,
+                defaultTestEvent,
+                defaultTestData,
+                {
+                    connectionName: testConnection,
+                }
+            );
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -640,11 +644,7 @@ describe("Orchestration Client", () => {
                 .reply(404, undefined);
 
             await expect(
-                client.raiseEvent({
-                    instanceId: id,
-                    eventName: defaultTestEvent,
-                    eventData: defaultTestData,
-                })
+                client.raiseEvent(id, defaultTestEvent, defaultTestData)
             ).to.be.rejectedWith(`No instance with ID '${id}' found.`);
             expect(scope.isDone()).to.be.equal(true);
         });

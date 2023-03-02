@@ -135,7 +135,7 @@ describe("Durable client RPC endpoint", () => {
                 .post(expectedUrl.pathname, eventData)
                 .reply(202);
 
-            await client.raiseEvent({ instanceId, eventName, eventData });
+            await client.raiseEvent(instanceId, eventName, eventData);
             expect(scope.isDone()).to.be.equal(true);
         });
 
@@ -160,10 +160,7 @@ describe("Durable client RPC endpoint", () => {
                 .query({ taskHub, connection })
                 .reply(202);
 
-            await client.raiseEvent({
-                instanceId,
-                eventName,
-                eventData,
+            await client.raiseEvent(instanceId, eventName, eventData, {
                 taskHubName: taskHub,
                 connectionName: connection,
             });

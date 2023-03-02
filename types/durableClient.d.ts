@@ -75,8 +75,12 @@ export declare class DurableClient {
     /**
      * Sends an event notification message to a waiting orchestration instance.
      *
-     * @param options RaiseEventOptions object specifying which orchestration to
-     * send event to and the event data.
+     * @param instanceId The ID of the orchestration instance that will handle
+     *  the event.
+     * @param eventName The name of the event.
+     * @param eventData The JSON-serializable data associated with the event.
+     * @param options object providing TaskHubName of the orchestration instance and
+     *  the name of its associated connection string
      *
      * @returns A promise that resolves when the event notification message has
      *  been enqueued.
@@ -88,7 +92,12 @@ export declare class DurableClient {
      * If the specified instance is not found or not running, this operation
      * will have no effect.
      */
-    raiseEvent(options: RaiseEventOptions): Promise<void>;
+    raiseEvent(
+        instanceId: string,
+        eventName: string,
+        eventData: unknown,
+        options?: TaskHubOptions
+    ): Promise<void>;
 
     /**
      * Tries to read the current state of an entity. Returns undefined if the
@@ -252,24 +261,6 @@ export interface GetStatusOptions {
      * Specifies whether orchestration input should be included in the response.
      */
     showInput?: boolean;
-}
-
-/**
- * Options object passed to DurableClient.raiseEvent()
- */
-export interface RaiseEventOptions extends TaskHubOptions {
-    /**
-     * The ID of the orchestration instance that will handle the event.
-     */
-    instanceId: string;
-    /**
-     * The name of the event.
-     */
-    eventName: string;
-    /**
-     * The JSON-serializable data associated with the event.
-     */
-    eventData: unknown;
 }
 
 export interface SignalEntityOptions extends TaskHubOptions {

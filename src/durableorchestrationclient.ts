@@ -27,7 +27,6 @@ import {
     DurableClient,
     GetStatusOptions,
     SelectionOptions,
-    RaiseEventOptions,
     TaskHubOptions,
     SignalEntityOptions,
     WaitForCompletionOptions,
@@ -321,8 +320,13 @@ export class DurableOrchestrationClient implements DurableClient {
         }
     }
 
-    public async raiseEvent(options: RaiseEventOptions): Promise<void> {
-        const { eventName, instanceId, eventData, taskHubName, connectionName } = options;
+    public async raiseEvent(
+        instanceId: string,
+        eventName: string,
+        eventData: unknown,
+        options: TaskHubOptions = {}
+    ): Promise<void> {
+        const { taskHubName, connectionName } = options;
         if (!eventName) {
             throw new Error("eventName must be a valid string.");
         }
