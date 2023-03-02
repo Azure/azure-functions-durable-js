@@ -41,7 +41,7 @@ export declare class DurableClient {
     /**
      * Gets the status of the specified orchestration instance.
      * @param instanceId The ID of the orchestration instance to query.
-     * @param options options object specifying optional extra configuration options
+     * @param options options object specifying extra configuration
      */
     getStatus(instanceId: string, options?: GetStatusOptions): Promise<DurableOrchestrationStatus>;
 
