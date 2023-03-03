@@ -217,10 +217,8 @@ export class DurableOrchestrationClient implements DurableClient {
         }
     }
 
-    public async getStatusBy(
-        filterOptions: OrchestrationFilter
-    ): Promise<DurableOrchestrationStatus[]> {
-        const response = await this.getStatusInternal(filterOptions);
+    public async getStatusBy(filter: OrchestrationFilter): Promise<DurableOrchestrationStatus[]> {
+        const response = await this.getStatusInternal(filter);
         switch (response.status) {
             case 200:
                 return response.data as DurableOrchestrationStatus[];
@@ -252,11 +250,9 @@ export class DurableOrchestrationClient implements DurableClient {
         }
     }
 
-    public async purgeInstanceHistoryBy(
-        filterOptions: OrchestrationFilter
-    ): Promise<PurgeHistoryResult> {
+    public async purgeInstanceHistoryBy(filter: OrchestrationFilter): Promise<PurgeHistoryResult> {
         let requestUrl: string;
-        const { createdTimeFrom, createdTimeTo, runtimeStatus } = filterOptions;
+        const { createdTimeFrom, createdTimeTo, runtimeStatus } = filter;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             let path = new URL("instances/", this.clientData.rpcBaseUrl).href;

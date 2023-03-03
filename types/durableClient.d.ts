@@ -54,10 +54,10 @@ export declare class DurableClient {
      * Gets the status of all orchestration instances that match the specified
      * conditions.
      *
-     * @param filterOptions the OrchestrationFilter object specifying which
+     * @param filter the OrchestrationFilter object specifying which
      * orchestrations to retrieve.
      */
-    getStatusBy(filterOptions: OrchestrationFilter): Promise<DurableOrchestrationStatus[]>;
+    getStatusBy(filter: OrchestrationFilter): Promise<DurableOrchestrationStatus[]>;
 
     /**
      * Purge the history for a specific orchestration instance.
@@ -67,10 +67,10 @@ export declare class DurableClient {
 
     /**
      * Purge the orchestration history for instances that match the conditions.
-     * @param filterOptions the OrchestrationFilter object specifying which
+     * @param filter the OrchestrationFilter object specifying which
      * orchestrations to purge.
      */
-    purgeInstanceHistoryBy(filterOptions: OrchestrationFilter): Promise<PurgeHistoryResult>;
+    purgeInstanceHistoryBy(filter: OrchestrationFilter): Promise<PurgeHistoryResult>;
 
     /**
      * Sends an event notification message to a waiting orchestration instance.
