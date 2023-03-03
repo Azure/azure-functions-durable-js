@@ -30,7 +30,7 @@ import {
 } from "./task";
 import moment = require("moment");
 import { ReplaySchema } from "./replaySchema";
-import { CallHttpOptions, CallSubOrchestratorOptions, Task, TimerTask } from "durable-functions";
+import { CallHttpOptions, Task, TimerTask } from "durable-functions";
 import * as types from "durable-functions";
 import { SignalEntityAction } from "./actions/signalentityaction";
 
@@ -176,14 +176,14 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         this.taskOrchestratorExecutor.recordFireAndForgetAction(action);
     }
 
-    public callSubOrchestrator(name: string, options: CallSubOrchestratorOptions = {}): Task {
+    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"
             );
         }
 
-        const newAction = new CallSubOrchestratorAction(name, options.instanceId, options.input);
+        const newAction = new CallSubOrchestratorAction(name, instanceId, input);
         const task = new AtomicTask(false, newAction);
         return task;
     }
@@ -191,7 +191,8 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
     public callSubOrchestratorWithRetry(
         name: string,
         retryOptions: RetryOptions,
-        options: CallSubOrchestratorOptions = {}
+        input?: unknown,
+        instanceId?: string
     ): Task {
         if (!name) {
             throw new Error(
@@ -202,8 +203,8 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         const newAction = new CallSubOrchestratorWithRetryAction(
             name,
             retryOptions,
-            options.input,
-            options.instanceId
+            input,
+            instanceId
         );
         const backingTask = new AtomicTask(false, newAction);
         const task = new RetryableTask(backingTask, retryOptions, this.taskOrchestratorExecutor);
