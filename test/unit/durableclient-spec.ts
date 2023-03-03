@@ -469,9 +469,7 @@ describe("Durable client RPC endpoint", () => {
                 .query({ op, taskHub, connection })
                 .reply(202);
 
-            await client.signalEntity(entityId, {
-                operationName: op,
-                operationContent: payload,
+            await client.signalEntity(entityId, op, payload, {
                 taskHubName: taskHub,
                 connectionName: connection,
             });

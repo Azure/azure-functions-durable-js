@@ -134,9 +134,17 @@ export declare class DurableClient {
      * Signals an entity to perform an operation.
      *
      * @param entityId The target entity.
-     * @param options options object providing configurations the signal to the entity
+     * @param operationName The name of the operation.
+     * @param operationContent The content for the operation.
+     * @param options object providing TaskHubName of the entity instance and
+     *  the name of its associated connection string
      */
-    signalEntity(entityId: EntityId, options?: SignalEntityOptions): Promise<void>;
+    signalEntity(
+        entityId: EntityId,
+        operationName?: string,
+        operationContent?: unknown,
+        options?: TaskHubOptions
+    ): Promise<void>;
 
     /**
      * Starts a new instance of the specified orchestrator function.
@@ -261,17 +269,6 @@ export interface GetStatusOptions {
      * Specifies whether orchestration input should be included in the response.
      */
     showInput?: boolean;
-}
-
-export interface SignalEntityOptions extends TaskHubOptions {
-    /**
-     * The name of the operation.
-     */
-    operationName?: string;
-    /**
-     * The content for the operation
-     */
-    operationContent?: unknown;
 }
 
 /**

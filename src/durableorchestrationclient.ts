@@ -28,7 +28,6 @@ import {
     GetStatusOptions,
     OrchestrationFilter,
     TaskHubOptions,
-    SignalEntityOptions,
     WaitForCompletionOptions,
 } from "durable-functions";
 import { WebhookUtils } from "./webhookutils";
@@ -478,9 +477,11 @@ export class DurableOrchestrationClient implements DurableClient {
 
     public async signalEntity(
         entityId: EntityId,
-        options: SignalEntityOptions = {}
+        operationName?: string,
+        operationContent?: unknown,
+        options: TaskHubOptions = {}
     ): Promise<void> {
-        const { operationName, operationContent, taskHubName, connectionName } = options;
+        const { taskHubName, connectionName } = options;
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path

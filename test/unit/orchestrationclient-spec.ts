@@ -874,10 +874,11 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.signalEntity(defaultEntityId, {
-                operationName: defaultEntityOp,
-                operationContent: testSignalData,
-            });
+            const result = await client.signalEntity(
+                defaultEntityId,
+                defaultEntityOp,
+                testSignalData
+            );
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -900,12 +901,15 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.signalEntity(defaultEntityId, {
-                operationName: defaultEntityOp,
-                operationContent: testSignalData,
-                taskHubName: testTaskHub,
-                connectionName: testConn,
-            });
+            const result = await client.signalEntity(
+                defaultEntityId,
+                defaultEntityOp,
+                testSignalData,
+                {
+                    taskHubName: testTaskHub,
+                    connectionName: testConn,
+                }
+            );
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
@@ -926,9 +930,7 @@ describe("Orchestration Client", () => {
                 )
                 .reply(202);
 
-            const result = await client.signalEntity(defaultEntityId, {
-                operationContent: testSignalData,
-            });
+            const result = await client.signalEntity(defaultEntityId, undefined, testSignalData);
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal(undefined);
         });
