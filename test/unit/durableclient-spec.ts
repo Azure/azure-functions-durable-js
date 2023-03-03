@@ -160,7 +160,10 @@ describe("Durable client RPC endpoint", () => {
                 .query({ taskHub, connection })
                 .reply(202);
 
-            await client.raiseEvent(instanceId, eventName, eventData, taskHub, connection);
+            await client.raiseEvent(instanceId, eventName, eventData, {
+                taskHubName: taskHub,
+                connectionName: connection,
+            });
             expect(scope.isDone()).to.be.equal(true);
         });
     });
@@ -207,7 +210,11 @@ describe("Durable client RPC endpoint", () => {
                     history: [],
                 });
 
-            const result = await client.getStatus(instanceId, true, true, true);
+            const result = await client.getStatus(instanceId, {
+                showHistory: true,
+                showHistoryOutput: true,
+                showInput: true,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.an("object");
         });
@@ -237,11 +244,11 @@ describe("Durable client RPC endpoint", () => {
                             status as keyof typeof OrchestrationRuntimeStatus
                         ]
                 );
-            const result = await client.getStatusBy(
-                new Date(createdTimeFrom),
-                new Date(createdTimeTo),
-                statusList
-            );
+            const result = await client.getStatusBy({
+                createdTimeFrom: new Date(createdTimeFrom),
+                createdTimeTo: new Date(createdTimeTo),
+                runtimeStatus: statusList,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.an("array");
         });
@@ -293,11 +300,11 @@ describe("Durable client RPC endpoint", () => {
                             status as keyof typeof OrchestrationRuntimeStatus
                         ]
                 );
-            const result = await client.getStatusBy(
-                new Date(createdTimeFrom),
-                new Date(createdTimeTo),
-                statusList
-            );
+            const result = await client.getStatusBy({
+                createdTimeFrom: new Date(createdTimeFrom),
+                createdTimeTo: new Date(createdTimeTo),
+                runtimeStatus: statusList,
+            });
             expect(scopeWithTokenResponse.isDone()).to.be.equal(true);
             expect(scopeNoTokenResponse.isDone()).to.be.equal(true);
             expect(result).to.be.an("array");
@@ -368,11 +375,11 @@ describe("Durable client RPC endpoint", () => {
                             status as keyof typeof OrchestrationRuntimeStatus
                         ]
                 );
-            const result: PurgeHistoryResult = await client.purgeInstanceHistoryBy(
-                new Date(createdTimeFrom),
-                new Date(createdTimeTo),
-                statusList
-            );
+            const result: PurgeHistoryResult = await client.purgeInstanceHistoryBy({
+                createdTimeFrom: new Date(createdTimeFrom),
+                createdTimeTo: new Date(createdTimeTo),
+                runtimeStatus: statusList,
+            });
             expect(scope.isDone()).to.be.equal(true);
             expect(result.instancesDeleted).to.be.equal(10);
         });
@@ -416,7 +423,10 @@ describe("Durable client RPC endpoint", () => {
                 .query({ reason, taskHub, connection })
                 .reply(202);
 
-            await client.rewind(instanceId, reason, taskHub, connection);
+            await client.rewind(instanceId, reason, {
+                taskHubName: taskHub,
+                connectionName: connection,
+            });
             expect(scope.isDone()).to.be.equal(true);
         });
     });
@@ -459,7 +469,10 @@ describe("Durable client RPC endpoint", () => {
                 .query({ op, taskHub, connection })
                 .reply(202);
 
-            await client.signalEntity(entityId, op, payload, taskHub, connection);
+            await client.signalEntity(entityId, op, payload, {
+                taskHubName: taskHub,
+                connectionName: connection,
+            });
             expect(scope.isDone()).to.equal(true);
         });
     });
@@ -506,7 +519,10 @@ describe("Durable client RPC endpoint", () => {
                 .query({ taskHub, connection })
                 .reply(200, expectedEntityState);
 
-            const result = await client.readEntityState(entityId, taskHub, connection);
+            const result = await client.readEntityState(entityId, {
+                taskHubName: taskHub,
+                connectionName: connection,
+            });
             expect(scope.isDone()).to.equal(true);
             expect(result.entityExists).to.equal(true);
             expect(result.entityState).to.deep.equal(expectedEntityState);

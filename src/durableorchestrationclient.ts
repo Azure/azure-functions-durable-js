@@ -21,7 +21,15 @@ import {
     PurgeHistoryResult,
     Utils,
 } from "./classes";
-import { StartNewOptions, DurableClientInput, DurableClient } from "durable-functions";
+import {
+    StartNewOptions,
+    DurableClientInput,
+    DurableClient,
+    GetStatusOptions,
+    OrchestrationFilter,
+    TaskHubOptions,
+    WaitForCompletionOptions,
+} from "durable-functions";
 import { WebhookUtils } from "./webhookutils";
 
 /** @hidden */
@@ -179,17 +187,13 @@ export class DurableOrchestrationClient implements DurableClient {
 
     public async getStatus(
         instanceId: string,
-        showHistory?: boolean,
-        showHistoryOutput?: boolean,
-        showInput?: boolean
+        options: GetStatusOptions = {}
     ): Promise<DurableOrchestrationStatus> {
-        const options: GetStatusInternalOptions = {
+        const internalOptions: GetStatusInternalOptions = {
             instanceId,
-            showHistory,
-            showHistoryOutput,
-            showInput,
+            ...options,
         };
-        const response = await this.getStatusInternal(options);
+        const response = await this.getStatusInternal(internalOptions);
 
         switch (response.status) {
             case 200: // instance completed
@@ -213,18 +217,8 @@ export class DurableOrchestrationClient implements DurableClient {
         }
     }
 
-    public async getStatusBy(
-        createdTimeFrom: Date | undefined,
-        createdTimeTo: Date | undefined,
-        runtimeStatus: OrchestrationRuntimeStatus[]
-    ): Promise<DurableOrchestrationStatus[]> {
-        const options: GetStatusInternalOptions = {
-            createdTimeFrom,
-            createdTimeTo,
-            runtimeStatus,
-        };
-
-        const response = await this.getStatusInternal(options);
+    public async getStatusBy(filter: OrchestrationFilter): Promise<DurableOrchestrationStatus[]> {
+        const response = await this.getStatusInternal(filter);
         switch (response.status) {
             case 200:
                 return response.data as DurableOrchestrationStatus[];
@@ -256,12 +250,9 @@ export class DurableOrchestrationClient implements DurableClient {
         }
     }
 
-    public async purgeInstanceHistoryBy(
-        createdTimeFrom: Date,
-        createdTimeTo?: Date,
-        runtimeStatus?: OrchestrationRuntimeStatus[]
-    ): Promise<PurgeHistoryResult> {
+    public async purgeInstanceHistoryBy(filter: OrchestrationFilter): Promise<PurgeHistoryResult> {
         let requestUrl: string;
+        const { createdTimeFrom, createdTimeTo, runtimeStatus } = filter;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             let path = new URL("instances/", this.clientData.rpcBaseUrl).href;
@@ -328,9 +319,9 @@ export class DurableOrchestrationClient implements DurableClient {
         instanceId: string,
         eventName: string,
         eventData: unknown,
-        taskHubName?: string,
-        connectionName?: string
+        options: TaskHubOptions = {}
     ): Promise<void> {
+        const { taskHubName, connectionName } = options;
         if (!eventName) {
             throw new Error("eventName must be a valid string.");
         }
@@ -382,10 +373,10 @@ export class DurableOrchestrationClient implements DurableClient {
 
     public async readEntityState<T>(
         entityId: EntityId,
-        taskHubName?: string,
-        connectionName?: string
+        options: TaskHubOptions = {}
     ): Promise<EntityStateResponse<T>> {
         let requestUrl: string;
+        const { taskHubName, connectionName } = options;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             let path = `entities/${entityId.name}/${entityId.key}`;
@@ -434,9 +425,9 @@ export class DurableOrchestrationClient implements DurableClient {
     public async rewind(
         instanceId: string,
         reason: string,
-        taskHubName?: string,
-        connectionName?: string
+        options: TaskHubOptions = {}
     ): Promise<void> {
+        const { taskHubName, connectionName } = options;
         const idPlaceholder = this.clientData.managementUrls.id;
 
         let requestUrl: string;
@@ -484,9 +475,9 @@ export class DurableOrchestrationClient implements DurableClient {
         entityId: EntityId,
         operationName?: string,
         operationContent?: unknown,
-        taskHubName?: string,
-        connectionName?: string
+        options: TaskHubOptions = {}
     ): Promise<void> {
+        const { taskHubName, connectionName } = options;
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
@@ -603,9 +594,17 @@ export class DurableOrchestrationClient implements DurableClient {
     public async waitForCompletionOrCreateCheckStatusResponse(
         request: HttpRequest,
         instanceId: string,
-        timeoutInMilliseconds = 10000,
-        retryIntervalInMilliseconds = 1000
+        waitOptions: WaitForCompletionOptions = {}
     ): Promise<HttpResponse> {
+        const timeoutInMilliseconds: number =
+            waitOptions.timeoutInMilliseconds !== undefined
+                ? waitOptions.timeoutInMilliseconds
+                : 10000;
+        const retryIntervalInMilliseconds: number =
+            waitOptions.retryIntervalInMilliseconds !== undefined
+                ? waitOptions.retryIntervalInMilliseconds
+                : 1000;
+
         if (retryIntervalInMilliseconds > timeoutInMilliseconds) {
             throw new Error(
                 `Total timeout ${timeoutInMilliseconds} (ms) should be bigger than retry timeout ${retryIntervalInMilliseconds} (ms)`

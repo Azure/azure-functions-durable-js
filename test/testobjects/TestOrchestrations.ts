@@ -267,7 +267,9 @@ export class TestOrchestrations {
         return output;
     });
 
-    public static SayHelloWithSubOrchestrator: any = createOrchestrator(function* (context: any) {
+    public static SayHelloWithSubOrchestrator = createOrchestrator(function* (
+        context: OrchestrationContext
+    ) {
         const input = context.df.getInput();
         const childId = context.df.instanceId + ":0";
         const output = yield context.df.callSubOrchestrator("SayHelloWithActivity", input, childId);
@@ -275,7 +277,7 @@ export class TestOrchestrations {
     });
 
     public static SayHelloWithSubOrchestratorNoSubId: any = createOrchestrator(function* (
-        context: any
+        context: OrchestrationContext
     ) {
         const input = context.df.getInput();
         const output = yield context.df.callSubOrchestrator("SayHelloWithActivity", input);
