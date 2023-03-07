@@ -211,7 +211,7 @@ export class DurableOrchestrationClient {
         showHistory?: boolean,
         showHistoryOutput?: boolean,
         showInput?: boolean
-    ): Promise<DurableOrchestrationStatus> {
+    ): Promise<DurableOrchestrationStatus | undefined> {
         const options: GetStatusOptions = {
             instanceId,
             showHistory,
@@ -226,6 +226,9 @@ export class DurableOrchestrationClient {
             case 400: // instance failed or terminated
             case 404: // instance not found or pending
             case 500: // instance failed with unhandled exception
+                if (!response.data || !Object.keys(response.data).length) {
+                    return undefined;
+                }
                 return response.data as DurableOrchestrationStatus;
             default:
                 return Promise.reject(this.createGenericError(response));
