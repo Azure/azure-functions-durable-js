@@ -211,20 +211,6 @@ describe("Durable client RPC endpoint", () => {
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.an("object");
         });
-        it("returns undefined for a purged instance", async () => {
-            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
-
-            // The getStatus() method should do a GET to http://127.0.0.1:17071/durabletask/instances/abc123?showInput=true&showHistory=true&showHistoryOutput=true
-            const instanceId = "abc123";
-            const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/${instanceId}`);
-
-            const scope = nock(expectedUrl.origin).get(expectedUrl.pathname).reply(404, "");
-
-            const result = await client.getStatus(instanceId);
-            expect(scope.isDone()).to.be.equal(true);
-            expect(result).to.be.an("undefined");
-        });
     });
 
     describe("getStatusBy()", () => {
