@@ -1,6 +1,7 @@
 import * as df from "../../src";
 import { OrchestrationContext } from "durable-functions";
 import { createOrchestrator } from "../../src/shim";
+import { DurableHttpRequest } from "src/classes";
 
 export class TestOrchestrations {
     public static NotGenerator: any = createOrchestrator(function* () {
@@ -351,7 +352,7 @@ export class TestOrchestrations {
     });
 
     public static SendHttpRequest: any = createOrchestrator(function* (context) {
-        const input = context.df.getInput() as df.DurableHttpRequest;
+        const input = context.df.getInput() as DurableHttpRequest;
         const output = yield context.df.callHttp({
             method: input.method,
             url: input.uri,
