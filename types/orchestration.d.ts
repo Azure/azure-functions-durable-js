@@ -7,7 +7,11 @@ import { EntityId } from "./entity";
  */
 export type OrchestrationHandler = (
     context: OrchestrationContext
-) => Generator<unknown, unknown, any>;
+) => Generator<
+    Task, // orchestrations can only yield Task types
+    unknown, // return type of the orchestration
+    any // what the SDK passes back to the orchestration
+>;
 
 /**
  * Context object passed to orchestration Functions.
