@@ -1,6 +1,4 @@
 import {
-    DurableHttpRequest,
-    DurableHttpResponse,
     EntityId,
     EntityStateResponse,
     OrchestrationRuntimeStatus,
@@ -9,11 +7,10 @@ import {
 } from "./classes";
 import { getClient } from "./durableorchestrationclient";
 import { app, input, trigger } from "./shim";
+import { DummyEntityContext } from "./testingUtils";
 import { ManagedIdentityTokenSource } from "./tokensource";
 
 export {
-    DurableHttpRequest,
-    DurableHttpResponse,
     EntityId,
     EntityStateResponse,
     getClient,
@@ -21,6 +18,7 @@ export {
     OrchestrationRuntimeStatus,
     RetryOptions,
     DummyOrchestrationContext,
+    DummyEntityContext,
     app,
     input,
     trigger,
