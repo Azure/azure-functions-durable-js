@@ -9,8 +9,13 @@
         "start": "func start",
         "test": "echo \"No tests yet...\""
     },
+    "dependencies": {
+        "@azure/functions": "^4.0.0-alpha.7",
+        "durable-functions": "^3.0.0-alpha.2"
+    },
     "devDependencies": {
-        "@azure/functions": "^3.0.0",
+        "@types/node": "^18.x",
         "typescript": "^4.0.0"
-    }
+    },
+    "main": "dist/src/functions/*.js"
 }
