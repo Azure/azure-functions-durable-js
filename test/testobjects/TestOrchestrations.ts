@@ -7,6 +7,7 @@ export class TestOrchestrations {
         return "Hello";
     });
 
+    // @ts-expect-error yielding a non-Task type
     public static YieldInteger: any = createOrchestrator(function* () {
         yield 4;
     });
