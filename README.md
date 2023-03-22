@@ -5,7 +5,7 @@
 
 # Durable Functions for Node.js
 
-The `durable-functions` npm package allows you to write [Durable Functions](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview?tabs=javascript-v4) for [Node.js](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node?pivots=nodejs-model-v4). Durable Functions is an extension of [Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview) that lets you write stateful functions and workflows in a serverless environment. The extension manages state, checkpoints, and restarts for you. Durable Functions' advantages include:
+The `durable-functions` npm package allows you to write [Durable Functions](https://docs.microsoft.com/azure/azure-functions/durable/durable-functions-overview?tabs=javascript-v4) for [Node.js](https://docs.microsoft.com/azure/azure-functions/functions-reference-node?pivots=nodejs-model-v4). Durable Functions is an extension of [Azure Functions](https://docs.microsoft.com/azure/azure-functions/functions-overview) that lets you write stateful functions and workflows in a serverless environment. The extension manages state, checkpoints, and restarts for you. Durable Functions' advantages include:
 
 -   Define workflows in code. No JSON schemas or designers are needed.
 -   Call other functions synchronously and asynchronously. Output from called functions can be saved to local variables.
@@ -13,9 +13,9 @@ The `durable-functions` npm package allows you to write [Durable Functions](http
 
 You can find more information at the following links:
 
--   [Azure Functions overview](https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview)
--   [Azure Functions JavaScript developers guide](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node?pivots=nodejs-model-v4)
--   [Durable Functions overview](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview?tabs=javascript-v4)
+-   [Azure Functions overview](https://docs.microsoft.com/azure/azure-functions/functions-overview)
+-   [Azure Functions JavaScript developers guide](https://docs.microsoft.com/azure/azure-functions/functions-reference-node?pivots=nodejs-model-v4)
+-   [Durable Functions overview](https://docs.microsoft.com/azure/azure-functions/durable/durable-functions-overview?tabs=javascript-v4)
 
 A durable function, or _orchestration_, is a solution made up of different types of Azure Functions:
 
@@ -23,28 +23,28 @@ A durable function, or _orchestration_, is a solution made up of different types
 -   **Orchestrator:** a function that describes the way and order actions are executed in code.
 -   **Client:** the entry point for creating an instance of a durable orchestration.
 
-Durable Functions' function types and features are documented in-depth [here.](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-types-features-overview)
+Durable Functions' function types and features are documented in-depth [here.](https://docs.microsoft.com/azure/azure-functions/durable/durable-functions-types-features-overview)
 
 This preview `v3.x` version of the Durable Functions package supports the new v4 Node.js programming model for Azure Functions, currently in preview! Compared to the current v3 model, the v4 model is designed to have a more idiomatic and intuitive experience for JavaScript and TypeScript developers. You can learn more about the v4 programming model at the following links:
 
--   [Azure Functions Node.js Developer Guide](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node?pivots=nodejs-model-v4)
--   [Node.js v4 programming model upgrade guide](https://learn.microsoft.com/en-us/azure/azure-functions/functions-node-upgrade-v4)
+-   [Azure Functions Node.js Developer Guide](https://docs.microsoft.com/azure/azure-functions/functions-reference-node?pivots=nodejs-model-v4)
+-   [Node.js v4 programming model upgrade guide](https://learn.microsoft.com/azure/azure-functions/functions-node-upgrade-v4)
 
 ## Getting Started
 
-You can follow the Visual Studio Code quickstart in [JavaScript](https://docs.microsoft.com/en-us/azure/azure-functions/durable/quickstart-js-vscode?pivots=nodejs-model-v4) or [TypeScript](https://docs.microsoft.com/en-us/azure/azure-functions/durable/quickstart-ts-vscode?pivots=nodejs-model-v4) to get started with a function chaining example, or follow the general checklist below:
+You can follow the Visual Studio Code quickstart in [JavaScript](https://docs.microsoft.com/azure/azure-functions/durable/quickstart-js-vscode?pivots=nodejs-model-v4) or [TypeScript](https://docs.microsoft.com/azure/azure-functions/durable/quickstart-ts-vscode?pivots=nodejs-model-v4) to get started with a function chaining example, or follow the general checklist below:
 
 1. Install prerequisites:
 
-    - [Azure Functions Core Tools version 4.0.5085 (or higher)](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Cnode%2Cportal%2Cbash#install-the-azure-functions-core-tools)
-    - [Azurit emulator](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite) or an actual Azure storage account
+    - [Azure Functions Core Tools version 4.0.5085 (or higher)](https://learn.microsoft.com/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Cnode%2Cportal%2Cbash#install-the-azure-functions-core-tools)
+    - [Azurit emulator](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) or an actual Azure storage account
     - Node.js 18.x or later
 
-2. [Create an Azure Functions app.](https://learn.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-node?pivots=nodejs-model-v4) [Visual Studio Code's Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) is recommended ([version 1.10.4](https://github.com/microsoft/vscode-azurefunctions/releases/tag/v1.10.4) or above is needed for the v4 programming model).
+2. [Create an Azure Functions app.](https://learn.microsoft.com/azure/azure-functions/create-first-function-vs-code-node?pivots=nodejs-model-v4) [Visual Studio Code's Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) is recommended ([version 1.10.4](https://github.com/microsoft/vscode-azurefunctions/releases/tag/v1.10.4) or above is needed for the v4 programming model).
 
 3. Install the Durable Functions extension
 
-We recommend using Azure Functions [extension bundles](https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-register#extension-bundles) to install the Durable Functions extension. Version 3.15 or higher of extension bundles is required for the v4 programming model. Make sure you add the following in your `host.json` file:
+We recommend using Azure Functions [extension bundles](https://learn.microsoft.com/azure/azure-functions/functions-bindings-register#extension-bundles) to install the Durable Functions extension. Version 3.15 or higher of extension bundles is required for the v4 programming model. Make sure you add the following in your `host.json` file:
 
 ```json
 "extensionBundle": {
@@ -79,7 +79,7 @@ df.app.orchestration("myOrchestration", function* (context) {
 });
 ```
 
-**Note:** Orchestrator functions must follow certain [code constraints.](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-checkpointing-and-replay#orchestrator-code-constraints)
+**Note:** Orchestrator functions must follow certain [code constraints.](https://docs.microsoft.com/azure/azure-functions/durable-functions-checkpointing-and-replay#orchestrator-code-constraints)
 
 7. Write your client function (see sample in [JavaScript](./samples-js/functions/httpStart.js)/[TypeScript](./samples-ts/functions/httpStart.ts)):
 
@@ -102,16 +102,16 @@ app.http("httpStart", {
 });
 ```
 
-**Note:** Client functions can be started by any trigger binding supported in the Azure Functions runtime version 2.x+. Node.js v4 programming model apps require at least version 4.16.5 of the Azure Functions runtime. [Read more about trigger bindings and 2.x-supported bindings.](https://docs.microsoft.com/en-us/azure/azure-functions/functions-triggers-bindings#overview)
+**Note:** Client functions can be started by any trigger binding supported in the Azure Functions runtime version 2.x+. Node.js v4 programming model apps require at least version 4.16.5 of the Azure Functions runtime. [Read more about trigger bindings and 2.x-supported bindings.](https://docs.microsoft.com/azure/azure-functions/functions-triggers-bindings#overview)
 
 ## Samples
 
-The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-install) demonstrate several common use cases. They are located in the samples directories ([JavaScript](./samples-js/)/[TypeScript](./samples-ts/)). Descriptive documentation is also available:
+The [Durable Functions samples](https://docs.microsoft.com/azure/azure-functions/durable-functions-install) demonstrate several common use cases. They are located in the samples directories ([JavaScript](./samples-js/)/[TypeScript](./samples-ts/)). Descriptive documentation is also available:
 
--   [Function Chaining - Hello Sequence](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-sequence?tabs=javascript-v4)
--   [Fan-out/Fan-in - Cloud Backup](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-cloud-backup?tabs=javascript-v4)
--   [Monitors - Weather Watcher](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-monitor?tabs=javascript)
--   [Human Interaction & Timeouts - Phone Verification](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-phone-verification?tabs=javascript-v4)
+-   [Function Chaining - Hello Sequence](https://docs.microsoft.com/azure/azure-functions/durable-functions-sequence?tabs=javascript-v4)
+-   [Fan-out/Fan-in - Cloud Backup](https://docs.microsoft.com/azure/azure-functions/durable-functions-cloud-backup?tabs=javascript-v4)
+-   [Monitors - Weather Watcher](https://docs.microsoft.com/azure/azure-functions/durable-functions-monitor?tabs=javascript)
+-   [Human Interaction & Timeouts - Phone Verification](https://docs.microsoft.com/azure/azure-functions/durable-functions-phone-verification?tabs=javascript-v4)
 
 ```javascript
 const df = require("durable-functions");
@@ -138,11 +138,11 @@ One of the key attributes of Durable Functions is reliable execution. Orchestrat
 
 In spite of this, Durable Functions ensures reliable execution of orchestrations. It does so by using storage queues to drive function invocation and by periodically checkpointing execution history into storage tables (using a cloud design pattern known as [Event Sourcing](https://docs.microsoft.com/azure/architecture/patterns/event-sourcing)). That history can then be replayed to automatically rebuild the in-memory state of an orchestrator function.
 
-[Read more about Durable Functions' reliable execution.](https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-orchestrations?tabs=javascript-v4)
+[Read more about Durable Functions' reliable execution.](https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-orchestrations?tabs=javascript-v4)
 
 ### Durable Functions JS
 
-The `durable-functions` shim lets you express a workflow in code as a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators) wrapped by a call to the `app.orchestration` method. The Durable Functions SDK treats `yield`-ed calls to your function `context`'s `df` object, like `context.df.callActivity`, as points where you want to schedule an asynchronous unit of work and wait for it to complete.
+The `durable-functions` shim lets you express a workflow in code as a [generator function](https://developer.mozilla.org/docs/Web/JavaScript/Guide/Iterators_and_Generators) wrapped by a call to the `app.orchestration` method. The Durable Functions SDK treats `yield`-ed calls to your function `context`'s `df` object, like `context.df.callActivity`, as points where you want to schedule an asynchronous unit of work and wait for it to complete.
 
 These calls return a `Task` object signifying the outstanding work. The SDK appends the action(s) of the `Task` object to a list which it passes back to the Functions runtime, plus whether the function is completed, and any output or errors.
 
