@@ -1,7 +1,7 @@
-| Branch | Status                                                                                                                                                                                                                                    |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| v2.x   | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v2.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v2.x) |
-| v3.x   | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v3.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v3.x) |
+| Branch | Support level | Status                                                                                                                                                                                                                                    |
+| ------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v2.x   | GA            | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v2.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v2.x) |
+| v3.x   | Preview       | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v3.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v3.x) |
 
 # Durable Functions for Node.js
 
@@ -37,7 +37,7 @@ You can follow the Visual Studio Code quickstart in [JavaScript](https://docs.mi
 1. Install prerequisites:
 
     - [Azure Functions Core Tools version 4.0.5085 (or higher)](https://learn.microsoft.com/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Cnode%2Cportal%2Cbash#install-the-azure-functions-core-tools)
-    - [Azurit emulator](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) or an actual Azure storage account
+    - [Azurite emulator](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) or an actual Azure storage account
     - Node.js 18.x or later
 
 2. [Create an Azure Functions app.](https://learn.microsoft.com/azure/azure-functions/create-first-function-vs-code-node?pivots=nodejs-model-v4) [Visual Studio Code's Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) is recommended ([version 1.10.4](https://github.com/microsoft/vscode-azurefunctions/releases/tag/v1.10.4) or above is needed for the v4 programming model).
