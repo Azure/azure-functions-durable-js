@@ -644,10 +644,9 @@ export class DurableOrchestrationClient implements DurableClient {
     }
 
     private createHttpResponse(statusCode: number, body: unknown): HttpResponse {
-        const bodyAsJson = JSON.stringify(body);
         return new HttpResponse({
             status: statusCode,
-            jsonBody: bodyAsJson,
+            jsonBody: body,
             headers: {
                 "Content-Type": "application/json",
             },
