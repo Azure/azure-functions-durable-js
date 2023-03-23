@@ -1157,7 +1157,7 @@ describe("Orchestration Client", () => {
                 }
             );
 
-            const body = await res.json();
+            const body = await res.text();
             expect(res.status).to.equal(200);
             expect(body).to.equal(JSON.stringify(expectedOutput));
             expect(res.headers.get("Content-Type")).to.equal("application/json");
@@ -1189,7 +1189,7 @@ describe("Orchestration Client", () => {
                 }
             );
 
-            const body = await res.json();
+            const body = await res.text();
             expect(res.status).to.equal(200);
             expect(body).to.equal(expectedStatusAsJson);
             expect(res.headers.get("Content-Type")).to.equal("application/json");
@@ -1221,7 +1221,7 @@ describe("Orchestration Client", () => {
                 }
             );
 
-            const body = await res.json();
+            const body = await res.text();
             expect(res.status).to.equal(200);
             expect(body).to.equal(expectedStatusAsJson);
             expect(res.headers.get("Content-Type")).to.equal("application/json");
@@ -1253,7 +1253,7 @@ describe("Orchestration Client", () => {
                 }
             );
 
-            const body = await res.json();
+            const body = await res.text();
             expect(res.status).to.equal(500);
             expect(body).to.equal(expectedStatusAsJson);
             expect(res.headers.get("Content-Type")).to.equal("application/json");
@@ -1310,7 +1310,7 @@ describe("Orchestration Client", () => {
                 }
             );
 
-            const body = await res.json();
+            const body = await res.text();
             expect(res.status).to.equal(200);
             expect(body).to.equal(JSON.stringify(expectedOutput));
             expect(res.headers.get("Content-Type")).to.equal("application/json");
