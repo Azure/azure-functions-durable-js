@@ -158,7 +158,7 @@ export class DurableOrchestrationClient {
                 },
             },
             maxContentLength: Infinity,
-            maxBodyLength: 5000000,
+            maxBodyLength: 5000000, // 5MB
         });
         this.taskHubName = this.clientData.taskHubName;
         this.uniqueWebhookOrigins = this.extractUniqueWebhookOrigins(this.clientData);
