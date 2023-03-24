@@ -22,7 +22,7 @@ df.app.orchestration("sayHelloWithActivity", function* (context) {
 
 df.app.orchestration("sayHelloWithCustomStatus", function* (context) {
     const input = context.df.getInput();
-    const output = yield context.df.callActivity(sayHelloActivityName, input);
+    const output = yield context.df.callActivity(helloActivityName, input);
     context.df.setCustomStatus(output);
     return output;
 });
