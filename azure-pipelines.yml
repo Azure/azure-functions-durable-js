@@ -13,11 +13,9 @@ pr:
     branches:
         include:
             - v2.x
-            - v3.x
 
 trigger:
     - v2.x
-    - v3.x
 
 jobs:
     - job: Test
