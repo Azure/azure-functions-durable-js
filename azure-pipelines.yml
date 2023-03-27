@@ -1,16 +1,23 @@
 variables:
-    { MODULE_VERSION: "2.1.2", NODE_10: "10.x", NODE_12: "12.x", NODE_14: "14.x", NODE_16: "16.x" }
+    {
+        MODULE_VERSION: "2.1.2",
+        NODE_10: "10.x",
+        NODE_12: "12.x",
+        NODE_14: "14.x",
+        NODE_16: "16.x",
+        NODE_18: "18.x",
+    }
 name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
 
 pr:
     branches:
         include:
-            - main
-            - dev
+            - v2.x
+            - v3.x
 
 trigger:
-    - main
-    - dev
+    - v2.x
+    - v3.x
 
 jobs:
     - job: Test
@@ -28,6 +35,9 @@ jobs:
               UBUNTU_NODE16:
                   IMAGE_TYPE: "ubuntu-latest"
                   NODE_VERSION: $(NODE_16)
+              UBUNTU_NODE18:
+                  IMAGE_TYPE: "ubuntu-latest"
+                  NODE_VERSION: $(NODE_18)
               WINDOWS_NODE10:
                   IMAGE_TYPE: "windows-latest"
                   NODE_VERSION: $(NODE_10)
@@ -40,6 +50,9 @@ jobs:
               WINDOWS_NODE16:
                   IMAGE_TYPE: "windows-latest"
                   NODE_VERSION: $(NODE_16)
+              WINDOWS_NODE18:
+                  IMAGE_TYPE: "windows-latest"
+                  NODE_VERSION: $(NODE_18)
               MAC_NODE10:
                   IMAGE_TYPE: "macOS-latest"
                   NODE_VERSION: $(NODE_10)
@@ -52,6 +65,9 @@ jobs:
               MAC_NODE16:
                   IMAGE_TYPE: "macOS-latest"
                   NODE_VERSION: $(NODE_16)
+              MAC_NODE18:
+                  IMAGE_TYPE: "macOS-latest"
+                  NODE_VERSION: $(NODE_18)
       pool:
           vmImage: $(IMAGE_TYPE)
       steps:
