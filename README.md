@@ -1,27 +1,29 @@
-|Branch|Status|
-|---|---|
-|v2.x|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v2.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v2.x)|
-|v3.x|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v3.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v3.x)|
+| Branch | Status                                                                                                                                                                                                                                    | Support level | Programming model | Node.js versions |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------------- | ---------------- |
+| v2.x   | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v2.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v2.x) | GA            | V1, V2, V3        | 8.x+             |
+| v3.x   | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v3.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v3.x) | Preview       | V4 (preview)      | 18.x+            |
 
 # Durable Functions for Node.js
 
+> _**Version 3 with support for the V4 node programming model is currently in public preview! 🎉✨ Learn more about the V4 programming model: <https://aka.ms/AzFuncNodeV4>**_
+
 The `durable-functions` npm package allows you to write [Durable Functions](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview) for [Node.js](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node). Durable Functions is an extension of [Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview) that lets you write stateful functions and workflows in a serverless environment. The extension manages state, checkpoints, and restarts for you. Durable Functions' advantages include:
 
-* Define workflows in code. No JSON schemas or designers are needed.
-* Call other functions synchronously and asynchronously. Output from called functions can be saved to local variables.
-* Automatically checkpoint progress whenever the function schedules async work. Local state is never lost if the process recycles or the VM reboots.
+-   Define workflows in code. No JSON schemas or designers are needed.
+-   Call other functions synchronously and asynchronously. Output from called functions can be saved to local variables.
+-   Automatically checkpoint progress whenever the function schedules async work. Local state is never lost if the process recycles or the VM reboots.
 
 You can find more information at the following links:
 
-* [Azure Functions overview](https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview)
-* [Azure Functions JavaScript developers guide](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node)
-* [Durable Functions overview](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview)
+-   [Azure Functions overview](https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview)
+-   [Azure Functions JavaScript developers guide](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node)
+-   [Durable Functions overview](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview)
 
 A durable function, or _orchestration_, is a solution made up of different types of Azure Functions:
 
-* **Activity:** the functions and tasks being orchestrated by your workflow.
-* **Orchestrator:** a function that describes the way and order actions are executed in code.
-* **Client:** the entry point for creating an instance of a durable orchestration.
+-   **Activity:** the functions and tasks being orchestrated by your workflow.
+-   **Orchestrator:** a function that describes the way and order actions are executed in code.
+-   **Client:** the entry point for creating an instance of a durable orchestration.
 
 Durable Functions' function types and features are documented in-depth [here.](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-types-features-overview)
 
@@ -30,6 +32,7 @@ Durable Functions' function types and features are documented in-depth [here.](h
 You can follow the [Visual Studio Code quickstart](https://docs.microsoft.com/en-us/azure/azure-functions/durable/quickstart-js-vscode) to get started with a function chaining example, or follow the general checklist below:
 
 1. Install prerequisites:
+
     - [Azure Functions Core Tools version 2.x](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools)
     - [Azure Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator) (Windows) or an actual Azure storage account (Mac or Linux)
     - Node.js 8.6.0 or later
@@ -39,6 +42,7 @@ You can follow the [Visual Studio Code quickstart](https://docs.microsoft.com/en
 3. Install the Durable Functions extension
 
 Run this command from the root folder of your Azure Functions app:
+
 ```bash
 func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.8.3
 ```
@@ -52,8 +56,9 @@ npm install durable-functions
 ```
 
 5. Write an activity function ([see sample](./samples/E1_SayHello)):
+
 ```javascript
-module.exports = async function(context) {
+module.exports = async function (context) {
     // your code here
 };
 ```
@@ -61,8 +66,8 @@ module.exports = async function(context) {
 6. Write an orchestrator function ([see sample](./samples/E1_HelloSequence)):
 
 ```javascript
-const df = require('durable-functions');
-module.exports = df.orchestrator(function*(context){
+const df = require("durable-functions");
+module.exports = df.orchestrator(function* (context) {
     // your code here
 });
 ```
@@ -70,6 +75,7 @@ module.exports = df.orchestrator(function*(context){
 **Note:** Orchestrator functions must follow certain [code constraints.](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-checkpointing-and-replay#orchestrator-code-constraints)
 
 7. Write your client function ([see sample](./samples/HttpStart/)):
+
 ```javascript
 module.exports = async function (context, req) {
     const client = df.getClient(context);
@@ -87,15 +93,15 @@ module.exports = async function (context, req) {
 
 The [Durable Functions samples](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-install) demonstrate several common use cases. They are located in the [samples directory.](./samples/) Descriptive documentation is also available:
 
-* [Function Chaining - Hello Sequence](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-sequence)
-* [Fan-out/Fan-in - Cloud Backup](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-cloud-backup)
-* [Monitors - Weather Watcher](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-monitor)
-* [Human Interaction & Timeouts - Phone Verification](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-phone-verification)
+-   [Function Chaining - Hello Sequence](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-sequence)
+-   [Fan-out/Fan-in - Cloud Backup](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-cloud-backup)
+-   [Monitors - Weather Watcher](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-monitor)
+-   [Human Interaction & Timeouts - Phone Verification](https://docs.microsoft.com/en-us/azure/azure-functions/durable-functions-phone-verification)
 
 ```javascript
 const df = require("durable-functions");
 
-module.exports = df.orchestrator(function*(context){
+module.exports = df.orchestrator(function* (context) {
     context.log("Starting chain sample");
     const output = [];
     output.push(yield context.df.callActivity("E1_SayHello", "Tokyo"));
@@ -109,6 +115,7 @@ module.exports = df.orchestrator(function*(context){
 ## How it works
 
 ### Durable Functions
+
 One of the key attributes of Durable Functions is reliable execution. Orchestrator functions and activity functions may be running on different VMs within a data center, and those VMs or the underlying networking infrastructure is not 100% reliable.
 
 In spite of this, Durable Functions ensures reliable execution of orchestrations. It does so by using storage queues to drive function invocation and by periodically checkpointing execution history into storage tables (using a cloud design pattern known as [Event Sourcing](https://docs.microsoft.com/azure/architecture/patterns/event-sourcing)). That history can then be replayed to automatically rebuild the in-memory state of an orchestrator function.
