@@ -35,7 +35,7 @@ const httpSyncStart: HttpHandler = async function (
             retryIntervalInMilliseconds,
         }
     );
-    return new HttpResponse(response as HttpResponseInit);
+    return response;
 };
 
 app.http("httpSyncStart", {
