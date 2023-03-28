@@ -19,10 +19,14 @@ app.http("httpSyncStart", {
         const timeoutInMilliseconds = getTimeInMilliseconds(request, timeout) || 30000;
         const retryIntervalInMilliseconds = getTimeInMilliseconds(request, retryInterval) || 1000;
 
-        const response = client.waitForCompletionOrCreateCheckStatusResponse(request, instanceId, {
-            timeoutInMilliseconds,
-            retryIntervalInMilliseconds,
-        });
+        const response = await client.waitForCompletionOrCreateCheckStatusResponse(
+            request,
+            instanceId,
+            {
+                timeoutInMilliseconds,
+                retryIntervalInMilliseconds,
+            }
+        );
         return response;
     },
 });
