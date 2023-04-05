@@ -30,10 +30,12 @@ const httpSyncStart: HttpHandler = async function (
     const response = await client.waitForCompletionOrCreateCheckStatusResponse(
         request,
         instanceId,
-        timeoutInMilliseconds,
-        retryIntervalInMilliseconds
+        {
+            timeoutInMilliseconds,
+            retryIntervalInMilliseconds,
+        }
     );
-    return new HttpResponse(response as HttpResponseInit);
+    return response;
 };
 
 app.http("httpSyncStart", {
