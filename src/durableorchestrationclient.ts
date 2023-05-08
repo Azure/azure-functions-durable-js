@@ -193,15 +193,26 @@ export class DurableOrchestrationClient implements DurableClient {
             instanceId,
             ...options,
         };
-        const response = await this.getStatusInternal(internalOptions);
+        const response: AxiosResponse = await this.getStatusInternal(internalOptions);
 
         switch (response.status) {
-            case 200: // instance completed
-            case 202: // instance in progress
-            case 400: // instance failed or terminated
-            case 404: // instance not found or pending
-            case 500: // instance failed with unhandled exception
-                return response.data as DurableOrchestrationStatus;
+            case 200: // instance completed, failed or terminated
+            case 202: // instance running or pending
+            case 400:
+                if (!response.data) {
+                    throw new Error(
+                        "Operation failed. The received response contained empty response data."
+                    );
+                }
+                return new DurableOrchestrationStatus(response.data);
+            case 404: // instance not found
+                let msg =
+                    "The operation failed because the instanceId supplied was invalid or not found.";
+                if (response.data) {
+                    msg += ` Details: ${JSON.stringify(response.data)}`;
+                }
+                throw new Error(msg);
+            case 500: // request failed with unhandled exception (data contains exception message)
             default:
                 return Promise.reject(this.createGenericError(response));
         }

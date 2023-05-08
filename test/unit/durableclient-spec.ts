@@ -178,6 +178,10 @@ describe("Durable client RPC endpoint", () => {
             const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/${instanceId}`);
 
             const scope = nock(expectedUrl.origin).get(expectedUrl.pathname).reply(202, {
+                name: "testOrchestration",
+                instanceId: "testInstanceId",
+                input: null,
+                output: null,
                 createdTime: "2020-01-01T05:00:00Z",
                 lastUpdatedTime: "2020-01-01T05:00:00Z",
                 runtimeStatus: "Running",
@@ -204,6 +208,10 @@ describe("Durable client RPC endpoint", () => {
                     showHistoryOutput: true,
                 })
                 .reply(202, {
+                    name: "testOrchestration",
+                    instanceId: "testInstanceId",
+                    input: null,
+                    output: null,
                     createdTime: "2020-01-01T05:00:00Z",
                     lastUpdatedTime: "2020-01-01T05:00:00Z",
                     runtimeStatus: "Pending",
@@ -265,15 +273,15 @@ describe("Durable client RPC endpoint", () => {
 
             // create dummy orchestration status for response
             const dummyDate = new Date();
-            const dummyStatus = new DurableOrchestrationStatus(
-                "dummyOrchestrationStatus",
-                "123456",
-                dummyDate,
-                dummyDate,
-                "myInput",
-                "myOutput",
-                OrchestrationRuntimeStatus.Completed
-            );
+            const dummyStatus = new DurableOrchestrationStatus({
+                name: "dummyOrchestrationStatus",
+                instanceId: "123456",
+                createdTime: dummyDate,
+                lastUpdatedTime: dummyDate,
+                input: "myInput",
+                output: "myOutput",
+                runtimeStatus: OrchestrationRuntimeStatus.Completed,
+            });
             const dummyStatusJSON = JSON.stringify(dummyStatus);
 
             const scopeWithTokenResponse = nock(expectedUrl.origin)
