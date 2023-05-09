@@ -510,7 +510,7 @@ describe("Orchestration Client", () => {
                 .reply(404, "");
 
             await expect(client.getStatus("nonExistentInstanceId")).to.be.rejectedWith(
-                `The operation failed because the instanceId supplied was invalid or not found.`
+                `DurableClient error: Durable Functions extension replied with HTTP 404 response. This usually means we could not find any data associated with the instanceId provided: nonExistentInstanceId.`
             );
         });
     });
