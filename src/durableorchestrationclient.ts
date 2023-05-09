@@ -201,10 +201,18 @@ export class DurableOrchestrationClient implements DurableClient {
             case 400:
                 if (!response.data) {
                     throw new Error(
-                        "Operation failed. The received response contained empty response data."
+                        `DurableClient error: the Durable Functions extension replied with an empty HTTP ${response.status} response.`
                     );
                 }
-                return new DurableOrchestrationStatus(response.data);
+
+                try {
+                    return new DurableOrchestrationStatus(response.data);
+                } catch (error) {
+                    throw new Error(
+                        `DurableClient error: could not construct a DurableOrhcestrationStatus object using the data received from the Durable Functions extension: ${error.Message}`
+                    );
+                }
+
             case 404: // instance not found
                 let msg = `DurableClient error: Durable Functions extension replied with HTTP 404 response. This usually means we could not find any data associated with the instanceId provided: ${instanceId}.`;
                 if (response.data) {
