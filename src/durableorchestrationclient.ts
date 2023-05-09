@@ -212,7 +212,7 @@ export class DurableOrchestrationClient implements DurableClient {
                     msg += ` Details: ${JSON.stringify(response.data)}`;
                 }
                 throw new Error(msg);
-            case 500: // request failed with unhandled exception (data contains exception message)
+            case 500: // request failed with unhandled exception (response data contains exception details)
             default:
                 return Promise.reject(this.createGenericError(response));
         }
