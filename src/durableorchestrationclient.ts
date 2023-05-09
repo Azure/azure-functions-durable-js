@@ -206,8 +206,7 @@ export class DurableOrchestrationClient implements DurableClient {
                 }
                 return new DurableOrchestrationStatus(response.data);
             case 404: // instance not found
-                let msg =
-                    "The operation failed because the instanceId supplied was invalid or not found.";
+                let msg = `DurableClient error: Durable Functions extension replied with HTTP 404 response. This usually means we could not find any data associated with the instanceId provided: ${instanceId}.`;
                 if (response.data) {
                     msg += ` Details: ${JSON.stringify(response.data)}`;
                 }
