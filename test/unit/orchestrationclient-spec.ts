@@ -456,7 +456,7 @@ describe("Orchestration Client", () => {
                 .reply(200, "");
 
             await expect(client.getStatus(defaultInstanceId)).to.be.rejectedWith(
-                `Operation failed. The received response contained empty response data.`
+                `DurableClient error: the Durable Functions extension replied with an empty HTTP 200 response.`
             );
         });
 
@@ -486,9 +486,9 @@ describe("Orchestration Client", () => {
                 .reply(202, statusInit);
 
             await expect(client.getStatus(defaultInstanceId)).to.be.rejectedWith(
-                `Malformed data passed to DurableOrchestrationStatus constructor. Data received: ${JSON.stringify(
-                    statusInit
-                )}`
+                `DurableClient error: could not construct a DurableOrchestrationStatus object using the data received from the Durable Functions extension: ` +
+                    `Failed to construct a DurableOrchestrationStatus object because the initializer had invalid types or missing fields. ` +
+                    `Initializer received: ${JSON.stringify(statusInit)}`
             );
         });
 

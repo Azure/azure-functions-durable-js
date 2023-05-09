@@ -209,12 +209,14 @@ export class DurableOrchestrationClient implements DurableClient {
                     return new DurableOrchestrationStatus(response.data);
                 } catch (error) {
                     throw new Error(
-                        `DurableClient error: could not construct a DurableOrhcestrationStatus object using the data received from the Durable Functions extension: ${error.Message}`
+                        `DurableClient error: could not construct a DurableOrchestrationStatus object using the data received from the Durable Functions extension: ${error.message}`
                     );
                 }
 
             case 404: // instance not found
-                let msg = `DurableClient error: Durable Functions extension replied with HTTP 404 response. This usually means we could not find any data associated with the instanceId provided: ${instanceId}.`;
+                let msg =
+                    `DurableClient error: Durable Functions extension replied with HTTP 404 response. ` +
+                    `This usually means we could not find any data associated with the instanceId provided: ${instanceId}.`;
                 if (response.data) {
                     msg += ` Details: ${JSON.stringify(response.data)}`;
                 }

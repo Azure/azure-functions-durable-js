@@ -16,7 +16,7 @@ export class DurableOrchestrationStatus implements types.DurableOrchestrationSta
     constructor(init: unknown) {
         if (!this.isDurableOrchestrationStatusInit(init)) {
             throw new TypeError(
-                `Malformed data passed to DurableOrchestrationStatus constructor. Data received: ${JSON.stringify(
+                `Failed to construct a DurableOrchestrationStatus object because the initializer had invalid types or missing fields. Initializer received: ${JSON.stringify(
                     init
                 )}`
             );
