@@ -138,15 +138,15 @@ describe("Orchestration Client", () => {
         it("calls expected webhook", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                undefined,
-                OrchestrationRuntimeStatus.Pending
-            );
+            const expectedStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: null,
+                runtimeStatus: OrchestrationRuntimeStatus.Pending,
+            });
             const expectedWebhookUrl = new url.URL(
                 defaultClientInputData.managementUrls.statusQueryGetUri.replace(
                     TestConstants.idPlaceholder,
@@ -169,15 +169,15 @@ describe("Orchestration Client", () => {
         it("calls expected webhook when showHistory = true", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                undefined,
-                OrchestrationRuntimeStatus.Pending
-            );
+            const expectedStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: null,
+                runtimeStatus: OrchestrationRuntimeStatus.Pending,
+            });
             const expectedWebhookUrl = new url.URL(
                 defaultClientInputData.managementUrls.statusQueryGetUri.replace(
                     TestConstants.idPlaceholder,
@@ -202,15 +202,15 @@ describe("Orchestration Client", () => {
         it("calls expected webhook when showHistoryOutput = true", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                undefined,
-                OrchestrationRuntimeStatus.Pending
-            );
+            const expectedStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: null,
+                runtimeStatus: OrchestrationRuntimeStatus.Pending,
+            });
             const expectedWebhookUrl = new url.URL(
                 defaultClientInputData.managementUrls.statusQueryGetUri.replace(
                     TestConstants.idPlaceholder,
@@ -236,15 +236,15 @@ describe("Orchestration Client", () => {
         it("calls expected webhook when showInput = false", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                undefined,
-                OrchestrationRuntimeStatus.Pending
-            );
+            const expectedStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: null,
+                runtimeStatus: OrchestrationRuntimeStatus.Pending,
+            });
             const expectedWebhookUrl = new url.URL(
                 defaultClientInputData.managementUrls.statusQueryGetUri.replace(
                     TestConstants.idPlaceholder,
@@ -268,7 +268,251 @@ describe("Orchestration Client", () => {
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
         });
 
-        // TODO: test status codes individually
+        describe("correctly handles 200 responses", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                    TestConstants.idPlaceholder,
+                    defaultInstanceId
+                )
+            );
+
+            it("correctly handles Completed case", async () => {
+                const expectedStatus = new DurableOrchestrationStatus({
+                    name: defaultOrchestrationName,
+                    instanceId: defaultInstanceId,
+                    createdTime: new Date().toString(),
+                    lastUpdatedTime: new Date().toString(),
+                    input: null,
+                    output: "myOutput",
+                    runtimeStatus: OrchestrationRuntimeStatus.Completed,
+                });
+
+                const scope = nock(expectedWebhookUrl.origin)
+                    .get(expectedWebhookUrl.pathname)
+                    .query((actualQueryObject: object) =>
+                        urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                    )
+                    .reply(200, expectedStatus);
+
+                const result = await client.getStatus(defaultInstanceId);
+                expect(scope.isDone()).to.be.equal(true);
+                expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
+            });
+
+            it("correctly handles Failed case", async () => {
+                const expectedStatus = new DurableOrchestrationStatus({
+                    name: defaultOrchestrationName,
+                    instanceId: defaultInstanceId,
+                    createdTime: new Date().toString(),
+                    lastUpdatedTime: new Date().toString(),
+                    input: null,
+                    output: `Orchestrator function '${defaultOrchestrationName}' failed: Error`,
+                    runtimeStatus: OrchestrationRuntimeStatus.Failed,
+                });
+
+                const scope = nock(expectedWebhookUrl.origin)
+                    .get(expectedWebhookUrl.pathname)
+                    .query((actualQueryObject: object) =>
+                        urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                    )
+                    .reply(200, expectedStatus);
+
+                const result = await client.getStatus(defaultInstanceId);
+                expect(scope.isDone()).to.be.equal(true);
+                expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
+            });
+
+            it("correctly handles Terminated case", async () => {
+                const expectedStatus = new DurableOrchestrationStatus({
+                    name: defaultOrchestrationName,
+                    instanceId: defaultInstanceId,
+                    createdTime: new Date().toString(),
+                    lastUpdatedTime: new Date().toString(),
+                    input: null,
+                    output: `Termination reason`,
+                    runtimeStatus: OrchestrationRuntimeStatus.Terminated,
+                });
+
+                const scope = nock(expectedWebhookUrl.origin)
+                    .get(expectedWebhookUrl.pathname)
+                    .query((actualQueryObject: object) =>
+                        urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                    )
+                    .reply(200, expectedStatus);
+
+                const result = await client.getStatus(defaultInstanceId);
+                expect(scope.isDone()).to.be.equal(true);
+                expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
+            });
+        });
+
+        describe("correctly handles 202 responses", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                    TestConstants.idPlaceholder,
+                    defaultInstanceId
+                )
+            );
+
+            it("correctly handles Pending case", async () => {
+                const expectedStatus = new DurableOrchestrationStatus({
+                    name: defaultOrchestrationName,
+                    instanceId: defaultInstanceId,
+                    createdTime: new Date().toString(),
+                    lastUpdatedTime: new Date().toString(),
+                    input: null,
+                    output: null,
+                    runtimeStatus: OrchestrationRuntimeStatus.Pending,
+                });
+
+                const scope = nock(expectedWebhookUrl.origin)
+                    .get(expectedWebhookUrl.pathname)
+                    .query((actualQueryObject: object) =>
+                        urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                    )
+                    .reply(202, expectedStatus);
+
+                const result = await client.getStatus(defaultInstanceId);
+                expect(scope.isDone()).to.be.equal(true);
+                expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
+            });
+
+            it("correctly handles Running case", async () => {
+                const expectedStatus = new DurableOrchestrationStatus({
+                    name: defaultOrchestrationName,
+                    instanceId: defaultInstanceId,
+                    createdTime: new Date().toString(),
+                    lastUpdatedTime: new Date().toString(),
+                    input: null,
+                    output: null,
+                    runtimeStatus: OrchestrationRuntimeStatus.Running,
+                });
+
+                const scope = nock(expectedWebhookUrl.origin)
+                    .get(expectedWebhookUrl.pathname)
+                    .query((actualQueryObject: object) =>
+                        urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                    )
+                    .reply(202, expectedStatus);
+
+                const result = await client.getStatus(defaultInstanceId);
+                expect(scope.isDone()).to.be.equal(true);
+                expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
+            });
+        });
+
+        it("throws on 500 responses", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                    TestConstants.idPlaceholder,
+                    defaultInstanceId
+                )
+            );
+
+            const exception = {
+                Message: "Something went wrong while processing your request",
+                ExceptionType:
+                    "ExceptionType: 'DurableTask.AzureStorage.Storage.DurableTaskStorageException",
+                ExceptionMessage:
+                    "No connection could be made because the target machine actively refused it. (127.0.0.1:10002)",
+                StackTrace: "Sample stack trace",
+            };
+
+            nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(500, exception);
+
+            await expect(client.getStatus(defaultInstanceId)).to.be.rejectedWith(
+                `The operation failed with an unexpected status code: 500. Details: ${JSON.stringify(
+                    exception
+                )}`
+            );
+        });
+
+        it("Throws on empty response data", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                    TestConstants.idPlaceholder,
+                    defaultInstanceId
+                )
+            );
+
+            nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(200, "");
+
+            await expect(client.getStatus(defaultInstanceId)).to.be.rejectedWith(
+                `DurableClient error: the Durable Functions extension replied with an empty HTTP 200 response.`
+            );
+        });
+
+        it("throws on malformed response data", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                    TestConstants.idPlaceholder,
+                    defaultInstanceId
+                )
+            );
+
+            const statusInit = {
+                createdTime: new Date().toString(),
+                lastUpdatedTime: new Date().toString(),
+                input: null,
+                output: null,
+                runtimeStatus: OrchestrationRuntimeStatus.Running,
+            };
+
+            nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(202, statusInit);
+
+            await expect(client.getStatus(defaultInstanceId)).to.be.rejectedWith(
+                `DurableClient error: could not construct a DurableOrchestrationStatus object using the data received from the Durable Functions extension: ` +
+                    `Failed to construct a DurableOrchestrationStatus object because the initializer had invalid types or missing fields. ` +
+                    `Initializer received: ${JSON.stringify(statusInit)}`
+            );
+        });
+
+        it("throws on invalid instanceId", async () => {
+            const client = new DurableOrchestrationClient(defaultClientInputData);
+
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.statusQueryGetUri.replace(
+                    TestConstants.idPlaceholder,
+                    "nonExistentInstanceId"
+                )
+            );
+
+            nock(expectedWebhookUrl.origin)
+                .get(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(404, "");
+
+            await expect(client.getStatus("nonExistentInstanceId")).to.be.rejectedWith(
+                `DurableClient error: Durable Functions extension replied with HTTP 404 response. This usually means we could not find any data associated with the instanceId provided: nonExistentInstanceId.`
+            );
+        });
     });
 
     describe("getStatusAll()", () => {
@@ -291,15 +535,15 @@ describe("Orchestration Client", () => {
             );
 
             const expectedStatuses: DurableOrchestrationStatus[] = [
-                new DurableOrchestrationStatus(
-                    defaultOrchestrationName,
-                    defaultInstanceId,
-                    new Date(),
-                    new Date(),
-                    undefined,
-                    undefined,
-                    OrchestrationRuntimeStatus.Pending
-                ),
+                new DurableOrchestrationStatus({
+                    name: defaultOrchestrationName,
+                    instanceId: defaultInstanceId,
+                    createdTime: new Date(),
+                    lastUpdatedTime: new Date(),
+                    input: null,
+                    output: null,
+                    runtimeStatus: OrchestrationRuntimeStatus.Pending,
+                }),
             ];
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
@@ -342,17 +586,15 @@ describe("Orchestration Client", () => {
             );
 
             const expectedStatuses: DurableOrchestrationStatus[] = [
-                new DurableOrchestrationStatus(
-                    defaultOrchestrationName,
-                    defaultInstanceId,
-                    new Date(),
-                    new Date(),
-                    undefined,
-                    undefined,
-                    OrchestrationRuntimeStatus.Terminated,
-                    undefined,
-                    undefined
-                ),
+                new DurableOrchestrationStatus({
+                    name: defaultOrchestrationName,
+                    instanceId: defaultInstanceId,
+                    createdTime: new Date(),
+                    lastUpdatedTime: new Date(),
+                    input: null,
+                    output: null,
+                    runtimeStatus: OrchestrationRuntimeStatus.Terminated,
+                }),
             ];
             const scope = nock(expectedWebhookUrl.origin)
                 .get(expectedWebhookUrl.pathname)
@@ -1134,19 +1376,17 @@ describe("Orchestration Client", () => {
 
             const expectedOutput = 42;
 
-            const expectedStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                expectedOutput,
-                OrchestrationRuntimeStatus.Completed,
-                undefined,
-                undefined
-            );
+            const expectedStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: expectedOutput,
+                runtimeStatus: OrchestrationRuntimeStatus.Completed,
+            });
 
-            nock(Constants.DefaultLocalOrigin).get(/.*/).reply(202, expectedStatus);
+            nock(Constants.DefaultLocalOrigin).get(/.*/).reply(200, expectedStatus);
 
             const res = await client.waitForCompletionOrCreateCheckStatusResponse(
                 defaultRequest,
@@ -1166,15 +1406,15 @@ describe("Orchestration Client", () => {
         it("returns expected result for canceled instance", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                undefined,
-                OrchestrationRuntimeStatus.Canceled
-            );
+            const expectedStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: null,
+                runtimeStatus: OrchestrationRuntimeStatus.Canceled,
+            });
 
             nock(Constants.DefaultLocalOrigin).get(/.*/).reply(202, expectedStatus);
 
@@ -1198,17 +1438,17 @@ describe("Orchestration Client", () => {
         it("returns expected result for terminated instance", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                undefined,
-                OrchestrationRuntimeStatus.Terminated
-            );
+            const expectedStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: null,
+                runtimeStatus: OrchestrationRuntimeStatus.Terminated,
+            });
 
-            nock(Constants.DefaultLocalOrigin).get(/.*/).reply(202, expectedStatus);
+            nock(Constants.DefaultLocalOrigin).get(/.*/).reply(200, expectedStatus);
 
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
 
@@ -1230,17 +1470,17 @@ describe("Orchestration Client", () => {
         it("returns expected result for failed instance", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const expectedStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                undefined,
-                OrchestrationRuntimeStatus.Failed
-            );
+            const expectedStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: null,
+                runtimeStatus: OrchestrationRuntimeStatus.Failed,
+            });
 
-            nock(Constants.DefaultLocalOrigin).get(/.*/).reply(202, expectedStatus);
+            nock(Constants.DefaultLocalOrigin).get(/.*/).reply(200, expectedStatus);
 
             const expectedStatusAsJson = JSON.stringify(expectedStatus);
 
@@ -1264,24 +1504,24 @@ describe("Orchestration Client", () => {
 
             const expectedOutput = 42;
 
-            const runningStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                undefined,
-                OrchestrationRuntimeStatus.Running
-            );
-            const completedStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                expectedOutput,
-                OrchestrationRuntimeStatus.Completed
-            );
+            const runningStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: null,
+                runtimeStatus: OrchestrationRuntimeStatus.Running,
+            });
+            const completedStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: expectedOutput,
+                runtimeStatus: OrchestrationRuntimeStatus.Completed,
+            });
 
             const httpManagementPayload = TestUtils.createHttpManagementPayload(
                 defaultInstanceId,
@@ -1320,15 +1560,15 @@ describe("Orchestration Client", () => {
         it("returns check status response if timeout expires", async () => {
             const client = new DurableOrchestrationClient(defaultClientInputData);
 
-            const runningStatus = new DurableOrchestrationStatus(
-                defaultOrchestrationName,
-                defaultInstanceId,
-                new Date(),
-                new Date(),
-                undefined,
-                undefined,
-                OrchestrationRuntimeStatus.Running
-            );
+            const runningStatus = new DurableOrchestrationStatus({
+                name: defaultOrchestrationName,
+                instanceId: defaultInstanceId,
+                createdTime: new Date(),
+                lastUpdatedTime: new Date(),
+                input: null,
+                output: null,
+                runtimeStatus: OrchestrationRuntimeStatus.Running,
+            });
 
             const httpManagementPayload = TestUtils.createHttpManagementPayload(
                 defaultInstanceId,

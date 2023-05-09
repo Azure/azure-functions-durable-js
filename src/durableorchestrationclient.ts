@@ -193,15 +193,35 @@ export class DurableOrchestrationClient implements DurableClient {
             instanceId,
             ...options,
         };
-        const response = await this.getStatusInternal(internalOptions);
+        const response: AxiosResponse = await this.getStatusInternal(internalOptions);
 
         switch (response.status) {
-            case 200: // instance completed
-            case 202: // instance in progress
-            case 400: // instance failed or terminated
-            case 404: // instance not found or pending
-            case 500: // instance failed with unhandled exception
-                return response.data as DurableOrchestrationStatus;
+            case 200: // instance completed, failed or terminated
+            case 202: // instance running or pending
+            case 400:
+                if (!response.data) {
+                    throw new Error(
+                        `DurableClient error: the Durable Functions extension replied with an empty HTTP ${response.status} response.`
+                    );
+                }
+
+                try {
+                    return new DurableOrchestrationStatus(response.data);
+                } catch (error) {
+                    throw new Error(
+                        `DurableClient error: could not construct a DurableOrchestrationStatus object using the data received from the Durable Functions extension: ${error.message}`
+                    );
+                }
+
+            case 404: // instance not found
+                let msg =
+                    `DurableClient error: Durable Functions extension replied with HTTP 404 response. ` +
+                    `This usually means we could not find any data associated with the instanceId provided: ${instanceId}.`;
+                if (response.data) {
+                    msg += ` Details: ${JSON.stringify(response.data)}`;
+                }
+                throw new Error(msg);
+            case 500: // request failed with unhandled exception (response data contains exception details)
             default:
                 return Promise.reject(this.createGenericError(response));
         }
