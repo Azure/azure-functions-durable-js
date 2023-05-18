@@ -2969,6 +2969,7 @@ class MockContext implements IOrchestrationFunctionContext {
     log: Logger;
     req?: HttpRequest;
     res?: { [key: string]: any };
+    suppressAsyncDoneError: boolean;
 
     public done(err?: Error | string | null, result?: IOrchestratorState): void {
         this.doneValue = result;

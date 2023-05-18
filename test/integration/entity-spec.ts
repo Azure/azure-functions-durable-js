@@ -100,6 +100,7 @@ class MockContext<T> implements IEntityFunctionContext<T> {
     public req?: HttpRequest | undefined;
     public res?: { [key: string]: any } | undefined;
     public df: DurableEntityContext<T>;
+    public suppressAsyncDoneError: boolean;
 
     public done(err?: Error | string | null, result?: EntityState): void {
         this.doneValue = result;
