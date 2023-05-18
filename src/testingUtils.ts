@@ -81,6 +81,7 @@ export class DummyOrchestrationContext implements IOrchestrationFunctionContext 
     traceContext: TraceContext;
     bindingDefinitions: BindingDefinition[];
     log: Logger;
+    suppressAsyncDoneError: boolean;
     done(err?: string | Error, result?: any): void {
         this.doneValue = result;
         this.err = err;

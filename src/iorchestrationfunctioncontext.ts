@@ -3,4 +3,5 @@ import { DurableOrchestrationContext } from "./classes";
 
 export interface IOrchestrationFunctionContext extends Context {
     df: DurableOrchestrationContext;
+    suppressAsyncDoneError: boolean;
 }

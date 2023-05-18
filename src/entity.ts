@@ -67,6 +67,7 @@ export class Entity<T> {
             }
         }
 
+        context.suppressAsyncDoneError = true;
         context.done(null, returnState);
     }
 
