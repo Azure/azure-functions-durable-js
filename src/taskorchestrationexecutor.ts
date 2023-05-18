@@ -429,7 +429,8 @@ export class TaskOrchestrationExecutor {
                 this.trackOpenTask(newTask);
                 // We only keep track of actions from user-declared tasks, not from
                 // tasks generated internally to facilitate history-processing.
-                if (this.currentTask instanceof DFTask) {
+                if (this.currentTask instanceof DFTask && !this.currentTask.alreadyScheduled) {
+                    this.markAsScheduled(this.currentTask);
                     this.addToActions(this.currentTask.actionObj);
                 }
             }
@@ -501,6 +502,24 @@ export class TaskOrchestrationExecutor {
                 const taskUpdateAction = this.deferredTasks[task.id];
                 taskUpdateAction();
             }
+        }
+    }
+
+    /**
+     * @hidden
+     * Marks the current task (and all its children, if compound task) as already scheduled.
+     * If a task is already scheduled, its backing action should not be added to the actions array
+     *
+     * @param task The task to mark as already scheduled.
+     */
+    public markAsScheduled(task: NoOpTask | DFTask): void {
+        if (task instanceof CompoundTask) {
+            task.alreadyScheduled = true;
+            for (const child of task.children) {
+                this.markAsScheduled(child);
+            }
+        } else if (task instanceof DFTask) {
+            task.alreadyScheduled = true;
         }
     }
 }
