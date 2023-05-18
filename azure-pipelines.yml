@@ -1,4 +1,4 @@
-variables: { MODULE_VERSION: "3.0.0-alpha.4", NODE_18: "18.x" }
+variables: { MODULE_VERSION: "3.0.0-alpha.4", NODE_18: "18.x", NODE_20: "20.x" }
 name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
 
 pr:
@@ -20,12 +20,21 @@ jobs:
               UBUNTU_NODE18:
                   IMAGE_TYPE: "ubuntu-latest"
                   NODE_VERSION: $(NODE_18)
+              UBUNTU_NODE20:
+                  IMAGE_TYPE: "ubuntu-latest"
+                  NODE_VERSION: $(NODE_20)
               WINDOWS_NODE18:
                   IMAGE_TYPE: "windows-latest"
                   NODE_VERSION: $(NODE_18)
+              WINDOWS_NODE20:
+                  IMAGE_TYPE: "windows-latest"
+                  NODE_VERSION: $(NODE_20)
               MAC_NODE18:
                   IMAGE_TYPE: "macOS-latest"
                   NODE_VERSION: $(NODE_18)
+              MAC_NODE20:
+                  IMAGE_TYPE: "macOS-latest"
+                  NODE_VERSION: $(NODE_20)
       pool:
           vmImage: $(IMAGE_TYPE)
       steps:
