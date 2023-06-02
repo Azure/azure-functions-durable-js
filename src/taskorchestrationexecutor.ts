@@ -507,7 +507,7 @@ export class TaskOrchestrationExecutor {
 
     /**
      * @hidden
-     * Marks the current task (and all its children, if compound task) as already scheduled.
+     * Marks the current task (and all its children if it is a compound task) as already scheduled.
      * If a task is already scheduled, its backing action should not be added to the actions array
      *
      * @param task The task to mark as already scheduled.
