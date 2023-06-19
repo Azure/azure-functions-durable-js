@@ -1,5 +1,13 @@
 variables:
-    { MODULE_VERSION: "2.1.2", NODE_14: "14.x", NODE_16: "16.x", NODE_18: "18.x", NODE_20: "20.x" }
+    {
+        MODULE_VERSION: "2.1.2",
+        NODE_10: "10.x",
+        NODE_12: "12.x",
+        NODE_14: "14.x",
+        NODE_16: "16.x",
+        NODE_18: "18.x",
+        NODE_20: "20.x",
+    }
 name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
 
 pr:
@@ -14,6 +22,12 @@ jobs:
     - job: Test
       strategy:
           matrix:
+              UBUNTU_NODE10:
+                  IMAGE_TYPE: "ubuntu-latest"
+                  NODE_VERSION: $(NODE_10)
+              UBUNTU_NODE12:
+                  IMAGE_TYPE: "ubuntu-latest"
+                  NODE_VERSION: $(NODE_12)
               UBUNTU_NODE14:
                   IMAGE_TYPE: "ubuntu-latest"
                   NODE_VERSION: $(NODE_14)
@@ -26,6 +40,12 @@ jobs:
               UBUNTU_NODE20:
                   IMAGE_TYPE: "ubuntu-latest"
                   NODE_VERSION: $(NODE_20)
+              WINDOWS_NODE10:
+                  IMAGE_TYPE: "windows-latest"
+                  NODE_VERSION: $(NODE_10)
+              WINDOWS_NODE12:
+                  IMAGE_TYPE: "windows-latest"
+                  NODE_VERSION: $(NODE_12)
               WINDOWS_NODE14:
                   IMAGE_TYPE: "windows-latest"
                   NODE_VERSION: $(NODE_14)
@@ -38,6 +58,12 @@ jobs:
               WINDOWS_NODE20:
                   IMAGE_TYPE: "windows-latest"
                   NODE_VERSION: $(NODE_20)
+              MAC_NODE10:
+                  IMAGE_TYPE: "macOS-latest"
+                  NODE_VERSION: $(NODE_10)
+              MAC_NODE12:
+                  IMAGE_TYPE: "macOS-latest"
+                  NODE_VERSION: $(NODE_12)
               MAC_NODE14:
                   IMAGE_TYPE: "macOS-latest"
                   NODE_VERSION: $(NODE_14)
