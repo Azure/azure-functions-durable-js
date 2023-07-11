@@ -6,9 +6,12 @@ import {
     DummyOrchestrationContext,
 } from "./classes";
 import { getClient } from "./durableorchestrationclient";
-import { app, input, trigger } from "./shim";
-import { DummyEntityContext } from "./util/testingUtils";
+import { DummyEntityContext, createEntityFunction, createOrchestrator } from "./util/testingUtils";
 import { ManagedIdentityTokenSource } from "./tokensource";
+
+export * as app from "./app";
+export * as trigger from "./trigger";
+export * as input from "./input";
 
 export {
     EntityId,
@@ -19,7 +22,6 @@ export {
     RetryOptions,
     DummyOrchestrationContext,
     DummyEntityContext,
-    app,
-    input,
-    trigger,
+    createOrchestrator,
+    createEntityFunction,
 };

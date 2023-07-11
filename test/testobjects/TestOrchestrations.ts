@@ -1,7 +1,7 @@
 import * as df from "../../src";
 import { OrchestrationContext } from "durable-functions";
-import { createOrchestrator } from "../../src/shim";
 import { DurableHttpRequest } from "src/classes";
+import { createOrchestrator } from "../../src/testingUtils";
 
 export class TestOrchestrations {
     public static NotGenerator: any = createOrchestrator(function* () {
