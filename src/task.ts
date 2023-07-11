@@ -136,6 +136,7 @@ export class NoOpTask extends TaskBase {
  */
 export class DFTask extends TaskBase implements Task {
     protected action: IAction;
+    public alreadyScheduled = false;
 
     /** Get this task's backing action */
     get actionObj(): IAction {
