@@ -1,5 +1,13 @@
+import * as types from "durable-functions";
 import { RetryOptions } from ".";
-import { IAction, CreateTimerAction, CallHttpAction, DurableHttpResponse } from "./classes";
+import {
+    IAction,
+    CreateTimerAction,
+    CallHttpAction,
+    DurableHttpResponse,
+    CallActivityAction,
+    CallActivityWithRetryAction,
+} from "./classes";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import moment = require("moment");
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
@@ -201,6 +209,25 @@ export abstract class CompoundTask extends DFTask {
 }
 
 export class AtomicTask extends DFTask {}
+
+export class YieldableActivityTask extends AtomicTask implements types.YieldableActivityTask {
+    withRetry: (retryOptions: RetryOptions) => DFTask;
+
+    constructor(activityName: string, executor: TaskOrchestrationExecutor, input?: unknown) {
+        super(false, new CallActivityAction(activityName, input));
+        this.withRetry = (retryOptions: RetryOptions): DFTask => {
+            const callActivityWithRetryAction = new CallActivityWithRetryAction(
+                activityName,
+                retryOptions,
+                input
+            );
+
+            const backingRetryTask = new AtomicTask(false, callActivityWithRetryAction);
+            const retryTask = new RetryableTask(backingRetryTask, retryOptions, executor);
+            return retryTask;
+        };
+    }
+}
 
 /**
  * @hidden
