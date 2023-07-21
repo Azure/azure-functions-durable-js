@@ -210,7 +210,7 @@ export abstract class CompoundTask extends DFTask {
 
 export class AtomicTask extends DFTask {}
 
-export class YieldableActivityTask extends AtomicTask implements types.YieldableActivityTask {
+export class RegisteredActivityTask extends AtomicTask implements types.RegisteredActivityTask {
     withRetry: (retryOptions: RetryOptions) => DFTask;
 
     constructor(activityName: string, executor: TaskOrchestrationExecutor, input?: unknown) {
@@ -222,8 +222,8 @@ export class YieldableActivityTask extends AtomicTask implements types.Yieldable
                 input
             );
 
-            const backingRetryTask = new AtomicTask(false, callActivityWithRetryAction);
-            const retryTask = new RetryableTask(backingRetryTask, retryOptions, executor);
+            const backingTask = new AtomicTask(false, callActivityWithRetryAction);
+            const retryTask = new RetryableTask(backingTask, retryOptions, executor);
             return retryTask;
         };
     }

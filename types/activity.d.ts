@@ -19,10 +19,10 @@ export interface ActivityTrigger extends FunctionTrigger {
     type: "activityTrigger";
 }
 
-export type YieldableActivity = {
-    (input?: unknown): YieldableActivityTask;
+export type RegisteredActivity = {
+    (input?: unknown): RegisteredActivityTask;
 };
 
-export interface YieldableActivityTask extends Task {
+export interface RegisteredActivityTask extends Task {
     withRetry: (retryOptions: RetryOptions) => Task;
 }

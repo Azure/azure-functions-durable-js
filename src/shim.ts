@@ -16,13 +16,13 @@ import {
     EntityOptions,
     OrchestrationContext,
     EntityContext,
-    YieldableActivity,
+    RegisteredActivity,
 } from "durable-functions";
 import { Entity, EntityState, Orchestrator } from "./classes";
 import { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 import { OrchestratorState } from "./orchestratorstate";
 import { DurableOrchestrationInput } from "./testingUtils";
-import { YieldableActivityTask } from "./task";
+import { RegisteredActivityTask } from "./task";
 
 type EntityFunction<T> = FunctionHandler &
     ((entityTrigger: DurableEntityBindingInfo, context: EntityContext<T>) => Promise<EntityState>);
@@ -98,14 +98,14 @@ export namespace app {
         });
     }
 
-    export function activity(functionName: string, options: ActivityOptions): YieldableActivity {
+    export function activity(functionName: string, options: ActivityOptions): RegisteredActivity {
         azFuncApp.generic(functionName, {
             trigger: trigger.activity(),
             ...options,
         });
 
-        const result: YieldableActivity = (input?: unknown) => {
-            return new YieldableActivityTask(functionName, this.taskOrchestrationExecutor, input);
+        const result: RegisteredActivity = (input?: unknown) => {
+            return new RegisteredActivityTask(functionName, this.taskOrchestrationExecutor, input);
         };
 
         return result;

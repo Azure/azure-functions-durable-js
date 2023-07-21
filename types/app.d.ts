@@ -1,4 +1,4 @@
-import { ActivityOptions, YieldableActivity } from "./activity";
+import { ActivityOptions, RegisteredActivity } from "./activity";
 import { EntityHandler, EntityOptions } from "./entity";
 import { OrchestrationHandler, OrchestrationOptions } from "./orchestration";
 
@@ -44,4 +44,4 @@ export function entity<T = unknown>(functionName: string, options: EntityOptions
  * @param functionName the name of your new activity function
  * @param options the configuration options for this activity, specifying the handler and the inputs and outputs
  */
-export function activity(functionName: string, options: ActivityOptions): YieldableActivity;
+export function activity(functionName: string, options: ActivityOptions): RegisteredActivity;
