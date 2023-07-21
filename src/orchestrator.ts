@@ -10,6 +10,7 @@ import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import { LatestReplaySchema, ReplaySchema } from "./replaySchema";
 import { DurableOrchestrationBindingInfoReqFields } from "./durableorchestrationbindinginfo";
 import { OrchestrationContext } from "durable-functions";
+import { executorContext } from "./app";
 
 /** @hidden */
 export class Orchestrator {
@@ -34,6 +35,7 @@ export class Orchestrator {
         context: OrchestrationContext
     ): Promise<OrchestratorState> {
         this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
+        executorContext.taskOrchestrationExecutor = this.taskOrchestrationExecutor;
         const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
             { trigger: orchestrationTrigger },
             new DurableOrchestrationBindingInfoReqFields() as DurableOrchestrationBindingInfo

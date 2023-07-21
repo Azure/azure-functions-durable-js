@@ -17,12 +17,13 @@ import {
     OrchestrationContext,
     EntityContext,
     RegisteredActivity,
+    RegisteredOrchestration,
 } from "durable-functions";
 import { Entity, EntityState, Orchestrator } from "./classes";
 import { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 import { OrchestratorState } from "./orchestratorstate";
 import { DurableOrchestrationInput } from "./testingUtils";
-import { RegisteredActivityTask } from "./task";
+import { RegisteredActivityTask, RegisteredOrchestrationTask } from "./task";
 
 type EntityFunction<T> = FunctionHandler &
     ((entityTrigger: DurableEntityBindingInfo, context: EntityContext<T>) => Promise<EntityState>);
@@ -65,52 +66,7 @@ export function createEntityFunction<T = unknown>(fn: EntityHandler<T>): EntityF
     };
 }
 
-export namespace app {
-    export function orchestration(
-        functionName: string,
-        handlerOrOptions: OrchestrationHandler | OrchestrationOptions
-    ): void {
-        const options: OrchestrationOptions =
-            typeof handlerOrOptions === "function"
-                ? { handler: handlerOrOptions }
-                : handlerOrOptions;
-
-        azFuncApp.generic(functionName, {
-            trigger: trigger.orchestration(),
-            ...options,
-            handler: createOrchestrator(options.handler),
-        });
-    }
-
-    export function entity<T = unknown>(
-        functionName: string,
-        handlerOrOptions: EntityHandler<T> | EntityOptions<T>
-    ): void {
-        const options: EntityOptions<T> =
-            typeof handlerOrOptions === "function"
-                ? { handler: handlerOrOptions }
-                : handlerOrOptions;
-
-        azFuncApp.generic(functionName, {
-            trigger: trigger.entity(),
-            ...options,
-            handler: createEntityFunction(options.handler),
-        });
-    }
-
-    export function activity(functionName: string, options: ActivityOptions): RegisteredActivity {
-        azFuncApp.generic(functionName, {
-            trigger: trigger.activity(),
-            ...options,
-        });
-
-        const result: RegisteredActivity = (input?: unknown) => {
-            return new RegisteredActivityTask(functionName, this.taskOrchestrationExecutor, input);
-        };
-
-        return result;
-    }
-}
+export * as app from "./app";
 
 export namespace trigger {
     export function activity(): ActivityTrigger {

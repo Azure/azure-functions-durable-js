@@ -36,7 +36,7 @@ const sayHelloWithSubOrchestrator: OrchestrationHandler = function* (
 ) {
     const input: unknown = context.df.getInput();
 
-    const output: string = yield context.df.callSubOrchestrator("sayHelloWithActivity", { input });
+    const output: string = yield context.df.callSubOrchestrator("sayHelloWithActivity", input);
     return output;
 };
 df.app.orchestration("sayHelloWithSubOrchestrator", sayHelloWithSubOrchestrator);

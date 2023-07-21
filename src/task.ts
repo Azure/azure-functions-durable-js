@@ -7,11 +7,14 @@ import {
     DurableHttpResponse,
     CallActivityAction,
     CallActivityWithRetryAction,
+    CallSubOrchestratorAction,
+    CallSubOrchestratorWithRetryAction,
 } from "./classes";
 import { TaskOrchestrationExecutor } from "./taskorchestrationexecutor";
 import moment = require("moment");
 import { DurableOrchestrationContext } from "./durableorchestrationcontext";
 import { Task, TimerTask } from "durable-functions";
+import { executorContext } from "./app";
 
 /**
  * @hidden
@@ -213,18 +216,46 @@ export class AtomicTask extends DFTask {}
 export class RegisteredActivityTask extends AtomicTask implements types.RegisteredActivityTask {
     withRetry: (retryOptions: RetryOptions) => DFTask;
 
-    constructor(activityName: string, executor: TaskOrchestrationExecutor, input?: unknown) {
+    constructor(activityName: string, input?: unknown) {
         super(false, new CallActivityAction(activityName, input));
+
         this.withRetry = (retryOptions: RetryOptions): DFTask => {
             const callActivityWithRetryAction = new CallActivityWithRetryAction(
                 activityName,
                 retryOptions,
                 input
             );
-
             const backingTask = new AtomicTask(false, callActivityWithRetryAction);
-            const retryTask = new RetryableTask(backingTask, retryOptions, executor);
-            return retryTask;
+            return new RetryableTask(
+                backingTask,
+                retryOptions,
+                executorContext.taskOrchestrationExecutor
+            );
+        };
+    }
+}
+
+export class RegisteredOrchestrationTask extends AtomicTask
+    implements types.RegisteredOrchestrationTask {
+    withRetry: (retryOptions: RetryOptions) => DFTask;
+
+    constructor(
+        orchestrationName: string,
+        executor: TaskOrchestrationExecutor,
+        input?: unknown,
+        instanceId?: string
+    ) {
+        super(false, new CallSubOrchestratorAction(orchestrationName, instanceId, input));
+
+        this.withRetry = (retryOptions: RetryOptions): DFTask => {
+            const callSubOrchestratorWithRetryAction = new CallSubOrchestratorWithRetryAction(
+                orchestrationName,
+                retryOptions,
+                input,
+                instanceId
+            );
+            const backingTask = new AtomicTask(false, callSubOrchestratorWithRetryAction);
+            return new RetryableTask(backingTask, retryOptions, executor);
         };
     }
 }
