@@ -7,7 +7,7 @@ import {
 } from "./classes";
 import { getClient } from "./durableorchestrationclient";
 import { app, input, trigger } from "./shim";
-import { DummyEntityContext } from "./testingUtils";
+import { DummyEntityContext } from "./util/testingUtils";
 import { ManagedIdentityTokenSource } from "./tokensource";
 
 export {

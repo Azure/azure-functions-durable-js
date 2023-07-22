@@ -18,9 +18,9 @@ import {
     EntityContext,
 } from "durable-functions";
 import { Entity, EntityState, Orchestrator } from "./classes";
-import { DurableEntityBindingInfo } from "./durableentitybindinginfo";
+import { DurableEntityBindingInfo } from "./entities/DurableEntityBindingInfo";
 import { OrchestratorState } from "./orchestratorstate";
-import { DurableOrchestrationInput } from "./testingUtils";
+import { DurableOrchestrationInput } from "./util/testingUtils";
 
 type EntityFunction<T> = FunctionHandler &
     ((entityTrigger: DurableEntityBindingInfo, context: EntityContext<T>) => Promise<EntityState>);

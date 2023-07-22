@@ -1,4 +1,4 @@
-import { Utils } from "./utils";
+import { Utils } from "./util/Utils";
 import * as types from "durable-functions";
 
 export class RetryOptions implements types.RetryOptions {
