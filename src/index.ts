@@ -6,7 +6,7 @@ import {
     DummyOrchestrationContext,
 } from "./classes";
 import { getClient } from "./durableorchestrationclient";
-import { DummyEntityContext, createEntityFunction, createOrchestrator } from "./util/testingUtils";
+import { DummyEntityContext } from "./util/testingUtils";
 import { ManagedIdentityTokenSource } from "./tokensource";
 
 export * as app from "./app";
@@ -22,6 +22,4 @@ export {
     RetryOptions,
     DummyOrchestrationContext,
     DummyEntityContext,
-    createOrchestrator,
-    createEntityFunction,
 };
