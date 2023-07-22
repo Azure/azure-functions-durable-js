@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import "mocha";
 import { EntityState } from "../../src/classes";
-import { DummyEntityContext } from "../../src/testingUtils";
+import { DummyEntityContext } from "../../src/util/testingUtils";
 import { TestEntities } from "../testobjects/testentities";
 import { TestEntityBatches } from "../testobjects/testentitybatches";
 import { StringStoreOperation } from "../testobjects/testentityoperations";

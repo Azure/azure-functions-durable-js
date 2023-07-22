@@ -30,7 +30,7 @@ import {
     TaskHubOptions,
     WaitForCompletionOptions,
 } from "durable-functions";
-import { WebhookUtils } from "./util/webhookutils";
+import { WebhookUtils } from "./util/WebhookUtils";
 
 /** @hidden */
 const URL = url.URL;

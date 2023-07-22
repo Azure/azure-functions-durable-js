@@ -3,7 +3,7 @@ import { EntityId, EntityState, OperationResult, RequestMessage, Signal, Utils }
 import {
     DurableEntityBindingInfoReqFields,
     DurableEntityBindingInfo,
-} from "./durableentitybindinginfo";
+} from "./DurableEntityBindingInfo";
 import { DurableEntityContext, EntityContext } from "durable-functions";
 
 /** @hidden */

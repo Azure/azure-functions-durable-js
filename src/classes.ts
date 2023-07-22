@@ -1,6 +1,6 @@
 /** @hidden */
 export { Constants } from "./constants";
-export { Utils } from "./util/utils";
+export { Utils } from "./util/Utils";
 
 export { Orchestrator } from "./orchestrator";
 export { Entity } from "./entities/Entity";
@@ -45,8 +45,8 @@ export { RetryOptions } from "./retryoptions";
 
 export { DurableOrchestrationClient } from "./durableorchestrationclient";
 export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
-export { HttpCreationPayload } from "./http/httpcreationpayload";
-export { HttpManagementPayload } from "./http/httpmanagementpayload";
+export { HttpCreationPayload } from "./http/HttpCreationPayload";
+export { HttpManagementPayload } from "./http/HttpManagementPayload";
 
 export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
 export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
@@ -54,8 +54,8 @@ export { PurgeHistoryResult } from "./purgehistoryresult";
 
 export { GuidManager } from "./guidmanager";
 
-export { DurableHttpRequest } from "./http/durablehttprequest";
-export { DurableHttpResponse } from "./http/durablehttpresponse";
+export { DurableHttpRequest } from "./http/DurableHttpRequest";
+export { DurableHttpResponse } from "./http/DurableHttpResponse";
 export { DurableLock } from "./entities/durablelock";
 export { EntityId } from "./entities/entityid";
 export { EntityState } from "./entities/entitystate";
