@@ -4,7 +4,7 @@ import {
     IOrchestratorState,
     OrchestrationClientInputData,
 } from "../../src/classes";
-import { OrchestrationFailureError } from "../../src/orchestrationfailureerror";
+import { OrchestrationFailureError } from "../../src/error/OrchestrationFailureError";
 import { TestConstants } from "./testconstants";
 
 export class TestUtils {

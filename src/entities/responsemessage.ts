@@ -1,4 +1,4 @@
-import { Utils } from "./../utils";
+import { Utils } from "../util/Utils";
 
 /** @hidden */
 export class ResponseMessage {

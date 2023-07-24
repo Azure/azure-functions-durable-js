@@ -1,11 +1,10 @@
 /** @hidden */
 export { Constants } from "./constants";
-export { Utils } from "./utils";
+export { Utils } from "./util/Utils";
 
 export { Orchestrator } from "./orchestrator";
-export { Entity } from "./entity";
+export { Entity } from "./entities/Entity";
 
-export { DurableEntityBindingInfo } from "./durableentitybindinginfo";
 export { DurableOrchestrationBindingInfo } from "./durableorchestrationbindinginfo";
 export { DurableOrchestrationContext } from "./durableorchestrationcontext";
 
@@ -46,8 +45,8 @@ export { RetryOptions } from "./retryoptions";
 
 export { DurableOrchestrationClient } from "./durableorchestrationclient";
 export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
-export { HttpCreationPayload } from "./httpcreationpayload";
-export { HttpManagementPayload } from "./httpmanagementpayload";
+export { HttpCreationPayload } from "./http/HttpCreationPayload";
+export { HttpManagementPayload } from "./http/HttpManagementPayload";
 
 export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
 export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
@@ -55,8 +54,8 @@ export { PurgeHistoryResult } from "./purgehistoryresult";
 
 export { GuidManager } from "./guidmanager";
 
-export { DurableHttpRequest } from "./durablehttprequest";
-export { DurableHttpResponse } from "./durablehttpresponse";
+export { DurableHttpRequest } from "./http/DurableHttpRequest";
+export { DurableHttpResponse } from "./http/DurableHttpResponse";
 export { DurableLock } from "./entities/durablelock";
 export { EntityId } from "./entities/entityid";
 export { EntityState } from "./entities/entitystate";
@@ -66,4 +65,6 @@ export { OperationResult } from "./entities/operationresult";
 export { RequestMessage } from "./entities/requestmessage";
 export { ResponseMessage } from "./entities/responsemessage";
 export { Signal } from "./entities/signal";
-export { DummyOrchestrationContext } from "./testingUtils";
+export { DurableEntityBindingInfo } from "./entities/DurableEntityBindingInfo";
+
+export { DummyOrchestrationContext } from "./util/testingUtils";

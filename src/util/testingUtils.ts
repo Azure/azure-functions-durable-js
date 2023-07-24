@@ -5,8 +5,8 @@ import {
     HistoryEvent,
     HistoryEventOptions,
     OrchestratorStartedEvent,
-} from "./classes";
-import { ReplaySchema } from "./replaySchema";
+} from "../classes";
+import { ReplaySchema } from "../replaySchema";
 import * as uuidv1 from "uuid/v1";
 import { DurableEntityContext, EntityContext, OrchestrationContext } from "durable-functions";
 import * as types from "durable-functions";
