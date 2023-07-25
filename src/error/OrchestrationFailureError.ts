@@ -1,4 +1,5 @@
-import { OrchestratorState } from "../classes";
+import { OrchestratorState } from "../orchestrations/OrchestratorState";
+
 /** @hidden */
 const outOfProcDataLabel = "\n\n$OutOfProcData$:";
 

@@ -1,4 +1,4 @@
-import { EntityId } from "../classes";
+import { EntityId } from "./entityid";
 
 /**
  * @hidden

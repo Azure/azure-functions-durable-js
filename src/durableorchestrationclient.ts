@@ -10,18 +10,6 @@ import process = require("process");
 import url = require("url");
 import { isURL } from "validator";
 import {
-    Constants,
-    DurableOrchestrationStatus,
-    EntityId,
-    EntityStateResponse,
-    HttpCreationPayload,
-    HttpManagementPayload,
-    OrchestrationClientInputData,
-    OrchestrationRuntimeStatus,
-    PurgeHistoryResult,
-    Utils,
-} from "./classes";
-import {
     StartNewOptions,
     DurableClientInput,
     DurableClient,
@@ -31,6 +19,16 @@ import {
     WaitForCompletionOptions,
 } from "durable-functions";
 import { WebhookUtils } from "./util/WebhookUtils";
+import { Constants } from "./constants";
+import { HttpCreationPayload } from "./http/HttpCreationPayload";
+import { OrchestrationClientInputData } from "./orchestrationclientinputdata";
+import { Utils } from "./util/Utils";
+import { HttpManagementPayload } from "./http/HttpManagementPayload";
+import { DurableOrchestrationStatus } from "./orchestrations/DurableOrchestrationStatus";
+import { PurgeHistoryResult } from "./purgehistoryresult";
+import { EntityStateResponse } from "./entities/entitystateresponse";
+import { EntityId } from "./entities/entityid";
+import { OrchestrationRuntimeStatus } from "./orchestrations/OrchestrationRuntimeStatus";
 
 /** @hidden */
 const URL = url.URL;

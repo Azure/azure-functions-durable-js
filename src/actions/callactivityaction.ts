@@ -1,4 +1,6 @@
-import { ActionType, IAction, Utils } from "../classes";
+import { Utils } from "../util/Utils";
+import { ActionType } from "./actiontype";
+import { IAction } from "./iaction";
 
 /** @hidden */
 export class CallActivityAction implements IAction {

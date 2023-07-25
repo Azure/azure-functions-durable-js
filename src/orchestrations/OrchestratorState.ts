@@ -1,6 +1,7 @@
+import { IAction } from "../actions/iaction";
 import { WhenAllAction } from "../actions/whenallaction";
 import { WhenAnyAction } from "../actions/whenanyaction";
-import { IAction, IOrchestratorState } from "../classes";
+import { IOrchestratorState } from "./IOrchestratorState";
 import { ReplaySchema } from "./ReplaySchema";
 
 /** @hidden */

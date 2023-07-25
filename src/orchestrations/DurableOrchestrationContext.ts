@@ -1,20 +1,3 @@
-import {
-    EntityId,
-    RetryOptions,
-    CallActivityAction,
-    CallActivityWithRetryAction,
-    CallEntityAction,
-    CallHttpAction,
-    CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction,
-    ContinueAsNewAction,
-    CreateTimerAction,
-    DurableHttpRequest,
-    ExternalEventType,
-    GuidManager,
-    HistoryEvent,
-    WaitForExternalEventAction,
-} from "../classes";
 import { TaskOrchestrationExecutor } from "./TaskOrchestrationExecutor";
 import { WhenAllAction } from "../actions/whenallaction";
 import { WhenAnyAction } from "../actions/whenanyaction";
@@ -33,6 +16,19 @@ import { ReplaySchema } from "./ReplaySchema";
 import { CallHttpOptions, Task, TimerTask } from "durable-functions";
 import * as types from "durable-functions";
 import { SignalEntityAction } from "../actions/signalentityaction";
+import { CallActivityAction } from "../actions/callactivityaction";
+import { CallActivityWithRetryAction } from "../actions/callactivitywithretryaction";
+import { CallEntityAction } from "../actions/callentityaction";
+import { CallHttpAction } from "../actions/callhttpaction";
+import { CallSubOrchestratorAction } from "../actions/callsuborchestratoraction";
+import { CallSubOrchestratorWithRetryAction } from "../actions/callsuborchestratorwithretryaction";
+import { ContinueAsNewAction } from "../actions/continueasnewaction";
+import { CreateTimerAction } from "../actions/createtimeraction";
+import { ExternalEventType } from "../actions/externaleventtype";
+import { WaitForExternalEventAction } from "../actions/waitforexternaleventaction";
+import { GuidManager } from "../guidmanager";
+import { HistoryEvent } from "../history/historyevent";
+import { DurableHttpRequest } from "../http/DurableHttpRequest";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -159,19 +155,31 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         return task;
     }
 
-    public callActivityWithRetry(name: string, retryOptions: RetryOptions, input?: unknown): Task {
+    public callActivityWithRetry(
+        name: string,
+        retryOptions: types.RetryOptions,
+        input?: unknown
+    ): Task {
         const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
         const backingTask = new AtomicTask(false, newAction);
         const task = new RetryableTask(backingTask, retryOptions, this.taskOrchestratorExecutor);
         return task;
     }
 
-    public callEntity(entityId: EntityId, operationName: string, operationInput?: unknown): Task {
+    public callEntity(
+        entityId: types.EntityId,
+        operationName: string,
+        operationInput?: unknown
+    ): Task {
         const newAction = new CallEntityAction(entityId, operationName, operationInput);
         const task = new AtomicTask(false, newAction);
         return task;
     }
-    public signalEntity(entityId: EntityId, operationName: string, operationInput?: unknown): void {
+    public signalEntity(
+        entityId: types.EntityId,
+        operationName: string,
+        operationInput?: unknown
+    ): void {
         const action = new SignalEntityAction(entityId, operationName, operationInput);
         this.taskOrchestratorExecutor.recordFireAndForgetAction(action);
     }
@@ -190,7 +198,7 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
 
     public callSubOrchestratorWithRetry(
         name: string,
-        retryOptions: RetryOptions,
+        retryOptions: types.RetryOptions,
         input?: unknown,
         instanceId?: string
     ): Task {

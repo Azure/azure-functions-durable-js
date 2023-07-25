@@ -1,5 +1,5 @@
-import { OrchestrationRuntimeStatus } from "../classes";
 import * as types from "durable-functions";
+import { OrchestrationRuntimeStatus } from "./OrchestrationRuntimeStatus";
 
 export class DurableOrchestrationStatus implements types.DurableOrchestrationStatus {
     public readonly name: string;

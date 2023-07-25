@@ -1,10 +1,10 @@
 import { DurableOrchestrationContext, TimerTask } from "durable-functions";
 import { WhenAllTask } from "./WhenAllTask";
 import moment = require("moment");
-import { CreateTimerAction } from "../classes";
 import { TaskOrchestrationExecutor } from "../orchestrations/TaskOrchestrationExecutor";
 import { TaskID } from ".";
 import { DFTimerTask } from "./DFTimerTask";
+import { CreateTimerAction } from "../actions/createtimeraction";
 
 /**
  * @hidden

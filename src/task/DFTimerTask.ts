@@ -1,7 +1,7 @@
 import { TimerTask } from "durable-functions";
 import { AtomicTask } from "./AtomicTask";
 import { TaskID } from ".";
-import { CreateTimerAction } from "../classes";
+import { CreateTimerAction } from "../actions/createtimeraction";
 
 /**
  * @hidden

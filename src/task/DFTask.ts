@@ -1,6 +1,6 @@
 import { Task } from "durable-functions";
 import { TaskBase } from "./TaskBase";
-import { IAction } from "../classes";
+import { IAction } from "../actions/iaction";
 
 /**
  * @hidden

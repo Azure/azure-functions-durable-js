@@ -8,18 +8,16 @@ import "mocha";
 import nock = require("nock");
 import url = require("url");
 import uuidv1 = require("uuid/v1");
-import {
-    Constants,
-    DurableOrchestrationClient,
-    DurableOrchestrationStatus,
-    EntityId,
-    EntityStateResponse,
-    HttpManagementPayload,
-    OrchestrationRuntimeStatus,
-    PurgeHistoryResult,
-} from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
+import { Constants } from "../../src/constants";
+import { DurableOrchestrationClient } from "../../src/durableorchestrationclient";
+import { EntityId } from "../../src/entities/entityid";
+import { DurableOrchestrationStatus } from "../../src/orchestrations/DurableOrchestrationStatus";
+import { OrchestrationRuntimeStatus } from "../../src/orchestrations/OrchestrationRuntimeStatus";
+import { PurgeHistoryResult } from "../../src/purgehistoryresult";
+import { EntityStateResponse } from "../../src/entities/entitystateresponse";
+import { HttpManagementPayload } from "../../src/http/HttpManagementPayload";
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);

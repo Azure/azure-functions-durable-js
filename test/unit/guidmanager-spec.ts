@@ -1,9 +1,9 @@
 import { expect } from "chai";
 import "mocha";
 import moment = require("moment");
+import { GuidManager } from "../../src/guidmanager";
 import uuidv1 = require("uuid/v1");
 import { isUUID } from "validator";
-import { GuidManager } from "../../src/classes";
 
 describe("GuidManager", () => {
     describe("createDeterministicGuid()", async () => {

@@ -2,17 +2,15 @@ import { HttpRequest } from "@azure/functions";
 import chai = require("chai");
 import chaiString = require("chai-string");
 import nock = require("nock");
+import { DurableOrchestrationClient } from "../../src/durableorchestrationclient";
+import { OrchestrationClientInputData } from "../../src/orchestrationclientinputdata";
 import url = require("url");
-import {
-    DurableOrchestrationClient,
-    DurableOrchestrationStatus,
-    EntityId,
-    EntityStateResponse,
-    HttpManagementPayload,
-    OrchestrationClientInputData,
-    OrchestrationRuntimeStatus,
-    PurgeHistoryResult,
-} from "../../src/classes";
+import { HttpManagementPayload } from "../../src/http/HttpManagementPayload";
+import { OrchestrationRuntimeStatus } from "../../src/orchestrations/OrchestrationRuntimeStatus";
+import { DurableOrchestrationStatus } from "../../src/orchestrations/DurableOrchestrationStatus";
+import { PurgeHistoryResult } from "../../src/purgehistoryresult";
+import { EntityId } from "../../src/entities/entityid";
+import { EntityStateResponse } from "../../src/entities/entitystateresponse";
 
 chai.use(chaiString);
 const expect = chai.expect;

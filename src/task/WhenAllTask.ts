@@ -1,8 +1,8 @@
-import { IAction } from "../classes";
 import { CompoundTask } from "./CompoundTask";
 import { TaskBase } from "./TaskBase";
 import { AtomicTask } from "./AtomicTask";
 import { TaskState } from ".";
+import { IAction } from "../actions/iaction";
 
 /**
  * @hidden

@@ -3,34 +3,35 @@ import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
 import * as uuidv1 from "uuid/v1";
-import { DummyOrchestrationContext, ManagedIdentityTokenSource } from "../../src";
-import { SignalEntityAction } from "../../src/actions/signalentityaction";
 import {
-    ActionType,
-    CallActivityAction,
-    CallActivityWithRetryAction,
-    CallEntityAction,
-    CallHttpAction,
-    CallSubOrchestratorAction,
-    CallSubOrchestratorWithRetryAction,
-    ContinueAsNewAction,
-    CreateTimerAction,
-    DurableHttpRequest,
-    DurableHttpResponse,
+    DummyOrchestrationContext,
     EntityId,
-    ExternalEventType,
-    HistoryEvent,
-    LockState,
-    OrchestratorState,
+    ManagedIdentityTokenSource,
     RetryOptions,
-    WaitForExternalEventAction,
-} from "../../src/classes";
+} from "../../src";
+import { SignalEntityAction } from "../../src/actions/signalentityaction";
 import { OrchestrationFailureError } from "../../src/error/OrchestrationFailureError";
 import { ReplaySchema } from "../../src/orchestrations/ReplaySchema";
 import { DurableOrchestrationInput } from "../../src/util/testingUtils";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
 import { TestUtils } from "../testobjects/testutils";
+import { ActionType } from "../../src/actions/actiontype";
+import { CallActivityAction } from "../../src/actions/callactivityaction";
+import { CallActivityWithRetryAction } from "../../src/actions/callactivitywithretryaction";
+import { CallEntityAction } from "../../src/actions/callentityaction";
+import { CallHttpAction } from "../../src/actions/callhttpaction";
+import { CallSubOrchestratorAction } from "../../src/actions/callsuborchestratoraction";
+import { CallSubOrchestratorWithRetryAction } from "../../src/actions/callsuborchestratorwithretryaction";
+import { ContinueAsNewAction } from "../../src/actions/continueasnewaction";
+import { CreateTimerAction } from "../../src/actions/createtimeraction";
+import { ExternalEventType } from "../../src/actions/externaleventtype";
+import { WaitForExternalEventAction } from "../../src/actions/waitforexternaleventaction";
+import { LockState } from "../../src/entities/lockstate";
+import { HistoryEvent } from "../../src/history/historyevent";
+import { DurableHttpRequest } from "../../src/http/DurableHttpRequest";
+import { DurableHttpResponse } from "../../src/http/DurableHttpResponse";
+import { OrchestratorState } from "../../src/orchestrations/OrchestratorState";
 
 describe("Orchestrator", () => {
     const falsyValues = [false, 0, "", null, undefined, NaN];

@@ -5,14 +5,12 @@ import chaiAsPromised = require("chai-as-promised");
 import "mocha";
 import "process";
 import { DurableClientInput } from "durable-functions";
-import {
-    Constants,
-    DurableOrchestrationClient,
-    OrchestrationClientInputData,
-} from "../../src/classes";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 import { getClient, input } from "../../src";
+import { Constants } from "../../src/constants";
+import { DurableOrchestrationClient } from "../../src/durableorchestrationclient";
+import { OrchestrationClientInputData } from "../../src/orchestrationclientinputdata";
 
 chai.use(chaiAsPromised);
 

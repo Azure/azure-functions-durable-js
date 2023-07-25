@@ -1,14 +1,14 @@
-import {
-    DurableOrchestrationBindingInfo,
-    HistoryEvent,
-    HistoryEventType,
-    OrchestratorState,
-    Utils,
-} from "../classes";
 import { DurableOrchestrationContext } from "./DurableOrchestrationContext";
 import { TaskOrchestrationExecutor } from "./TaskOrchestrationExecutor";
 import { LatestReplaySchema, ReplaySchema } from "./ReplaySchema";
-import { DurableOrchestrationBindingInfoReqFields } from "./DurableOrchestrationBindingInfo";
+import {
+    DurableOrchestrationBindingInfo,
+    DurableOrchestrationBindingInfoReqFields,
+} from "./DurableOrchestrationBindingInfo";
+import { HistoryEvent } from "../history/historyevent";
+import { HistoryEventType } from "../history/historyeventtype";
+import { Utils } from "../util/Utils";
+import { OrchestratorState } from "./OrchestratorState";
 import { OrchestrationContext } from "durable-functions";
 
 /** @hidden */

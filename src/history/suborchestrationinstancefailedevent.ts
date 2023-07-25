@@ -1,4 +1,6 @@
-import { HistoryEvent, HistoryEventOptions, HistoryEventType } from "../classes";
+import { HistoryEvent } from "./historyevent";
+import { HistoryEventOptions } from "./historyeventoptions";
+import { HistoryEventType } from "./historyeventtype";
 
 /** @hidden */
 export class SubOrchestrationInstanceFailedEvent extends HistoryEvent {

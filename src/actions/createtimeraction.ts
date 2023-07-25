@@ -1,5 +1,6 @@
 import { isDate } from "util";
-import { ActionType, IAction } from "../classes";
+import { ActionType } from "./actiontype";
+import { IAction } from "./iaction";
 
 /** @hidden */
 export class CreateTimerAction implements IAction {
