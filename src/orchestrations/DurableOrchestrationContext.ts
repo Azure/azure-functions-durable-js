@@ -26,7 +26,7 @@ import { ContinueAsNewAction } from "../actions/continueasnewaction";
 import { CreateTimerAction } from "../actions/createtimeraction";
 import { ExternalEventType } from "../actions/externaleventtype";
 import { WaitForExternalEventAction } from "../actions/waitforexternaleventaction";
-import { GuidManager } from "../guidmanager";
+import { GuidManager } from "../util/GuidManager";
 import { HistoryEvent } from "../history/historyevent";
 import { DurableHttpRequest } from "../http/DurableHttpRequest";
 
