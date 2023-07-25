@@ -1,9 +1,9 @@
 import { HttpCreationPayload } from "../../src/http/HttpCreationPayload";
-import { OrchestrationClientInputData } from "../../src/orchestrationclientinputdata";
 import { IOrchestratorState } from "../../src/orchestrations/IOrchestratorState";
 import { OrchestrationFailureError } from "../../src/error/OrchestrationFailureError";
 import { TestConstants } from "./testconstants";
 import { HttpManagementPayload } from "../../src/http/HttpManagementPayload";
+import { OrchestrationClientInputData } from "../../src/durableClient/OrchestrationClientInputData";
 
 export class TestUtils {
     public static createOrchestrationClientInputData(

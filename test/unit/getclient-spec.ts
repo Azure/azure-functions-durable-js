@@ -9,8 +9,8 @@ import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 import { getClient, input } from "../../src";
 import { Constants } from "../../src/constants";
-import { DurableOrchestrationClient } from "../../src/durableorchestrationclient";
-import { OrchestrationClientInputData } from "../../src/orchestrationclientinputdata";
+import { OrchestrationClientInputData } from "../../src/durableClient/OrchestrationClientInputData";
+import { DurableOrchestrationClient } from "../../src/durableClient/DurableOrchestrationClient";
 
 chai.use(chaiAsPromised);
 
