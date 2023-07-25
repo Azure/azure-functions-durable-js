@@ -9,10 +9,10 @@ import { SubOrchestrationInstanceCompletedEvent } from "../../src/history/SubOrc
 import { SubOrchestrationInstanceCreatedEvent } from "../../src/history/SubOrchestrationInstanceCreatedEvent";
 import { SubOrchestrationInstanceFailedEvent } from "../../src/history/SubOrchestrationInstanceFailedEvent";
 import { TaskCompletedEvent } from "../../src/history/TaskCompletedEvent";
-import { TaskFailedEvent } from "../../src/history/taskfailedevent";
-import { TaskScheduledEvent } from "../../src/history/taskscheduledevent";
-import { TimerCreatedEvent } from "../../src/history/timercreatedevent";
-import { TimerFiredEvent } from "../../src/history/timerfiredevent";
+import { TaskFailedEvent } from "../../src/history/TaskFailedEvent";
+import { TaskScheduledEvent } from "../../src/history/TaskScheduledEvent";
+import { TimerCreatedEvent } from "../../src/history/TimerCreatedEvent";
+import { TimerFiredEvent } from "../../src/history/TimerFiredEvent";
 import { DurableHttpRequest } from "../../src/http/DurableHttpRequest";
 import { DurableHttpResponse } from "../../src/http/DurableHttpResponse";
 import * as uuidv1 from "uuid/v1";
