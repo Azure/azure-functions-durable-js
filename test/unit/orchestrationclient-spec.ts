@@ -11,13 +11,13 @@ import uuidv1 = require("uuid/v1");
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 import { Constants } from "../../src/constants";
-import { DurableOrchestrationClient } from "../../src/durableorchestrationclient";
 import { EntityId } from "../../src/entities/entityid";
 import { DurableOrchestrationStatus } from "../../src/orchestrations/DurableOrchestrationStatus";
 import { OrchestrationRuntimeStatus } from "../../src/orchestrations/OrchestrationRuntimeStatus";
-import { PurgeHistoryResult } from "../../src/purgehistoryresult";
 import { EntityStateResponse } from "../../src/entities/entitystateresponse";
 import { HttpManagementPayload } from "../../src/http/HttpManagementPayload";
+import { DurableOrchestrationClient } from "../../src/durableClient/DurableOrchestrationClient";
+import { PurgeHistoryResult } from "../../src/durableClient/PurgeHistoryResult";
 
 const expect = chai.expect;
 chai.use(chaiAsPromised);
