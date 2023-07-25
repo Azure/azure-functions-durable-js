@@ -1,4 +1,4 @@
-import { createEntityFunction } from "../../src/testingUtils";
+import { createEntityFunction } from "../../src/util/testingUtils";
 
 export class TestEntities {
     public static StringStore = createEntityFunction<string>((context): void => {

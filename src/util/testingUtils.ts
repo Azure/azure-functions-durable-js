@@ -14,6 +14,7 @@ import {
     HistoryEventOptions,
     Orchestrator,
     OrchestratorStartedEvent,
+    OrchestratorState,
 } from "../classes";
 import { ReplaySchema } from "../replaySchema";
 import * as uuidv1 from "uuid/v1";

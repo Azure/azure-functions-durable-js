@@ -6,7 +6,7 @@ import {
     OrchestrationOptions,
 } from "durable-functions";
 import * as trigger from "./trigger";
-import { createOrchestrator, createEntityFunction } from "./testingUtils";
+import { createOrchestrator, createEntityFunction } from "./util/testingUtils";
 import { app as azFuncApp } from "@azure/functions";
 
 export function orchestration(
