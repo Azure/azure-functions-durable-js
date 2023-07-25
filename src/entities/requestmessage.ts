@@ -1,4 +1,4 @@
-import { EntityId } from "./entityid";
+import { EntityId } from "./EntityId";
 
 /** @hidden */
 export class RequestMessage {

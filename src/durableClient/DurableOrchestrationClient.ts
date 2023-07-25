@@ -20,8 +20,8 @@ import { OrchestrationClientInputData } from "./OrchestrationClientInputData";
 import { HttpManagementPayload } from "../http/HttpManagementPayload";
 import { DurableOrchestrationStatus } from "../orchestrations/DurableOrchestrationStatus";
 import { PurgeHistoryResult } from "./PurgeHistoryResult";
-import { EntityId } from "../entities/entityid";
-import { EntityStateResponse } from "../entities/entitystateresponse";
+import { EntityId } from "../entities/EntityId";
+import { EntityStateResponse } from "../entities/EntityStateResponse";
 import { OrchestrationRuntimeStatus } from "../orchestrations/OrchestrationRuntimeStatus";
 import { Utils } from "../util/Utils";
 

@@ -1,7 +1,7 @@
-import { EntityId } from "../entities/entityid";
+import { EntityId } from "../entities/EntityId";
 import { Utils } from "../util/Utils";
-import { ActionType } from "./actiontype";
-import { IAction } from "./iaction";
+import { ActionType } from "./ActionType";
+import { IAction } from "./IAction";
 
 /** @hidden */
 export class SignalEntityAction implements IAction {

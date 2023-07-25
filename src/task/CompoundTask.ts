@@ -1,4 +1,4 @@
-import { IAction } from "../actions/iaction";
+import { IAction } from "../actions/IAction";
 import { DFTask } from "./DFTask";
 import { TaskBase } from "./TaskBase";
 

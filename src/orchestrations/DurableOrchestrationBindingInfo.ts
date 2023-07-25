@@ -1,4 +1,4 @@
-import { HistoryEvent } from "../history/historyevent";
+import { HistoryEvent } from "../history/HistoryEvent";
 import { ReplaySchema } from "./ReplaySchema";
 
 /** @hidden */

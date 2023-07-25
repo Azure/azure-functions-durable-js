@@ -1,6 +1,6 @@
 import { TaskOrchestrationExecutor } from "./TaskOrchestrationExecutor";
-import { WhenAllAction } from "../actions/whenallaction";
-import { WhenAnyAction } from "../actions/whenanyaction";
+import { WhenAllAction } from "../actions/WhenAllAction";
+import { WhenAnyAction } from "../actions/WhenAnyAction";
 import {
     WhenAllTask,
     WhenAnyTask,
@@ -15,19 +15,19 @@ import moment = require("moment");
 import { ReplaySchema } from "./ReplaySchema";
 import { CallHttpOptions, Task, TimerTask } from "durable-functions";
 import * as types from "durable-functions";
-import { SignalEntityAction } from "../actions/signalentityaction";
-import { CallActivityAction } from "../actions/callactivityaction";
-import { CallActivityWithRetryAction } from "../actions/callactivitywithretryaction";
-import { CallEntityAction } from "../actions/callentityaction";
-import { CallHttpAction } from "../actions/callhttpaction";
-import { CallSubOrchestratorAction } from "../actions/callsuborchestratoraction";
-import { CallSubOrchestratorWithRetryAction } from "../actions/callsuborchestratorwithretryaction";
-import { ContinueAsNewAction } from "../actions/continueasnewaction";
-import { CreateTimerAction } from "../actions/createtimeraction";
-import { ExternalEventType } from "../actions/externaleventtype";
-import { WaitForExternalEventAction } from "../actions/waitforexternaleventaction";
-import { GuidManager } from "../guidmanager";
-import { HistoryEvent } from "../history/historyevent";
+import { SignalEntityAction } from "../actions/SignalEntityAction";
+import { CallActivityAction } from "../actions/CallActivityAction";
+import { CallActivityWithRetryAction } from "../actions/CallActivityWithRetryAction";
+import { CallEntityAction } from "../actions/CallEntityAction";
+import { CallHttpAction } from "../actions/CallHttpAction";
+import { CallSubOrchestratorAction } from "../actions/CallSubOrchestratorAction";
+import { CallSubOrchestratorWithRetryAction } from "../actions/CallSubOrchestratorWithRetryAction";
+import { ContinueAsNewAction } from "../actions/ContinueAsNewAction";
+import { CreateTimerAction } from "../actions/CreateTimerAction";
+import { ExternalEventType } from "../actions/ExternalEventType";
+import { WaitForExternalEventAction } from "../actions/WaitForExternalEventAction";
+import { GuidManager } from "../GuidManager";
+import { HistoryEvent } from "../history/HistoryEvent";
 import { DurableHttpRequest } from "../http/DurableHttpRequest";
 
 /**

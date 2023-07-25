@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import "mocha";
 import { DFTimerTask } from "../../src/task";
-import { CreateTimerAction } from "../../src/actions/createtimeraction";
+import { CreateTimerAction } from "../../src/actions/CreateTimerAction";
 
 describe("TimerTask", () => {
     it("throws cannot cancel a completed task", async () => {

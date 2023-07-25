@@ -1,7 +1,7 @@
 import { Utils } from "../util/Utils";
-import { RetryOptions } from "../retryoptions";
-import { ActionType } from "./actiontype";
-import { IAction } from "./iaction";
+import { RetryOptions } from "../RetryOptions";
+import { ActionType } from "./ActionType";
+import { IAction } from "./IAction";
 
 /** @hidden */
 export class CallActivityWithRetryAction implements IAction {

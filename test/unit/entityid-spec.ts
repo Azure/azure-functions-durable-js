@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import "mocha";
-import { EntityId } from "../../src/entities/entityid";
+import { EntityId } from "../../src/entities/EntityId";
 
 describe("EntityId", () => {
     const defaultEntityName = "entity";

@@ -1,4 +1,4 @@
-import { HistoryEventType } from "./historyeventtype";
+import { HistoryEventType } from "./HistoryEventType";
 
 /** @hidden */
 export abstract class HistoryEvent {

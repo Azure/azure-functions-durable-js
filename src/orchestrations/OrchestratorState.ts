@@ -1,6 +1,6 @@
-import { IAction } from "../actions/iaction";
-import { WhenAllAction } from "../actions/whenallaction";
-import { WhenAnyAction } from "../actions/whenanyaction";
+import { IAction } from "../actions/IAction";
+import { WhenAllAction } from "../actions/WhenAllAction";
+import { WhenAnyAction } from "../actions/WhenAnyAction";
 import { IOrchestratorState } from "./IOrchestratorState";
 import { ReplaySchema } from "./ReplaySchema";
 

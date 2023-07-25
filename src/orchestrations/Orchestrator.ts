@@ -5,8 +5,8 @@ import {
     DurableOrchestrationBindingInfo,
     DurableOrchestrationBindingInfoReqFields,
 } from "./DurableOrchestrationBindingInfo";
-import { HistoryEvent } from "../history/historyevent";
-import { HistoryEventType } from "../history/historyeventtype";
+import { HistoryEvent } from "../history/HistoryEvent";
+import { HistoryEventType } from "../history/HistoryEventType";
 import { Utils } from "../util/Utils";
 import { OrchestratorState } from "./OrchestratorState";
 import { OrchestrationContext } from "durable-functions";

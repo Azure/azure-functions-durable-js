@@ -1,4 +1,4 @@
-import { ActionType } from "./actiontype";
+import { ActionType } from "./ActionType";
 
 /** @hidden */
 export interface IAction {

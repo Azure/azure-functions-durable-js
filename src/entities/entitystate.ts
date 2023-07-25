@@ -1,5 +1,5 @@
-import { OperationResult } from "./operationresult";
-import { Signal } from "./signal";
+import { OperationResult } from "./OperationResult";
+import { Signal } from "./Signal";
 
 /** @hidden */
 export class EntityState {

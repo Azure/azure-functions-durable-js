@@ -9,7 +9,7 @@ import url = require("url");
 import { HttpCreationPayload } from "../http/HttpCreationPayload";
 import { HttpManagementPayload } from "../http/HttpManagementPayload";
 import { isURL } from "validator";
-import { Constants } from "../constants";
+import { Constants } from "../Constants";
 
 export function getClient(context: InvocationContext): DurableClient {
     const foundInput: FunctionInput | undefined = context.options.extraInputs.find(

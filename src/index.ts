@@ -1,9 +1,9 @@
 import { DummyEntityContext, DummyOrchestrationContext } from "./util/testingUtils";
-import { ManagedIdentityTokenSource } from "./tokensource";
-import { EntityId } from "./entities/entityid";
-import { EntityStateResponse } from "./entities/entitystateresponse";
+import { ManagedIdentityTokenSource } from "./ManagedIdentityTokenSource";
+import { EntityId } from "./entities/EntityId";
+import { EntityStateResponse } from "./entities/EntityStateResponse";
 import { OrchestrationRuntimeStatus } from "./orchestrations/OrchestrationRuntimeStatus";
-import { RetryOptions } from "./retryoptions";
+import { RetryOptions } from "./RetryOptions";
 import { getClient } from "./durableClient/getClient";
 
 export * as app from "./app";

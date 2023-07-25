@@ -2,7 +2,7 @@ import { CompoundTask } from "./CompoundTask";
 import { TaskBase } from "./TaskBase";
 import { AtomicTask } from "./AtomicTask";
 import { TaskState } from ".";
-import { IAction } from "../actions/iaction";
+import { IAction } from "../actions/IAction";
 
 /**
  * @hidden

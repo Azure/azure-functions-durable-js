@@ -1,6 +1,6 @@
 import { Utils } from "../util/Utils";
-import { ActionType } from "./actiontype";
-import { IAction } from "./iaction";
+import { ActionType } from "./ActionType";
+import { IAction } from "./IAction";
 
 /** @hidden */
 export class CallSubOrchestratorAction implements IAction {

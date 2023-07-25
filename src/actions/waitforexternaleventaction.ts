@@ -1,7 +1,7 @@
 import { Utils } from "../util/Utils";
-import { ActionType } from "./actiontype";
-import { ExternalEventType } from "./externaleventtype";
-import { IAction } from "./iaction";
+import { ActionType } from "./ActionType";
+import { ExternalEventType } from "./ExternalEventType";
+import { IAction } from "./IAction";
 
 /** @hidden */
 export class WaitForExternalEventAction implements IAction {

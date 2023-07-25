@@ -1,5 +1,5 @@
 import { DurableEntityBindingInfo } from "../../src/entities/DurableEntityBindingInfo";
-import { EntityState } from "../../src/entities/entitystate";
+import { EntityState } from "../../src/entities/EntityState";
 
 export interface EntityInputsAndOutputs {
     input: DurableEntityBindingInfo;
