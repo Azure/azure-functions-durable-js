@@ -1,5 +1,5 @@
 import { RetryOptions } from "durable-functions";
-import { TaskOrchestrationExecutor } from "../taskorchestrationexecutor";
+import { TaskOrchestrationExecutor } from "../orchestrations/TaskOrchestrationExecutor";
 import { TaskState } from ".";
 import { DFTask } from "./DFTask";
 import { NoOpTask } from "./NoOpTask";

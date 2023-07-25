@@ -2,11 +2,11 @@
 export { Constants } from "./constants";
 export { Utils } from "./util/Utils";
 
-export { Orchestrator } from "./orchestrator";
+export { Orchestrator } from "./orchestrations/Orchestrator";
 export { Entity } from "./entities/Entity";
 
-export { DurableOrchestrationBindingInfo } from "./durableorchestrationbindinginfo";
-export { DurableOrchestrationContext } from "./durableorchestrationcontext";
+export { DurableOrchestrationBindingInfo } from "./orchestrations/DurableOrchestrationBindingInfo";
+export { DurableOrchestrationContext } from "./orchestrations/DurableOrchestrationContext";
 
 export { IAction } from "./actions/iaction";
 export { ActionType } from "./actions/actiontype";
@@ -38,8 +38,8 @@ export { TaskScheduledEvent } from "./history/taskscheduledevent";
 export { TimerCreatedEvent } from "./history/timercreatedevent";
 export { TimerFiredEvent } from "./history/timerfiredevent";
 
-export { OrchestratorState } from "./orchestratorstate";
-export { IOrchestratorState } from "./iorchestratorstate";
+export { OrchestratorState } from "./orchestrations/OrchestratorState";
+export { IOrchestratorState } from "./orchestrations/IOrchestratorState";
 
 export { RetryOptions } from "./retryoptions";
 
@@ -48,8 +48,8 @@ export { OrchestrationClientInputData } from "./orchestrationclientinputdata";
 export { HttpCreationPayload } from "./http/HttpCreationPayload";
 export { HttpManagementPayload } from "./http/HttpManagementPayload";
 
-export { DurableOrchestrationStatus } from "./durableorchestrationstatus";
-export { OrchestrationRuntimeStatus } from "./orchestrationruntimestatus";
+export { DurableOrchestrationStatus } from "./orchestrations/DurableOrchestrationStatus";
+export { OrchestrationRuntimeStatus } from "./orchestrations/OrchestrationRuntimeStatus";
 export { PurgeHistoryResult } from "./purgehistoryresult";
 
 export { GuidManager } from "./guidmanager";

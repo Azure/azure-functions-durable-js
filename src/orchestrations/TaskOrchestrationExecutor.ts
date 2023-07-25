@@ -10,12 +10,12 @@ import {
     SubOrchestrationInstanceCompletedEvent,
     TaskCompletedEvent,
     WaitForExternalEventAction,
-} from "./classes";
-import { OrchestrationFailureError } from "./error/OrchestrationFailureError";
-import { OrchestratorState } from "./orchestratorstate";
-import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "./task";
-import { ReplaySchema } from "./replaySchema";
-import { Utils } from "./util/Utils";
+} from "../classes";
+import { OrchestrationFailureError } from "../error/OrchestrationFailureError";
+import { OrchestratorState } from "./OrchestratorState";
+import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "../task";
+import { ReplaySchema } from "./ReplaySchema";
+import { Utils } from "../util/Utils";
 import { DurableOrchestrationContext, OrchestrationContext } from "durable-functions";
 
 /**

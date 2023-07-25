@@ -1,8 +1,8 @@
 import { CallHttpAction, DurableHttpResponse } from "../classes";
 import { CompoundTask } from "./CompoundTask";
 import { AtomicTask, TaskBase, TaskID, TaskState } from ".";
-import { DurableOrchestrationContext } from "../durableorchestrationcontext";
-import { TaskOrchestrationExecutor } from "src/taskorchestrationexecutor";
+import { DurableOrchestrationContext } from "../orchestrations/DurableOrchestrationContext";
+import { TaskOrchestrationExecutor } from "src/orchestrations/TaskOrchestrationExecutor";
 import moment = require("moment");
 
 /**
