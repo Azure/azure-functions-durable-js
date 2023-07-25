@@ -9,7 +9,7 @@ import { DurableOrchestrationStatus } from "../../src/orchestrations/DurableOrch
 import { EntityId } from "../../src/entities/entityid";
 import { EntityStateResponse } from "../../src/entities/entitystateresponse";
 import { OrchestrationClientInputData } from "../../src/durableClient/OrchestrationClientInputData";
-import { DurableOrchestrationClient } from "../../src/durableClient/DurableOrchestrationClient";
+import { DurableClient } from "../../src/durableClient/DurableClient";
 import { PurgeHistoryResult } from "../../src/durableClient/PurgeHistoryResult";
 
 chai.use(chaiString);
@@ -66,7 +66,7 @@ describe("Durable client RPC endpoint", () => {
     describe("createCheckStatusResponse()", () => {
         it("does NOT reference the RPC endpoint", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
             const request: HttpRequest = new HttpRequest({
                 method: "GET",
                 url: `${externalOrigin}/api/Foo`,
@@ -95,7 +95,7 @@ describe("Durable client RPC endpoint", () => {
     describe("startNew()", () => {
         it("uses the RPC endpoint", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The startNew() method should do a POST to http://127.0.0.1:17071/durabletask/orchestrators/MyFunction
             const functionName = "MyFunction";
@@ -117,7 +117,7 @@ describe("Durable client RPC endpoint", () => {
     describe("raiseEvent()", () => {
         it("uses the RPC endpoint (no query params)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The raiseEvent() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/raiseEvent/MyEvent
             // with a application/json payload matching { "value": 5 }.
@@ -139,7 +139,7 @@ describe("Durable client RPC endpoint", () => {
 
         it("uses the RPC endpoint (with query params)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The raiseEvent() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/raiseEvent/MyEvent?taskHub=hub&connection=Storage
             // with a application/json payload matching { "value": 42 }.
@@ -169,7 +169,7 @@ describe("Durable client RPC endpoint", () => {
     describe("getStatus()", () => {
         it("uses the RPC endpoint (no query params)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The getStatus() method should do a GET to http://127.0.0.1:17071/durabletask/instances/abc123
             const instanceId = "abc123";
@@ -192,7 +192,7 @@ describe("Durable client RPC endpoint", () => {
 
         it("uses the RPC endpoint (with all query params)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The getStatus() method should do a GET to http://127.0.0.1:17071/durabletask/instances/abc123?showInput=true&showHistory=true&showHistoryOutput=true
             const instanceId = "abc123";
@@ -229,7 +229,7 @@ describe("Durable client RPC endpoint", () => {
     describe("getStatusBy()", () => {
         it("uses the RPC endpoint (all query params)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The getStatusBy() method should do a GET to http://127.0.0.1:17071/durabletask/instances/?createdTimeFrom=2020-01-01T00:00:00Z&createdTimeTo=2020-01-01T23:59:59Z&runtimeStatus=Pending,Running,Completed,Terminated,Failed
             const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/`);
@@ -261,7 +261,7 @@ describe("Durable client RPC endpoint", () => {
 
         it("uses continuation header", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The getStatusBy() method should do a GET to http://127.0.0.1:17071/durabletask/instances/?createdTimeFrom=2020-01-01T00:00:00Z&createdTimeTo=2020-01-01T23:59:59Z&runtimeStatus=Pending,Running,Completed,Terminated,Failed
             const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/`);
@@ -321,7 +321,7 @@ describe("Durable client RPC endpoint", () => {
     describe("terminate()", () => {
         it("uses the RPC endpoint", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The terminate() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/terminate?reason=because
             const instanceId = "abc123";
@@ -342,7 +342,7 @@ describe("Durable client RPC endpoint", () => {
     describe("purgeInstanceHistory[By]()", () => {
         it("uses the RPC endpoint (single instance)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The purgeInstanceHistory() method should do a DELETE to http://127.0.0.1:17071/durabletask/instances/abc123
             const instanceId = "abc123";
@@ -359,7 +359,7 @@ describe("Durable client RPC endpoint", () => {
 
         it("uses the RPC endpoint (multiple instances)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The purgeInstanceHistoryBy() method should do a DELETE to
             // http://127.0.0.1:17071/durabletask/instances/?createdTimeFrom=2020-01-01T00:00:00Z&createdTimeTo=2020-01-01T23:59:59Z&runtimeStatus=Pending,Running,Completed,Terminated,Failed
@@ -394,7 +394,7 @@ describe("Durable client RPC endpoint", () => {
     describe("rewind()", () => {
         it("uses the RPC endpoint (no optional query params)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The rewind() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/rewind?reason=because
             const instanceId = "abc123";
@@ -413,7 +413,7 @@ describe("Durable client RPC endpoint", () => {
 
         it("uses the RPC endpoint (all query params)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The rewind() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/rewind?reason=because&taskHub=hub&connection=Storage
             const instanceId = "abc123";
@@ -440,7 +440,7 @@ describe("Durable client RPC endpoint", () => {
     describe("signalEntity()", () => {
         it("uses the RPC endpoint (no arguments)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The signalEntity() method should do a POST to http://127.0.0.1:17071/durabletask/entities/counter/abc123?op=MyEvent
             const entityId = new EntityId("counter", "abc123");
@@ -456,7 +456,7 @@ describe("Durable client RPC endpoint", () => {
 
         it("uses the RPC endpoint (with all arguments)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The signalEntity() method should do a POST to http://127.0.0.1:17071/durabletask/entities/counter/abc123?op=incr&taskHub=hub&connection=Storage
             // with a application/json payload matching { "value": 42 }.
@@ -486,7 +486,7 @@ describe("Durable client RPC endpoint", () => {
     describe("readEntityState()", () => {
         it("uses the RPC endpoint (no optional params)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The readEntityState() method should do a GET to http://127.0.0.1:17071/durabletask/entities/counter/abc123
             const entityId = new EntityId("counter", "abc123");
@@ -509,7 +509,7 @@ describe("Durable client RPC endpoint", () => {
 
         it("uses the RPC endpoint (with optional params)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The readEntityState() method should do a GET to http://127.0.0.1:17071/durabletask/entities/counter/abc123?taskHub=hub&connection=Storage
             const entityId = new EntityId("counter", "abc123");
