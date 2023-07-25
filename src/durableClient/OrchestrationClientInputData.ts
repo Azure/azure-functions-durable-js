@@ -1,5 +1,5 @@
-import { HttpCreationPayload } from "./http/HttpCreationPayload";
-import { HttpManagementPayload } from "./http/HttpManagementPayload";
+import { HttpCreationPayload } from "../http/HttpCreationPayload";
+import { HttpManagementPayload } from "../http/HttpManagementPayload";
 
 /** @hidden */
 export class OrchestrationClientInputData {

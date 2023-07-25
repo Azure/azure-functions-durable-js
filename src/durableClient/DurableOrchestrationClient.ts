@@ -1,9 +1,7 @@
 // tslint:disable:member-access
 
-import { FunctionInput, HttpRequest, HttpResponse, InvocationContext } from "@azure/functions";
+import { HttpRequest, HttpResponse } from "@azure/functions";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-/** @hidden */
-import cloneDeep = require("lodash/cloneDeep");
 /** @hidden */
 import process = require("process");
 /** @hidden */
@@ -11,99 +9,21 @@ import url = require("url");
 import { isURL } from "validator";
 import {
     StartNewOptions,
-    DurableClientInput,
     DurableClient,
     GetStatusOptions,
     OrchestrationFilter,
     TaskHubOptions,
     WaitForCompletionOptions,
 } from "durable-functions";
-import { WebhookUtils } from "./util/WebhookUtils";
-import { Constants } from "./constants";
-import { HttpCreationPayload } from "./http/HttpCreationPayload";
-import { OrchestrationClientInputData } from "./orchestrationclientinputdata";
-import { Utils } from "./util/Utils";
-import { HttpManagementPayload } from "./http/HttpManagementPayload";
-import { DurableOrchestrationStatus } from "./orchestrations/DurableOrchestrationStatus";
-import { PurgeHistoryResult } from "./purgehistoryresult";
-import { EntityStateResponse } from "./entities/entitystateresponse";
-import { EntityId } from "./entities/entityid";
-import { OrchestrationRuntimeStatus } from "./orchestrations/OrchestrationRuntimeStatus";
-
-/** @hidden */
-const URL = url.URL;
-
-export function getClient(context: InvocationContext): DurableClient {
-    const foundInput: FunctionInput | undefined = context.options.extraInputs.find(
-        isDurableClientInput
-    );
-    if (!foundInput) {
-        throw new Error(
-            "Could not find a registered durable client input binding. Check your extraInputs definition when registering your function."
-        );
-    }
-
-    const clientInputOptions = foundInput as DurableClientInput;
-    let clientData = getClientData(context, clientInputOptions);
-
-    if (!process.env.WEBSITE_HOSTNAME || process.env.WEBSITE_HOSTNAME.includes("0.0.0.0")) {
-        clientData = correctClientData(clientData);
-    }
-
-    return new DurableOrchestrationClient(clientData);
-}
-
-/** @hidden */
-function isDurableClientInput(input: FunctionInput): boolean {
-    return input.type === "durableClient" || input.type === "orchestrationClient";
-}
-
-/** @hidden */
-function getClientData(
-    context: InvocationContext,
-    clientInput: DurableClientInput
-): OrchestrationClientInputData {
-    const clientData: unknown = context.extraInputs.get(clientInput);
-    if (clientData && OrchestrationClientInputData.isOrchestrationClientInputData(clientData)) {
-        return clientData as OrchestrationClientInputData;
-    }
-
-    throw new Error(
-        "Received input is not a valid durable client input. Check your extraInputs definition when registering your function."
-    );
-}
-
-/** @hidden */
-function correctClientData(clientData: OrchestrationClientInputData): OrchestrationClientInputData {
-    const returnValue = cloneDeep(clientData);
-
-    returnValue.creationUrls = correctUrls(clientData.creationUrls) as HttpCreationPayload;
-    returnValue.managementUrls = correctUrls(clientData.managementUrls) as HttpManagementPayload;
-
-    return returnValue;
-}
-
-function correctUrls(obj: { [key: string]: string }): { [key: string]: string } {
-    const returnValue = cloneDeep(obj);
-
-    const keys = Object.getOwnPropertyNames(obj);
-    keys.forEach((key) => {
-        const value = obj[key];
-
-        if (
-            isURL(value, {
-                protocols: ["http", "https"],
-                require_tld: false,
-                require_protocol: true,
-            })
-        ) {
-            const valueAsUrl = new url.URL(value);
-            returnValue[key] = value.replace(valueAsUrl.origin, Constants.DefaultLocalOrigin);
-        }
-    });
-
-    return returnValue;
-}
+import { WebhookUtils } from "../util/WebhookUtils";
+import { OrchestrationClientInputData } from "./OrchestrationClientInputData";
+import { HttpManagementPayload } from "../http/HttpManagementPayload";
+import { DurableOrchestrationStatus } from "../orchestrations/DurableOrchestrationStatus";
+import { PurgeHistoryResult } from "./PurgeHistoryResult";
+import { EntityId } from "../entities/entityid";
+import { EntityStateResponse } from "../entities/entitystateresponse";
+import { OrchestrationRuntimeStatus } from "../orchestrations/OrchestrationRuntimeStatus";
+import { Utils } from "../util/Utils";
 
 /**
  * Client for starting, querying, terminating and raising events to
