@@ -1,15 +1,31 @@
-import { InvocationContext, InvocationContextInit, LogHandler } from "@azure/functions";
 import {
+    FunctionHandler,
+    InvocationContext,
+    InvocationContextInit,
+    LogHandler,
+} from "@azure/functions";
+import {
+    DurableEntityBindingInfo,
     DurableOrchestrationBindingInfo,
     DurableOrchestrationContext,
+    Entity,
+    EntityState,
     HistoryEvent,
     HistoryEventOptions,
+    Orchestrator,
     OrchestratorStartedEvent,
+    OrchestratorState,
 } from "../classes";
 import { ReplaySchema } from "../replaySchema";
 import * as uuidv1 from "uuid/v1";
-import { DurableEntityContext, EntityContext, OrchestrationContext } from "durable-functions";
+import {
+    DurableEntityContext,
+    EntityContext,
+    OrchestrationContext,
+    OrchestrationHandler,
+} from "durable-functions";
 import * as types from "durable-functions";
+import { EntityHandler } from "durable-functions";
 
 export class DummyOrchestrationContext extends InvocationContext
     implements OrchestrationContext, types.DummyOrchestrationContext {
@@ -99,4 +115,45 @@ export class DummyEntityContext<T> extends InvocationContext
     }
 
     df: DurableEntityContext<T>;
+}
+
+type EntityFunction<T> = FunctionHandler &
+    ((entityTrigger: DurableEntityBindingInfo, context: EntityContext<T>) => Promise<EntityState>);
+
+type OrchestrationFunction = FunctionHandler &
+    ((
+        orchestrationTrigger: DurableOrchestrationInput,
+        context: OrchestrationContext
+    ) => Promise<OrchestratorState>);
+
+/**
+ * Enables a generator function to act as an orchestrator function.
+ *
+ * @param fn the generator function that should act as an orchestrator
+ */
+export function createOrchestrator(fn: OrchestrationHandler): OrchestrationFunction {
+    const listener = new Orchestrator(fn).listen();
+
+    return async (
+        orchestrationTrigger: DurableOrchestrationInput,
+        context: OrchestrationContext
+    ): Promise<OrchestratorState> => {
+        return await listener(orchestrationTrigger, context);
+    };
+}
+
+/**
+ * Enables an entity handler function to act as a Durable Entity Azure Function.
+ *
+ * @param fn the handler function that should act as a durable entity
+ */
+export function createEntityFunction<T = unknown>(fn: EntityHandler<T>): EntityFunction<T> {
+    const listener = new Entity<T>(fn).listen();
+
+    return async (
+        entityTrigger: DurableEntityBindingInfo,
+        context: EntityContext<T>
+    ): Promise<EntityState> => {
+        return await listener(entityTrigger, context);
+    };
 }
