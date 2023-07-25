@@ -1,6 +1,6 @@
 import { FunctionInput, InvocationContext } from "@azure/functions";
-import { DurableClient, DurableClientInput } from "durable-functions";
-import { DurableOrchestrationClient } from "./DurableOrchestrationClient";
+import { DurableClientInput } from "durable-functions";
+import { DurableClient } from "./DurableClient";
 import { OrchestrationClientInputData } from "./OrchestrationClientInputData";
 /** @hidden */
 import cloneDeep = require("lodash/cloneDeep");
@@ -28,7 +28,7 @@ export function getClient(context: InvocationContext): DurableClient {
         clientData = correctClientData(clientData);
     }
 
-    return new DurableOrchestrationClient(clientData);
+    return new DurableClient(clientData);
 }
 
 /** @hidden */

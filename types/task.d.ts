@@ -18,7 +18,7 @@ export interface Task {
 }
 
 /**
- * Returned from [[DurableOrchestrationClient]].[[createTimer]] if the call is
+ * Returned from [[DurableClient]].[[createTimer]] if the call is
  * not `yield`-ed. Represents a pending timer. See documentation on [[Task]]
  * for more information.
  *
