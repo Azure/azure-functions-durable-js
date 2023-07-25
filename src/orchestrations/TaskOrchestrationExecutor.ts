@@ -1,22 +1,20 @@
-import {
-    CallEntityAction,
-    EventRaisedEvent,
-    EventSentEvent,
-    HistoryEvent,
-    HistoryEventType,
-    IAction,
-    RequestMessage,
-    ResponseMessage,
-    SubOrchestrationInstanceCompletedEvent,
-    TaskCompletedEvent,
-    WaitForExternalEventAction,
-} from "../classes";
 import { OrchestrationFailureError } from "../error/OrchestrationFailureError";
 import { OrchestratorState } from "./OrchestratorState";
 import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "../task";
 import { ReplaySchema } from "./ReplaySchema";
 import { Utils } from "../util/Utils";
 import { DurableOrchestrationContext, OrchestrationContext } from "durable-functions";
+import { CallEntityAction } from "../actions/callentityaction";
+import { IAction } from "../actions/iaction";
+import { WaitForExternalEventAction } from "../actions/waitforexternaleventaction";
+import { RequestMessage } from "../entities/requestmessage";
+import { ResponseMessage } from "../entities/responsemessage";
+import { EventRaisedEvent } from "../history/eventraisedevent";
+import { EventSentEvent } from "../history/eventsentevent";
+import { HistoryEvent } from "../history/historyevent";
+import { HistoryEventType } from "../history/historyeventtype";
+import { SubOrchestrationInstanceCompletedEvent } from "../history/suborchestrationinstancecompletedevent";
+import { TaskCompletedEvent } from "../history/taskcompletedevent";
 
 /**
  * @hidden

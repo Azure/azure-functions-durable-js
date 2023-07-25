@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import "mocha";
-import { RetryOptions } from "../../src/classes";
+import { RetryOptions } from "../../src/retryoptions";
 
 describe("RetryOptions", () => {
     it("throws if firstRetryIntervalInMilliseconds less than or equal to zero", async () => {

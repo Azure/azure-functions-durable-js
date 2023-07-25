@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 /** @hidden */
 import uuidv5 = require("uuid/v5");
-import { Utils } from "./classes";
+import { Utils } from "./util/Utils";
 
 /** @hidden */
 export class GuidManager {

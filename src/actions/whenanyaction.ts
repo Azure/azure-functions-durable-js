@@ -1,5 +1,6 @@
-import { ActionType, IAction } from "../classes";
 import { DFTask } from "../task";
+import { ActionType } from "./actiontype";
+import { IAction } from "./iaction";
 
 /** @hidden */
 export class WhenAnyAction implements IAction {

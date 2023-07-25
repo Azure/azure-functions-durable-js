@@ -1,10 +1,15 @@
 import * as debug from "debug";
-import { EntityId, EntityState, OperationResult, RequestMessage, Signal, Utils } from "../classes";
 import {
     DurableEntityBindingInfoReqFields,
     DurableEntityBindingInfo,
 } from "./DurableEntityBindingInfo";
 import { DurableEntityContext, EntityContext } from "durable-functions";
+import { Utils } from "../util/Utils";
+import { EntityState } from "./entitystate";
+import { OperationResult } from "./operationresult";
+import { RequestMessage } from "./requestmessage";
+import { Signal } from "./signal";
+import { EntityId } from "./entityid";
 
 /** @hidden */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

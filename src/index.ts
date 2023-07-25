@@ -1,13 +1,10 @@
-import {
-    EntityId,
-    EntityStateResponse,
-    OrchestrationRuntimeStatus,
-    RetryOptions,
-    DummyOrchestrationContext,
-} from "./classes";
 import { getClient } from "./durableorchestrationclient";
-import { DummyEntityContext } from "./util/testingUtils";
+import { DummyEntityContext, DummyOrchestrationContext } from "./util/testingUtils";
 import { ManagedIdentityTokenSource } from "./tokensource";
+import { EntityId } from "./entities/entityid";
+import { EntityStateResponse } from "./entities/entitystateresponse";
+import { OrchestrationRuntimeStatus } from "./orchestrations/OrchestrationRuntimeStatus";
+import { RetryOptions } from "./retryoptions";
 
 export * as app from "./app";
 export * as trigger from "./trigger";

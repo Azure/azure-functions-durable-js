@@ -4,18 +4,6 @@ import {
     InvocationContextInit,
     LogHandler,
 } from "@azure/functions";
-import {
-    DurableEntityBindingInfo,
-    DurableOrchestrationBindingInfo,
-    DurableOrchestrationContext,
-    Entity,
-    EntityState,
-    HistoryEvent,
-    HistoryEventOptions,
-    Orchestrator,
-    OrchestratorStartedEvent,
-    OrchestratorState,
-} from "../classes";
 import { ReplaySchema } from "../orchestrations/ReplaySchema";
 import * as uuidv1 from "uuid/v1";
 import {
@@ -26,6 +14,15 @@ import {
 } from "durable-functions";
 import * as types from "durable-functions";
 import { EntityHandler } from "durable-functions";
+import { DurableEntityBindingInfo } from "../entities/DurableEntityBindingInfo";
+import { Entity } from "../entities/Entity";
+import { EntityState } from "../entities/entitystate";
+import { HistoryEvent } from "../history/historyevent";
+import { HistoryEventOptions } from "../history/historyeventoptions";
+import { OrchestratorStartedEvent } from "../history/orchestratorstartedevent";
+import { DurableOrchestrationBindingInfo } from "../orchestrations/DurableOrchestrationBindingInfo";
+import { Orchestrator } from "../orchestrations/Orchestrator";
+import { OrchestratorState } from "../orchestrations/OrchestratorState";
 
 export class DummyOrchestrationContext extends InvocationContext
     implements OrchestrationContext, types.DummyOrchestrationContext {
@@ -42,10 +39,10 @@ export class DummyOrchestrationContext extends InvocationContext
         super(invocationContextInit);
 
         // Set this as undefined, let it be initialized by the orchestrator
-        this.df = (undefined as unknown) as DurableOrchestrationContext;
+        this.df = (undefined as unknown) as types.DurableOrchestrationContext;
     }
 
-    df: DurableOrchestrationContext;
+    df: types.DurableOrchestrationContext;
 }
 
 export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
