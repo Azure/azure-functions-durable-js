@@ -26,7 +26,7 @@ import {
     WaitForExternalEventAction,
 } from "../../src/classes";
 import { OrchestrationFailureError } from "../../src/error/OrchestrationFailureError";
-import { ReplaySchema } from "../../src/replaySchema";
+import { ReplaySchema } from "../../src/orchestrations/ReplaySchema";
 import { DurableOrchestrationInput } from "../../src/util/testingUtils";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";

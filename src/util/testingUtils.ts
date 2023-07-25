@@ -16,7 +16,7 @@ import {
     OrchestratorStartedEvent,
     OrchestratorState,
 } from "../classes";
-import { ReplaySchema } from "../replaySchema";
+import { ReplaySchema } from "../orchestrations/ReplaySchema";
 import * as uuidv1 from "uuid/v1";
 import {
     DurableEntityContext,
