@@ -325,7 +325,7 @@ export declare class DurableOrchestrationStatus {
 
     /**
      * The custom status payload (if any) that was set by
-     * `DurableOrchestrationClient.setCustomStatus()`.
+     * `DurableClient.setCustomStatus()`.
      */
     readonly customStatus?: unknown;
 
@@ -334,7 +334,7 @@ export declare class DurableOrchestrationStatus {
      *
      * The history log can be large and is therefore `undefined` by
      * default. It is populated only when explicitly requested in the call
-     * to `DurableOrchestrationClient.getStatus()`.
+     * to `DurableClient.getStatus()`.
      */
     readonly history?: Array<unknown>;
 }

@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import "mocha";
 import moment = require("moment");
-import { GuidManager } from "../../src/GuidManager";
+import { GuidManager } from "../../src/util/GuidManager";
 import uuidv1 = require("uuid/v1");
 import { isUUID } from "validator";
 

@@ -10,7 +10,7 @@ import { TestUtils } from "../testobjects/testutils";
 import { getClient, input } from "../../src";
 import { Constants } from "../../src/Constants";
 import { OrchestrationClientInputData } from "../../src/durableClient/OrchestrationClientInputData";
-import { DurableOrchestrationClient } from "../../src/durableClient/DurableOrchestrationClient";
+import { DurableClient } from "../../src/durableClient/DurableClient";
 
 chai.use(chaiAsPromised);
 
@@ -68,14 +68,14 @@ describe("getClient()", () => {
         );
     });
 
-    it("returns DurableOrchestrationClient if called with valid context", async () => {
+    it("returns DurableClient if called with valid context", async () => {
         const client = getClient(defaultContext);
-        expect(client).to.be.instanceOf(DurableOrchestrationClient);
+        expect(client).to.be.instanceOf(DurableClient);
     });
 
-    it("returns DurableOrchestrationClient if called with V1 context", async () => {
+    it("returns DurableClient if called with V1 context", async () => {
         const client = getClient(v1Context);
-        expect(client).to.be.instanceOf(DurableOrchestrationClient);
+        expect(client).to.be.instanceOf(DurableClient);
     });
 
     describe("Azure/azure-functions-durable-js#28 patch", () => {
