@@ -1,5 +1,5 @@
 import { FunctionInput, InvocationContext } from "@azure/functions";
-import { DurableClient, DurableClientInput } from "durable-functions";
+import { DurableClientInput } from "durable-functions";
 import { DurableClient } from "./DurableClient";
 import { OrchestrationClientInputData } from "./OrchestrationClientInputData";
 /** @hidden */
