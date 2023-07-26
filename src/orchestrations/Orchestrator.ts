@@ -10,11 +10,11 @@ import { HistoryEventType } from "../history/HistoryEventType";
 import { Utils } from "../util/Utils";
 import { OrchestratorState } from "./OrchestratorState";
 import { OrchestrationContext } from "durable-functions";
+import { executorManager } from "./ExecutorManager";
 
 /** @hidden */
 export class Orchestrator {
     private currentUtcDateTime: Date;
-    private taskOrchestrationExecutor: TaskOrchestrationExecutor;
 
     // Our current testing infrastructure depends on static unit testing helpers that don't play
     // nicely with Orchestrator data being initialized in the constructor: state may preserved
@@ -33,72 +33,76 @@ export class Orchestrator {
         orchestrationTrigger: DurableOrchestrationBindingInfo,
         context: OrchestrationContext
     ): Promise<OrchestratorState> {
-        this.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
-        const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
-            { trigger: orchestrationTrigger },
-            new DurableOrchestrationBindingInfoReqFields() as DurableOrchestrationBindingInfo
-        )[0];
+        try {
+            executorManager.taskOrchestrationExecutor = new TaskOrchestrationExecutor();
+            const orchestrationBinding = Utils.getInstancesOf<DurableOrchestrationBindingInfo>(
+                { trigger: orchestrationTrigger },
+                new DurableOrchestrationBindingInfoReqFields() as DurableOrchestrationBindingInfo
+            )[0];
 
-        if (!orchestrationBinding) {
-            throw new Error("Could not find an orchestrationClient binding on context.");
-        }
+            if (!orchestrationBinding) {
+                throw new Error("Could not find an orchestrationClient binding on context.");
+            }
 
-        const state: HistoryEvent[] = orchestrationBinding.history;
-        const input = orchestrationBinding.input;
-        const instanceId: string = orchestrationBinding.instanceId;
-        // const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
+            const state: HistoryEvent[] = orchestrationBinding.history;
+            const input = orchestrationBinding.input;
+            const instanceId: string = orchestrationBinding.instanceId;
+            // const contextLocks: EntityId[] = orchestrationBinding.contextLocks;
 
-        // The upper schema version corresponds to the maximum OOProc protocol version supported by the extension,
-        // we use it to determine the format of the SDK's output
-        let upperSchemaVersion: ReplaySchema;
+            // The upper schema version corresponds to the maximum OOProc protocol version supported by the extension,
+            // we use it to determine the format of the SDK's output
+            let upperSchemaVersion: ReplaySchema;
 
-        // represents the upper schema version suported by the extension
-        const extensionUpperSchemaVersion: ReplaySchema = orchestrationBinding.upperSchemaVersionNew
-            ? orchestrationBinding.upperSchemaVersionNew
-            : orchestrationBinding.upperSchemaVersion;
+            // represents the upper schema version suported by the extension
+            const extensionUpperSchemaVersion: ReplaySchema = orchestrationBinding.upperSchemaVersionNew
+                ? orchestrationBinding.upperSchemaVersionNew
+                : orchestrationBinding.upperSchemaVersion;
 
-        // It is assumed that the extension supports all schemas in range [0, upperSchemaVersion].
-        // Similarly, it is assumed that this SDK supports all schemas in range [0, LatestReplaySchema].
-        // Therefore, if the extension supplies a upperSchemaVersion included in our ReplaySchema enum, we use it.
-        // But if the extension supplies an upperSchemaVersion not included in our ReplaySchema enum, then we
-        // assume that upperSchemaVersion is larger than LatestReplaySchema and therefore use LatestReplaySchema instead.
-        if (Object.values(ReplaySchema).includes(extensionUpperSchemaVersion)) {
-            upperSchemaVersion = extensionUpperSchemaVersion;
-        } else {
-            upperSchemaVersion = LatestReplaySchema;
-        }
+            // It is assumed that the extension supports all schemas in range [0, upperSchemaVersion].
+            // Similarly, it is assumed that this SDK supports all schemas in range [0, LatestReplaySchema].
+            // Therefore, if the extension supplies a upperSchemaVersion included in our ReplaySchema enum, we use it.
+            // But if the extension supplies an upperSchemaVersion not included in our ReplaySchema enum, then we
+            // assume that upperSchemaVersion is larger than LatestReplaySchema and therefore use LatestReplaySchema instead.
+            if (Object.values(ReplaySchema).includes(extensionUpperSchemaVersion)) {
+                upperSchemaVersion = extensionUpperSchemaVersion;
+            } else {
+                upperSchemaVersion = LatestReplaySchema;
+            }
 
-        // Initialize currentUtcDateTime
-        const decisionStartedEvent: HistoryEvent = Utils.ensureNonNull(
-            state.find((e) => e.EventType === HistoryEventType.OrchestratorStarted),
-            "The orchestrator can not execute without an OrchestratorStarted event."
-        );
-        this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
-
-        // Only create durable orchestration context when `context.df` has not been defined
-        // if it has been defined, then we must be in some unit-testing scenario
-        if (context.df === undefined) {
-            // Create durable orchestration context
-            context.df = new DurableOrchestrationContext(
-                state,
-                instanceId,
-                this.currentUtcDateTime,
-                orchestrationBinding.isReplaying,
-                orchestrationBinding.parentInstanceId,
-                orchestrationBinding.longRunningTimerIntervalDuration,
-                orchestrationBinding.maximumShortTimerDuration,
-                orchestrationBinding.defaultHttpAsyncRequestSleepTimeMillseconds,
-                upperSchemaVersion,
-                input,
-                this.taskOrchestrationExecutor
+            // Initialize currentUtcDateTime
+            const decisionStartedEvent: HistoryEvent = Utils.ensureNonNull(
+                state.find((e) => e.EventType === HistoryEventType.OrchestratorStarted),
+                "The orchestrator can not execute without an OrchestratorStarted event."
             );
-        }
+            this.currentUtcDateTime = new Date(decisionStartedEvent.Timestamp);
 
-        return await this.taskOrchestrationExecutor.execute(
-            context,
-            state,
-            upperSchemaVersion,
-            this.fn
-        );
+            // Only create durable orchestration context when `context.df` has not been defined
+            // if it has been defined, then we must be in some unit-testing scenario
+            if (context.df === undefined) {
+                // Create durable orchestration context
+                context.df = new DurableOrchestrationContext(
+                    state,
+                    instanceId,
+                    this.currentUtcDateTime,
+                    orchestrationBinding.isReplaying,
+                    orchestrationBinding.parentInstanceId,
+                    orchestrationBinding.longRunningTimerIntervalDuration,
+                    orchestrationBinding.maximumShortTimerDuration,
+                    orchestrationBinding.defaultHttpAsyncRequestSleepTimeMillseconds,
+                    upperSchemaVersion,
+                    input,
+                    executorManager.taskOrchestrationExecutor
+                );
+            }
+
+            return executorManager.taskOrchestrationExecutor.execute(
+                context,
+                state,
+                upperSchemaVersion,
+                this.fn
+            );
+        } finally {
+            executorManager.taskOrchestrationExecutor = undefined;
+        }
     }
 }

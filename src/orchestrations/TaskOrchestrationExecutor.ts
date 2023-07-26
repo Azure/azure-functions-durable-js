@@ -91,12 +91,12 @@ export class TaskOrchestrationExecutor {
      * @returns
      *  Returns void but communicates the resulting orchestrator state via the context object's handler
      */
-    public async execute(
+    public execute(
         context: OrchestrationContext,
         history: HistoryEvent[],
         schemaVersion: ReplaySchema,
         fn: (context: OrchestrationContext) => IterableIterator<unknown>
-    ): Promise<OrchestratorState> {
+    ): OrchestratorState {
         this.schemaVersion = schemaVersion;
         this.context = context.df;
         this.generator = fn(context) as Generator<TaskBase, any, any>;
