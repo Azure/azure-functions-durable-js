@@ -1,22 +1,22 @@
 import * as moment from "moment";
-import { EventRaisedEvent } from "../../src/history/eventraisedevent";
-import { EventSentEvent } from "../../src/history/eventsentevent";
-import { ExecutionStartedEvent } from "../../src/history/executionstartedevent";
-import { HistoryEvent } from "../../src/history/historyevent";
-import { OrchestratorCompletedEvent } from "../../src/history/orchestratorcompletedevent";
-import { OrchestratorStartedEvent } from "../../src/history/orchestratorstartedevent";
-import { SubOrchestrationInstanceCompletedEvent } from "../../src/history/suborchestrationinstancecompletedevent";
-import { SubOrchestrationInstanceCreatedEvent } from "../../src/history/suborchestrationinstancecreatedevent";
-import { SubOrchestrationInstanceFailedEvent } from "../../src/history/suborchestrationinstancefailedevent";
-import { TaskCompletedEvent } from "../../src/history/taskcompletedevent";
-import { TaskFailedEvent } from "../../src/history/taskfailedevent";
-import { TaskScheduledEvent } from "../../src/history/taskscheduledevent";
-import { TimerCreatedEvent } from "../../src/history/timercreatedevent";
-import { TimerFiredEvent } from "../../src/history/timerfiredevent";
+import { EventRaisedEvent } from "../../src/history/EventRaisedEvent";
+import { EventSentEvent } from "../../src/history/EventSentEvent";
+import { ExecutionStartedEvent } from "../../src/history/ExecutionStartedEvent";
+import { HistoryEvent } from "../../src/history/HistoryEvent";
+import { OrchestratorCompletedEvent } from "../../src/history/OrchestratorCompletedEvent";
+import { OrchestratorStartedEvent } from "../../src/history/OrchestratorStartedEvent";
+import { SubOrchestrationInstanceCompletedEvent } from "../../src/history/SubOrchestrationInstanceCompletedEvent";
+import { SubOrchestrationInstanceCreatedEvent } from "../../src/history/SubOrchestrationInstanceCreatedEvent";
+import { SubOrchestrationInstanceFailedEvent } from "../../src/history/SubOrchestrationInstanceFailedEvent";
+import { TaskCompletedEvent } from "../../src/history/TaskCompletedEvent";
+import { TaskFailedEvent } from "../../src/history/TaskFailedEvent";
+import { TaskScheduledEvent } from "../../src/history/TaskScheduledEvent";
+import { TimerCreatedEvent } from "../../src/history/TimerCreatedEvent";
+import { TimerFiredEvent } from "../../src/history/TimerFiredEvent";
 import { DurableHttpRequest } from "../../src/http/DurableHttpRequest";
 import { DurableHttpResponse } from "../../src/http/DurableHttpResponse";
 import * as uuidv1 from "uuid/v1";
-import { EntityId } from "../../src/entities/entityid";
+import { EntityId } from "../../src/entities/EntityId";
 
 export class TestHistories {
     public static StarterHistory(timestamp: Date): HistoryEvent[] {

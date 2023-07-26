@@ -5,11 +5,11 @@ import {
 } from "./DurableEntityBindingInfo";
 import { DurableEntityContext, EntityContext } from "durable-functions";
 import { Utils } from "../util/Utils";
-import { EntityState } from "./entitystate";
-import { OperationResult } from "./operationresult";
-import { RequestMessage } from "./requestmessage";
-import { Signal } from "./signal";
-import { EntityId } from "./entityid";
+import { EntityState } from "./EntityState";
+import { OperationResult } from "./OperationResult";
+import { RequestMessage } from "./RequestMessage";
+import { Signal } from "./Signal";
+import { EntityId } from "./EntityId";
 
 /** @hidden */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

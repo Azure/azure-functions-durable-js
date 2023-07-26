@@ -1,7 +1,7 @@
 import { DurableEntityBindingInfo } from "../../src/entities/DurableEntityBindingInfo";
-import { EntityState } from "../../src/entities/entitystate";
-import { OperationResult } from "../../src/entities/operationresult";
-import { RequestMessage } from "../../src/entities/requestmessage";
+import { EntityState } from "../../src/entities/EntityState";
+import { OperationResult } from "../../src/entities/OperationResult";
+import { RequestMessage } from "../../src/entities/RequestMessage";
 import * as df from "../../src";
 import {
     CounterOperation,

@@ -8,7 +8,7 @@ import { DurableClientInput } from "durable-functions";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 import { getClient, input } from "../../src";
-import { Constants } from "../../src/constants";
+import { Constants } from "../../src/Constants";
 import { OrchestrationClientInputData } from "../../src/durableClient/OrchestrationClientInputData";
 import { DurableClient } from "../../src/durableClient/DurableClient";
 

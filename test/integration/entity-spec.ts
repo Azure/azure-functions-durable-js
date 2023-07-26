@@ -4,7 +4,7 @@ import { DummyEntityContext } from "../../src/util/testingUtils";
 import { TestEntities } from "../testobjects/testentities";
 import { TestEntityBatches } from "../testobjects/testentitybatches";
 import { StringStoreOperation } from "../testobjects/testentityoperations";
-import { EntityState } from "../../src/entities/entitystate";
+import { EntityState } from "../../src/entities/EntityState";
 
 describe("Entity", () => {
     it("StringStore entity with no initial state.", async () => {

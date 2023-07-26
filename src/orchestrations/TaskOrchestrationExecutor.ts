@@ -4,17 +4,17 @@ import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "../task";
 import { ReplaySchema } from "./ReplaySchema";
 import { Utils } from "../util/Utils";
 import { DurableOrchestrationContext, OrchestrationContext } from "durable-functions";
-import { CallEntityAction } from "../actions/callentityaction";
-import { IAction } from "../actions/iaction";
-import { WaitForExternalEventAction } from "../actions/waitforexternaleventaction";
-import { RequestMessage } from "../entities/requestmessage";
-import { ResponseMessage } from "../entities/responsemessage";
-import { EventRaisedEvent } from "../history/eventraisedevent";
-import { EventSentEvent } from "../history/eventsentevent";
-import { HistoryEvent } from "../history/historyevent";
-import { HistoryEventType } from "../history/historyeventtype";
-import { SubOrchestrationInstanceCompletedEvent } from "../history/suborchestrationinstancecompletedevent";
-import { TaskCompletedEvent } from "../history/taskcompletedevent";
+import { CallEntityAction } from "../actions/CallEntityAction";
+import { IAction } from "../actions/IAction";
+import { WaitForExternalEventAction } from "../actions/WaitForExternalEventAction";
+import { RequestMessage } from "../entities/RequestMessage";
+import { ResponseMessage } from "../entities/ResponseMessage";
+import { EventRaisedEvent } from "../history/EventRaisedEvent";
+import { EventSentEvent } from "../history/EventSentEvent";
+import { HistoryEvent } from "../history/HistoryEvent";
+import { HistoryEventType } from "../history/HistoryEventType";
+import { SubOrchestrationInstanceCompletedEvent } from "../history/SubOrchestrationInstanceCompletedEvent";
+import { TaskCompletedEvent } from "../history/TaskCompletedEvent";
 
 /**
  * @hidden

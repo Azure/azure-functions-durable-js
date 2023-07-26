@@ -3,7 +3,7 @@ import { AtomicTask, TaskBase, TaskID, TaskState } from ".";
 import { DurableOrchestrationContext } from "../orchestrations/DurableOrchestrationContext";
 import { TaskOrchestrationExecutor } from "src/orchestrations/TaskOrchestrationExecutor";
 import moment = require("moment");
-import { CallHttpAction } from "../actions/callhttpaction";
+import { CallHttpAction } from "../actions/CallHttpAction";
 import { DurableHttpResponse } from "../http/DurableHttpResponse";
 
 /**

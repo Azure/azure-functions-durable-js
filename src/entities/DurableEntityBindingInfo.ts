@@ -1,5 +1,5 @@
-import { EntityId } from "./entityid";
-import { RequestMessage } from "./requestmessage";
+import { EntityId } from "./EntityId";
+import { RequestMessage } from "./RequestMessage";
 
 /** @hidden */
 export class DurableEntityBindingInfoReqFields {

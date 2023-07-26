@@ -4,7 +4,7 @@ import moment = require("moment");
 import { TaskOrchestrationExecutor } from "../orchestrations/TaskOrchestrationExecutor";
 import { TaskID } from ".";
 import { DFTimerTask } from "./DFTimerTask";
-import { CreateTimerAction } from "../actions/createtimeraction";
+import { CreateTimerAction } from "../actions/CreateTimerAction";
 
 /**
  * @hidden
