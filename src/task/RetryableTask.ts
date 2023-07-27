@@ -31,11 +31,7 @@ export class RetryableTask extends WhenAllTask {
      *  The taskOrchestrationExecutor managing the replay,
      *  we use to to scheduling new tasks (timers and retries)
      */
-    constructor(
-        public innerTask: DFTask,
-        private retryOptions: RetryOptions,
-        private executor: TaskOrchestrationExecutor
-    ) {
+    constructor(public innerTask: DFTask, private retryOptions: RetryOptions) {
         super([innerTask], innerTask.actionObj);
         this.attemptNumber = 1;
         this.isWaitingOnTimer = false;
@@ -48,7 +44,14 @@ export class RetryableTask extends WhenAllTask {
      * @param child
      *  The sub-task that just completed
      */
-    public trySetValue(child: TaskBase): void {
+    public trySetValue(child: TaskBase, executor?: TaskOrchestrationExecutor): void {
+        if (!executor) {
+            throw new Error(
+                "Ne executor passed to RetryableTask.trySetValue. " +
+                    "A TaskOrchestrationExecutor is required to schedule new tasks."
+            );
+        }
+
         // Case 1 - child is a timer task
         if (this.isWaitingOnTimer) {
             this.isWaitingOnTimer = false;
@@ -64,7 +67,7 @@ export class RetryableTask extends WhenAllTask {
                 const rescheduledTask = new NoOpTask();
                 rescheduledTask.parent = this;
                 this.children.push(rescheduledTask);
-                this.executor.trackOpenTask(rescheduledTask);
+                executor.trackOpenTask(rescheduledTask);
             }
         } // Case 2 - child is the API to retry, and it succeeded
         else if (child.stateObj === TaskState.Completed) {
@@ -77,7 +80,7 @@ export class RetryableTask extends WhenAllTask {
             const rescheduledTask = new NoOpTask();
             rescheduledTask.parent = this;
             this.children.push(rescheduledTask);
-            this.executor.trackOpenTask(rescheduledTask);
+            executor.trackOpenTask(rescheduledTask);
             this.isWaitingOnTimer = true;
             this.error = child.result;
             this.attemptNumber++;

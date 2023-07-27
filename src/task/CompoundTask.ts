@@ -1,3 +1,4 @@
+import { TaskOrchestrationExecutor } from "src/orchestrations/TaskOrchestrationExecutor";
 import { IAction } from "../actions/IAction";
 import { DFTask } from "./DFTask";
 import { TaskBase } from "./TaskBase";
@@ -40,11 +41,11 @@ export abstract class CompoundTask extends DFTask {
      * @param child
      *  A sub-task of this task.
      */
-    public handleCompletion(child: TaskBase): void {
+    public handleCompletion(child: TaskBase, executor?: TaskOrchestrationExecutor): void {
         if (!this.isPlayed) {
             this.isPlayed = child.isPlayed;
         }
-        this.trySetValue(child);
+        this.trySetValue(child, executor);
     }
 
     /**
@@ -55,5 +56,5 @@ export abstract class CompoundTask extends DFTask {
      * @param child
      *  A sub-task
      */
-    abstract trySetValue(child: TaskBase): void;
+    abstract trySetValue(child: TaskBase, executor?: TaskOrchestrationExecutor): void;
 }

@@ -162,7 +162,7 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
     ): Task {
         const newAction = new CallActivityWithRetryAction(name, retryOptions, input);
         const backingTask = new AtomicTask(false, newAction);
-        const task = new RetryableTask(backingTask, retryOptions, this.taskOrchestratorExecutor);
+        const task = new RetryableTask(backingTask, retryOptions);
         return task;
     }
 
@@ -215,7 +215,7 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
             instanceId
         );
         const backingTask = new AtomicTask(false, newAction);
-        const task = new RetryableTask(backingTask, retryOptions, this.taskOrchestratorExecutor);
+        const task = new RetryableTask(backingTask, retryOptions);
         return task;
     }
 

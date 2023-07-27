@@ -344,7 +344,7 @@ export class TaskOrchestrationExecutor {
 
         // Set result to the task, and update it's isPlayed flag.
         task.isPlayed = event.IsPlayed;
-        task.setValue(!isSuccess, taskResult);
+        task.setValue(!isSuccess, taskResult, this);
     }
 
     /**

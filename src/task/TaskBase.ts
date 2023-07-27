@@ -1,3 +1,4 @@
+import { TaskOrchestrationExecutor } from "src/orchestrations/TaskOrchestrationExecutor";
 import { BackingAction, TaskID, TaskState } from ".";
 import { CompoundTask } from "./CompoundTask";
 
@@ -56,7 +57,7 @@ export abstract class TaskBase {
     }
 
     /** Attempt to set a result for this task, and notifies parents, if any */
-    public setValue(isError: boolean, value: unknown): void {
+    public setValue(isError: boolean, value: unknown, executor?: TaskOrchestrationExecutor): void {
         let newState: TaskState;
 
         if (isError) {
@@ -71,17 +72,17 @@ export abstract class TaskBase {
 
         this.changeState(newState);
         this.result = value;
-        this.propagate();
+        this.propagate(executor);
     }
 
     /**
      * @hidden
      * Notifies this task's parents about its state change.
      */
-    private propagate(): void {
+    private propagate(executor?: TaskOrchestrationExecutor): void {
         const hasCompleted = this.state !== TaskState.Running;
         if (hasCompleted && this.parent !== undefined) {
-            this.parent.handleCompletion(this);
+            this.parent.handleCompletion(this, executor);
         }
     }
 }
