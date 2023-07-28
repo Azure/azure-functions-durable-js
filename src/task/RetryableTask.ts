@@ -47,7 +47,7 @@ export class RetryableTask extends WhenAllTask {
     public trySetValue(child: TaskBase, executor?: TaskOrchestrationExecutor): void {
         if (!executor) {
             throw new Error(
-                "Ne executor passed to RetryableTask.trySetValue. " +
+                "No executor passed to RetryableTask.trySetValue. " +
                     "A TaskOrchestrationExecutor is required to schedule new tasks."
             );
         }
