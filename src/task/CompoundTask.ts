@@ -39,6 +39,8 @@ export abstract class CompoundTask extends DFTask {
      * @hidden
      * Tries to set this task's result based on the completion of a sub-task
      * @param child
+     * @param executor The TaskOrchestrationExecutor instance that is managing the replay
+     *      This argument is optional, and mostly passed to the RetryableTask trySetValue() method
      *  A sub-task of this task.
      */
     public handleCompletion(child: TaskBase, executor?: TaskOrchestrationExecutor): void {

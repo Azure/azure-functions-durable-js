@@ -5,6 +5,7 @@ import { DFTask } from "./DFTask";
 import { NoOpTask } from "./NoOpTask";
 import { TaskBase } from "./TaskBase";
 import { WhenAllTask } from "./WhenAllTask";
+import { DurableError } from "../error/DurableError";
 
 /**
  * @hidden
@@ -46,9 +47,12 @@ export class RetryableTask extends WhenAllTask {
      */
     public trySetValue(child: TaskBase, executor?: TaskOrchestrationExecutor): void {
         if (!executor) {
-            throw new Error(
-                "No executor passed to RetryableTask.trySetValue. " +
-                    "A TaskOrchestrationExecutor is required to schedule new tasks."
+            throw new DurableError(
+                "A framework-internal error was detected: " +
+                    "No executor passed to RetryableTask.trySetValue. " +
+                    "A TaskOrchestrationExecutor is required to schedule new tasks. " +
+                    "If this issue persists, please report it here: " +
+                    "https://github.com/Azure/azure-functions-durable-js/issues"
             );
         }
 
