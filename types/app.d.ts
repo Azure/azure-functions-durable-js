@@ -1,6 +1,10 @@
-import { ActivityOptions } from "./activity";
+import { ActivityOptions, RegisteredActivity } from "./activity";
 import { EntityHandler, EntityOptions } from "./entity";
-import { OrchestrationHandler, OrchestrationOptions } from "./orchestration";
+import {
+    OrchestrationHandler,
+    OrchestrationOptions,
+    RegisteredOrchestration,
+} from "./orchestration";
 
 /**
  * Registers a generator function as a Durable Orchestrator for your Function App.
@@ -9,7 +13,10 @@ import { OrchestrationHandler, OrchestrationOptions } from "./orchestration";
  * @param handler the generator function that should act as an orchestrator
  *
  */
-export function orchestration(functionName: string, handler: OrchestrationHandler): void;
+export function orchestration(
+    functionName: string,
+    handler: OrchestrationHandler
+): RegisteredOrchestration;
 
 /**
  * Registers a generator function as a Durable Orchestrator for your Function App.
@@ -18,7 +25,10 @@ export function orchestration(functionName: string, handler: OrchestrationHandle
  * @param options the configuration options object describing the handler for this orchestrator
  *
  */
-export function orchestration(functionName: string, options: OrchestrationOptions): void;
+export function orchestration(
+    functionName: string,
+    options: OrchestrationOptions
+): RegisteredOrchestration;
 
 /**
  * Registers a function as a Durable Entity for your Function App.
@@ -44,4 +54,4 @@ export function entity<T = unknown>(functionName: string, options: EntityOptions
  * @param functionName the name of your new activity function
  * @param options the configuration options for this activity, specifying the handler and the inputs and outputs
  */
-export function activity(functionName: string, options: ActivityOptions): void;
+export function activity(functionName: string, options: ActivityOptions): RegisteredActivity;

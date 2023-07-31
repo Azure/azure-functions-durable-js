@@ -4,15 +4,19 @@ import {
     EntityOptions,
     OrchestrationHandler,
     OrchestrationOptions,
+    RegisteredActivity,
+    RegisteredOrchestration,
 } from "durable-functions";
 import * as trigger from "./trigger";
 import { createOrchestrator, createEntityFunction } from "./util/testingUtils";
 import { app as azFuncApp } from "@azure/functions";
+import { RegisteredOrchestrationTask } from "./task/RegisteredOrchestrationTask";
+import { RegisteredActivityTask } from "./task/RegisteredActivityTask";
 
 export function orchestration(
     functionName: string,
     handlerOrOptions: OrchestrationHandler | OrchestrationOptions
-): void {
+): RegisteredOrchestration {
     const options: OrchestrationOptions =
         typeof handlerOrOptions === "function" ? { handler: handlerOrOptions } : handlerOrOptions;
 
@@ -21,6 +25,15 @@ export function orchestration(
         ...options,
         handler: createOrchestrator(options.handler),
     });
+
+    const result: RegisteredOrchestration = (
+        input?: unknown,
+        instanceId?: string
+    ): RegisteredOrchestrationTask => {
+        return new RegisteredOrchestrationTask(functionName, input, instanceId);
+    };
+
+    return result;
 }
 
 export function entity<T = unknown>(
@@ -37,9 +50,15 @@ export function entity<T = unknown>(
     });
 }
 
-export function activity(functionName: string, options: ActivityOptions): void {
+export function activity(functionName: string, options: ActivityOptions): RegisteredActivity {
     azFuncApp.generic(functionName, {
         trigger: trigger.activity(),
         ...options,
     });
+
+    const result: RegisteredActivity = (input?: unknown): RegisteredActivityTask => {
+        return new RegisteredActivityTask(functionName, input);
+    };
+
+    return result;
 }
