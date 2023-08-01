@@ -15,7 +15,9 @@ export class RegisteredOrchestrationTask extends AtomicTask
         this.withRetry = (retryOptions: RetryOptions): RetryableTask => {
             if (this.alreadyScheduled) {
                 throw new Error(
-                    "This subOrchestrator has already been scheduled. You cannot call withRetry on an already scheduled task. Create a new task instead."
+                    "Invalid use of `.withRetry`: attempted to create a retry task from an already scheduled task. " +
+                        `A task with ID ${this.id} to call subOrchestrator ${orchestrationName} has already been scheduled.` +
+                        "Make sure you only call `.withRetry` on tasks that have not previously been yielded."
                 );
             }
 
