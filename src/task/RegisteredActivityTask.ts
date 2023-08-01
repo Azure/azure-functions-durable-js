@@ -12,6 +12,12 @@ export class RegisteredActivityTask extends AtomicTask implements types.Register
         super(false, new CallActivityAction(activityName, input));
 
         this.withRetry = (retryOptions: RetryOptions): RetryableTask => {
+            if (this.alreadyScheduled) {
+                throw new Error(
+                    "This activity has already been scheduled. You cannot call withRetry on an already scheduled task. Create a new task instead."
+                );
+            }
+
             const callActivityWithRetryAction = new CallActivityWithRetryAction(
                 activityName,
                 retryOptions,
