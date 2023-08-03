@@ -14,9 +14,9 @@ export class RegisteredActivityTask extends AtomicTask implements types.Register
         this.withRetry = (retryOptions: RetryOptions): RetryableTask => {
             if (this.alreadyScheduled) {
                 throw new Error(
-                    "Invalid use of `.withRetry`: attempted to create a retry task from an already scheduled task. " +
+                    "Invalid use of `.withRetry`: attempted to create a retriable task from an already scheduled task. " +
                         `A task with ID ${this.id} to call activity ${activityName} has already been scheduled. ` +
-                        "Make sure you only call `.withRetry` on tasks that have not previously been yielded."
+                        "Make sure to only invoke `.withRetry` on tasks that have not previously been yielded."
                 );
             }
 
