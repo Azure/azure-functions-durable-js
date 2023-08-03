@@ -44,7 +44,7 @@ export type HttpDurableClientHandler = (
  * Configures options for an HTTP-triggered Durable Client function.
  */
 export interface HttpDurableClientOptions extends Omit<HttpFunctionOptions, "handler"> {
-    handler: DurableClientHandler;
+    handler: HttpDurableClientHandler;
 }
 
 export type TimerDurableClientHandler = (
@@ -57,7 +57,7 @@ export type TimerDurableClientHandler = (
  * Configures options for a timer-triggered Durable Client function.
  */
 export interface TimerDurableClientOptions extends Omit<TimerFunctionOptions, "handler"> {
-    handler: DurableClientHandler;
+    handler: TimerDurableClientHandler;
 }
 
 /**

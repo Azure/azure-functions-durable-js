@@ -7,6 +7,7 @@ import {
 } from "durable-functions";
 import {
     FunctionHandler,
+    FunctionInput,
     FunctionResult,
     InvocationContext,
     app as azFuncApp,
@@ -39,11 +40,15 @@ export function generic(functionName: string, options: DurableClientOptions): vo
 }
 
 function addClientInput(options: Partial<DurableClientOptions>): void {
-    if (options.extraInputs) {
+    if (options.extraInputs && !options.extraInputs.find(isDurableClientInput)) {
         options.extraInputs.push(input.durableClient());
     } else {
         options.extraInputs = [input.durableClient()];
     }
+}
+
+function isDurableClientInput(inputOptions: FunctionInput): boolean {
+    return inputOptions.type === "durableClient" || inputOptions.type === "orchestrationClient";
 }
 
 function convertToFunctionHandler(clientHandler: DurableClientHandler): FunctionHandler {
