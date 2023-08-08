@@ -2,7 +2,6 @@ import {
     EntityClass,
     OrchestrationContext,
     RegisterEntityResult,
-    RegisteredEntity,
     TaskHubOptions,
 } from "durable-functions";
 import { EntityStateResponse } from "./EntityStateResponse";
@@ -11,6 +10,8 @@ import { DurableClient } from "../durableClient/DurableClient";
 import { DurableOrchestrationContext } from "../orchestrations/DurableOrchestrationContext";
 import { CallEntityTask } from "../task/CallEntityTask";
 import { DurableError } from "../error/DurableError";
+import { RegisteredEntity } from "./RegisteredEntity";
+import * as _ from "lodash";
 
 export function getRegisterEntityResult<
     T = unknown,
@@ -20,18 +21,16 @@ export function getRegisterEntityResult<
     entityClass: new (...args: any[]) => EntityClass<T>
 ): RegisterEntityResult<T, BaseClass> {
     const registeredEntity = class extends RegisteredEntity<T> {
+        #entityName: string = entityName;
+        #entityClass: new (...args: any[]) => EntityClass<T> = entityClass;
         #entityId: EntityId;
         #orchestrationContext?: OrchestrationContext;
         #durableClient?: DurableClient;
 
-        [key: string]: (
-            input?: unknown,
-            options?: TaskHubOptions
-        ) => CallEntityTask | Promise<void> | Promise<EntityStateResponse<T>>;
-
-        constructor(entityId: string, contextOrClient: OrchestrationContext | DurableClient) {
-            super(entityId, contextOrClient);
-            this.#entityId = new EntityId(entityName, entityId);
+        constructor(id: string, contextOrClient: OrchestrationContext | DurableClient) {
+            // super(entityId, contextOrClient);
+            super();
+            this.#entityId = new EntityId(this.#entityName, id);
             if (
                 "df" in contextOrClient &&
                 contextOrClient.df instanceof DurableOrchestrationContext
@@ -41,8 +40,8 @@ export function getRegisterEntityResult<
                 this.#durableClient = contextOrClient;
             }
 
-            const instance: EntityClass<T> = new entityClass();
-            const propertyNames = Object.getOwnPropertyNames(instance);
+            const instance: EntityClass<T> = new this.#entityClass();
+            const propertyNames: string[] = Object.getOwnPropertyNames(this.#entityClass.prototype);
             propertyNames.map((propertyName) => {
                 if (
                     propertyName !== "constructor" &&

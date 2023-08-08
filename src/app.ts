@@ -56,7 +56,6 @@ export function entity<T = unknown>(
 }
 
 export function classEntity<T = unknown, Base extends EntityClass<T> = EntityClass<T>>(
-    entityName: string,
     entityClass: new (...args: any[]) => Base
 ): RegisterEntityResult<T, Base> {
     const handler: EntityHandler<T> = (context: EntityContext<T>) => {
@@ -87,8 +86,8 @@ export function classEntity<T = unknown, Base extends EntityClass<T> = EntityCla
         context.df.setState(entityClassInstance.state);
     };
 
+    const entityName: string = entityClass.name;
     entity(entityName, handler);
-
     return getRegisterEntityResult(entityName, entityClass);
 }
 
