@@ -1,16 +1,17 @@
 import {
     EntityClass,
     OrchestrationContext,
-    RegisterEntityResult,
+    RegisteredEntity,
+    RegisteredEntityForClients,
+    RegisteredEntityForOrchestrations,
     TaskHubOptions,
 } from "durable-functions";
 import { EntityStateResponse } from "./EntityStateResponse";
 import { EntityId } from "./EntityId";
 import { DurableClient } from "../durableClient/DurableClient";
-import { DurableOrchestrationContext } from "../orchestrations/DurableOrchestrationContext";
 import { CallEntityTask } from "../task/CallEntityTask";
-import { DurableError } from "../error/DurableError";
-import { RegisteredEntity } from "./RegisteredEntity";
+import { RegisteredEntityForOrchestrationsBase } from "./RegisteredEntityForOrchestrations";
+import { RegisteredEntityForClientsBase } from "./RegisteredEntityForClients";
 
 export function getRegisterEntityResult<
     T = unknown,
@@ -18,26 +19,20 @@ export function getRegisterEntityResult<
 >(
     entityName: string,
     entityClass: new (...args: any[]) => EntityClass<T>
-): RegisterEntityResult<T, BaseClass> {
-    const registeredEntity = class extends RegisteredEntity<T> {
+): RegisteredEntity<T, BaseClass> {
+    const registeredEntityForOrchestrations: RegisteredEntityForOrchestrations<
+        T,
+        BaseClass
+    > = (class extends RegisteredEntityForOrchestrationsBase {
         #entityName: string = entityName;
         #entityClass: new (...args: any[]) => EntityClass<T> = entityClass;
         #entityId: EntityId;
-        #orchestrationContext?: OrchestrationContext;
-        #durableClient?: DurableClient;
+        #orchestrationContext: OrchestrationContext;
 
-        constructor(id: string, contextOrClient: OrchestrationContext | DurableClient) {
-            // super(entityId, contextOrClient);
+        constructor(id: string, context: OrchestrationContext) {
             super();
             this.#entityId = new EntityId(this.#entityName, id);
-            if (
-                "df" in contextOrClient &&
-                contextOrClient.df instanceof DurableOrchestrationContext
-            ) {
-                this.#orchestrationContext = contextOrClient;
-            } else if (contextOrClient instanceof DurableClient) {
-                this.#durableClient = contextOrClient;
-            }
+            this.#orchestrationContext = context;
 
             const instance: EntityClass<T> = new this.#entityClass();
             const propertyNames: string[] = Object.getOwnPropertyNames(this.#entityClass.prototype);
@@ -46,11 +41,51 @@ export function getRegisterEntityResult<
                     propertyName !== "constructor" &&
                     typeof instance[propertyName] === "function"
                 ) {
-                    if (this.#orchestrationContext) {
-                        this.convertToOrchestrationMethod(propertyName);
-                    } else if (this.#durableClient) {
-                        this.convertToClientMethod(propertyName);
-                    }
+                    this[propertyName] = (input?: unknown): CallEntityTask => {
+                        return new CallEntityTask(
+                            this.#orchestrationContext,
+                            this.#entityId,
+                            propertyName,
+                            input
+                        );
+                    };
+                }
+            });
+        }
+    } as unknown) as RegisteredEntityForOrchestrations<T, BaseClass>;
+
+    const registeredEntityForClients: RegisteredEntityForClients<
+        T,
+        BaseClass
+    > = class extends RegisteredEntityForClientsBase<T> {
+        #entityName: string = entityName;
+        #entityClass: new (...args: any[]) => EntityClass<T> = entityClass;
+        #entityId: EntityId;
+        #durableClient: DurableClient;
+
+        constructor(id: string, client: DurableClient) {
+            super();
+            this.#entityId = new EntityId(this.#entityName, id);
+            this.#durableClient = client;
+
+            const instance: EntityClass<T> = new this.#entityClass();
+            const propertyNames: string[] = Object.getOwnPropertyNames(this.#entityClass.prototype);
+            propertyNames.map((propertyName) => {
+                if (
+                    propertyName !== "constructor" &&
+                    typeof instance[propertyName] === "function"
+                ) {
+                    this[propertyName] = async (
+                        input?: unknown,
+                        options?: TaskHubOptions
+                    ): Promise<void> => {
+                        return await this.#durableClient.signalEntity(
+                            this.#entityId,
+                            propertyName,
+                            input,
+                            options
+                        );
+                    };
                 }
             });
         }
@@ -61,40 +96,10 @@ export function getRegisterEntityResult<
             }
             return this.#durableClient.readEntityState(this.#entityId, options);
         }
+    } as RegisteredEntityForClients<T, BaseClass>;
 
-        private async convertToOrchestrationMethod(propertyName: string): Promise<void> {
-            this[propertyName] = (input?: unknown): CallEntityTask => {
-                if (!this.#orchestrationContext) {
-                    throw new Error("OrchestrationContext must be passed to constructor");
-                }
-
-                return new CallEntityTask(
-                    this.#orchestrationContext,
-                    this.#entityId,
-                    propertyName,
-                    input
-                );
-            };
-        }
-
-        private async convertToClientMethod(propertyName: string): Promise<void> {
-            this[propertyName] = async (
-                input?: unknown,
-                options?: TaskHubOptions
-            ): Promise<void> => {
-                if (!this.#durableClient) {
-                    throw new DurableError("Client must be passed to constructor");
-                }
-
-                return await this.#durableClient.signalEntity(
-                    this.#entityId,
-                    propertyName,
-                    input,
-                    options
-                );
-            };
-        }
+    return {
+        orchestration: registeredEntityForOrchestrations,
+        client: registeredEntityForClients,
     };
-
-    return registeredEntity as RegisterEntityResult<T, BaseClass>;
 }

@@ -40,6 +40,10 @@ export declare class DummyEntityContext<T> extends InvocationContext implements 
     df: DurableEntityContext<T>;
 }
 
+/**
+ * This class should be extended by all entities that are registered
+ *  using `app.classEntity()`.
+ */
 export declare abstract class EntityClass<T = unknown> {
     state: T;
 
@@ -50,36 +54,97 @@ export type ClassMethods<Class> = {
     [Property in keyof Class]: Class[Property] extends (...args: any[]) => any ? Property : never;
 };
 
-export type RegisteredEntityMethods<T = unknown, Base extends EntityClass<T> = EntityClass<T>> = {
-    [Property in keyof ClassMethods<Base>]: (
-        input?: unknown,
-        options?: TaskHubOptions
-    ) => CallEntityTask | Promise<void> | Promise<EntityStateResponse<T>>;
-    // readState: (options?: TaskHubOptions) => Promise<EntityStateResponse<T>>;
+export type RegisteredEntityMethodsForOrchestrations<
+    T = unknown,
+    Base extends EntityClass<T> = EntityClass<T>
+> = {
+    [Property in keyof ClassMethods<Omit<Base, "state">>]: (input?: unknown) => CallEntityTask;
 };
 
-export declare abstract class RegisteredEntity<T> {
-    // constructor(id: string, orchestrationContext: OrchestrationContext);
-    // constructor(id: string, durableClient: DurableClient);
-    constructor(id: string, contextOrClient: OrchestrationContext | DurableClient);
+export type RegisteredEntityMethodsForClients<
+    T = unknown,
+    Base extends EntityClass<T> = EntityClass<T>
+> = {
+    [Property in keyof ClassMethods<Omit<Base, "state">>]: (
+        input?: unknown,
+        options?: TaskHubOptions
+    ) => Promise<void> | Promise<EntityStateResponse<T>>;
+};
 
-    readState(options?: TaskHubOptions): Promise<EntityStateResponse<T>>;
-    // [P in keyof BaseClass]: (
-    //     input?: unknown,
-    //     options?: TaskHubOptions
-    // ) => CallEntityTask | void | Promise<EntityStateResponse<T>>;
+export declare abstract class RegisteredEntityForOrchestrationsBase {
+    constructor(id: string, context: OrchestrationContext);
 
-    // [key: string]: (
-    //     input?: unknown,
-    //     options?: TaskHubOptions
-    // ) => CallEntityTask | void | Promise<EntityStateResponse<T>>;
+    [key: string]: (input?: unknown) => CallEntityTask;
 }
 
-export type RegisterEntityResult<T = unknown, Base extends EntityClass<T> = EntityClass<T>> = new (
-    id: string,
-    contextOrClient: OrchestrationContext | DurableClient
-) => RegisteredEntity<T> & RegisteredEntityMethods<T, Base>;
+export declare abstract class RegisteredEntityForClientsBase<T> {
+    constructor(id: string, client: DurableClient);
 
+    readState(options?: TaskHubOptions): Promise<EntityStateResponse<T>>;
+
+    [key: string]: (
+        input?: unknown,
+        options?: TaskHubOptions
+    ) => Promise<void> | Promise<EntityStateResponse<T>>;
+}
+
+// export type RegisteredEntityForOrchestrations<
+//     T = unknown,
+//     Base extends EntityClass<T> = EntityClass<T>
+// > = RegisteredEntityForOrchestrationsBase & RegisteredEntityMethodsForOrchestrations<T, Base>;
+
+export type RegisteredEntityForOrchestrations<
+    T = unknown,
+    Base extends EntityClass<T> = EntityClass<T>
+> = new (
+    /**
+     * The ID of the entity to call or signal
+     */
+    id: string,
+    /**
+     * The `OrchestrationContext` of the current orchestration
+     */
+    orchestrationContext: OrchestrationContext
+) => RegisteredEntityForOrchestrationsBase & RegisteredEntityMethodsForOrchestrations<T, Base>;
+
+export type RegisteredEntityForClients<
+    T = unknown,
+    Base extends EntityClass<T> = EntityClass<T>
+> = new (
+    /**
+     * The ID of the entity to manage
+     */
+    id: string,
+    /**
+     * The `DurableClient` to use to manage the entity
+     */
+    durableClient: DurableClient
+) => RegisteredEntityForClientsBase<T> & RegisteredEntityMethodsForClients<T, Base>;
+
+/**
+ * The result of registering an entity class using `app.classEntity()`.
+ */
+export interface RegisteredEntity<T = unknown, Base extends EntityClass<T> = EntityClass<T>> {
+    /**
+     * This constructor returns a class instance which can be used to call or signal an entity,
+     *  with a specific entity ID.
+     */
+    orchestration: RegisteredEntityForOrchestrations<T, Base>;
+
+    /**
+     * This constructor returns a class instance which can be used to call an entity or read its state,
+     *  with a specific entity ID.
+     */
+    client: RegisteredEntityForClients<T, Base>;
+}
+
+/**
+ * By default, this Task blocks execution of the orchestration when yielded,
+ *  until the entity responds to the call.
+ *
+ * If calling `.signal()`, the entity is signalled instead, which is a fire-and-forget operation.
+ *  Please do not yield any calls to `.signal()`.
+ */
 export interface CallEntityTask extends Task {
     signal(): void;
 }

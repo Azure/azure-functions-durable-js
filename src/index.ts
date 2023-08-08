@@ -6,6 +6,8 @@ import { OrchestrationRuntimeStatus } from "./orchestrations/OrchestrationRuntim
 import { RetryOptions } from "./RetryOptions";
 import { getClient } from "./durableClient/getClient";
 import { EntityClass } from "./entities/EntityClass";
+import { RegisteredEntityForOrchestrationsBase } from "./entities/RegisteredEntityForOrchestrations";
+import { RegisteredEntityForClientsBase } from "./entities/RegisteredEntityForClients";
 
 export * as app from "./app";
 export * as trigger from "./trigger";
@@ -14,6 +16,8 @@ export * as input from "./input";
 export {
     EntityId,
     EntityClass,
+    RegisteredEntityForOrchestrationsBase,
+    RegisteredEntityForClientsBase,
     EntityStateResponse,
     getClient,
     ManagedIdentityTokenSource,
