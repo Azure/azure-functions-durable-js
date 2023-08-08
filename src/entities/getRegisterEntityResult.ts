@@ -11,7 +11,6 @@ import { DurableOrchestrationContext } from "../orchestrations/DurableOrchestrat
 import { CallEntityTask } from "../task/CallEntityTask";
 import { DurableError } from "../error/DurableError";
 import { RegisteredEntity } from "./RegisteredEntity";
-import * as _ from "lodash";
 
 export function getRegisterEntityResult<
     T = unknown,

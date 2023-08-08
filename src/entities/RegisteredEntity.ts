@@ -1,8 +1,7 @@
-import { OrchestrationContext, TaskHubOptions } from "durable-functions";
+import { TaskHubOptions } from "durable-functions";
 import { CallEntityTask } from "../task/CallEntityTask";
 import { EntityStateResponse } from "./EntityStateResponse";
 import * as types from "durable-functions";
-import { DurableClient } from "../durableClient/DurableClient";
 
 export abstract class RegisteredEntity<T = unknown> implements types.RegisteredEntity<T> {
     [key: string]: (

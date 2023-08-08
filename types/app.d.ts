@@ -49,7 +49,6 @@ export function entity<T = unknown>(functionName: string, handler: EntityHandler
 export function entity<T = unknown>(functionName: string, options: EntityOptions<T>): void;
 
 export function classEntity<T = unknown, Base extends EntityClass<T> = EntityClass<T>>(
-    entityName: string,
     entityClass: new (...args: any[]) => Base
 ): RegisterEntityResult<T, Base>;
 
