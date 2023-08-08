@@ -1,5 +1,5 @@
 import { ActivityOptions, RegisteredActivity } from "./activity";
-import { EntityHandler, EntityOptions } from "./entity";
+import { EntityClass, EntityHandler, EntityOptions, RegisterEntityResult } from "./entity";
 import {
     OrchestrationHandler,
     OrchestrationOptions,
@@ -47,6 +47,11 @@ export function entity<T = unknown>(functionName: string, handler: EntityHandler
  *
  */
 export function entity<T = unknown>(functionName: string, options: EntityOptions<T>): void;
+
+export function classEntity<T = unknown, Base extends EntityClass<T> = EntityClass<T>>(
+    entityName: string,
+    entityClass: new (...args: any[]) => Base
+): RegisterEntityResult<T, Base>;
 
 /**
  * Registers a function as an Activity Function for your Function App

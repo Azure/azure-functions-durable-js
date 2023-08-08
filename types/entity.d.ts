@@ -1,6 +1,7 @@
 import { FunctionOptions, FunctionTrigger, InvocationContext, LogHandler } from "@azure/functions";
+import { DurableClient, OrchestrationContext, Task, TaskHubOptions } from "durable-functions";
 
-export type EntityHandler<T> = (context: EntityContext<T>) => void;
+export type EntityHandler<T = unknown> = (context: EntityContext<T>) => void;
 
 export interface EntityOptions<T> extends Partial<FunctionOptions> {
     handler: EntityHandler<T>;
@@ -13,7 +14,7 @@ export interface EntityTrigger extends FunctionTrigger {
 /**
  * Context object passed to entity Functions.
  */
-export interface EntityContext<T> extends InvocationContext {
+export interface EntityContext<T = unknown> extends InvocationContext {
     /**
      * Object containing all DF entity APIs and properties
      */
@@ -37,6 +38,50 @@ export declare class DummyEntityContext<T> extends InvocationContext implements 
     constructor(functionName?: string, invocationId?: string, logHandler?: LogHandler);
 
     df: DurableEntityContext<T>;
+}
+
+export declare abstract class EntityClass<T = unknown> {
+    state: T;
+
+    [key: string]: T | ((input?: unknown) => T | void);
+}
+
+export type ClassMethods<Class> = {
+    [Property in keyof Class]: Class[Property] extends (...args: any[]) => any ? Property : never;
+};
+
+export type RegisteredEntityMethods<T = unknown, Base extends EntityClass<T> = EntityClass<T>> = {
+    [Property in keyof ClassMethods<Base>]: (
+        input?: unknown,
+        options?: TaskHubOptions
+    ) => CallEntityTask | Promise<void> | Promise<EntityStateResponse<T>>;
+    // readState: (options?: TaskHubOptions) => Promise<EntityStateResponse<T>>;
+};
+
+export declare abstract class RegisteredEntity<T> {
+    // constructor(id: string, orchestrationContext: OrchestrationContext);
+    // constructor(id: string, durableClient: DurableClient);
+    constructor(id: string, contextOrClient: OrchestrationContext | DurableClient);
+
+    readState(options?: TaskHubOptions): Promise<EntityStateResponse<T>>;
+    // [P in keyof BaseClass]: (
+    //     input?: unknown,
+    //     options?: TaskHubOptions
+    // ) => CallEntityTask | void | Promise<EntityStateResponse<T>>;
+
+    // [key: string]: (
+    //     input?: unknown,
+    //     options?: TaskHubOptions
+    // ) => CallEntityTask | void | Promise<EntityStateResponse<T>>;
+}
+
+export type RegisterEntityResult<T = unknown, Base extends EntityClass<T> = EntityClass<T>> = new (
+    id: string,
+    contextOrClient: OrchestrationContext | DurableClient
+) => RegisteredEntity<T> & RegisteredEntityMethods<T, Base>;
+
+export interface CallEntityTask extends Task {
+    signal(): void;
 }
 
 /**
