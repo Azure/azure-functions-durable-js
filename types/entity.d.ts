@@ -54,30 +54,27 @@ export type ClassMethods<Class> = {
     [Property in keyof Class]: Class[Property] extends (...args: any[]) => any ? Property : never;
 };
 
-export type RegisteredEntityMethodsForOrchestrations<
+export type EntityOrchestrationProxyMethods<
     T = unknown,
     Base extends EntityClass<T> = EntityClass<T>
 > = {
     [Property in keyof ClassMethods<Omit<Base, "state">>]: (input?: unknown) => CallEntityTask;
 };
 
-export type RegisteredEntityMethodsForClients<
-    T = unknown,
-    Base extends EntityClass<T> = EntityClass<T>
-> = {
+export type EntityClientProxyMethods<T = unknown, Base extends EntityClass<T> = EntityClass<T>> = {
     [Property in keyof ClassMethods<Omit<Base, "state">>]: (
         input?: unknown,
         options?: TaskHubOptions
     ) => Promise<void> | Promise<EntityStateResponse<T>>;
 };
 
-export declare abstract class RegisteredEntityForOrchestrationsBase {
+export declare abstract class EntityOrchestrationProxyBase {
     constructor(id: string, context: OrchestrationContext);
 
     [key: string]: (input?: unknown) => CallEntityTask;
 }
 
-export declare abstract class RegisteredEntityForClientsBase<T> {
+export declare abstract class EntityClientProxyBase<T> {
     constructor(id: string, client: DurableClient);
 
     readState(options?: TaskHubOptions): Promise<EntityStateResponse<T>>;
@@ -93,49 +90,49 @@ export declare abstract class RegisteredEntityForClientsBase<T> {
 //     Base extends EntityClass<T> = EntityClass<T>
 // > = RegisteredEntityForOrchestrationsBase & RegisteredEntityMethodsForOrchestrations<T, Base>;
 
-export type RegisteredEntityForOrchestrations<
+export type EntityOrchestrationProxy<
     T = unknown,
     Base extends EntityClass<T> = EntityClass<T>
-> = new (
-    /**
-     * The ID of the entity to call or signal
-     */
-    id: string,
-    /**
-     * The `OrchestrationContext` of the current orchestration
-     */
-    orchestrationContext: OrchestrationContext
-) => RegisteredEntityForOrchestrationsBase & RegisteredEntityMethodsForOrchestrations<T, Base>;
+> = EntityOrchestrationProxyBase & EntityOrchestrationProxyMethods<T, Base>;
 
-export type RegisteredEntityForClients<
+export type EntityClientProxy<
     T = unknown,
     Base extends EntityClass<T> = EntityClass<T>
-> = new (
-    /**
-     * The ID of the entity to manage
-     */
-    id: string,
-    /**
-     * The `DurableClient` to use to manage the entity
-     */
-    durableClient: DurableClient
-) => RegisteredEntityForClientsBase<T> & RegisteredEntityMethodsForClients<T, Base>;
+> = EntityClientProxyBase<T> & EntityClientProxyMethods<T, Base>;
 
 /**
  * The result of registering an entity class using `app.classEntity()`.
  */
-export interface RegisteredEntity<T = unknown, Base extends EntityClass<T> = EntityClass<T>> {
+export interface EntityProxies<T = unknown, Base extends EntityClass<T> = EntityClass<T>> {
     /**
      * This constructor returns a class instance which can be used to call or signal an entity,
      *  with a specific entity ID.
      */
-    orchestration: RegisteredEntityForOrchestrations<T, Base>;
+    OrchestrationProxy: new (
+        /**
+         * The ID of the entity to call or signal
+         */
+        id: string,
+        /**
+         * The `OrchestrationContext` of the current orchestration
+         */
+        orchestrationContext: OrchestrationContext
+    ) => EntityOrchestrationProxy<T, Base>;
 
     /**
      * This constructor returns a class instance which can be used to call an entity or read its state,
      *  with a specific entity ID.
      */
-    client: RegisteredEntityForClients<T, Base>;
+    ClientProxy: new (
+        /**
+         * The ID of the entity to manage
+         */
+        id: string,
+        /**
+         * The `DurableClient` to use to manage the entity
+         */
+        durableClient: DurableClient
+    ) => EntityClientProxy<T, Base>;
 }
 
 /**

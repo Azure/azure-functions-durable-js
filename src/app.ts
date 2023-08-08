@@ -4,10 +4,10 @@ import {
     EntityContext,
     EntityHandler,
     EntityOptions,
+    EntityProxies,
     OrchestrationHandler,
     OrchestrationOptions,
     RegisteredActivity,
-    RegisteredEntity,
     RegisteredOrchestration,
 } from "durable-functions";
 import * as trigger from "./trigger";
@@ -57,7 +57,7 @@ export function entity<T = unknown>(
 
 export function classEntity<T = unknown, Base extends EntityClass<T> = EntityClass<T>>(
     entityClass: new (...args: any[]) => Base
-): RegisteredEntity<T, Base> {
+): EntityProxies<T, Base> {
     const handler: EntityHandler<T> = (context: EntityContext<T>) => {
         if (!context.df.operationName) {
             throw new DurableError(
@@ -88,7 +88,7 @@ export function classEntity<T = unknown, Base extends EntityClass<T> = EntityCla
 
     const entityName: string = entityClass.name;
     entity(entityName, handler);
-    return getRegisterEntityResult(entityName, entityClass);
+    return getRegisterEntityResult<T, Base>(entityName, entityClass);
 }
 
 export function activity(functionName: string, options: ActivityOptions): RegisteredActivity {

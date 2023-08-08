@@ -1,29 +1,31 @@
 import {
     EntityClass,
+    EntityClientProxy,
+    EntityOrchestrationProxy,
+    EntityProxies,
     OrchestrationContext,
-    RegisteredEntity,
-    RegisteredEntityForClients,
-    RegisteredEntityForOrchestrations,
     TaskHubOptions,
 } from "durable-functions";
 import { EntityStateResponse } from "./EntityStateResponse";
 import { EntityId } from "./EntityId";
 import { DurableClient } from "../durableClient/DurableClient";
 import { CallEntityTask } from "../task/CallEntityTask";
-import { RegisteredEntityForOrchestrationsBase } from "./RegisteredEntityForOrchestrations";
-import { RegisteredEntityForClientsBase } from "./RegisteredEntityForClients";
+import { EntityOrchestrationProxyBase } from "./EntityOrchestrationProxyBase";
+import { EntityClientProxyBase } from "./EntityClientProxybase";
 
-export function getRegisterEntityResult<
-    T = unknown,
-    BaseClass extends EntityClass<T> = EntityClass<T>
->(
+export function getRegisterEntityResult<T = unknown, Base extends EntityClass<T> = EntityClass<T>>(
     entityName: string,
     entityClass: new (...args: any[]) => EntityClass<T>
-): RegisteredEntity<T, BaseClass> {
-    const registeredEntityForOrchestrations: RegisteredEntityForOrchestrations<
-        T,
-        BaseClass
-    > = (class extends RegisteredEntityForOrchestrationsBase {
+): EntityProxies<T, Base> {
+    type EntityOrchestrationProxyConstructor = new (
+        id: string,
+        context: OrchestrationContext
+    ) => EntityOrchestrationProxy<T, Base>;
+    type EntityClientProxyConstructor = new (
+        id: string,
+        client: DurableClient
+    ) => EntityClientProxy<T, Base>;
+    const registeredEntityForOrchestrations: EntityOrchestrationProxyConstructor = (class extends EntityOrchestrationProxyBase {
         #entityName: string = entityName;
         #entityClass: new (...args: any[]) => EntityClass<T> = entityClass;
         #entityId: EntityId;
@@ -52,12 +54,11 @@ export function getRegisterEntityResult<
                 }
             });
         }
-    } as unknown) as RegisteredEntityForOrchestrations<T, BaseClass>;
+    } as unknown) as EntityOrchestrationProxyConstructor;
 
-    const registeredEntityForClients: RegisteredEntityForClients<
-        T,
-        BaseClass
-    > = class extends RegisteredEntityForClientsBase<T> {
+    const registeredEntityForClients: EntityClientProxyConstructor = class extends EntityClientProxyBase<
+        T
+    > {
         #entityName: string = entityName;
         #entityClass: new (...args: any[]) => EntityClass<T> = entityClass;
         #entityId: EntityId;
@@ -96,10 +97,10 @@ export function getRegisterEntityResult<
             }
             return this.#durableClient.readEntityState(this.#entityId, options);
         }
-    } as RegisteredEntityForClients<T, BaseClass>;
+    } as EntityClientProxyConstructor;
 
     return {
-        orchestration: registeredEntityForOrchestrations,
-        client: registeredEntityForClients,
+        OrchestrationProxy: registeredEntityForOrchestrations,
+        ClientProxy: registeredEntityForClients,
     };
 }
