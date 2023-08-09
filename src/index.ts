@@ -7,7 +7,7 @@ import { RetryOptions } from "./RetryOptions";
 import { getClient } from "./durableClient/getClient";
 import { EntityClass } from "./entities/EntityClass";
 import { EntityOrchestrationProxyBase } from "./entities/EntityOrchestrationProxyBase";
-import { EntityClientProxyBase } from "./entities/EntityClientProxybase";
+import { EntityClientProxyBase } from "./entities/EntityClientProxyBase";
 
 export * as app from "./app";
 export * as trigger from "./trigger";

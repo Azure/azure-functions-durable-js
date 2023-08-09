@@ -16,7 +16,7 @@ import { app as azFuncApp } from "@azure/functions";
 import { RegisteredOrchestrationTask } from "./task/RegisteredOrchestrationTask";
 import { RegisteredActivityTask } from "./task/RegisteredActivityTask";
 import { DurableError } from "./error/DurableError";
-import { getRegisterEntityResult } from "./entities/getRegisterEntityResult";
+import { getEntityProxies } from "./entities/getEntityProxies";
 
 export function orchestration(
     functionName: string,
@@ -88,7 +88,7 @@ export function classEntity<T = unknown, Base extends EntityClass<T> = EntityCla
 
     const entityName: string = entityClass.name;
     entity(entityName, handler);
-    return getRegisterEntityResult<T, Base>(entityName, entityClass);
+    return getEntityProxies<T, Base>(entityName, entityClass);
 }
 
 export function activity(functionName: string, options: ActivityOptions): RegisteredActivity {

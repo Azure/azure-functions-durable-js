@@ -11,9 +11,9 @@ import { EntityId } from "./EntityId";
 import { DurableClient } from "../durableClient/DurableClient";
 import { CallEntityTask } from "../task/CallEntityTask";
 import { EntityOrchestrationProxyBase } from "./EntityOrchestrationProxyBase";
-import { EntityClientProxyBase } from "./EntityClientProxybase";
+import { EntityClientProxyBase } from "./EntityClientProxyBase";
 
-export function getRegisterEntityResult<T = unknown, Base extends EntityClass<T> = EntityClass<T>>(
+export function getEntityProxies<T = unknown, Base extends EntityClass<T> = EntityClass<T>>(
     entityName: string,
     entityClass: new (...args: any[]) => EntityClass<T>
 ): EntityProxies<T, Base> {
@@ -25,7 +25,8 @@ export function getRegisterEntityResult<T = unknown, Base extends EntityClass<T>
         id: string,
         client: DurableClient
     ) => EntityClientProxy<T, Base>;
-    const registeredEntityForOrchestrations: EntityOrchestrationProxyConstructor = (class extends EntityOrchestrationProxyBase {
+
+    const orchestrationProxy: EntityOrchestrationProxyConstructor = (class extends EntityOrchestrationProxyBase {
         #entityName: string = entityName;
         #entityClass: new (...args: any[]) => EntityClass<T> = entityClass;
         #entityId: EntityId;
@@ -56,9 +57,7 @@ export function getRegisterEntityResult<T = unknown, Base extends EntityClass<T>
         }
     } as unknown) as EntityOrchestrationProxyConstructor;
 
-    const registeredEntityForClients: EntityClientProxyConstructor = class extends EntityClientProxyBase<
-        T
-    > {
+    const clientProxy: EntityClientProxyConstructor = (class extends EntityClientProxyBase<T> {
         #entityName: string = entityName;
         #entityClass: new (...args: any[]) => EntityClass<T> = entityClass;
         #entityId: EntityId;
@@ -92,15 +91,12 @@ export function getRegisterEntityResult<T = unknown, Base extends EntityClass<T>
         }
 
         readState(options?: TaskHubOptions): Promise<EntityStateResponse<T>> {
-            if (!this.#durableClient) {
-                throw new Error("Client must be passed to constructor");
-            }
             return this.#durableClient.readEntityState(this.#entityId, options);
         }
-    } as EntityClientProxyConstructor;
+    } as unknown) as EntityClientProxyConstructor;
 
     return {
-        OrchestrationProxy: registeredEntityForOrchestrations,
-        ClientProxy: registeredEntityForClients,
+        OrchestrationProxy: orchestrationProxy,
+        ClientProxy: clientProxy,
     };
 }

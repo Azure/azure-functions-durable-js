@@ -50,30 +50,40 @@ export declare abstract class EntityClass<T = unknown> {
     [key: string]: T | ((input?: unknown) => T | void);
 }
 
-export type ClassMethods<Class> = {
-    [Property in keyof Class]: Class[Property] extends (...args: any[]) => any ? Property : never;
+/**
+ * Methods present on an orchestration proxy of a class entity.
+ * The methods are the same as the methods on the entity class itself,
+ *  converted to return a `CallEntityTask` that executes that operation on the entity.
+ */
+export type EntityOrchestrationProxyMethods<Class> = {
+    [Property in keyof Class]: Class[Property] extends (...args: infer Args) => any
+        ? (...args: Args) => CallEntityTask
+        : never;
 };
 
-export type EntityOrchestrationProxyMethods<
-    T = unknown,
-    Base extends EntityClass<T> = EntityClass<T>
-> = {
-    [Property in keyof ClassMethods<Omit<Base, "state">>]: (input?: unknown) => CallEntityTask;
+/**
+ * Methods present on a client proxy of a class entity.
+ * The methods are the same as the methods on the entity class itself,
+ *  converted to return a `Promise` that signals that operation on the entity.
+ */
+export type EntityClientProxyMethods<Class> = {
+    [Property in keyof Class]: Class[Property] extends (input?: infer InputType) => any
+        ? (input?: InputType, options?: TaskHubOptions) => Promise<void>
+        : never;
 };
 
-export type EntityClientProxyMethods<T = unknown, Base extends EntityClass<T> = EntityClass<T>> = {
-    [Property in keyof ClassMethods<Omit<Base, "state">>]: (
-        input?: unknown,
-        options?: TaskHubOptions
-    ) => Promise<void> | Promise<EntityStateResponse<T>>;
-};
-
+/**
+ * Base class for a proxy that can be used to call operations on a class entity from an orchestration.
+ */
 export declare abstract class EntityOrchestrationProxyBase {
     constructor(id: string, context: OrchestrationContext);
 
     [key: string]: (input?: unknown) => CallEntityTask;
 }
 
+/**
+ * Base class for a proxy that can be used to send signals to and manage a class entity from a client function.
+ */
 export declare abstract class EntityClientProxyBase<T> {
     constructor(id: string, client: DurableClient);
 
@@ -85,20 +95,21 @@ export declare abstract class EntityClientProxyBase<T> {
     ) => Promise<void> | Promise<EntityStateResponse<T>>;
 }
 
-// export type RegisteredEntityForOrchestrations<
-//     T = unknown,
-//     Base extends EntityClass<T> = EntityClass<T>
-// > = RegisteredEntityForOrchestrationsBase & RegisteredEntityMethodsForOrchestrations<T, Base>;
-
+/**
+ * A proxy that can be used to call an entity from an orchestration.
+ */
 export type EntityOrchestrationProxy<
     T = unknown,
     Base extends EntityClass<T> = EntityClass<T>
-> = EntityOrchestrationProxyBase & EntityOrchestrationProxyMethods<T, Base>;
+> = EntityOrchestrationProxyBase & EntityOrchestrationProxyMethods<Base>;
 
+/**
+ * A proxy that can be used to signal an entity from a client function.
+ */
 export type EntityClientProxy<
     T = unknown,
     Base extends EntityClass<T> = EntityClass<T>
-> = EntityClientProxyBase<T> & EntityClientProxyMethods<T, Base>;
+> = EntityClientProxyBase<T> & EntityClientProxyMethods<Base>;
 
 /**
  * The result of registering an entity class using `app.classEntity()`.
