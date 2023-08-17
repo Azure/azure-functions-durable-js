@@ -15,7 +15,7 @@ import { TimerCreatedEvent } from "../../src/history/TimerCreatedEvent";
 import { TimerFiredEvent } from "../../src/history/TimerFiredEvent";
 import { DurableHttpRequest } from "../../src/http/DurableHttpRequest";
 import { DurableHttpResponse } from "../../src/http/DurableHttpResponse";
-import * as uuidv1 from "uuid/v1";
+import { v1 as uuidv1 } from "uuid";
 import { EntityId } from "../../src/entities/EntityId";
 
 export class TestHistories {

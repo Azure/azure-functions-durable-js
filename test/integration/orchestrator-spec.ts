@@ -2,7 +2,7 @@
 import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
-import * as uuidv1 from "uuid/v1";
+import { v1 as uuidv1 } from "uuid";
 import {
     DummyOrchestrationContext,
     EntityId,
@@ -15,6 +15,7 @@ import { ReplaySchema } from "../../src/orchestrations/ReplaySchema";
 import { DurableOrchestrationInput } from "../../src/util/testingUtils";
 import { TestHistories } from "../testobjects/testhistories";
 import { TestOrchestrations } from "../testobjects/TestOrchestrations";
+import { TestHistories } from "../testobjects/testhistories";
 import { TestUtils } from "../testobjects/testutils";
 import { ActionType } from "../../src/actions/ActionType";
 import { CallActivityAction } from "../../src/actions/CallActivityAction";

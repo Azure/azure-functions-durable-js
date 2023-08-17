@@ -5,7 +5,7 @@ import {
     LogHandler,
 } from "@azure/functions";
 import { ReplaySchema } from "../orchestrations/ReplaySchema";
-import * as uuidv1 from "uuid/v1";
+import { v1 as uuidv1 } from "uuid";
 import {
     DurableEntityContext,
     EntityContext,
