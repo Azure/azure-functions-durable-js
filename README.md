@@ -1,6 +1,6 @@
 | Branch | Status                                                                                                                                                                                                                                    | Support level | Programming model | Node.js versions |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------------- | ---------------- |
-| v2.x   | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v2.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v2.x) | GA            | V1, V2, V3        | 14.x+            |
+| v2.x   | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v2.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v2.x) | GA            | V3                | 14.x+            |
 | v3.x   | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v3.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v3.x) | Preview       | V4 (preview)      | 18.x+            |
 
 # Durable Functions for Node.js
@@ -33,7 +33,7 @@ You can follow the [Visual Studio Code quickstart](https://docs.microsoft.com/en
 
 1. Install prerequisites:
 
-    - [Azure Functions Core Tools version 2.x](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools)
+    - [Azure Functions Core Tools version 4.x](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools)
     - [Azure Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator) (Windows) or an actual Azure storage account (Mac or Linux)
     - Node.js 14.x or later
 
