@@ -1,4 +1,4 @@
-variables: { MODULE_VERSION: "3.0.0-alpha.5", NODE_18: "18.x", NODE_20: "20.x" }
+variables: { MODULE_VERSION: "3.0.0-alpha.6", NODE_18: "18.x", NODE_20: "20.x" }
 name: $(MODULE_VERSION)-$(Date:yyyyMMdd)$(Rev:.r)
 
 pr:
