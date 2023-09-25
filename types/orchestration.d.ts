@@ -51,6 +51,15 @@ export interface OrchestrationTrigger extends FunctionTrigger {
     type: "orchestrationTrigger";
 }
 
+export type RegisteredOrchestration = (
+    input?: unknown,
+    instanceId?: string
+) => RegisteredOrchestrationTask;
+
+export interface RegisteredOrchestrationTask extends Task {
+    withRetry: (retryOptions: RetryOptions) => Task;
+}
+
 /**
  * Provides functionality for application code implementing an orchestration operation.
  */
