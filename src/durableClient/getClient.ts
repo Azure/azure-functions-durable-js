@@ -32,7 +32,7 @@ export function getClient(context: InvocationContext): DurableClient {
 }
 
 /** @hidden */
-function isDurableClientInput(input: FunctionInput): boolean {
+export function isDurableClientInput(input: FunctionInput): boolean {
     return input.type === "durableClient" || input.type === "orchestrationClient";
 }
 

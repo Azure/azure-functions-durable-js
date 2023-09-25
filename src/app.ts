@@ -62,3 +62,5 @@ export function activity(functionName: string, options: ActivityOptions): Regist
 
     return result;
 }
+
+export * as client from "./client";

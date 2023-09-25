@@ -55,3 +55,5 @@ export function entity<T = unknown>(functionName: string, options: EntityOptions
  * @param options the configuration options for this activity, specifying the handler and the inputs and outputs
  */
 export function activity(functionName: string, options: ActivityOptions): RegisteredActivity;
+
+export * as client from "./app.client";
