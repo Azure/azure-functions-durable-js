@@ -39,10 +39,9 @@ export function generic(functionName: string, options: DurableClientOptions): vo
 }
 
 function addClientInput(options: Partial<DurableClientOptions>): void {
-    if (options.extraInputs && !options.extraInputs.find(isDurableClientInput)) {
+    options.extraInputs = options.extraInputs ?? [];
+    if (!options.extraInputs.find(isDurableClientInput)) {
         options.extraInputs.push(input.durableClient());
-    } else {
-        options.extraInputs = [input.durableClient()];
     }
 }
 
