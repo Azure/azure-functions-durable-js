@@ -87,7 +87,7 @@ df.app.orchestration("myOrchestration", function* (context) {
 ```javascript
 const df = require("durable-functions");
 
-df.app.http("httpStart", {
+df.app.client.http("httpStart", {
     route: "orchestrators/{orchestratorName}",
     handler: async (request, client, context) => {
         const body = await request.json();
