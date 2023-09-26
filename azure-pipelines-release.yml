@@ -2,7 +2,7 @@ parameters:
     - name: NpmPublishTag
       displayName: "Tag"
       type: string
-      default: "latest"
+      default: "legacy"
     - name: NpmPublishDryRun
       displayName: "Dry Run"
       type: boolean
