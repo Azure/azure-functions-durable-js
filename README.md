@@ -1,11 +1,8 @@
 | Branch | Status                                                                                                                                                                                                                                    | Support level | Programming model | Node.js versions |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------------- | ---------------- |
 | v2.x   | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v2.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v2.x) | GA            | V3                | 14.x+            |
-| v3.x   | [![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/Azure.azure-functions-durable-js?branchName=v3.x)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=13&branchName=v3.x) | Preview       | V4 (preview)      | 18.x+            |
 
 # Durable Functions for Node.js
-
-> _**Version 3 with support for the V4 node programming model is currently in public preview! 🎉✨ Learn more about the V4 programming model: <https://aka.ms/AzFuncNodeV4>**_
 
 The `durable-functions` npm package allows you to write [Durable Functions](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview) for [Node.js](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node). Durable Functions is an extension of [Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview) that lets you write stateful functions and workflows in a serverless environment. The extension manages state, checkpoints, and restarts for you. Durable Functions' advantages include:
 
@@ -26,6 +23,8 @@ A durable function, or _orchestration_, is a solution made up of different types
 -   **Client:** the entry point for creating an instance of a durable orchestration.
 
 Durable Functions' function types and features are documented in-depth [here.](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-types-features-overview)
+
+Version `2.x` of the Durable Functions package supports the legacy v3 Node.js programming model for Azure Functions. Compared to the v3 model, the v4 model is designed to have a more intuitive and flexible experience for JavaScript and TypeScript developers. To use the v4 model, please switch to `v3.x` of the Durable Functions package.
 
 ## Getting Started
 
@@ -52,7 +51,7 @@ func extensions install -p Microsoft.Azure.WebJobs.Extensions.DurableTask -v 1.8
 4. Install the `durable-functions` npm package at the root of your function app:
 
 ```bash
-npm install durable-functions
+npm install durable-functions@2
 ```
 
 5. Write an activity function ([see sample](./samples/E1_SayHello)):
