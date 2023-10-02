@@ -1,4 +1,9 @@
 import {
+    CosmosDBv3FunctionOptions,
+    CosmosDBv4FunctionOptions,
+    EventGridEvent,
+    EventGridFunctionOptions,
+    EventHubFunctionOptions,
     FunctionInput,
     FunctionOptions,
     FunctionResult,
@@ -7,6 +12,10 @@ import {
     HttpResponse,
     HttpResponseInit,
     InvocationContext,
+    ServiceBusQueueFunctionOptions,
+    ServiceBusTopicFunctionOptions,
+    StorageBlobFunctionOptions,
+    StorageQueueFunctionOptions,
     Timer,
     TimerFunctionOptions,
 } from "@azure/functions";
@@ -58,6 +67,88 @@ export type TimerDurableClientHandler = (
  */
 export interface TimerDurableClientOptions extends Omit<TimerFunctionOptions, "handler"> {
     handler: TimerDurableClientHandler;
+}
+
+export type StorageBlobDurableClientHandler = (
+    blob: unknown,
+    client: DurableClient,
+    context: InvocationContext
+) => FunctionResult;
+
+export interface StorageBlobDurableClientOptions
+    extends Omit<StorageBlobFunctionOptions, "handler"> {
+    handler: StorageBlobDurableClientHandler;
+}
+
+export type StorageQueueDurableClientHandler = (
+    queueEntry: unknown,
+    client: DurableClient,
+    context: InvocationContext
+) => FunctionResult;
+
+export interface StorageQueueDurableClientOptions
+    extends Omit<StorageQueueFunctionOptions, "handler"> {
+    handler: StorageQueueDurableClientHandler;
+}
+
+export type ServiceBusQueueDurableClientHandler = (
+    message: unknown,
+    client: DurableClient,
+    context: InvocationContext
+) => FunctionResult;
+
+export interface ServiceBusQueueDurableClientOptions
+    extends Omit<ServiceBusQueueFunctionOptions, "handler"> {
+    handler: ServiceBusQueueDurableClientHandler;
+}
+
+export type ServiceBusTopicDurableClientHandler = (
+    message: unknown,
+    client: DurableClient,
+    context: InvocationContext
+) => FunctionResult;
+
+export interface ServiceBusTopicDurableClientOptions
+    extends Omit<ServiceBusTopicFunctionOptions, "handler"> {
+    handler: ServiceBusTopicDurableClientHandler;
+}
+
+export type EventHubDurableClientHandler = (
+    messages: unknown,
+    client: DurableClient,
+    context: InvocationContext
+) => FunctionResult;
+
+export interface EventHubDurableClientOptions extends Omit<EventHubFunctionOptions, "handler"> {
+    handler: EventHubDurableClientHandler;
+}
+
+export type EventGridDurableClientHandler = (
+    event: EventGridEvent,
+    client: DurableClient,
+    context: InvocationContext
+) => FunctionResult;
+
+export interface EventGridDurableClientOptions extends Omit<EventGridFunctionOptions, "handler"> {
+    handler: EventGridDurableClientHandler;
+}
+
+export type CosmosDBDurableClientHandler = (
+    documents: unknown[],
+    client: DurableClient,
+    context: InvocationContext
+) => FunctionResult;
+
+export type CosmosDBDurableClientOptions =
+    | CosmosDBv3DurableClientOptions
+    | CosmosDBv4DurableClientOptions;
+
+export interface CosmosDBv3DurableClientOptions extends Omit<CosmosDBv3FunctionOptions, "handler"> {
+    handler: CosmosDBDurableClientHandler;
+}
+
+export interface CosmosDBv4DurableClientOptions extends Omit<CosmosDBv4FunctionOptions, "handler"> {
+    handler: CosmosDBDurableClientHandler;
 }
 
 /**
