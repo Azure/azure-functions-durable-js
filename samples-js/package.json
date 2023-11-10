@@ -9,7 +9,7 @@
     },
     "dependencies": {
         "@azure/functions": "^4.0.0-alpha.9",
-        "axios": "^1.2.3",
+        "axios": "^1.6.0",
         "durable-functions": "^3.0.0-alpha.4",
         "luxon": "^3.2.1",
         "readdirp": "^3.6.0"
