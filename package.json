@@ -40,11 +40,11 @@
         "watch": "tsc --watch",
         "watch:test": "npm run test -- --watch",
         "docs": "typedoc --excludePrivate --mode file --out ./lib/docs ./src",
-        "e2etst": "npm run "
+        "e2etst": "npm run"
     },
     "dependencies": {
         "@azure/functions": "^4.0.0",
-        "axios": "^0.21.1",
+        "axios": "^1.6.1",
         "debug": "~2.6.9",
         "lodash": "^4.17.15",
         "moment": "^2.29.2",
