@@ -40,12 +40,12 @@
     },
     "dependencies": {
         "@azure/functions": "^1.2.3",
-        "axios": "^0.21.1",
+        "axios": "^1.6.5",
         "debug": "~2.6.9",
         "lodash": "^4.17.15",
+        "moment": "^2.29.2",
         "uuid": "~3.3.2",
-        "validator": "~13.7.0",
-        "moment": "^2.29.2"
+        "validator": "~13.7.0"
     },
     "devDependencies": {
         "@types/chai": "~4.1.6",
