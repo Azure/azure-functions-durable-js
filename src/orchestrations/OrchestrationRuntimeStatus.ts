@@ -6,5 +6,5 @@ export enum OrchestrationRuntimeStatus {
     Canceled = "Canceled",
     Terminated = "Terminated",
     Pending = "Pending",
-    Suspended = 'Suspended',
+    Suspended = "Suspended",
 }
