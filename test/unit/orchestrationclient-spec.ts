@@ -1347,7 +1347,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook and completes for valid instance", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableClient(defaultClientInputData);
 
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(
@@ -1368,7 +1368,7 @@ describe("Orchestration Client", () => {
         });
 
         it(`throws when webhook returns invalid status code 404`, async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableClient(defaultClientInputData);
 
             const id = "badId";
             const testReason = "test";
@@ -1391,7 +1391,7 @@ describe("Orchestration Client", () => {
         });
 
         it(`throws when webhook returns invalid status code 500`, async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableClient(defaultClientInputData);
 
             const id = "badId";
             const testReason = "test";
@@ -1424,7 +1424,7 @@ describe("Orchestration Client", () => {
         });
 
         it("calls expected webhook and completes for valid instance", async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableClient(defaultClientInputData);
 
             const testReason = "test";
             const expectedWebhookUrl = new url.URL(
@@ -1445,7 +1445,7 @@ describe("Orchestration Client", () => {
         });
 
         it(`throws when webhook returns invalid status code 404`, async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableClient(defaultClientInputData);
 
             const id = "badId";
             const testReason = "test";
@@ -1468,7 +1468,7 @@ describe("Orchestration Client", () => {
         });
 
         it(`throws when webhook returns invalid status code 500`, async () => {
-            const client = new DurableOrchestrationClient(defaultClientInputData);
+            const client = new DurableClient(defaultClientInputData);
 
             const id = "badId";
             const testReason = "test";
