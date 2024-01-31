@@ -388,6 +388,12 @@ export declare enum OrchestrationRuntimeStatus {
      * running.
      */
     Pending = "Pending",
+
+    /**
+     * The orchestration instance has been suspended and
+     * may be resumed to running later.
+     */
+    Suspended = "Suspended",
 }
 
 /**

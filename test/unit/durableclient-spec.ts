@@ -346,7 +346,7 @@ describe("Durable client RPC endpoint", () => {
     describe("suspend()", () => {
         it("uses the RPC endpoint", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The suspend() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/suspend?reason=because
             const instanceId = "abc123";
@@ -367,7 +367,7 @@ describe("Durable client RPC endpoint", () => {
     describe("resume()", () => {
         it("uses the RPC endpoint", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
-            const client = new DurableOrchestrationClient(input);
+            const client = new DurableClient(input);
 
             // The resume() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/resume?reason=because
             const instanceId = "abc123";
