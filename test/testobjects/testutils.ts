@@ -85,6 +85,16 @@ export class TestUtils {
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
                 .replace(TestConstants.connectionPlaceholder, connection)
+            TestConstants.suspendPostUriTemplate
+                .replace(TestConstants.hostPlaceholder, host)
+                .replace(TestConstants.idPlaceholder, id)
+                .replace(TestConstants.taskHubPlaceholder, taskHub)
+                .replace(TestConstants.connectionPlaceholder, connection)
+            TestConstants.resumePostUriTemplate
+                .replace(TestConstants.hostPlaceholder, host)
+                .replace(TestConstants.idPlaceholder, id)
+                .replace(TestConstants.taskHubPlaceholder, taskHub)
+                .replace(TestConstants.connectionPlaceholder, connection)
         );
     }
 
