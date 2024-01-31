@@ -1200,7 +1200,10 @@ describe("Orchestration Client", () => {
                 .query((actualQueryObject: object) =>
                     urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
                 )
-                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "", "", "", ""));
+                .reply(
+                    202,
+                    new HttpManagementPayload(defaultInstanceId, "", "", "", "", "", "", "")
+                );
 
             const result = await client.startNew(functionName);
             expect(scope.isDone()).to.be.equal(true);
@@ -1223,7 +1226,10 @@ describe("Orchestration Client", () => {
                 .query((actualQueryObject: object) =>
                     urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
                 )
-                .reply(202, new HttpManagementPayload(defaultInstanceId, "", "", "", "", "", "", ""));
+                .reply(
+                    202,
+                    new HttpManagementPayload(defaultInstanceId, "", "", "", "", "", "", "")
+                );
 
             const result = await client.startNew(functionName, {
                 instanceId: defaultInstanceId,
