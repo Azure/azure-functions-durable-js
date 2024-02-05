@@ -1,7 +1,6 @@
 variables:
     {
         MODULE_VERSION: "2.1.3",
-        NODE_10: "10.x",
         NODE_12: "12.x",
         NODE_14: "14.x",
         NODE_16: "16.x",
@@ -22,9 +21,6 @@ jobs:
     - job: Test
       strategy:
           matrix:
-              UBUNTU_NODE10:
-                  IMAGE_TYPE: "ubuntu-latest"
-                  NODE_VERSION: $(NODE_10)
               UBUNTU_NODE12:
                   IMAGE_TYPE: "ubuntu-latest"
                   NODE_VERSION: $(NODE_12)
@@ -40,9 +36,6 @@ jobs:
               UBUNTU_NODE20:
                   IMAGE_TYPE: "ubuntu-latest"
                   NODE_VERSION: $(NODE_20)
-              WINDOWS_NODE10:
-                  IMAGE_TYPE: "windows-latest"
-                  NODE_VERSION: $(NODE_10)
               WINDOWS_NODE12:
                   IMAGE_TYPE: "windows-latest"
                   NODE_VERSION: $(NODE_12)
