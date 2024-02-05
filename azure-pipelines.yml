@@ -51,9 +51,6 @@ jobs:
               WINDOWS_NODE20:
                   IMAGE_TYPE: "windows-latest"
                   NODE_VERSION: $(NODE_20)
-              MAC_NODE10:
-                  IMAGE_TYPE: "macOS-latest"
-                  NODE_VERSION: $(NODE_10)
               MAC_NODE12:
                   IMAGE_TYPE: "macOS-latest"
                   NODE_VERSION: $(NODE_12)
