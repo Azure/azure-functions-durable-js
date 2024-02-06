@@ -529,6 +529,62 @@ export class DurableClient implements types.DurableClient {
         }
     }
 
+    public async suspend(instanceId: string, reason: string): Promise<void> {
+        const idPlaceholder = this.clientData.managementUrls.id;
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            requestUrl = new URL(
+                `instances/${instanceId}/suspend?reason=${reason}`,
+                this.clientData.rpcBaseUrl
+            ).href;
+        } else {
+            // Legacy app frontend path
+            requestUrl = this.clientData.managementUrls.suspendPostUri
+                .replace(idPlaceholder, instanceId)
+                .replace(this.reasonPlaceholder, reason);
+        }
+
+        const response = await this.axiosInstance.post(requestUrl);
+        switch (response.status) {
+            case 202: // suspend accepted
+            case 410: // instance completed or failed
+                return;
+            case 404:
+                return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
+            default:
+                return Promise.reject(this.createGenericError(response));
+        }
+    }
+
+    public async resume(instanceId: string, reason: string): Promise<void> {
+        const idPlaceholder = this.clientData.managementUrls.id;
+        let requestUrl: string;
+        if (this.clientData.rpcBaseUrl) {
+            // Fast local RPC path
+            requestUrl = new URL(
+                `instances/${instanceId}/resume?reason=${reason}`,
+                this.clientData.rpcBaseUrl
+            ).href;
+        } else {
+            // Legacy app frontend path
+            requestUrl = this.clientData.managementUrls.resumePostUri
+                .replace(idPlaceholder, instanceId)
+                .replace(this.reasonPlaceholder, reason);
+        }
+
+        const response = await this.axiosInstance.post(requestUrl);
+        switch (response.status) {
+            case 202: // resume accepted
+            case 410: // instance completed or failed
+                return;
+            case 404:
+                return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
+            default:
+                return Promise.reject(this.createGenericError(response));
+        }
+    }
+
     public async waitForCompletionOrCreateCheckStatusResponse(
         request: HttpRequest,
         instanceId: string,

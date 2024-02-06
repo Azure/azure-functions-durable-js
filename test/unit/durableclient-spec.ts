@@ -35,6 +35,8 @@ const durableClientBindingInputJson = JSON.stringify({
         terminatePostUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
         rewindPostUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
         purgeHistoryDeleteUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
+        suspendPostUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
+        resumePostUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
     },
     baseUrl: externalBaseUrl,
     rpcBaseUrl: testRpcBaseUrl,
@@ -89,6 +91,8 @@ describe("Durable client RPC endpoint", () => {
             expect(payload.sendEventPostUri).to.startWith(externalBaseUrl);
             expect(payload.statusQueryGetUri).to.startWith(externalBaseUrl);
             expect(payload.terminatePostUri).to.startWith(externalBaseUrl);
+            expect(payload.suspendPostUri).to.startWith(externalBaseUrl);
+            expect(payload.resumePostUri).to.startWith(externalBaseUrl);
         });
     });
 
@@ -231,11 +235,11 @@ describe("Durable client RPC endpoint", () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
             const client = new DurableClient(input);
 
-            // The getStatusBy() method should do a GET to http://127.0.0.1:17071/durabletask/instances/?createdTimeFrom=2020-01-01T00:00:00Z&createdTimeTo=2020-01-01T23:59:59Z&runtimeStatus=Pending,Running,Completed,Terminated,Failed
+            // The getStatusBy() method should do a GET to http://127.0.0.1:17071/durabletask/instances/?createdTimeFrom=2020-01-01T00:00:00Z&createdTimeTo=2020-01-01T23:59:59Z&runtimeStatus=Pending,Running,Completed,Terminated,Failed,Suspended
             const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/`);
             const createdTimeFrom = "2020-01-01T00:00:00.000Z";
             const createdTimeTo = "2020-01-01T23:59:59.000Z";
-            const runtimeStatus = "Pending,Running,Completed,Terminated,Failed";
+            const runtimeStatus = "Pending,Running,Completed,Terminated,Failed,Suspended";
 
             const scope = nock(expectedUrl.origin)
                 .get(expectedUrl.pathname)
@@ -263,11 +267,11 @@ describe("Durable client RPC endpoint", () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
             const client = new DurableClient(input);
 
-            // The getStatusBy() method should do a GET to http://127.0.0.1:17071/durabletask/instances/?createdTimeFrom=2020-01-01T00:00:00Z&createdTimeTo=2020-01-01T23:59:59Z&runtimeStatus=Pending,Running,Completed,Terminated,Failed
+            // The getStatusBy() method should do a GET to http://127.0.0.1:17071/durabletask/instances/?createdTimeFrom=2020-01-01T00:00:00Z&createdTimeTo=2020-01-01T23:59:59Z&runtimeStatus=Pending,Running,Completed,Terminated,Failed,Suspended
             const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/`);
             const createdTimeFrom = "2020-01-01T00:00:00.000Z";
             const createdTimeTo = "2020-01-01T23:59:59.000Z";
-            const runtimeStatus = "Pending,Running,Completed,Terminated,Failed";
+            const runtimeStatus = "Pending,Running,Completed,Terminated,Failed,Suspended";
 
             // create dummy orchestration status for response
             const dummyDate = new Date();
@@ -339,6 +343,48 @@ describe("Durable client RPC endpoint", () => {
         });
     });
 
+    describe("suspend()", () => {
+        it("uses the RPC endpoint", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableClient(input);
+
+            // The suspend() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/suspend?reason=because
+            const instanceId = "abc123";
+            const reason = "because";
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/${instanceId}/suspend?reason=${reason}`
+            );
+
+            const scope = nock(expectedUrl.origin)
+                .post(expectedUrl.pathname + expectedUrl.search)
+                .reply(202);
+
+            await client.suspend(instanceId, reason);
+            expect(scope.isDone()).to.be.equal(true);
+        });
+    });
+
+    describe("resume()", () => {
+        it("uses the RPC endpoint", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableClient(input);
+
+            // The resume() method should do a POST to http://127.0.0.1:17071/durabletask/instances/abc123/resume?reason=because
+            const instanceId = "abc123";
+            const reason = "because";
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/${instanceId}/resume?reason=${reason}`
+            );
+
+            const scope = nock(expectedUrl.origin)
+                .post(expectedUrl.pathname + expectedUrl.search)
+                .reply(202);
+
+            await client.resume(instanceId, reason);
+            expect(scope.isDone()).to.be.equal(true);
+        });
+    });
+
     describe("purgeInstanceHistory[By]()", () => {
         it("uses the RPC endpoint (single instance)", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
@@ -362,11 +408,11 @@ describe("Durable client RPC endpoint", () => {
             const client = new DurableClient(input);
 
             // The purgeInstanceHistoryBy() method should do a DELETE to
-            // http://127.0.0.1:17071/durabletask/instances/?createdTimeFrom=2020-01-01T00:00:00Z&createdTimeTo=2020-01-01T23:59:59Z&runtimeStatus=Pending,Running,Completed,Terminated,Failed
+            // http://127.0.0.1:17071/durabletask/instances/?createdTimeFrom=2020-01-01T00:00:00Z&createdTimeTo=2020-01-01T23:59:59Z&runtimeStatus=Pending,Running,Completed,Terminated,Failed,Suspended
             const expectedUrl = new URL(`${testRpcOrigin}/durabletask/instances/`);
             const createdTimeFrom = "2020-01-01T00:00:00.000Z";
             const createdTimeTo = "2020-01-01T23:59:59.000Z";
-            const runtimeStatus = "Pending,Running,Completed,Terminated,Failed";
+            const runtimeStatus = "Pending,Running,Completed,Terminated,Failed,Suspended";
 
             const scope = nock(expectedUrl.origin)
                 .delete(expectedUrl.pathname)
