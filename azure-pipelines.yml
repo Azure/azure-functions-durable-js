@@ -1,6 +1,6 @@
 variables:
     {
-        MODULE_VERSION: "2.1.3",
+        MODULE_VERSION: "2.1.4",
         NODE_12: "12.x",
         NODE_14: "14.x",
         NODE_16: "16.x",
