@@ -16,9 +16,9 @@
         "typescript": "^4.0.0"
     },
     "dependencies": {
-        "@azure/functions": "^4.0.0-alpha.9",
+        "@azure/functions": "^4.0.0",
         "axios": "^1.6.0",
-        "durable-functions": "^3.0.0-alpha.4",
+        "durable-functions": "^3.0.0",
         "luxon": "^3.2.1",
         "readdirp": "^3.6.0"
     }
