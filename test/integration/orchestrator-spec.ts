@@ -2,7 +2,7 @@
 import { expect } from "chai";
 import "mocha";
 import * as moment from "moment";
-import * as uuidv1 from "uuid/v1";
+import { v1 as uuidv1 } from "uuid";
 import {
     DummyOrchestrationContext,
     EntityId,

@@ -2,7 +2,7 @@ import { expect } from "chai";
 import "mocha";
 import moment = require("moment");
 import { GuidManager } from "../../src/util/GuidManager";
-import uuidv1 = require("uuid/v1");
+import { v1 as uuidv1 } from "uuid";
 import { isUUID } from "validator";
 
 describe("GuidManager", () => {

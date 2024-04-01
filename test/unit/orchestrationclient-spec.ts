@@ -7,7 +7,7 @@ import { isEqual } from "lodash";
 import "mocha";
 import nock = require("nock");
 import url = require("url");
-import uuidv1 = require("uuid/v1");
+import { v1 as uuidv1 } from "uuid";
 import { TestConstants } from "../testobjects/testconstants";
 import { TestUtils } from "../testobjects/testutils";
 import { Constants } from "../../src/Constants";

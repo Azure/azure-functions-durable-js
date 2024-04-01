@@ -1,6 +1,6 @@
 import * as crypto from "crypto";
 /** @hidden */
-import uuidv5 = require("uuid/v5");
+import { v5 as uuidv5 } from "uuid";
 import { Utils } from "./Utils";
 
 /** @hidden */
