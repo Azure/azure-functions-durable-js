@@ -22,4 +22,6 @@ export enum HistoryEventType {
     ContinueAsNew = 16,
     GenericEvent = 17,
     HistoryState = 18,
+    ExecutionSuspended = 19,
+    ExecutionResumed = 20,
 }

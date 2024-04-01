@@ -11,6 +11,8 @@ export class HttpManagementPayload implements types.HttpManagementPayload {
         public readonly sendEventPostUri: string,
         public readonly terminatePostUri: string,
         public readonly rewindPostUri: string,
-        public readonly purgeHistoryDeleteUri: string
+        public readonly purgeHistoryDeleteUri: string,
+        public readonly suspendPostUri: string,
+        public readonly resumePostUri: string
     ) {}
 }
