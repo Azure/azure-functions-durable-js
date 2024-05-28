@@ -1,13 +1,9 @@
 trigger:
     branches:
         include:
-            # Below branches are examples for Azure/azure-functions-host. Replace with appropriate branches for your repository.
-            # Keep this set limited as appropriate (don't mirror individual user branches).
-            - dev
-            - in-proc
-            - release/4.* # azure-functions-host github repo restricts creation of release/* branches, so using a pattern is safe here.
-            - release/inproc6/4.*
-            - release/inproc8/4.*
+            - master
+            - v2.x
+            - v3.x
 
 resources:
     repositories:
