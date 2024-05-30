@@ -1,7 +1,6 @@
 trigger:
     branches:
         include:
-            - master
             - v2.x
             - v3.x
 
