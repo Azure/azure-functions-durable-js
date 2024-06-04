@@ -13,8 +13,7 @@
     ],
     "files": [
         "lib/src",
-        "types/",
-        "_manifest"
+        "types/"
     ],
     "main": "lib/src/index.js",
     "types": "types/index.d.ts",
