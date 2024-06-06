@@ -6,7 +6,7 @@ jobs:
                 path: $(Build.ArtifactStagingDirectory)
                 artifact: drop
                 sbomBuildDropPath: "$(System.DefaultWorkingDirectory)"
-                sbomPackageName: "Azure Functions Node.js Programming Model"
+                sbomPackageName: "Durable Functions for Node.js"
                 # The list of components can't be determined from the webpacked file in the staging dir, so reference the original node_modules folder
                 sbomBuildComponentPath: "$(Build.SourcesDirectory)/node_modules"
       steps:

@@ -43,5 +43,3 @@ extends:
               dependsOn: []
               jobs:
                   - template: /azure-pipelines/templates/build.yml@self
-                    parameters:
-                        IsPrerelease: true
