@@ -14,8 +14,8 @@ pr: none
 resources:
     pipelines:
         - pipeline: DurableJSCI
-          project: "Azure Functions"
-          source: azure-functions-durable-js
+          project: internal
+          source: durable-js.official
           branch: v3.x
 
 jobs:
