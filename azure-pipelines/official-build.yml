@@ -15,7 +15,7 @@ schedules:
   displayName: Nightly Build
   branches:
     include:
-    - main
+    - v3.x
   always: true
 
 resources:
