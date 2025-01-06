@@ -54,7 +54,7 @@ We recommend using Azure Functions [extension bundles](https://learn.microsoft.c
 }
 ```
 
-4. Install the `durable-functions` npm package (preview version) at the root of your function app:
+4. Install the `durable-functions` npm package at the root of your function app:
 
 ```bash
 npm install durable-functions
