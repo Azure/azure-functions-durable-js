@@ -3,8 +3,6 @@ import { DurableClientInput } from "durable-functions";
 import { DurableClient } from "./DurableClient";
 import { OrchestrationClientInputData } from "./OrchestrationClientInputData";
 /** @hidden */
-import cloneDeep = require("lodash/cloneDeep");
-/** @hidden */
 import url = require("url");
 import { HttpCreationPayload } from "../http/HttpCreationPayload";
 import { HttpManagementPayload } from "../http/HttpManagementPayload";
@@ -53,7 +51,7 @@ function getClientData(
 
 /** @hidden */
 function correctClientData(clientData: OrchestrationClientInputData): OrchestrationClientInputData {
-    const returnValue = cloneDeep(clientData);
+    const returnValue = structuredClone(clientData);
 
     returnValue.creationUrls = correctUrls(clientData.creationUrls) as HttpCreationPayload;
     returnValue.managementUrls = correctUrls(clientData.managementUrls) as HttpManagementPayload;
@@ -62,7 +60,7 @@ function correctClientData(clientData: OrchestrationClientInputData): Orchestrat
 }
 
 function correctUrls(obj: { [key: string]: string }): { [key: string]: string } {
-    const returnValue = cloneDeep(obj);
+    const returnValue = structuredClone(obj);
 
     const keys = Object.getOwnPropertyNames(obj);
     keys.forEach((key) => {
