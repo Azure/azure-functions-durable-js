@@ -1,6 +1,7 @@
 // tslint:disable:member-access
 
 import { HttpRequest, HttpResponse } from "@azure/functions";
+import { context, trace } from "@opentelemetry/api";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 /** @hidden */
 import process = require("process");
@@ -469,7 +470,9 @@ export class DurableClient implements types.DurableClient {
 
     public async startNew(
         orchestratorFunctionName: string,
-        options?: StartNewOptions
+        options?: StartNewOptions,
+        traceParent?: string,
+        traceState?: string
     ): Promise<string> {
         if (!orchestratorFunctionName) {
             throw new Error("orchestratorFunctionName must be a valid string.");
@@ -492,8 +495,17 @@ export class DurableClient implements types.DurableClient {
                 .replace(this.instanceIdPlaceholder, instanceIdPath);
         }
 
+        // Build headers only if traceParent or traceState are provided
+        const headers: { [key: string]: string } = {};
+        if (traceParent) {
+            headers["traceparent"] = traceParent;
+        }
+        if (traceState) {
+            headers["tracestate"] = traceState;
+        }
+
         const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
-        const response = await this.axiosInstance.post(requestUrl, input);
+        const response = await this.axiosInstance.post(requestUrl, input, { headers });
         if (response.data && response.status <= 202) {
             return (response.data as HttpManagementPayload).id;
         } else {
