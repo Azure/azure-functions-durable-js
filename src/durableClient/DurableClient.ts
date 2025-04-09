@@ -1,7 +1,6 @@
 // tslint:disable:member-access
 
 import { HttpRequest, HttpResponse } from "@azure/functions";
-import { context, trace } from "@opentelemetry/api";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 /** @hidden */
 import process = require("process");
