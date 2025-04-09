@@ -469,9 +469,7 @@ export class DurableClient implements types.DurableClient {
 
     public async startNew(
         orchestratorFunctionName: string,
-        options?: StartNewOptions,
-        traceParent?: string,
-        traceState?: string
+        options?: StartNewOptions
     ): Promise<string> {
         if (!orchestratorFunctionName) {
             throw new Error("orchestratorFunctionName must be a valid string.");
@@ -496,11 +494,11 @@ export class DurableClient implements types.DurableClient {
 
         // Build headers only if traceParent or traceState are provided
         const headers: { [key: string]: string } = {};
-        if (traceParent) {
-            headers["traceparent"] = traceParent;
+        if (options?.traceParent) {
+            headers["x-client-traceparent"] = options.traceParent;
         }
-        if (traceState) {
-            headers["tracestate"] = traceState;
+        if (options?.traceState) {
+            headers["x-client-tracestate"] = options.traceState;
         }
 
         const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
