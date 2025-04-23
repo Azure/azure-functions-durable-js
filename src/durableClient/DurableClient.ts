@@ -505,8 +505,8 @@ export class DurableClient implements types.DurableClient {
             }-${spanContext.traceFlags.toString(16).padStart(2, "0")}`;
             traceState = spanContext.traceState ? spanContext.traceState.serialize() : "";
 
-            headers["x-client-traceparent"] = traceParent;
-            headers["x-client-tracestate"] = traceState;
+            headers["traceparent"] = traceParent;
+            headers["tracestate"] = traceState;
         }
 
         const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
