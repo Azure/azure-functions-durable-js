@@ -350,16 +350,6 @@ export interface StartNewOptions {
      * JSON-serializable input value for the orchestrator function.
      */
     input?: unknown;
-
-    /**
-     * The traceparent header value to use for the new orchestration instance.
-     */
-    traceParent?: string;
-
-    /**
-     * The tracestate header value to use for the new orchestration instance.
-     */
-    traceState?: string;
 }
 
 /**

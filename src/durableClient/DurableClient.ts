@@ -1,6 +1,7 @@
 // tslint:disable:member-access
 
 import { HttpRequest, HttpResponse } from "@azure/functions";
+import OpenTelemetryApi = require("@opentelemetry/api");
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 /** @hidden */
 import process = require("process");
@@ -492,13 +493,20 @@ export class DurableClient implements types.DurableClient {
                 .replace(this.instanceIdPlaceholder, instanceIdPath);
         }
 
-        // Build headers only if traceParent or traceState are provided
-        const headers: { [key: string]: string } = {};
-        if (options?.traceParent) {
-            headers["x-client-traceparent"] = options.traceParent;
-        }
-        if (options?.traceState) {
-            headers["x-client-tracestate"] = options.traceState;
+        // Get the current active span
+        const currentSpan = OpenTelemetryApi.trace.getSpan(OpenTelemetryApi.context.active());
+        let traceParent = "";
+        let traceState = "";
+        const headers: Record<string, string> = {};
+        if (currentSpan) {
+            const spanContext = currentSpan.spanContext();
+            traceParent = `00-${spanContext.traceId}-${
+                spanContext.spanId
+            }-${spanContext.traceFlags.toString(16).padStart(2, "0")}`;
+            traceState = spanContext.traceState ? spanContext.traceState.serialize() : "";
+
+            headers["x-client-traceparent"] = traceParent;
+            headers["x-client-tracestate"] = traceState;
         }
 
         const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
