@@ -495,18 +495,11 @@ export class DurableClient implements types.DurableClient {
 
         // Get the current active span
         const currentSpan = OpenTelemetryApi.trace.getSpan(OpenTelemetryApi.context.active());
-        let traceParent = "";
-        let traceState = "";
+
+        // Create the headers object and inject the current span context if it exists
         const headers: Record<string, string> = {};
         if (currentSpan) {
-            const spanContext = currentSpan.spanContext();
-            traceParent = `00-${spanContext.traceId}-${
-                spanContext.spanId
-            }-${spanContext.traceFlags.toString(16).padStart(2, "0")}`;
-            traceState = spanContext.traceState ? spanContext.traceState.serialize() : "";
-
-            headers["traceparent"] = traceParent;
-            headers["tracestate"] = traceState;
+            OpenTelemetryApi.propagation.inject(OpenTelemetryApi.context.active(), headers);
         }
 
         const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
