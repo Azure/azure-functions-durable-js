@@ -493,14 +493,7 @@ export class DurableClient implements types.DurableClient {
                 .replace(this.instanceIdPlaceholder, instanceIdPath);
         }
 
-        // Get the current active span
-        const currentSpan = OpenTelemetryApi.trace.getSpan(OpenTelemetryApi.context.active());
-
-        // Create the headers object and inject the current span context if it exists
-        const headers: Record<string, string> = {};
-        if (currentSpan) {
-            OpenTelemetryApi.propagation.inject(OpenTelemetryApi.context.active(), headers);
-        }
+        const headers = this.getDistributedTracingHeaders();
 
         const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
         const response = await this.axiosInstance.post(requestUrl, input, { headers });
@@ -645,6 +638,19 @@ export class DurableClient implements types.DurableClient {
                 return this.createCheckStatusResponse(request, instanceId);
             }
         }
+    }
+
+    private getDistributedTracingHeaders(): Record<string, string> {
+        // Get the current active span
+        const currentSpan = OpenTelemetryApi.trace.getSpan(OpenTelemetryApi.context.active());
+
+        // Create the headers object and inject the current span context if it exists
+        const headers: Record<string, string> = {};
+        if (currentSpan) {
+            OpenTelemetryApi.propagation.inject(OpenTelemetryApi.context.active(), headers);
+        }
+
+        return headers;
     }
 
     private createHttpResponse(statusCode: number, body: unknown): HttpResponse {
