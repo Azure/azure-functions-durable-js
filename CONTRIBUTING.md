@@ -69,7 +69,7 @@ The following extensions should be installed if using Visual Studio Code for deb
 
 ### Setting up Durable JavaScript using sample code
 
-- Make your changes in the Durable Javascript project and run `npm run build` to build the project.
+- Make your changes in the Durable Functions project and run `npm run build` to build the project.
 
 - Create a Durable Functions Orchestrator for FunctionChaining pattern using [starter templates](https://docs.microsoft.com/en-us/azure/azure-functions/durable/quickstart-js-vscode)
   Note: In this starter template, ignore the line that says: "On a Mac or Linux computer, you must set the AzureWebJobsStorage property to the connection string of an existing Azure storage account". We will be setting up the AzureWebJobsStorage property to `UseDevelopmentStorage=true`
