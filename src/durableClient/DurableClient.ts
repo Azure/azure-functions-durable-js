@@ -1,6 +1,7 @@
 // tslint:disable:member-access
 
 import { HttpRequest, HttpResponse } from "@azure/functions";
+import OpenTelemetryApi = require("@opentelemetry/api");
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 /** @hidden */
 import process = require("process");
@@ -492,8 +493,10 @@ export class DurableClient implements types.DurableClient {
                 .replace(this.instanceIdPlaceholder, instanceIdPath);
         }
 
+        const headers = this.getDistributedTracingHeaders();
+
         const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
-        const response = await this.axiosInstance.post(requestUrl, input);
+        const response = await this.axiosInstance.post(requestUrl, input, { headers });
         if (response.data && response.status <= 202) {
             return (response.data as HttpManagementPayload).id;
         } else {
@@ -635,6 +638,19 @@ export class DurableClient implements types.DurableClient {
                 return this.createCheckStatusResponse(request, instanceId);
             }
         }
+    }
+
+    private getDistributedTracingHeaders(): Record<string, string> {
+        // Get the current active span
+        const currentSpan = OpenTelemetryApi.trace.getSpan(OpenTelemetryApi.context.active());
+
+        // Create the headers object and inject the current span context if it exists
+        const headers: Record<string, string> = {};
+        if (currentSpan) {
+            OpenTelemetryApi.propagation.inject(OpenTelemetryApi.context.active(), headers);
+        }
+
+        return headers;
     }
 
     private createHttpResponse(statusCode: number, body: unknown): HttpResponse {
