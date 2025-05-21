@@ -456,9 +456,12 @@ export class DurableClient implements types.DurableClient {
             );
         }
 
+        const headers = this.getDistributedTracingHeaders();
+
         const response = await this.axiosInstance.post(
             requestUrl,
-            JSON.stringify(operationContent)
+            JSON.stringify(operationContent),
+            { headers }
         );
         switch (response.status) {
             case 202: // signal accepted

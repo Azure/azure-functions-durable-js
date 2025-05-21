@@ -60,13 +60,18 @@ export class Entity<T> {
                 await Promise.resolve(this.fn(context));
                 if (!returnState.results[i]) {
                     const elapsedMs = this.computeElapsedMilliseconds(startTime);
-                    returnState.results[i] = new OperationResult(false, elapsedMs);
+                    returnState.results[i] = new OperationResult(
+                        false,
+                        elapsedMs,
+                        startTime.getTime()
+                    );
                 }
             } catch (error) {
                 const elapsedMs = this.computeElapsedMilliseconds(startTime);
                 returnState.results[i] = new OperationResult(
                     true,
                     elapsedMs,
+                    startTime.getTime(),
                     JSON.stringify(error)
                 );
             }
@@ -95,7 +100,7 @@ export class Entity<T> {
                 value: TResult
             ) => void,
             destructOnExit: this.destructOnExit.bind(this, batchState),
-            signalEntity: this.signalEntity.bind(this, batchState),
+            signalEntity: this.signalEntity.bind(this, batchState, currentRequest),
         };
     }
 
@@ -126,6 +131,7 @@ export class Entity<T> {
             new OperationResult(
                 false,
                 this.computeElapsedMilliseconds(startTime),
+                startTime.getTime(),
                 JSON.stringify(result)
             )
         );
@@ -138,12 +144,19 @@ export class Entity<T> {
 
     private signalEntity(
         returnState: EntityState,
+        request: RequestMessage,
         entity: EntityId,
         operationName: string,
         operationInput?: unknown
     ): void {
         returnState.signals.push(
-            new Signal(entity, operationName, operationInput ? JSON.stringify(operationInput) : "")
+            new Signal(
+                entity,
+                operationName,
+                operationInput ? JSON.stringify(operationInput) : "",
+                request.id,
+                new Date().getTime()
+            )
         );
     }
 
