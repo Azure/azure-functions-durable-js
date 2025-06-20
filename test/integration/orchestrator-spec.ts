@@ -212,6 +212,34 @@ describe("Orchestrator", () => {
             expect(mockContext.df!.parentInstanceId).to.be.equal(id);
         });
 
+        it("extracts version from history", async () => {
+            const orchestrator = TestOrchestrations.SayHelloSequence;
+            const name = "World";
+            const version = "1.0.0";
+
+            const mockContext = new DummyOrchestrationContext();
+            const orchestrationInput = new DurableOrchestrationInput(
+                "",
+                TestHistories.GetSayHelloWithActivityReplayOne(
+                    "SayHelloWithActivity",
+                    moment.utc().toDate(),
+                    name,
+                    version
+                ),
+                name,
+                undefined,
+                undefined,
+                undefined,
+                ReplaySchema.V1,
+                undefined,
+                undefined
+            );
+
+            await orchestrator(orchestrationInput, mockContext);
+
+            expect(mockContext.df!.version).to.be.equal(version);
+        });
+
         it("updates currentUtcDateTime to the most recent OrchestratorStarted timestamp", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
             const name = "World";

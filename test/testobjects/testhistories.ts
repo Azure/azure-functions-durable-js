@@ -1130,7 +1130,8 @@ export class TestHistories {
     public static GetSayHelloWithActivityReplayOne(
         name: string,
         firstTimestamp: Date,
-        input: unknown
+        input: unknown,
+        version?: string
     ): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent({
@@ -1144,6 +1145,7 @@ export class TestHistories {
                 isPlayed: true,
                 name,
                 input: JSON.stringify(input),
+                version: version,
             }),
             new TaskScheduledEvent({
                 eventId: 0,

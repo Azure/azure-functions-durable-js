@@ -29,6 +29,8 @@ import { WaitForExternalEventAction } from "../actions/WaitForExternalEventActio
 import { GuidManager } from "../util/GuidManager";
 import { HistoryEvent } from "../history/HistoryEvent";
 import { DurableHttpRequest } from "../http/DurableHttpRequest";
+import { HistoryEventType } from "../history/HistoryEventType";
+import { ExecutionStartedEvent } from "../history/ExecutionStartedEvent";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -63,12 +65,14 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         this.schemaVersion = schemaVersion;
         this.input = input;
         this.newGuidCounter = 0;
+        this.version = this.extractVersionFromHistory(state);
     }
 
     private input: unknown;
     private readonly state: HistoryEvent[];
     private newGuidCounter: number;
     public customStatus: unknown;
+    public readonly version: string | undefined;
 
     /**
      * The default time to wait between attempts when making HTTP polling requests
@@ -119,6 +123,19 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
      */
     private isDFTaskArray(tasks: Task[]): tasks is DFTask[] {
         return tasks.every((x) => x instanceof DFTask);
+    }
+
+    /**
+     * Extracts the version value from the ExecutionStarted event in the history
+     * @param state The history events array
+     * @returns The version string from ExecutionStartedEvent, or undefined if not found
+     */
+    private extractVersionFromHistory(state: HistoryEvent[]): string | undefined {
+        const executionStartedEvent = state.find(
+            (e) => e.EventType === HistoryEventType.ExecutionStarted
+        ) as ExecutionStartedEvent | undefined;
+
+        return executionStartedEvent?.Version;
     }
 
     public Task = {
