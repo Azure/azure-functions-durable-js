@@ -6,6 +6,7 @@ import { HistoryEventType } from "./HistoryEventType";
 export class ExecutionStartedEvent extends HistoryEvent {
     public Name: string;
     public Input: string | undefined;
+    public Version: string | undefined;
 
     constructor(options: HistoryEventOptions) {
         super(
@@ -22,5 +23,6 @@ export class ExecutionStartedEvent extends HistoryEvent {
         }
 
         this.Input = options.input;
+        this.Version = options.version;
     }
 }

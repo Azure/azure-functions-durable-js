@@ -85,6 +85,11 @@ export declare class DurableOrchestrationContext {
     readonly parentInstanceId: string | undefined;
 
     /**
+     * The version assigned to the orchestration instance on creation.
+     */
+    readonly version: string | undefined;
+
+    /**
      * Gets a value indicating whether the orchestrator function is currently
      * replaying itself.
      *
