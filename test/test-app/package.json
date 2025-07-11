@@ -11,11 +11,11 @@
     },
     "dependencies": {
         "@azure/functions": "^4.0.0-alpha.7",
-        "durable-functions": "^3.0.0-alpha.2"
+        "durable-functions": "file:../../durable-functions"
     },
     "devDependencies": {
         "@types/node": "^18.x",
-        "typescript": "^4.0.0"
+        "typescript": "^4.7.2"
     },
     "main": "dist/src/functions/*.js"
 }
