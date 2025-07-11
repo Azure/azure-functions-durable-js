@@ -9,8 +9,8 @@
     },
     "dependencies": {
         "@azure/functions": "^4.7.0",
-        "axios": "^1.6.0",
-        "durable-functions": "^3.0.0",
+        "axios": "^1.10.0",
+        "durable-functions": "file:../durable-functions",
         "luxon": "^3.2.1",
         "readdirp": "^3.6.0"
     }
