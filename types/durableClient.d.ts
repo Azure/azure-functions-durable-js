@@ -316,6 +316,28 @@ export declare class DurableClient {
     terminate(instanceId: string, reason: string): Promise<void>;
 
     /**
+     * Suspends a running orchestration instance.
+     * @param instanceId The ID of the orchestration instance to suspend.
+     * @param reason The reason for suspending the orchestration instance.
+     * @returns A promise that resolves when the suspend message is enqueued.
+     *
+     * Suspending an orchestration instance will pause its execution and
+     * prevent it from processing any further events until it is resumed.
+     */
+    suspend(instanceId: string, reason: string): Promise<void>;
+
+    /**
+     * Resumes a suspended orchestration instance.
+     * @param instanceId The ID of the orchestration instance to resume.
+     * @param reason The reason for resuming the orchestration instance.
+     * @returns A promise that resolves when the resume message is enqueued.
+     *
+     * Resuming an orchestration instance will allow it to continue processing
+     * events that were queued while it was suspended.
+     */
+    resume(instanceId: string, reason: string): Promise<void>;
+
+    /**
      * Creates an HTTP response which either contains a payload of management
      * URLs for a non-completed instance or contains the payload containing
      * the output of the completed orchestration.
@@ -396,6 +418,14 @@ export declare class HttpManagementPayload {
      * The HTTP DELETE purge endpoint URL.
      */
     readonly purgeHistoryDeleteUri: string;
+    /**
+     * The HTTP POST instance suspension endpoint URL.
+     */
+    readonly suspendPostUri: string;
+    /**
+     * The HTTP POST instance resumption endpoint URL.
+     */
+    readonly resumePostUri: string;
 }
 
 /**
