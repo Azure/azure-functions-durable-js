@@ -20,7 +20,7 @@ df.app.orchestration("backupSiteContent", function* (context) {
     const tasks = [];
     for (const file of files) {
         const input = {
-            backupPath: path.relative(rootDirAbs, file).replace("\\", "/"),
+            backupPath: path.relative(rootDirAbs, file).replace(/\\/g, "/"),
             filePath: file,
         };
         tasks.push(context.df.callActivity(copyFileToBlobActivityName, input));
