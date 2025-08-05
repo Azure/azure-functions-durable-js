@@ -18,7 +18,9 @@ export class GuidManager {
         Utils.throwIfEmpty(namespaceValue, "namespaceValue");
         Utils.throwIfEmpty(name, "name");
 
-        const hash = crypto.createHash("sha1");
+        const hash = crypto.createHash("sha1"); // CodeQL [SM04514] Suppressed: SHA1 is not used for cryptographic purposes here. The information being hashed is not sensitive, 
+                                              //   and the goal is to generate a deterministic Guid. We cannot update to SHA2-based algorithms without breaking
+                                              //   customers' inflight orchestrations.
         hash.update(name);
         const bytes: number[] = Array.prototype.slice.call(hash.digest(), 0, 16);
 
