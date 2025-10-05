@@ -201,14 +201,19 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         this.taskOrchestratorExecutor.recordFireAndForgetAction(action);
     }
 
-    public callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task {
+    public callSubOrchestrator(
+        name: string,
+        input?: unknown,
+        instanceId?: string,
+        version?: string
+    ): Task {
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"
             );
         }
 
-        const newAction = new CallSubOrchestratorAction(name, instanceId, input);
+        const newAction = new CallSubOrchestratorAction(name, instanceId, input, version);
         const task = new AtomicTask(false, newAction);
         return task;
     }
@@ -217,7 +222,8 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         name: string,
         retryOptions: types.RetryOptions,
         input?: unknown,
-        instanceId?: string
+        instanceId?: string,
+        version?: string
     ): Task {
         if (!name) {
             throw new Error(
@@ -229,7 +235,8 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
             name,
             retryOptions,
             input,
-            instanceId
+            instanceId,
+            version
         );
         const backingTask = new AtomicTask(false, newAction);
         const task = new RetryableTask(backingTask, retryOptions);

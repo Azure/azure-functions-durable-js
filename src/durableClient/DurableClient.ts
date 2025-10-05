@@ -484,16 +484,26 @@ export class DurableClient implements types.DurableClient {
         const instanceIdPath: string = options?.instanceId ? `/${options.instanceId}` : "";
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
-            requestUrl = new URL(
+            const urlObj = new URL(
                 `orchestrators/${orchestratorFunctionName}${instanceIdPath}`,
                 this.clientData.rpcBaseUrl
-            ).href;
+            );
+            if (options?.version) {
+                urlObj.searchParams.append("version", options.version);
+            }
+            requestUrl = urlObj.href;
         } else {
             // Legacy app frontend path
             requestUrl = this.clientData.creationUrls.createNewInstancePostUri;
             requestUrl = requestUrl
                 .replace(this.functionNamePlaceholder, orchestratorFunctionName)
                 .replace(this.instanceIdPlaceholder, instanceIdPath);
+            if (options?.version) {
+                const separator = requestUrl.includes("?") ? "&" : "?";
+                requestUrl = `${requestUrl}${separator}version=${encodeURIComponent(
+                    options.version
+                )}`;
+            }
         }
 
         const headers = this.getDistributedTracingHeaders();

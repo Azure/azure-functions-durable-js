@@ -189,8 +189,10 @@ export declare class DurableOrchestrationContext {
      * @param instanceId A unique ID to use for the sub-orchestration instance.
      * If `instanceId` is not specified, the extension will generate an id in
      * the format `<calling orchestrator instance ID>:<#>`
+     * @param version The version to use for the sub-orchestration instance.
+     * If not specified, the default version from host.json will be used.
      */
-    callSubOrchestrator(name: string, input?: unknown, instanceId?: string): Task;
+    callSubOrchestrator(name: string, input?: unknown, instanceId?: string, version?: string): Task;
 
     /**
      * Schedules an orchestrator function named `name` for execution with retry
@@ -201,12 +203,15 @@ export declare class DurableOrchestrationContext {
      * @param input The JSON-serializable input to pass to the orchestrator
      * function.
      * @param instanceId A unique ID to use for the sub-orchestration instance.
+     * @param version The version to use for the sub-orchestration instance.
+     * If not specified, the default version from host.json will be used.
      */
     callSubOrchestratorWithRetry(
         name: string,
         retryOptions: RetryOptions,
         input?: unknown,
-        instanceId?: string
+        instanceId?: string,
+        version?: string
     ): Task;
 
     /**
