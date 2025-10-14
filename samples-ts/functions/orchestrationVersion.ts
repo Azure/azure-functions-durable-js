@@ -18,12 +18,21 @@ const versionedOrchestrator: OrchestrationHandler = function* (context: Orchestr
     yield context.df.waitForExternalEvent("Continue");
     context.df.setCustomStatus("Continue event received");
 
-    // New sub-orchestrations will use the current defaultVersion specified in host.json
+    // You can explicitly pass a version to sub-orchestrators
+    const subOrchestratorWithVersionResult = yield context.df.callSubOrchestrator(
+        "versionedSuborchestrator",
+        undefined, // input
+        undefined, // instanceId
+        "0.9" // version override
+    );
+
+    // Without specifying version, the sub-orchestrator will use the current defaultVersion
     const subOrchestratorResult = yield context.df.callSubOrchestrator("versionedSuborchestrator");
 
     return [
         `Orchestration version: ${context.df.version}`,
-        `Suborchestration version: ${subOrchestratorResult}`,
+        `Suborchestration version (explicit): ${subOrchestratorWithVersionResult}`,
+        `Suborchestration version (default): ${subOrchestratorResult}`,
         `Activity result: ${activityResult}`,
     ];
 };

@@ -1488,6 +1488,45 @@ describe("Orchestrator", () => {
             );
         });
 
+        it("schedules a versioned suborchestrator function", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithVersionedSubOrchestrator;
+            const name = "World";
+            const id = uuidv1();
+            const childId = `${id}:0`;
+            const mockContext = new DummyOrchestrationContext();
+            const orchestrationInput = new DurableOrchestrationInput(
+                id,
+                TestHistories.GetOrchestratorStart(
+                    "SayHelloWithVersionedSubOrchestrator",
+                    moment.utc().toDate()
+                ),
+                name
+            );
+
+            const result = await orchestrator(orchestrationInput, mockContext);
+
+            expect(result).to.be.deep.equal(
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallSubOrchestratorAction(
+                                    "SayHelloWithActivity",
+                                    childId,
+                                    name,
+                                    "v2"
+                                ),
+                            ],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
+            );
+        });
+
         it("schedules a suborchestrator function with no instanceId", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorNoSubId;
             const name = "World";
@@ -1661,8 +1700,18 @@ describe("Orchestrator", () => {
                     .to.be.an("object")
                     .that.deep.include({
                         isDone: false,
+                        // Note: In error paths, actions may be serialized without undefined fields.
+                        // Using a plain object literal avoids setting expectations on the presence
+                        // of any property that would cause deep.include to fail.
                         actions: [
-                            [new CallSubOrchestratorAction("SayHelloWithActivity", childId, name)],
+                            [
+                                {
+                                    actionType: ActionType.CallSubOrchestrator,
+                                    functionName: "SayHelloWithActivity",
+                                    instanceId: childId,
+                                    input: name,
+                                },
+                            ],
                         ],
                     });
                 expect(orchestrationState.error).to.include(expectedErr);
@@ -1789,6 +1838,47 @@ describe("Orchestrator", () => {
             );
         });
 
+        it("schedules a versioned suborchestrator function with retry", async () => {
+            const orchestrator = TestOrchestrations.SayHelloWithVersionedSubOrchestratorRetry;
+            const name = "World";
+            const id = uuidv1();
+            const childId = `${id}:0`;
+            const mockContext = new DummyOrchestrationContext();
+            const orchestrationInput = new DurableOrchestrationInput(
+                id,
+                TestHistories.GetOrchestratorStart(
+                    "SayHelloWithVersionedSubOrchestratorRetry",
+                    moment.utc().toDate(),
+                    name
+                ),
+                name
+            );
+
+            const result = await orchestrator(orchestrationInput, mockContext);
+
+            expect(result).to.be.deep.equal(
+                new OrchestratorState(
+                    {
+                        isDone: false,
+                        output: undefined,
+                        actions: [
+                            [
+                                new CallSubOrchestratorWithRetryAction(
+                                    "SayHelloInline",
+                                    new RetryOptions(10000, 2),
+                                    name,
+                                    childId,
+                                    "v2"
+                                ),
+                            ],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
+            );
+        });
+
         it("retries a failed suborchestrator function if < max attempts", async () => {
             const orchestrator = TestOrchestrations.SayHelloWithSubOrchestratorRetry;
             const name = "World";
@@ -1864,14 +1954,18 @@ describe("Orchestrator", () => {
                     .to.be.an("object")
                     .that.deep.include({
                         isDone: false,
+                        // Note: In error paths, actions may be serialized without undefined fields.
+                        // Using a plain object literal avoids setting expectations on the presence
+                        // of any property that would cause deep.include to fail.
                         actions: [
                             [
-                                new CallSubOrchestratorWithRetryAction(
-                                    "SayHelloInline",
-                                    new RetryOptions(10000, 2),
-                                    name,
-                                    childId
-                                ),
+                                {
+                                    actionType: ActionType.CallSubOrchestratorWithRetry,
+                                    functionName: "SayHelloInline",
+                                    retryOptions: new RetryOptions(10000, 2),
+                                    instanceId: childId,
+                                    input: name,
+                                },
                             ],
                         ],
                     });

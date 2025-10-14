@@ -278,6 +278,20 @@ export class TestOrchestrations {
         return output;
     });
 
+    public static SayHelloWithVersionedSubOrchestrator = createOrchestrator(function* (
+        context: OrchestrationContext
+    ) {
+        const input = context.df.getInput();
+        const childId = context.df.instanceId + ":0";
+        const output = yield context.df.callSubOrchestrator(
+            "SayHelloWithActivity",
+            input,
+            childId,
+            "v2"
+        );
+        return output;
+    });
+
     public static SayHelloWithSubOrchestratorNoSubId: any = createOrchestrator(function* (
         context: OrchestrationContext
     ) {
@@ -310,6 +324,22 @@ export class TestOrchestrations {
             retryOptions,
             input,
             childId
+        );
+        return output;
+    });
+
+    public static SayHelloWithVersionedSubOrchestratorRetry: any = createOrchestrator(function* (
+        context: any
+    ) {
+        const input = context.df.getInput();
+        const childId = context.df.instanceId + ":0";
+        const retryOptions = new df.RetryOptions(10000, 2);
+        const output = yield context.df.callSubOrchestratorWithRetry(
+            "SayHelloInline",
+            retryOptions,
+            input,
+            childId,
+            "v2"
         );
         return output;
     });

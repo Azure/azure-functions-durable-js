@@ -372,6 +372,12 @@ export interface StartNewOptions {
      * JSON-serializable input value for the orchestrator function.
      */
     input?: unknown;
+
+    /**
+     * The version to use for the new orchestration instance. If not specified,
+     * the default version from host.json will be used.
+     */
+    version?: string;
 }
 
 /**

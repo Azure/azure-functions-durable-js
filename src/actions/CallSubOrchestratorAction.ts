@@ -10,7 +10,8 @@ export class CallSubOrchestratorAction implements IAction {
     constructor(
         public readonly functionName: string,
         public readonly instanceId?: string,
-        input?: unknown
+        input?: unknown,
+        public readonly version?: string
     ) {
         this.input = input;
         Utils.throwIfEmpty(functionName, "functionName");
