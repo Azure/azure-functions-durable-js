@@ -398,17 +398,21 @@ export class DurableClient implements types.DurableClient {
             case 202:
                 return;
             case 404:
-                return Promise.reject(new Error(`No instance with ID '${instanceId}' found.`));
+                return Promise.reject(
+                    new Error(response.data || `No instance with ID '${instanceId}' found.`)
+                );
             case 412:
                 return Promise.reject(
                     new Error(
-                        "The rewind operation is only supported on failed orchestration instances."
+                        response.data ||
+                            "The rewind operation is only supported on failed orchestration instances."
                     )
                 );
             case 501:
                 return Promise.reject(
                     new Error(
-                        "The rewind operation is not supported by the underlying storage provider."
+                        response.data ||
+                            "The rewind operation is not supported by the underlying storage provider."
                     )
                 );
             default:
