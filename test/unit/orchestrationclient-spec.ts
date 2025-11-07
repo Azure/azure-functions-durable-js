@@ -1042,7 +1042,7 @@ describe("Orchestration Client", () => {
             expect(scope.isDone()).to.be.equal(true);
         });
 
-        it(`throws when webhook returns invalid status code 410`, async () => {
+        it(`throws when webhook returns invalid status code 412`, async () => {
             const client = new DurableClient(defaultClientInputData);
 
             const testId = "badId";
@@ -1057,10 +1057,33 @@ describe("Orchestration Client", () => {
                 .query((actualQueryObject: object) =>
                     urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
                 )
-                .reply(410);
+                .reply(412);
 
             await expect(client.rewind(testId, testReason)).to.be.rejectedWith(
                 "The rewind operation is only supported on failed orchestration instances."
+            );
+            expect(scope.isDone()).to.be.equal(true);
+        });
+
+        it(`throws when webhook returns invalid status code 501`, async () => {
+            const client = new DurableClient(defaultClientInputData);
+
+            const testId = "badId";
+            const testReason = "test";
+            const expectedWebhookUrl = new url.URL(
+                defaultClientInputData.managementUrls.rewindPostUri
+                    .replace(TestConstants.idPlaceholder, testId)
+                    .replace(TestConstants.reasonPlaceholder, testReason)
+            );
+            const scope = nock(expectedWebhookUrl.origin, requiredPostHeaders)
+                .post(expectedWebhookUrl.pathname)
+                .query((actualQueryObject: object) =>
+                    urlQueryEqualsQueryObject(expectedWebhookUrl, actualQueryObject)
+                )
+                .reply(501);
+
+            await expect(client.rewind(testId, testReason)).to.be.rejectedWith(
+                "The rewind operation is not supported by the underlying storage provider."
             );
             expect(scope.isDone()).to.be.equal(true);
         });
