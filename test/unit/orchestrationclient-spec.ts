@@ -1061,7 +1061,7 @@ describe("Orchestration Client", () => {
 
             // Since the webhook did not provide a response body, use our own custom error message
             await expect(client.rewind(testId, testReason)).to.be.rejectedWith(
-                "No instance with ID '${testId}' found."
+                `No instance with ID '${testId}' found.`
             );
             expect(scope.isDone()).to.be.equal(true);
         });
