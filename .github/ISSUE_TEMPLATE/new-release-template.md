@@ -17,12 +17,12 @@ about: Template for creating new releases of the Durable Functions Node.js SDK
 4. Verify the installation: `npm list durable-functions`
 
 - [ ] Test that a JavaScript Durable Functions app works with the .tgz that we created above. Run `func host start` and trigger an orchestration.
-- [ ] Test that a TypeScript Durable Functions app works with the .tgz that we created above. Run `func host start` and trigger an orchestration.
+- [ ] Test that a TypeScript Durable Functions app works with the .tgz that we created above. Run `func host start` and trigger an orchestration. If you see the error `Error: Worker was unable to load entry point "dist/src/{index.js,functions/.js}": Found zero files matching the supplied pattern`, then run `npm run build` and then try running `func host start`.
 
 **SDK Release**
 - [ ] Dry run (optional): Run the [release pipeline](https://dev.azure.com/azfunc/internal/_build?definitionId=848) with the "Dry Run" box checked so you can simulate the npm publish step. It won't actually publish, but it will let you know what version would have been published and list other metadata. Check that there are no errors or warnings in the npm publish step.
 - [ ] Run the [release pipeline](https://dev.azure.com/azfunc/internal/_build?definitionId=848) from the v3.x branch without the "Dry Run" box checked. This should publish the durable-functions package to npm. If there is an error, check that the npm token hasn't expired. Currently, it's set to expire on 8/6/2026.
 
 **Release Completion**
-- [ ] Download the .tgz from the [durable-functions npm page](https://www.npmjs.com/package/durable-functions) by running `npm i durable-functions` from your test app. It should install the latest package with the new version. Test it in JS and TS apps and check that `func host start` and triggering an orchestration work.
+- [ ] Uninstall the existing durable-functions package from your test apps using `npm uninstall durable-functions`. Check that the package was uninstalled by running `npm list durable-functions`. Download the .tgz from the [durable-functions npm page](https://www.npmjs.com/package/durable-functions) by running `npm i durable-functions` from your test app. It should install the latest package with the new version. Test it in JS and TS apps and check that `func host start` and triggering an orchestration work.
 - [ ] Publish the release notes.
