@@ -35,6 +35,7 @@ export class TaskOrchestrationExecutor {
     protected openTasks: Record<number | string, TaskBase>;
     protected openEvents: Record<number | string, TaskBase[]>;
     private eventToTaskValuePayload: { [key in HistoryEventType]?: [boolean, string] };
+    private _isReplaying: boolean;
 
     constructor() {
         // Map of task-completion events types to pairs of
@@ -72,6 +73,7 @@ export class TaskOrchestrationExecutor {
         this.output = undefined;
         this.exception = undefined;
         this.orchestratorReturned = false;
+        this._isReplaying = false;
     }
 
     /**
@@ -101,9 +103,21 @@ export class TaskOrchestrationExecutor {
         this.context = context.df;
         this.generator = fn(context) as Generator<TaskBase, any, any>;
 
+        // Determine the index of the last OrchestratorStarted event in the history.
+        // Events before this index belong to previous replay frames (isReplaying = true).
+        // Events at or after this index belong to the current frame (isReplaying = false).
+        // This approach does not rely on the IsPlayed flag, which some backends do not set.
+        let lastOrchestratorStartedIndex = -1;
+        for (let i = 0; i < history.length; i++) {
+            if (history[i].EventType === HistoryEventType.OrchestratorStarted) {
+                lastOrchestratorStartedIndex = i;
+            }
+        }
+
         // Execute the orchestration, using the history for replay
-        for (const historyEvent of history) {
-            this.processEvent(historyEvent);
+        for (let i = 0; i < history.length; i++) {
+            this._isReplaying = i < lastOrchestratorStartedIndex;
+            this.processEvent(history[i]);
             if (this.isDoneExecuting()) {
                 break;
             }
@@ -355,7 +369,7 @@ export class TaskOrchestrationExecutor {
         // If the current task does not have a result,
         // then we cannot continue running the user code.
         const currentTask: TaskBase = this.currentTask;
-        this.context.isReplaying = currentTask.isPlayed;
+        this.context.isReplaying = this._isReplaying || currentTask.isPlayed;
         if (currentTask.stateObj === TaskState.Running) {
             return;
         }
