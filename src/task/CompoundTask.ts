@@ -44,9 +44,7 @@ export abstract class CompoundTask extends DFTask {
      *  A sub-task of this task.
      */
     public handleCompletion(child: TaskBase, executor?: TaskOrchestrationExecutor): void {
-        if (!this.isPlayed) {
-            this.isPlayed = child.isPlayed;
-        }
+        this.isPlayed = child.isPlayed;
         this.trySetValue(child, executor);
     }
 
