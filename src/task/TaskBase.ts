@@ -23,6 +23,7 @@ export abstract class TaskBase {
      */
     constructor(public id: TaskID, protected action: BackingAction) {
         this.state = TaskState.Running;
+        this.isPlayed = false;
     }
 
     /** Get this task's backing action */
