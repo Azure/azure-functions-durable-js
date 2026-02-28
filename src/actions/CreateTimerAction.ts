@@ -1,4 +1,4 @@
-import { isDate } from "util";
+import { isDate } from "util/types";
 import { ActionType } from "./ActionType";
 import { IAction } from "./IAction";
 
