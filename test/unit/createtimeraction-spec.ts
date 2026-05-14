@@ -20,14 +20,14 @@ describe("CreateTimerAction", () => {
     });
 
     it("throws TypeError when fireAt is not a Date", () => {
-        expect(() => new CreateTimerAction("not-a-date" as unknown as Date)).to.throw(
+        expect(() => new CreateTimerAction(("not-a-date" as unknown) as Date)).to.throw(
             TypeError,
             /Expected valid Date object/
         );
     });
 
     it("throws TypeError when fireAt is undefined", () => {
-        expect(() => new CreateTimerAction(undefined as unknown as Date)).to.throw(
+        expect(() => new CreateTimerAction((undefined as unknown) as Date)).to.throw(
             TypeError,
             /Expected valid Date object/
         );
