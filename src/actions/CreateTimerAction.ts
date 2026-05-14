@@ -1,4 +1,4 @@
-import { isDate } from "util";
+import { types } from "util";
 import { ActionType } from "./ActionType";
 import { IAction } from "./IAction";
 
@@ -7,7 +7,7 @@ export class CreateTimerAction implements IAction {
     public readonly actionType: ActionType = ActionType.CreateTimer;
 
     constructor(public readonly fireAt: Date, public isCanceled: boolean = false) {
-        if (!isDate(fireAt)) {
+        if (!types.isDate(fireAt)) {
             throw new TypeError(`fireAt: Expected valid Date object but got ${fireAt}`);
         }
     }
