@@ -10,7 +10,7 @@
         "test": "echo \"No tests yet...\""
     },
     "dependencies": {
-        "@azure/functions": "^4.0.0-alpha.7",
+        "@azure/functions": "^4.14.0",
         "durable-functions": "file:../../durable-functions"
     },
     "devDependencies": {
