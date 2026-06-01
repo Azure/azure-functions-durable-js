@@ -5,6 +5,7 @@ import { EntityStateResponse } from "./entities/EntityStateResponse";
 import { OrchestrationRuntimeStatus } from "./orchestrations/OrchestrationRuntimeStatus";
 import { RetryOptions } from "./RetryOptions";
 import { getClient } from "./durableClient/getClient";
+import { TaskFailedError } from "./error/TaskFailedError";
 
 export * as app from "./app";
 export * as trigger from "./trigger";
@@ -17,6 +18,7 @@ export {
     ManagedIdentityTokenSource,
     OrchestrationRuntimeStatus,
     RetryOptions,
+    TaskFailedError,
     DummyOrchestrationContext,
     DummyEntityContext,
 };

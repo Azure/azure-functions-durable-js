@@ -1,6 +1,9 @@
+import { FailureDetailsDto } from "./FailureDetailsDto";
+
 /** @hidden */
 export class HistoryEventOptions {
     public details?: string;
+    public failureDetails?: FailureDetailsDto;
     public fireAt?: Date;
     public input?: string;
     public instanceId?: string;

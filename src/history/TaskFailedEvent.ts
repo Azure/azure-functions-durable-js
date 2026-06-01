@@ -1,3 +1,4 @@
+import { FailureDetailsDto } from "./FailureDetailsDto";
 import { HistoryEvent } from "./HistoryEvent";
 import { HistoryEventOptions } from "./HistoryEventOptions";
 import { HistoryEventType } from "./HistoryEventType";
@@ -7,6 +8,7 @@ export class TaskFailedEvent extends HistoryEvent {
     public TaskScheduledId: number;
     public Reason: string | undefined;
     public Details: string | undefined;
+    public FailureDetails: FailureDetailsDto | undefined;
 
     constructor(options: HistoryEventOptions) {
         super(HistoryEventType.TaskFailed, options.eventId, options.isPlayed, options.timestamp);
@@ -18,5 +20,6 @@ export class TaskFailedEvent extends HistoryEvent {
         this.TaskScheduledId = options.taskScheduledId;
         this.Reason = options.reason;
         this.Details = options.details;
+        this.FailureDetails = options.failureDetails;
     }
 }

@@ -7,6 +7,7 @@ export * from "./entity";
 export * from "./exceptionPropertiesProvider";
 export * from "./orchestration";
 export * from "./task";
+export * from "./taskFailedError";
 
 export * as app from "./app";
 export * as trigger from "./trigger";
