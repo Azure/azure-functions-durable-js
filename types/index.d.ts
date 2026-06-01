@@ -4,6 +4,7 @@ import { DurableClient } from "./durableClient";
 export * from "./activity";
 export * from "./durableClient";
 export * from "./entity";
+export * from "./exceptionPropertiesProvider";
 export * from "./orchestration";
 export * from "./task";
 

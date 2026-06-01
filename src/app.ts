@@ -1,7 +1,9 @@
 import {
+    ActivityHandler,
     ActivityOptions,
     EntityHandler,
     EntityOptions,
+    ExceptionPropertiesProvider,
     OrchestrationHandler,
     OrchestrationOptions,
     RegisteredActivity,
@@ -12,6 +14,10 @@ import { createOrchestrator, createEntityFunction } from "./util/testingUtils";
 import { app as azFuncApp } from "@azure/functions";
 import { RegisteredOrchestrationTask } from "./task/RegisteredOrchestrationTask";
 import { RegisteredActivityTask } from "./task/RegisteredActivityTask";
+import {
+    appendExceptionPropertiesSuffix,
+    setRegisteredExceptionPropertiesProvider,
+} from "./error/ExceptionPropertiesProvider";
 
 export function orchestration(
     functionName: string,
@@ -54,6 +60,7 @@ export function activity(functionName: string, options: ActivityOptions): Regist
     azFuncApp.generic(functionName, {
         trigger: trigger.activity(),
         ...options,
+        handler: wrapActivityHandler(options.handler),
     });
 
     const result: RegisteredActivity = (input?: unknown): RegisteredActivityTask => {
@@ -61,6 +68,40 @@ export function activity(functionName: string, options: ActivityOptions): Regist
     };
 
     return result;
+}
+
+export function setExceptionPropertiesProvider(
+    provider: ExceptionPropertiesProvider | undefined
+): void {
+    setRegisteredExceptionPropertiesProvider(provider);
+}
+
+/**
+ * Wraps a user-supplied activity handler so that thrown errors are augmented
+ * with custom properties from the registered {@link ExceptionPropertiesProvider}
+ * before propagating to the Functions host.
+ */
+function wrapActivityHandler(handler: ActivityHandler): ActivityHandler {
+    return async (triggerInput, context) => {
+        try {
+            return await handler(triggerInput, context);
+        } catch (err) {
+            const original = err instanceof Error ? err : new Error(String(err));
+            const augmented = appendExceptionPropertiesSuffix(original.message, err);
+            if (augmented !== original.message) {
+                try {
+                    original.message = augmented;
+                } catch {
+                    // `message` is non-writable on some custom Error subclasses;
+                    // fall back to a fresh Error that preserves the original stack.
+                    const wrapped = new Error(augmented);
+                    wrapped.stack = original.stack;
+                    throw wrapped;
+                }
+            }
+            throw original;
+        }
+    };
 }
 
 export * as client from "./client";
