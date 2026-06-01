@@ -1,23 +1,19 @@
 import { expect } from "chai";
 import "mocha";
 import {
-    appendExceptionPropertiesSuffix,
-    exceptionPropertiesLabel,
+    buildTaskFailureDetailsJson,
     extractExceptionProperties,
     setRegisteredExceptionPropertiesProvider,
 } from "../../src/error/ExceptionPropertiesProvider";
-import { OrchestrationFailureError } from "../../src/error/OrchestrationFailureError";
-import { OrchestratorState } from "../../src/orchestrations/OrchestratorState";
-import { ReplaySchema } from "../../src/orchestrations/ReplaySchema";
 
 describe("ExceptionPropertiesProvider", () => {
-    // The provider is a module-level singleton; reset after every test so cases don't leak.
+    // Module-level singleton; reset between tests so cases don't leak.
     afterEach(() => {
         setRegisteredExceptionPropertiesProvider(undefined);
     });
 
-    // extractExceptionProperties is the safe accessor used by the activity/orchestrator
-    // code paths. It must never throw, and must isolate caller code from provider state.
+    // Safe accessor used by the activity wrapper. Must never throw and must
+    // isolate caller code from provider state.
     describe("extractExceptionProperties", () => {
         it("returns undefined when no provider is registered", () => {
             expect(extractExceptionProperties(new Error("boom"))).to.equal(undefined);
@@ -62,74 +58,85 @@ describe("ExceptionPropertiesProvider", () => {
         });
     });
 
-    // appendExceptionPropertiesSuffix is the wire-format helper: when a provider yields
-    // properties, it tacks `\n\n$FailureProperties$:<json>` onto the error message so the
-    // host's OOProc middleware can recover the structured payload from the failure string.
-    describe("appendExceptionPropertiesSuffix", () => {
-        it("returns the message unchanged when no provider is registered", () => {
-            expect(appendExceptionPropertiesSuffix("boom", new Error("boom"))).to.equal("boom");
+    // buildTaskFailureDetailsJson produces the wire payload consumed by the
+    // host extension's OutOfProcMiddleware.TryExtractSerializedFailureDetailsFromException.
+    // Shape must match the `TaskFailureDetails` protobuf JSON encoding.
+    describe("buildTaskFailureDetailsJson", () => {
+        it("returns undefined when no provider is registered", () => {
+            expect(buildTaskFailureDetailsJson(new Error("boom"))).to.equal(undefined);
         });
 
-        it("appends the sentinel-prefixed JSON when properties are returned", () => {
-            setRegisteredExceptionPropertiesProvider({
-                getExceptionProperties: () => ({ code: 42, name: "thing" }),
-            });
-            const out = appendExceptionPropertiesSuffix("boom", new Error("boom"));
-            expect(out).to.equal(
-                `boom${exceptionPropertiesLabel}${JSON.stringify({ code: 42, name: "thing" })}`
-            );
-        });
-
-        it("leaves the message untouched when the provider opts out", () => {
+        it("returns undefined when the provider yields no properties", () => {
             setRegisteredExceptionPropertiesProvider({
                 getExceptionProperties: () => undefined,
             });
-            expect(appendExceptionPropertiesSuffix("boom", new Error("boom"))).to.equal("boom");
+            expect(buildTaskFailureDetailsJson(new Error("boom"))).to.equal(undefined);
         });
-    });
 
-    // OrchestrationFailureError already appends a `$OutOfProcData$:<json>` suffix that carries
-    // orchestrator state back to the host. The properties suffix must land BEFORE that segment
-    // so the existing parser keeps working unchanged.
-    describe("OrchestrationFailureError integration", () => {
-        it("includes the properties suffix before the OutOfProcData segment", () => {
+        it("produces single-line JSON (extension parser splits on the first newline)", () => {
             setRegisteredExceptionPropertiesProvider({
                 getExceptionProperties: () => ({ code: 42 }),
             });
-            const state = new OrchestratorState({
-                isDone: false,
-                actions: [[]],
-                output: undefined,
-                schemaVersion: ReplaySchema.V1,
-            });
-            const err = new OrchestrationFailureError(new Error("boom"), state);
-            expect(err.message).to.contain(
-                `boom${exceptionPropertiesLabel}${JSON.stringify({ code: 42 })}`
-            );
-            expect(err.message).to.contain("$OutOfProcData$");
-            expect(err.message.indexOf("$FailureProperties$")).to.be.lessThan(
-                err.message.indexOf("$OutOfProcData$")
-            );
+            const out = buildTaskFailureDetailsJson(new Error("boom"));
+            expect(out).to.be.a("string");
+            expect((out as string).indexOf("\n")).to.equal(-1);
         });
 
-        it("omits the properties suffix when no provider is registered", () => {
-            const state = new OrchestratorState({
-                isDone: false,
-                actions: [[]],
-                output: undefined,
-                schemaVersion: ReplaySchema.V1,
+        it("encodes errorType, errorMessage, isNonRetriable and properties", () => {
+            setRegisteredExceptionPropertiesProvider({
+                getExceptionProperties: () => ({ code: 42, label: "x" }),
             });
-            const err = new OrchestrationFailureError(new Error("boom"), state);
-            expect(err.message).to.not.contain("$FailureProperties$");
-            expect(err.message).to.contain("$OutOfProcData$");
+            const err = new Error("boom");
+            const parsed = JSON.parse(buildTaskFailureDetailsJson(err) as string);
+            expect(parsed.errorType).to.equal("Error");
+            expect(parsed.errorMessage).to.equal("boom");
+            expect(parsed.isNonRetriable).to.equal(false);
+            expect(parsed.properties).to.deep.equal({ code: 42, label: "x" });
+        });
+
+        it("includes the stack trace when present", () => {
+            setRegisteredExceptionPropertiesProvider({
+                getExceptionProperties: () => ({ k: "v" }),
+            });
+            const err = new Error("boom");
+            const parsed = JSON.parse(buildTaskFailureDetailsJson(err) as string);
+            expect(parsed.stackTrace).to.be.a("string");
+            expect(parsed.stackTrace).to.contain("boom");
+        });
+
+        it("uses the constructor name as errorType for custom Error subclasses", () => {
+            class CustomBusinessError extends Error {
+                constructor(message: string, public readonly code: string) {
+                    super(message);
+                    this.name = "CustomBusinessError";
+                }
+            }
+            setRegisteredExceptionPropertiesProvider({
+                getExceptionProperties: (e) =>
+                    e instanceof CustomBusinessError ? { code: e.code } : undefined,
+            });
+            const parsed = JSON.parse(
+                buildTaskFailureDetailsJson(new CustomBusinessError("x", "INV")) as string
+            );
+            expect(parsed.errorType).to.equal("CustomBusinessError");
+            expect(parsed.properties).to.deep.equal({ code: "INV" });
+        });
+
+        it("falls back to Error/JSON when thrown value is not an Error instance", () => {
+            setRegisteredExceptionPropertiesProvider({
+                getExceptionProperties: () => ({ raw: true }),
+            });
+            const parsed = JSON.parse(buildTaskFailureDetailsJson("plain string") as string);
+            expect(parsed.errorType).to.equal("Error");
+            expect(parsed.errorMessage).to.equal("plain string");
+            expect(parsed.properties).to.deep.equal({ raw: true });
         });
     });
 
-    // End-to-end scenario mirroring the .NET sample: customers define their own Error
-    // subclass carrying domain fields, then the provider narrows on `instanceof` and emits
-    // those fields. Validates the realistic usage shape, not just primitives.
+    // End-to-end scenario mirroring the .NET sample: customers define a domain
+    // Error subclass, narrow on `instanceof` in their provider, and emit
+    // domain fields that flow through to FailureDetails.Properties.
     describe("custom error class", () => {
-        // Stand-in for a customer's domain exception (e.g. a business-rule violation).
         class CustomBusinessError extends Error {
             constructor(
                 message: string,
@@ -144,18 +151,15 @@ describe("ExceptionPropertiesProvider", () => {
 
         it("extracts fields from a custom Error subclass", () => {
             setRegisteredExceptionPropertiesProvider({
-                getExceptionProperties: (err) => {
-                    if (err instanceof CustomBusinessError) {
-                        return {
-                            errorCode: err.errorCode,
-                            httpStatus: err.httpStatus,
-                            isRetryable: err.isRetryable,
-                        };
-                    }
-                    return undefined;
-                },
+                getExceptionProperties: (err) =>
+                    err instanceof CustomBusinessError
+                        ? {
+                              errorCode: err.errorCode,
+                              httpStatus: err.httpStatus,
+                              isRetryable: err.isRetryable,
+                          }
+                        : undefined,
             });
-
             const err = new CustomBusinessError("Inventory shortage", "INV_OUT", 409, true);
             expect(extractExceptionProperties(err)).to.deep.equal({
                 errorCode: "INV_OUT",
@@ -169,40 +173,32 @@ describe("ExceptionPropertiesProvider", () => {
                 getExceptionProperties: (err) =>
                     err instanceof CustomBusinessError ? { errorCode: err.errorCode } : undefined,
             });
-
             expect(extractExceptionProperties(new Error("plain"))).to.equal(undefined);
         });
 
-        it("flows custom error properties through OrchestrationFailureError", () => {
+        it("serializes a custom error to a parseable TaskFailureDetails payload", () => {
             setRegisteredExceptionPropertiesProvider({
-                getExceptionProperties: (err) => {
-                    if (err instanceof CustomBusinessError) {
-                        return {
-                            errorCode: err.errorCode,
-                            httpStatus: err.httpStatus,
-                            isRetryable: err.isRetryable,
-                        };
-                    }
-                    return undefined;
-                },
-            });
-
-            const state = new OrchestratorState({
-                isDone: false,
-                actions: [[]],
-                output: undefined,
-                schemaVersion: ReplaySchema.V1,
+                getExceptionProperties: (err) =>
+                    err instanceof CustomBusinessError
+                        ? {
+                              errorCode: err.errorCode,
+                              httpStatus: err.httpStatus,
+                              isRetryable: err.isRetryable,
+                          }
+                        : undefined,
             });
             const original = new CustomBusinessError("Inventory shortage", "INV_OUT", 409, true);
-            const err = new OrchestrationFailureError(original, state);
-            const expectedJson = JSON.stringify({
-                errorCode: "INV_OUT",
-                httpStatus: 409,
-                isRetryable: true,
+            const parsed = JSON.parse(buildTaskFailureDetailsJson(original) as string);
+            expect(parsed).to.deep.include({
+                errorType: "CustomBusinessError",
+                errorMessage: "Inventory shortage",
+                isNonRetriable: false,
+                properties: {
+                    errorCode: "INV_OUT",
+                    httpStatus: 409,
+                    isRetryable: true,
+                },
             });
-            expect(err.message).to.contain(
-                `Inventory shortage${exceptionPropertiesLabel}${expectedJson}`
-            );
         });
     });
 });

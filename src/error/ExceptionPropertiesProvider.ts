@@ -39,25 +39,34 @@ export function extractExceptionProperties(error: unknown): Record<string, unkno
 
 /**
  * @hidden
- * Sentinel label appended to an error message to carry custom exception
- * properties back to the Durable Task host extension. Mirrors the existing
- * `$OutOfProcData$` convention so the extension can locate and strip it.
+ * Builds the single-line JSON payload that mirrors the protobuf
+ * `TaskFailureDetails` shape consumed by the Durable Task host extension's
+ * `OutOfProcMiddleware.TryExtractSerializedFailureDetailsFromException`.
  *
- * NOTE: Single source of truth for the wire format. If the host extension
- * expects a different sentinel or encoding, change it here only.
+ * Returns `undefined` when the registered provider yields no properties for
+ * the given error — callers should then leave the original error untouched so
+ * existing JS wire-format behaviour is preserved for users who haven't opted in.
  */
-export const exceptionPropertiesLabel = "\n\n$FailureProperties$:";
-
-/**
- * @hidden
- * Returns `message` with a serialized exception-properties suffix appended
- * when the registered provider yields properties for `error`. Otherwise
- * returns `message` unchanged.
- */
-export function appendExceptionPropertiesSuffix(message: string, error: unknown): string {
-    const props = extractExceptionProperties(error);
-    if (!props) {
-        return message;
+export function buildTaskFailureDetailsJson(error: unknown): string | undefined {
+    const properties = extractExceptionProperties(error);
+    if (!properties) {
+        return undefined;
     }
-    return `${message}${exceptionPropertiesLabel}${JSON.stringify(props)}`;
+
+    const errorObj = error instanceof Error ? error : undefined;
+    const errorType =
+        errorObj?.constructor?.name ?? (typeof error === "string" ? "Error" : "Error");
+    const errorMessage =
+        errorObj?.message ?? (typeof error === "string" ? error : JSON.stringify(error));
+
+    const payload: Record<string, unknown> = {
+        errorType,
+        errorMessage,
+        isNonRetriable: false,
+        properties,
+    };
+    if (errorObj?.stack) {
+        payload.stackTrace = errorObj.stack;
+    }
+    return JSON.stringify(payload);
 }

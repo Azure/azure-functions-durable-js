@@ -1,5 +1,4 @@
 import { OrchestratorState } from "../orchestrations/OrchestratorState";
-import { appendExceptionPropertiesSuffix } from "./ExceptionPropertiesProvider";
 
 /** @hidden */
 const outOfProcDataLabel = "\n\n$OutOfProcData$:";
@@ -12,10 +11,7 @@ const outOfProcDataLabel = "\n\n$OutOfProcData$:";
  *
  * Note that making any changes to the following schema to OrchestrationFailureError.message could be considered a breaking change:
  *
- * "<error message as a string>[$FailureProperties$:<json>]\n\n$OutOfProcData$<json representation of state>"
- *
- * The optional `$FailureProperties$` segment is added when the user registers an
- * {@link ExceptionPropertiesProvider} that returns properties for the thrown error.
+ * "<error message as a string>\n\n$OutOfProcData$<json representation of state>"
  */
 export class OrchestrationFailureError extends Error {
     constructor(error: any, state: OrchestratorState) {
@@ -27,8 +23,6 @@ export class OrchestrationFailureError extends Error {
         } else {
             errorMessage = JSON.stringify(error);
         }
-
-        errorMessage = appendExceptionPropertiesSuffix(errorMessage, error);
 
         const message = `${errorMessage}${outOfProcDataLabel}${JSON.stringify(state)}`;
         super(message);
