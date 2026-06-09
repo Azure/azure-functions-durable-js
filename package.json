@@ -42,9 +42,9 @@
         "e2etst": "npm run"
     },
     "dependencies": {
-        "@azure/functions": "^4.14.0",
+        "@azure/functions": "^4.8.2",
         "@opentelemetry/api": "^1.9.0",
-        "axios": "^1.16.1",
+        "axios": "^1.17.0",
         "debug": "~2.6.9",
         "lodash": "^4.18.1",
         "moment": "^2.29.2",
