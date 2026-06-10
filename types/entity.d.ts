@@ -146,6 +146,43 @@ export declare class EntityId {
 }
 
 /**
+ * Represents an acquired critical section. Returned from
+ * `DurableOrchestrationContext.lock`. Implements `Symbol.dispose` for use
+ * with the `using` statement (TypeScript >=5.2 / Node >=24).
+ */
+export declare class DurableLock {
+    /** The locks held by this critical section, in deterministic order. */
+    readonly ownedLocks: ReadonlyArray<EntityId>;
+
+    /** Release the lock. Idempotent. */
+    release(): void;
+
+    /** Alias for `release()`, invoked by the `using` statement. */
+    [Symbol.dispose](): void;
+}
+
+/**
+ * Snapshot of an orchestration's lock state. Returned by
+ * `DurableOrchestrationContext.isLocked`.
+ */
+export declare class LockState {
+    constructor(isLocked: boolean, ownedLocks: EntityId[]);
+    /** Whether the orchestration currently holds any locks. */
+    readonly isLocked: boolean;
+    /** The locks held by the orchestration. */
+    readonly ownedLocks: EntityId[];
+}
+
+/**
+ * Thrown when an orchestration violates one of the locking rules enforced
+ * inside a critical section (see `DurableOrchestrationContext.lock`).
+ */
+export declare class LockingRulesViolationError extends Error {
+    static readonly code: "LOCKING_RULES_VIOLATION";
+    constructor(message: string, options?: { cause?: unknown });
+}
+
+/**
  * The response returned by DurableClient.readEntityState().
  */
 export declare class EntityStateResponse<T> {

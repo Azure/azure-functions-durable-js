@@ -5,6 +5,7 @@ import { ReplaySchema } from "./ReplaySchema";
 import { Utils } from "../util/Utils";
 import { DurableOrchestrationContext, OrchestrationContext } from "durable-functions";
 import { CallEntityAction } from "../actions/CallEntityAction";
+import { LockEntitiesAction } from "../actions/LockEntitiesAction";
 import { IAction } from "../actions/IAction";
 import { WaitForExternalEventAction } from "../actions/WaitForExternalEventAction";
 import { RequestMessage } from "../entities/RequestMessage";
@@ -196,23 +197,30 @@ export class TaskOrchestrationExecutor {
             }
             case HistoryEventType.EventSent: {
                 // The EventSent event requires careful handling because it is re-used among
-                // CallEntity and WaitForExternalEvent APIs.
-                // For CallEntity, the EventRaised event that contains that API's result will
-                // expect a TaskID that is different from the TaskID found at the root of this
-                // EventSent event. Namely, the TaskID it expects can be found nested in the
-                // "Input" field of the corresponding EventSent event. Here, we handle that
-                // edge-case by correcting the expected TaskID in our openTask list.
+                // CallEntity, LockEntities, and WaitForExternalEvent APIs.
+                // For CallEntity/LockEntities, the completion event (EventRaised) carries
+                // a TaskID that is different from the TaskID at the root of this EventSent
+                // event. The expected TaskID lives in the "Input" field of the
+                // corresponding EventSent (as the `id` of the RequestMessage). We handle
+                // that edge-case here by re-keying the open task.
                 const key = event.EventId;
                 const task = this.openTasks[key];
                 if (task !== undefined) {
-                    if (task.actionObj instanceof CallEntityAction) {
+                    if (
+                        task.actionObj instanceof CallEntityAction ||
+                        task.actionObj instanceof LockEntitiesAction
+                    ) {
                         // extract TaskID from Input field
                         const eventSent = event as EventSentEvent;
                         const requestMessage = JSON.parse(
                             eventSent.Input as string
                         ) as RequestMessage;
 
-                        // Obtain correct Task ID and update the task to be associated with it
+                        // Obtain correct Task ID and update the task to be associated with it.
+                        // For LockEntitiesAction this id equals the action's lockRequestId,
+                        // and the upcoming EventRaised carrying "LockAcquisitionCompleted"
+                        // is named with the same GUID -- which is how the worker matches
+                        // lock-acquisition without a new history event type.
                         const eventId = requestMessage.id;
                         delete this.openTasks[key];
                         this.openTasks[eventId] = task;
@@ -340,6 +348,14 @@ export class TaskOrchestrationExecutor {
                     taskResult = Error(taskResult as string);
                     isSuccess = false;
                 }
+            } else if (action instanceof LockEntitiesAction) {
+                // Replace the raw extension response with the DurableLock
+                // attached to the task at schedule time. This is the value
+                // the orchestrator generator will see on `yield ctx.df.lock(...)`.
+                const lockResult = (task as { __lockResult?: unknown }).__lockResult;
+                if (lockResult !== undefined) {
+                    taskResult = lockResult;
+                }
             }
         } else {
             // The task failed, we attempt to extract the Reason and Details from the event.
@@ -359,6 +375,15 @@ export class TaskOrchestrationExecutor {
         // Set result to the task, and update it's isPlayed flag.
         task.isPlayed = event.IsPlayed;
         task.setValue(!isSuccess, taskResult, this);
+
+        // If this was a callEntity inside a critical section, mark the call
+        // as no longer in flight so the orchestrator can issue another call
+        // to the same locked entity. Done in both success and failure paths.
+        if (task.actionObj instanceof CallEntityAction) {
+            ((this.context as unknown) as {
+                _onEntityCallResolved(schedulerId: string): void;
+            })._onEntityCallResolved(task.actionObj.instanceId);
+        }
     }
 
     /**
