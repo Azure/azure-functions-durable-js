@@ -392,8 +392,8 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
 
     /**
      * @hidden
-     * Tracks the active critical section (if any). Set when a `lock` task
-     * resolves; cleared when `release()` is invoked.
+     * Tracks the active (or pending) critical section (if any). Set when `lock(...)` is scheduled;
+     * cleared when `release()` is invoked.
      */
     private currentLock: DurableLock | undefined;
 
@@ -465,11 +465,11 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         const entities = entitiesRaw as EntityId[];
 
         // Sort by scheduler id, then dedupe consecutive duplicates.
-        const sorted = [...entities].sort((a, b) =>
-            EntityId.getSchedulerIdFromEntityId(a).localeCompare(
-                EntityId.getSchedulerIdFromEntityId(b)
-            )
-        );
+        const sorted = [...entities].sort((a, b) => {
+            const aId = EntityId.getSchedulerIdFromEntityId(a);
+            const bId = EntityId.getSchedulerIdFromEntityId(b);
+            return aId < bId ? -1 : aId > bId ? 1 : 0;
+        });
         const deduped = sorted.filter(
             (e, i, arr) =>
                 i === 0 ||
