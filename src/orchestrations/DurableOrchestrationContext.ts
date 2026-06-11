@@ -418,7 +418,7 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
      *   ctx.df.lock(a, b)
      *   ctx.df.lock([a, b])
      *
-     * @throws RangeError if no entities are supplied.
+     * @throws RangeError if no entities are supplied (zero arguments or empty array).
      * @throws TypeError if any element is not an EntityId.
      * @throws LockingRulesViolationError if called from inside an existing
      *         critical section.
@@ -443,12 +443,16 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
             );
         }
 
+        // Reject the no-args case up front. Without this check, normalization
+        // below would produce `[undefined]` and surface a TypeError, which
+        // contradicts the documented RangeError contract.
+        if (typeof first === "undefined" && rest.length === 0) {
+            throw new RangeError("lock requires at least one EntityId");
+        }
+
         // Normalize varargs vs array form.
         const entitiesRaw: unknown[] = Array.isArray(first) ? first : [first, ...rest];
 
-        if (!Array.isArray(entitiesRaw)) {
-            throw new TypeError("lock expected EntityId[]");
-        }
         if (entitiesRaw.length === 0) {
             throw new RangeError("lock requires at least one EntityId");
         }

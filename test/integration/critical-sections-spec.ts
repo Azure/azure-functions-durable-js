@@ -45,6 +45,14 @@ function newContext(
 
 describe("Critical Sections (lock / isLocked)", () => {
     describe("input validation", () => {
+        it("throws RangeError when called with no arguments", () => {
+            const { ctx } = newContext();
+            // Cast through `any` so the runtime guard is exercised; the public
+            // overloads disallow zero-arg calls at the type level, but plain
+            // JS callers can still hit this path.
+            expect(() => (ctx as any).lock()).to.throw(RangeError, /at least one EntityId/);
+        });
+
         it("throws RangeError when called with empty array", () => {
             const { ctx } = newContext();
             expect(() => ctx.lock([])).to.throw(RangeError, /at least one EntityId/);

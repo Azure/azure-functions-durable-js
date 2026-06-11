@@ -203,7 +203,7 @@ export declare class DurableOrchestrationContext {
      * @param entities One or more entities to lock. Supports varargs
      *   (`lock(a, b)`) and array form (`lock([a, b])`).
      *
-     * @throws RangeError when called with an empty array.
+     * @throws RangeError when called with no arguments or an empty array.
      * @throws TypeError when an element is not an EntityId.
      * @throws LockingRulesViolationError when locking rules are violated.
      */
