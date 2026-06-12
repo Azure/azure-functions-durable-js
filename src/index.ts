@@ -5,6 +5,7 @@ import { EntityStateResponse } from "./entities/EntityStateResponse";
 import { OrchestrationRuntimeStatus } from "./orchestrations/OrchestrationRuntimeStatus";
 import { RetryOptions } from "./RetryOptions";
 import { getClient } from "./durableClient/getClient";
+import { getActivityInvocationInfo, getInstanceRetryHistory } from "./retryVisibility";
 
 export * as app from "./app";
 export * as trigger from "./trigger";
@@ -14,6 +15,8 @@ export {
     EntityId,
     EntityStateResponse,
     getClient,
+    getActivityInvocationInfo,
+    getInstanceRetryHistory,
     ManagedIdentityTokenSource,
     OrchestrationRuntimeStatus,
     RetryOptions,

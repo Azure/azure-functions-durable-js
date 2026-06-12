@@ -5,6 +5,7 @@ export * from "./activity";
 export * from "./durableClient";
 export * from "./entity";
 export * from "./orchestration";
+export * from "./retryVisibility";
 export * from "./task";
 
 export * as app from "./app";
