@@ -178,22 +178,33 @@ function makeUnavailable(): ActivityInvocationInfo {
 // getInstanceRetryHistory — client-side helper.
 // ---------------------------------------------------------------------------
 
-/** Minimal shape of getStatus payload we depend on. */
+/** Minimal shape of getStatus payload we depend on.
+ *  The extension's HTTP RPC layer returns history under the key `historyEvents`
+ *  (per host-side post-processing), while older or alternate transports may use
+ *  `history`. We accept either. */
 interface DurableClientLike {
     getStatus(
         instanceId: string,
         options?: { showHistory?: boolean; showInput?: boolean; showHistoryOutput?: boolean }
-    ): Promise<{ history?: Array<unknown> } | undefined>;
+    ): Promise<{ history?: Array<unknown>; historyEvents?: Array<unknown> } | undefined>;
 }
 
 /**
  * Project retry history for an orchestration instance.
  *
- * Calls `client.getStatus(instanceId, {showHistory: true})`, filters history
- * events to `TaskScheduled` entries carrying `dt.retry.*` tags, and joins each
- * to its matching `TaskCompleted` / `TaskFailed` (or marks `"running"` if
- * neither has appeared yet). Returns `undefined` when the instance does not
- * exist (matching the missing-instance contract of `getStatus`).
+ * Calls `client.getStatus(instanceId, {showHistory: true})` and walks the
+ * returned history to identify activity invocations carrying `dt.retry.*` tags.
+ *
+ * **Tag-location compatibility.** Tags are read from two places, in priority order:
+ *   1. `TaskScheduledEvent.Tags` — the canonical source of truth (raw DTFx history).
+ *   2. `TaskCompletedEvent.Tags` / `TaskFailedEvent.Tags` — set by the Functions
+ *      extension's `AddScheduledEventDataAndAggregate` post-processor, which
+ *      folds TaskScheduled events away and propagates their Tags onto the
+ *      aggregated Completed/Failed event. This is what `DurableClient.getStatus`
+ *      actually returns over the HTTP RPC endpoint.
+ *
+ * Returns `undefined` when the instance does not exist (matching the
+ * missing-instance contract of `getStatus`).
  *
  * **Complexity:** `O(history length)`. Downloads the full history. For
  * long-running instances with very large histories (>10k events), expect
@@ -216,11 +227,21 @@ export async function getInstanceRetryHistory(
         return undefined;
     }
 
-    const events = Array.isArray(status.history) ? status.history : [];
+    // Accept either casing: `history` (raw DTFx-style) or `historyEvents`
+    // (Functions extension HTTP RPC response).
+    const events: Array<unknown> = Array.isArray(status.history)
+        ? status.history
+        : Array.isArray(status.historyEvents)
+        ? status.historyEvents
+        : [];
 
     interface NormalizedEvent {
         readonly eventType: string;
-        readonly taskScheduledId?: number;
+        /** For TaskScheduled events: the event's own EventId (which is what
+         *  TaskCompleted/TaskFailed point back at via TaskScheduledId).
+         *  For TaskCompleted/TaskFailed events: the original TaskScheduledId.
+         *  Unified into one field so the join below is a single set lookup. */
+        readonly scheduledId?: number;
         readonly name?: string;
         readonly tags?: Record<string, string>;
     }
@@ -237,8 +258,21 @@ export async function getInstanceRetryHistory(
         if (typeof eventType !== "string") {
             return undefined;
         }
-        const taskScheduledIdRaw = o["TaskScheduledId"] ?? o["taskScheduledId"];
-        const name = (o["Name"] ?? o["name"]) as string | undefined;
+        // Read the per-event "join key" depending on event type. The join
+        // direction is: TaskCompleted/TaskFailed.TaskScheduledId === TaskScheduled.EventId.
+        // We collapse both into one normalized `scheduledId` field so the
+        // joiner below does not have to know about event-type specifics.
+        const idCandidate =
+            eventType === "TaskScheduled"
+                ? o["EventId"] ?? o["eventId"]
+                : o["TaskScheduledId"] ?? o["taskScheduledId"];
+        // The activity name lives under different keys depending on whether
+        // the response is raw DTFx history (`Name`/`name`) or post-processed
+        // by the extension's HTTP RPC layer (`FunctionName`/`functionName` —
+        // moved over by AddScheduledEventDataAndAggregate).
+        const name = (o["Name"] ?? o["name"] ?? o["FunctionName"] ?? o["functionName"]) as
+            | string
+            | undefined;
         const tagsRaw = o["Tags"] ?? o["tags"];
         const tags =
             tagsRaw && typeof tagsRaw === "object"
@@ -247,8 +281,7 @@ export async function getInstanceRetryHistory(
 
         return {
             eventType,
-            taskScheduledId:
-                typeof taskScheduledIdRaw === "number" ? taskScheduledIdRaw : undefined,
+            scheduledId: typeof idCandidate === "number" ? idCandidate : undefined,
             name,
             tags,
         };
@@ -262,20 +295,24 @@ export async function getInstanceRetryHistory(
         }
     }
 
-    // Index TaskCompleted / TaskFailed by their TaskScheduledId for the join.
+    // Index TaskCompleted / TaskFailed by their TaskScheduledId (now stored in
+    // scheduledId after normalization) for the join below.
     const completed = new Set<number>();
     const failed = new Set<number>();
     for (const e of normalized) {
-        if (e.taskScheduledId === undefined) continue;
-        if (e.eventType === "TaskCompleted") completed.add(e.taskScheduledId);
-        else if (e.eventType === "TaskFailed") failed.add(e.taskScheduledId);
+        if (e.scheduledId === undefined) continue;
+        if (e.eventType === "TaskCompleted") completed.add(e.scheduledId);
+        else if (e.eventType === "TaskFailed") failed.add(e.scheduledId);
     }
 
     const attempts: ActivityRetryRecord[] = [];
     let retryAttemptCount = 0;
     let retryMaxAttemptsReached = false;
     let sawAnyTaskScheduled = false;
+    let sawAnyAggregated = false;
 
+    // Path A: raw DTFx-style history with TaskScheduled events that still carry
+    // Tags. This is what direct backend history APIs would return.
     for (const e of normalized) {
         if (e.eventType !== "TaskScheduled") continue;
         sawAnyTaskScheduled = true;
@@ -294,15 +331,9 @@ export async function getInstanceRetryHistory(
             continue;
         }
 
-        const id = e.taskScheduledId ?? -1;
-        // For TaskScheduled events the id is the event's own EventId, not TaskScheduledId.
-        // Pull EventId as a fallback.
-        const scheduledId =
-            id >= 0
-                ? id
-                : typeof ((e as unknown) as { EventId?: number }).EventId === "number"
-                ? ((e as unknown) as { EventId: number }).EventId
-                : -1;
+        // For TaskScheduled events, scheduledId is the event's own EventId,
+        // which is the join key TaskCompleted/TaskFailed events reference.
+        const scheduledId = e.scheduledId ?? -1;
 
         const isMax = attempt === maxAttempts;
         let recordStatus: "running" | "completed" | "failed" = "running";
@@ -322,14 +353,57 @@ export async function getInstanceRetryHistory(
         if (isMax && recordStatus === "failed") retryMaxAttemptsReached = true;
     }
 
+    // Path B: Functions extension HTTP RPC response shape — TaskScheduled events
+    // are folded away by AddScheduledEventDataAndAggregate and their Tags are
+    // propagated onto the aggregated TaskCompleted / TaskFailed event. Only run
+    // when Path A produced nothing (i.e. no raw TaskScheduled events were
+    // present in the response) to avoid double-counting on hybrid shapes.
+    if (attempts.length === 0) {
+        for (const e of normalized) {
+            if (e.eventType !== "TaskCompleted" && e.eventType !== "TaskFailed") continue;
+
+            const tags = e.tags;
+            if (!tags) continue;
+
+            const attempt = parsePositiveInt(tags[HISTORY_TAG_ATTEMPT]);
+            const maxAttempts = parsePositiveInt(tags[HISTORY_TAG_MAX_ATTEMPTS]);
+            if (
+                attempt === undefined ||
+                maxAttempts === undefined ||
+                attempt < 1 ||
+                maxAttempts < attempt
+            ) {
+                continue;
+            }
+
+            sawAnyAggregated = true;
+            const isMax = attempt === maxAttempts;
+            const recordStatus = e.eventType === "TaskCompleted" ? "completed" : "failed";
+
+            attempts.push({
+                // For aggregated events, the FunctionName (set by the
+                // extension's post-processor) is the activity name source.
+                activityName: e.name ?? "",
+                taskScheduledId: e.scheduledId ?? -1,
+                attempt,
+                maxAttempts,
+                isMaxAttempt: isMax,
+                status: recordStatus,
+            });
+
+            if (attempt > 1) retryAttemptCount++;
+            if (isMax && recordStatus === "failed") retryMaxAttemptsReached = true;
+        }
+    }
+
     // If we saw TaskScheduled events but none carried retry tags, the backend
     // likely stripped them at persistence (or no activities used retry policy).
     // We can't distinguish those two cases with the data available here — the
     // safer choice is to report metadataAvailable=true (we successfully fetched
     // history) and let the caller infer "no retries" from the empty array.
     // metadataAvailable=false is reserved for the case where getStatus itself
-    // gave us nothing usable.
-    const retryMetadataAvailable = sawAnyTaskScheduled;
+    // gave us nothing usable. Path B also counts toward metadata-available.
+    const retryMetadataAvailable = sawAnyTaskScheduled || sawAnyAggregated;
 
     return {
         instanceId,

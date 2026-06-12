@@ -30,7 +30,10 @@ export class DurableOrchestrationStatus implements types.DurableOrchestrationSta
         this.output = init.output;
         this.runtimeStatus = init.runtimeStatus as OrchestrationRuntimeStatus;
         this.customStatus = init.customStatus;
-        this.history = init.history;
+        // The Functions extension HTTP RPC layer emits the history array under
+        // the key `historyEvents` (per its response-formatting code), while
+        // raw DTFx-style management APIs use `history`. Accept either.
+        this.history = init.history ?? init.historyEvents;
     }
 
     private isDurableOrchestrationStatusInit(obj: unknown): obj is DurableOrchestrationStatusInit {
@@ -59,4 +62,6 @@ interface DurableOrchestrationStatusInit {
     runtimeStatus: string;
     customStatus?: unknown;
     history?: Array<unknown>;
+    /** Alternate key used by the Functions extension HTTP RPC response. */
+    historyEvents?: Array<unknown>;
 }
