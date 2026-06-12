@@ -1,5 +1,6 @@
 /**
- * Native activity retry visibility — JS SDK helpers.
+ * Native activity retry visibility — helpers for inspecting per-attempt
+ * retry metadata recorded on activity history events.
  *
  * Two surfaces are exported from this module:
  *
@@ -12,21 +13,21 @@
  * guarantee identical interpretation of `dt.retry.*` history tags across
  * activity-side and client-side consumers. The shared parser is exported privately
  * via `internalParsePositiveInt` for the cross-stack test-vector fixture.
- *
- * Design: see `investigations/df-retry-information/design.MD`.
  */
 
 import type { InvocationContext } from "@azure/functions";
 
 // ---------------------------------------------------------------------------
-// Trigger metadata key constants — must match the extension's
-// RetryMetadataConstants (camelCase, `durabletask.` prefix). Frozen at v1.
+// Trigger metadata key constants — camelCase, `durabletask.` prefix.
+// These names are part of the cross-stack wire contract and must not change
+// without a coordinated update to every consumer of activity-trigger metadata.
 // ---------------------------------------------------------------------------
 const TRIGGER_KEY_ATTEMPT = "durabletask.attempt";
 const TRIGGER_KEY_MAX_ATTEMPTS = "durabletask.maxAttempts";
 const TRIGGER_KEY_IS_MAX_ATTEMPT = "durabletask.isMaxAttempt";
 
-// History tag keys — must match DTFx core's RetryTags.cs. Frozen at v1.
+// History tag keys — names are part of the cross-stack wire contract and must
+// match every producer / consumer of `TaskScheduledEvent.Tags`.
 const HISTORY_TAG_ATTEMPT = "dt.retry.attempt";
 const HISTORY_TAG_MAX_ATTEMPTS = "dt.retry.maxAttempts";
 
@@ -79,8 +80,8 @@ export interface InstanceRetryHistory {
     /**
      * True when retry metadata for this instance is available and the counts
      * above are trustworthy. False when retry metadata could not be recovered
-     * (currently for backends that don't roundtrip TaskScheduledEvent.Tags —
-     * Azure Storage, MSSQL, Netherite in v1).
+     * — typically when the backend in use does not preserve
+     * `TaskScheduledEvent.Tags` through persistence.
      */
     readonly retryMetadataAvailable: boolean;
 }
@@ -208,13 +209,14 @@ interface DurableClientLike {
  *
  * **Complexity:** `O(history length)`. Downloads the full history. For
  * long-running instances with very large histories (>10k events), expect
- * proportional payload size on the underlying `getStatus` call. No pagination in v1.
+ * proportional payload size on the underlying `getStatus` call — there is
+ * no pagination.
  *
  * **Latency:** polling latency = customer's polling interval. There is no push
  * notification — for subscribe-style alerts use OTel span attributes instead.
  *
- * **Backend dependency:** Backends that don't roundtrip `TaskScheduledEvent.Tags`
- * (Azure Storage, MSSQL, Netherite in v1) drop retry metadata at persistence.
+ * **Backend dependency:** Backends that do not preserve
+ * `TaskScheduledEvent.Tags` through persistence drop retry metadata.
  * Use `retryMetadataAvailable` to distinguish "no retries happened" from "we
  * don't know if retries happened."
  */
@@ -228,7 +230,7 @@ export async function getInstanceRetryHistory(
     }
 
     // Accept either casing: `history` (raw DTFx-style) or `historyEvents`
-    // (Functions extension HTTP RPC response).
+    // (HTTP RPC status-response shape).
     const events: Array<unknown> = Array.isArray(status.history)
         ? status.history
         : Array.isArray(status.historyEvents)
@@ -353,8 +355,8 @@ export async function getInstanceRetryHistory(
         if (isMax && recordStatus === "failed") retryMaxAttemptsReached = true;
     }
 
-    // Path B: Functions extension HTTP RPC response shape — TaskScheduled events
-    // are folded away by AddScheduledEventDataAndAggregate and their Tags are
+    // Path B: HTTP RPC status-response shape — TaskScheduled events
+    // are folded away by the host's response post-processor and their Tags are
     // propagated onto the aggregated TaskCompleted / TaskFailed event. Only run
     // when Path A produced nothing (i.e. no raw TaskScheduled events were
     // present in the response) to avoid double-counting on hybrid shapes.

@@ -58,8 +58,8 @@ export interface InstanceRetryHistory {
     /**
      * True when retry metadata for this instance is available and the counts
      * above are trustworthy. False when retry metadata could not be recovered
-     * — currently for backends that don't roundtrip TaskScheduledEvent.Tags
-     * (Azure Storage, MSSQL, Netherite in v1).
+     * — typically when the backend in use does not preserve
+     * `TaskScheduledEvent.Tags` through persistence.
      */
     readonly retryMetadataAvailable: boolean;
 }
