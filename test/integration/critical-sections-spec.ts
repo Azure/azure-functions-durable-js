@@ -43,6 +43,19 @@ function newContext(
     return { ctx, executor };
 }
 
+// -----------------------------------------------------------------------------
+// Critical Sections unit coverage
+//
+// Grouped by concern:
+//   - input validation:       arg shape (no-args, empty array, non-EntityId)
+//   - schema-version gating:  lock() requires negotiated OOProc schema >= V4
+//   - action emission:        lock() emits one LockEntitiesAction, sorted+deduped
+//   - isLocked():             section-state reporting before/after lock
+//   - rule enforcement:       nested lock, sub-orchestration, calls to unlocked
+//                             entities, parallel-vs-sequential calls, signals
+//   - re-lock after release:  section reset + re-acquire on the same entity
+//   - DurableLock release:    idempotent release()/[Symbol.dispose]()/frozen locks
+// -----------------------------------------------------------------------------
 describe("Critical Sections (lock / isLocked)", () => {
     describe("input validation", () => {
         it("throws RangeError when called with no arguments", () => {
@@ -170,6 +183,22 @@ describe("Critical Sections (lock / isLocked)", () => {
             );
         });
 
+        // Counterpart to the parallel case above: sequential calls to the same
+        // locked entity ARE allowed. The guard only blocks a *second* call while
+        // the first is still in flight. Once the first call resolves (the
+        // executor invokes `_onEntityCallResolved`, clearing it from
+        // `inFlightEntityCalls`), the next call is permitted.
+        it("allows sequential callEntity to the same locked entity (after the prior call resolves)", () => {
+            const { ctx } = newContext();
+            const a = new EntityId("Account", "A");
+            ctx.lock(a);
+            ctx.callEntity(a, "get"); // first call: now in flight
+            // Simulate the first call resolving, exactly as the executor does
+            // (it passes CallEntityAction.instanceId, which is this scheduler id).
+            ctx._onEntityCallResolved(EntityId.getSchedulerIdFromEntityId(a));
+            expect(() => ctx.callEntity(a, "get")).to.not.throw();
+        });
+
         it("throws on signalEntity to a locked entity", () => {
             const { ctx } = newContext();
             const a = new EntityId("Account", "A");
@@ -184,6 +213,32 @@ describe("Critical Sections (lock / isLocked)", () => {
             const { ctx } = newContext();
             ctx.lock(new EntityId("Account", "A"));
             expect(() => ctx.signalEntity(new EntityId("Other", "X"), "noop")).to.not.throw();
+        });
+    });
+
+    // Lock lifecycle: releasing a section resets `currentLock` to undefined so a
+    // brand-new critical section can be opened afterwards. Confirms the invariant
+    // lock -> work -> release -> lock again succeeds (no NestedSection violation).
+    describe("re-lock after release", () => {
+        it("a second lock() succeeds once the first section is released", () => {
+            const { ctx } = newContext();
+            const a = new EntityId("Account", "A");
+
+            // Acquire the lock.
+            const firstTask = ctx.lock(a) as AtomicTask & { __lockResult?: DurableLock };
+            expect(ctx.isLocked().isLocked).to.equal(true);
+
+            // Do work then release.
+            const firstLock = firstTask.__lockResult as DurableLock;
+            firstLock.release();
+
+            // currentLock is now reset to undefined.
+            expect(ctx.isLocked().isLocked).to.equal(false);
+
+            // Re-lock the same entity: a new critical section opens cleanly.
+            expect(() => ctx.lock(a)).to.not.throw();
+            expect(ctx.isLocked().isLocked).to.equal(true);
+            expect(ctx.isLocked().ownedLocks.map((e) => e.key)).to.deep.equal(["A"]);
         });
     });
 
