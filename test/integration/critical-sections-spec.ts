@@ -15,7 +15,7 @@ import { ActionType } from "../../src/actions/ActionType";
 import { HistoryEvent } from "../../src/history/HistoryEvent";
 import { OrchestratorStartedEvent } from "../../src/history/OrchestratorStartedEvent";
 import { HistoryEventOptions } from "../../src/history/HistoryEventOptions";
-import { AtomicTask } from "../../src/task";
+import { AtomicTask, LockTask } from "../../src/task";
 
 function newContext(
     schema: ReplaySchema = ReplaySchema.V4
@@ -225,11 +225,11 @@ describe("Critical Sections (lock / isLocked)", () => {
             const a = new EntityId("Account", "A");
 
             // Acquire the lock.
-            const firstTask = ctx.lock(a) as AtomicTask & { __lockResult?: DurableLock };
+            const firstTask = ctx.lock(a) as LockTask;
             expect(ctx.isLocked().isLocked).to.equal(true);
 
             // Do work then release.
-            const firstLock = firstTask.__lockResult as DurableLock;
+            const firstLock = firstTask.lockResult;
             firstLock.release();
 
             // currentLock is now reset to undefined.

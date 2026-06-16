@@ -1,9 +1,10 @@
 import { OrchestrationFailureError } from "../error/OrchestrationFailureError";
 import { OrchestratorState } from "./OrchestratorState";
-import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "../task";
+import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState, LockTask } from "../task";
 import { ReplaySchema } from "./ReplaySchema";
 import { Utils } from "../util/Utils";
 import { DurableOrchestrationContext, OrchestrationContext } from "durable-functions";
+import type { DurableOrchestrationContext as DurableOrchestrationContextImpl } from "./DurableOrchestrationContext";
 import { CallEntityAction } from "../actions/CallEntityAction";
 import { LockEntitiesAction } from "../actions/LockEntitiesAction";
 import { IAction } from "../actions/IAction";
@@ -348,14 +349,11 @@ export class TaskOrchestrationExecutor {
                     taskResult = Error(taskResult as string);
                     isSuccess = false;
                 }
-            } else if (action instanceof LockEntitiesAction) {
-                // Replace the raw extension response with the DurableLock
-                // attached to the task at schedule time. This is the value
-                // the orchestrator generator will see on `yield ctx.df.lock(...)`.
-                const lockResult = (task as { __lockResult?: unknown }).__lockResult;
-                if (lockResult !== undefined) {
-                    taskResult = lockResult;
-                }
+            } else if (task instanceof LockTask) {
+                // Replace the raw extension response with the DurableLock that
+                // the LockTask carries (set at schedule time). This is the
+                // value the orchestrator generator sees on `yield ctx.df.lock(...)`.
+                taskResult = task.lockResult;
             }
         } else {
             // The task failed, we attempt to extract the Reason and Details from the event.
@@ -380,9 +378,9 @@ export class TaskOrchestrationExecutor {
         // as no longer in flight so the orchestrator can issue another call
         // to the same locked entity. Done in both success and failure paths.
         if (task.actionObj instanceof CallEntityAction) {
-            ((this.context as unknown) as {
-                _onEntityCallResolved(schedulerId: string): void;
-            })._onEntityCallResolved(task.actionObj.instanceId);
+            (this.context as DurableOrchestrationContextImpl)._onEntityCallResolved(
+                task.actionObj.instanceId
+            );
         }
     }
 

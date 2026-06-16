@@ -5,6 +5,7 @@ import {
     WhenAllTask,
     WhenAnyTask,
     AtomicTask,
+    LockTask,
     RetryableTask,
     DFTimerTask,
     DFTask,
@@ -483,11 +484,11 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
 
         const lockRequestId = this.newGuid(this.instanceId);
         const action = new LockEntitiesAction(deduped, lockRequestId);
-        const task = new AtomicTask(false, action);
 
-        // Install a value-translation hook so that when the action completes
-        // the orchestrator generator receives a DurableLock (not the raw
-        // extension response).
+        // The DurableLock the orchestrator generator receives on
+        // `yield ctx.df.lock(...)`. It is carried on the returned LockTask as a
+        // typed field (see LockTask), so the executor can hand it back on
+        // completion without a shared untyped property between the two.
         const lock = new DurableLock(deduped, () => {
             this.taskOrchestratorExecutor.recordFireAndForgetAction(new ReleaseEntitiesAction());
             // Clear the active-section flag so subsequent code outside the
@@ -497,13 +498,7 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
             }
         });
 
-        // The AtomicTask returned to the user must resolve to `lock` on success.
-        // We achieve this by attaching a post-resolve override; the executor's
-        // setTaskValue path calls task.setValue(...) with the raw result.
-        // We intercept by wrapping the AtomicTask in a thin adapter that swaps
-        // the result. To keep things simple, we mark the task and let
-        // TaskOrchestrationExecutor recognize LockEntitiesAction and translate.
-        (task as AtomicTask & { __lockResult?: DurableLock }).__lockResult = lock;
+        const task = new LockTask(action, lock);
 
         // Activate the section eagerly so subsequent yielded callEntity/etc
         // inside the same generator frame see the rules. The lock won't
