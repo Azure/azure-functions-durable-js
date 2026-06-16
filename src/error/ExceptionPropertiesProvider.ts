@@ -54,8 +54,7 @@ export function buildTaskFailureDetailsJson(error: unknown): string | undefined 
     }
 
     const errorObj = error instanceof Error ? error : undefined;
-    const errorType =
-        errorObj?.constructor?.name ?? (typeof error === "string" ? "Error" : "Error");
+    const errorType = errorObj?.constructor?.name ?? "Error";
     const errorMessage =
         errorObj?.message ?? (typeof error === "string" ? error : JSON.stringify(error));
 
