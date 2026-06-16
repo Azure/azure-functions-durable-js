@@ -1,16 +1,19 @@
 import { EntityId } from "./EntityId";
 
-// Define Symbol.dispose for runtimes (Node <20) that lack it natively.
-// TypeScript >=5.2 emits this same polyfill in user code that uses `using`,
-// but adding it here ensures `[Symbol.dispose]` is callable even from plain
-// JavaScript without TS down-level emit.
-if (typeof (Symbol as { dispose?: symbol }).dispose === "undefined") {
-    Object.defineProperty(Symbol, "dispose", {
-        value: Symbol("Symbol.dispose"),
-        writable: false,
-        enumerable: false,
-        configurable: false,
-    });
+// Polyfill Symbol.dispose on Node <20, where the `[Symbol.dispose]()` member below needs it
+// (`using` only reads this symbol). `configurable: true` and try/catch keep it non-destructive.
+if (typeof (Symbol as { dispose?: symbol }).dispose !== "symbol") {
+    try {
+        Object.defineProperty(Symbol, "dispose", {
+            value: Symbol("Symbol.dispose"),
+            writable: false,
+            enumerable: false,
+            configurable: true,
+        });
+    } catch {
+        // Another polyfill defined it first so we read the global
+        // `Symbol.dispose` when wiring up the `[Symbol.dispose]()` member below.
+    }
 }
 
 /**
