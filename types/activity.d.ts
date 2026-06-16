@@ -5,7 +5,7 @@ import {
     FunctionOutput,
     FunctionTrigger,
 } from "@azure/functions";
-import { RetryOptions, Task } from "durable-functions";
+import { RetryOptions, Task } from ".";
 
 export type ActivityHandler = FunctionHandler;
 
