@@ -2434,6 +2434,158 @@ describe("Orchestrator", () => {
                 )
             );
         });
+
+        // Regression tests for when an external event  arrives in
+        // history BEFORE its `waitForExternalEvent` is registered must still
+        // resume the orchestration. Before the fix in TaskOrchestrationExecutor,
+        // these scenarios stalled in `Running` indefinitely.
+        it("completes when external event arrives before waitForExternalEvent is registered", async () => {
+            const orchestrator = TestOrchestrations.ActivityThenWaitForEvent;
+            const activityInput = "Tokyo";
+            const eventPayload = { ok: true };
+            const mockContext = new DummyOrchestrationContext();
+            const orchestrationInput = new DurableOrchestrationInput(
+                "",
+                TestHistories.GetActivityThenWaitForEvent_EventBeforeActivityCompletion(
+                    moment.utc().toDate(),
+                    "ActivityThenWaitForEvent",
+                    activityInput,
+                    "continue",
+                    eventPayload
+                ),
+                activityInput
+            );
+
+            const result = await orchestrator(orchestrationInput, mockContext);
+
+            expect(result).to.deep.equal(
+                new OrchestratorState(
+                    {
+                        isDone: true,
+                        output: eventPayload,
+                        actions: [
+                            [new CallActivityAction("Hello", activityInput)],
+                            [
+                                new WaitForExternalEventAction(
+                                    "continue",
+                                    ExternalEventType.ExternalEvent
+                                ),
+                            ],
+                        ],
+                        schemaVersion: ReplaySchema.V1,
+                    },
+                    true
+                )
+            );
+        });
+
+        it("preserves action order when activity completes and event arrives in the same execution", async () => {
+            // Parity guard for the normal-order path: the action stream must remain
+            // [CallActivity("Hello"), WaitForExternalEvent("continue")].
+            const orchestrator = TestOrchestrations.ActivityThenWaitForEvent;
+            const activityInput = "Osaka";
+            const eventPayload = "go";
+            const mockContext = new DummyOrchestrationContext();
+            const orchestrationInput = new DurableOrchestrationInput(
+                "",
+                TestHistories.GetActivityThenWaitForEvent_EventBeforeActivityCompletion(
+                    moment.utc().toDate(),
+                    "ActivityThenWaitForEvent",
+                    activityInput,
+                    "continue",
+                    eventPayload
+                ),
+                activityInput
+            );
+
+            const result = await orchestrator(orchestrationInput, mockContext);
+
+            const state = result as OrchestratorState;
+            // Flatten the per-execution action lists into a single ordered array.
+            const flattened = state.actions.reduce<unknown[]>(
+                (acc, batch) => acc.concat(batch as unknown[]),
+                []
+            );
+            expect(flattened).to.have.lengthOf(2);
+            expect(flattened[0]).to.be.instanceOf(CallActivityAction);
+            expect(flattened[1]).to.be.instanceOf(WaitForExternalEventAction);
+            expect(state.isDone).to.equal(true);
+            expect(state.output).to.equal(eventPayload);
+        });
+
+        it("drains queued early events of the same name in FIFO order", async () => {
+            // Two early events of the same name must be delivered to two
+            // `waitForExternalEvent("continue")` calls in arrival order.
+            const orchestrator = TestOrchestrations.TwoWaitsSameEvent;
+            const mockContext = new DummyOrchestrationContext();
+            const orchestrationInput = new DurableOrchestrationInput(
+                "",
+                TestHistories.GetTwoEarlyEventsSameName(
+                    moment.utc().toDate(),
+                    "TwoWaitsSameEvent",
+                    "continue",
+                    "first",
+                    "second"
+                ),
+                undefined
+            );
+
+            const result = await orchestrator(orchestrationInput, mockContext);
+
+            const state = result as OrchestratorState;
+            expect(state.isDone).to.equal(true);
+            expect(state.output).to.deep.equal(["first", "second"]);
+        });
+
+        it("delivers distinct early events to their matching waits", async () => {
+            // Distinct early events should be routed by name.
+            const orchestrator = TestOrchestrations.TwoWaitsDistinctEvents;
+            const mockContext = new DummyOrchestrationContext();
+            const orchestrationInput = new DurableOrchestrationInput(
+                "",
+                TestHistories.GetTwoEarlyEventsDistinctNames(
+                    moment.utc().toDate(),
+                    "TwoWaitsDistinctEvents",
+                    "alpha",
+                    "A",
+                    "beta",
+                    "B"
+                ),
+                undefined
+            );
+
+            const result = await orchestrator(orchestrationInput, mockContext);
+
+            const state = result as OrchestratorState;
+            expect(state.isDone).to.equal(true);
+            expect(state.output).to.deep.equal(["A", "B"]);
+        });
+
+        it("Task.all over an early event + activity still completes", async () => {
+            // Ensure the `Task.all` compound-task path is not regressed when one
+            // of the children is satisfied by an early external event.
+            const orchestrator = TestOrchestrations.AllWaitAndActivity;
+            const eventPayload = { ready: 1 };
+            const activityInput = "Tokyo";
+            const mockContext = new DummyOrchestrationContext();
+            const orchestrationInput = new DurableOrchestrationInput(
+                "",
+                TestHistories.GetAllWaitAndActivity_EarlyEvent(
+                    moment.utc().toDate(),
+                    "AllWaitAndActivity",
+                    activityInput,
+                    "continue",
+                    eventPayload
+                ),
+                undefined
+            );
+
+            const result = await orchestrator(orchestrationInput, mockContext);
+
+            const state = result as OrchestratorState;
+            expect(state.isDone).to.equal(true);
+            expect(state.output).to.deep.equal([eventPayload, `Hello, ${activityInput}!`]);
+        });
     });
 
     describe("Task.all() and Task.any()", () => {

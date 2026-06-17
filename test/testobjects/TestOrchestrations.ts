@@ -433,6 +433,41 @@ export class TestOrchestrations {
         return returnValue;
     });
 
+    // Yields a single activity, then waits on an external event. If the event
+    // arrives before the wait is registered, the orchestration should still
+    // complete and return the event payload.
+    public static ActivityThenWaitForEvent: any = createOrchestrator(function* (context: any) {
+        const input = context.df.getInput();
+        yield context.df.callActivity("Hello", input);
+        const evt = yield context.df.waitForExternalEvent("continue");
+        return evt;
+    });
+
+    // Waits on the same-named event twice. If two `continue` events arrived early,
+    // the first wait should resolve with the first event's payload and the second
+    // wait with the second event's payload (FIFO drain).
+    public static TwoWaitsSameEvent: any = createOrchestrator(function* (context: any) {
+        const first = yield context.df.waitForExternalEvent("continue");
+        const second = yield context.df.waitForExternalEvent("continue");
+        return [first, second];
+    });
+
+    // Two waits on distinct early events.
+    public static TwoWaitsDistinctEvents: any = createOrchestrator(function* (context: any) {
+        const a = yield context.df.waitForExternalEvent("alpha");
+        const b = yield context.df.waitForExternalEvent("beta");
+        return [a, b];
+    });
+
+    // `Task.all` over a wait and an activity, with the external event arriving
+    // before the wait is registered.
+    public static AllWaitAndActivity: any = createOrchestrator(function* (context: any) {
+        const waitTask = context.df.waitForExternalEvent("continue");
+        const activityTask = context.df.callActivity("Hello", "Tokyo");
+        const results = yield context.df.Task.all([waitTask, activityTask]);
+        return results;
+    });
+
     public static WaitOnTimer: any = createOrchestrator(function* (context: any) {
         const fireAt = context.df.getInput();
 

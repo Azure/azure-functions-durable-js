@@ -27,7 +27,7 @@ export class TaskOrchestrationExecutor {
     private exception: Error | undefined;
     private orchestratorReturned: boolean;
     private generator: Generator<TaskBase, any, any>;
-    private deferredTasks: Record<number | string, () => void>;
+    private deferredTasks: Record<number | string, Array<() => void>>;
     private sequenceNumber: number;
     private schemaVersion: ReplaySchema;
     public willContinueAsNew: boolean;
@@ -308,7 +308,10 @@ export class TaskOrchestrationExecutor {
                     this.setTaskValue(event, isSuccess, idKey);
                     return; // we return because the task is yet to be scheduled
                 };
-                this.deferredTasks[key] = updateTask.bind(this);
+                if (this.deferredTasks[key] === undefined) {
+                    this.deferredTasks[key] = [];
+                }
+                this.deferredTasks[key].push(updateTask.bind(this));
                 return;
             }
         } else {
@@ -425,13 +428,18 @@ export class TaskOrchestrationExecutor {
             if (newTask.state !== TaskState.Running) {
                 this.tryResumingUserCode();
             } else {
-                // The task hasn't completed, we add it to the open (incomplete) task list
+                // Record the task's action (only for user-declared, not-yet-scheduled tasks).
+                if (newTask instanceof DFTask && !newTask.alreadyScheduled) {
+                    this.markAsScheduled(newTask);
+                    this.addToActions(newTask.actionObj);
+                }
+
+                // Register the task as open; this may complete it if its result was already processed.
                 this.trackOpenTask(newTask);
-                // We only keep track of actions from user-declared tasks, not from
-                // tasks generated internally to facilitate history-processing.
-                if (this.currentTask instanceof DFTask && !this.currentTask.alreadyScheduled) {
-                    this.markAsScheduled(this.currentTask);
-                    this.addToActions(this.currentTask.actionObj);
+
+                // If the task got completed during registration, resume the generator now.
+                if (newTask.state !== TaskState.Running) {
+                    this.tryResumingUserCode();
                 }
             }
         }
@@ -496,10 +504,16 @@ export class TaskOrchestrationExecutor {
             }
 
             // If the task's ID can be found in deferred tasks, then we have already processed
-            // the history event that contains the result for this task. Therefore, we immediately
-            // assign this task's result so that the user-code may proceed executing.
-            if (this.deferredTasks.hasOwnProperty(task.id)) {
-                const taskUpdateAction = this.deferredTasks[task.id];
+            // a history event that contains a result for this task. Drain one entry from the
+            // per-ID FIFO queue so that the user-code may proceed executing. Multiple queued
+            // entries (e.g. two same-named external events that both arrived early) will be
+            // consumed across successive `trackOpenTask` registrations.
+            const deferredQueue = this.deferredTasks[task.id];
+            if (deferredQueue !== undefined && deferredQueue.length > 0) {
+                const taskUpdateAction = deferredQueue.shift() as () => void;
+                if (deferredQueue.length === 0) {
+                    delete this.deferredTasks[task.id];
+                }
                 taskUpdateAction();
             }
         }
