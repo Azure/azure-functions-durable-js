@@ -2435,7 +2435,7 @@ describe("Orchestrator", () => {
             );
         });
 
-        // Regression tests for when an external event  arrives in
+        // Regression tests for when an external event arrives in
         // history BEFORE its `waitForExternalEvent` is registered must still
         // resume the orchestration. Before the fix in TaskOrchestrationExecutor,
         // these scenarios stalled in `Running` indefinitely.

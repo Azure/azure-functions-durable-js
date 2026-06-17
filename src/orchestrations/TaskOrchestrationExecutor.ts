@@ -508,11 +508,12 @@ export class TaskOrchestrationExecutor {
             // per-ID FIFO queue so that the user-code may proceed executing. Multiple queued
             // entries (e.g. two same-named external events that both arrived early) will be
             // consumed across successive `trackOpenTask` registrations.
-            const deferredQueue = this.deferredTasks[task.id];
+            const taskId = task.id as number | string;
+            const deferredQueue = this.deferredTasks[taskId];
             if (deferredQueue !== undefined && deferredQueue.length > 0) {
-                const taskUpdateAction = deferredQueue.shift() as () => void;
+                const taskUpdateAction = deferredQueue.shift()!;
                 if (deferredQueue.length === 0) {
-                    delete this.deferredTasks[task.id];
+                    delete this.deferredTasks[taskId];
                 }
                 taskUpdateAction();
             }
