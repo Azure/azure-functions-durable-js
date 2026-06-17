@@ -2480,8 +2480,12 @@ describe("Orchestrator", () => {
         });
 
         it("preserves action order when activity completes and event arrives in the same execution", async () => {
-            // Parity guard for the normal-order path: the action stream must remain
-            // [CallActivity("Hello"), WaitForExternalEvent("continue")].
+            // Parity guard for action ordering: even when the `EventRaised` for
+            // `"continue"` arrives in the same replay as the activity's
+            // `TaskCompleted` (the early-event ordering), the recorded action
+            // stream must remain [CallActivity("Hello"), WaitForExternalEvent("continue")]
+            // — i.e. the order of the orchestrator's yields, not the order of
+            // the satisfying history events.
             const orchestrator = TestOrchestrations.ActivityThenWaitForEvent;
             const activityInput = "Osaka";
             const eventPayload = "go";

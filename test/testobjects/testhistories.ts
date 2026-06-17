@@ -2755,7 +2755,15 @@ export class TestHistories {
                 taskScheduledId: 0,
                 result: JSON.stringify("Hello, Prep!"),
             }),
-            // Tokyo activity (the second `Task.all` child) is the next scheduled task.
+            // Tokyo activity (the second `Task.all` child) is scheduled when the
+            // `Task.all` is registered, then completes immediately afterward.
+            new TaskScheduledEvent({
+                eventId: 1,
+                timestamp: t2,
+                isPlayed: false,
+                name: "Hello",
+                input: JSON.stringify(activityInput),
+            }),
             new TaskCompletedEvent({
                 eventId: -1,
                 timestamp: t3,
