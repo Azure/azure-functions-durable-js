@@ -2590,6 +2590,33 @@ describe("Orchestrator", () => {
             expect(state.isDone).to.equal(true);
             expect(state.output).to.deep.equal([eventPayload, `Hello, ${activityInput}!`]);
         });
+
+        // Event names matching `Object.prototype` members (e.g. "toString")
+        // must not collide with inherited properties on `openTasks`/`openEvents`.
+        const prototypeKeyEventNames = ["toString", "constructor", "hasOwnProperty", "valueOf"];
+        prototypeKeyEventNames.forEach((eventName) => {
+            it(`completes when the external event name collides with Object.prototype ("${eventName}")`, async () => {
+                const orchestrator = TestOrchestrations.WaitForNamedEvent;
+                const eventPayload = { handled: eventName };
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
+                    "",
+                    TestHistories.GetEventRaisedForName(
+                        moment.utc().toDate(),
+                        "WaitForNamedEvent",
+                        eventName,
+                        eventPayload
+                    ),
+                    eventName
+                );
+
+                const result = await orchestrator(orchestrationInput, mockContext);
+
+                const state = result as OrchestratorState;
+                expect(state.isDone).to.equal(true);
+                expect(state.output).to.deep.equal(eventPayload);
+            });
+        });
     });
 
     describe("Task.all() and Task.any()", () => {

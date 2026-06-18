@@ -2477,6 +2477,52 @@ export class TestHistories {
     }
 
     /**
+     * Regression history for external event names that collide with `Object.prototype`
+     * members (e.g. "toString"). The orchestrator waits for the event name passed as
+     * its input, then the event is raised under that name. Before the prototype-less
+     * hardening of `openTasks`/`openEvents`, this threw a `TypeError`.
+     */
+    public static GetEventRaisedForName(
+        firstTimestamp: Date,
+        orchestratorName: string,
+        eventName: string,
+        eventPayload: unknown
+    ): HistoryEvent[] {
+        const t1 = moment(firstTimestamp).add(1, "s").toDate();
+        return [
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: orchestratorName,
+                input: JSON.stringify(eventName),
+            }),
+            new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+            }),
+            new EventRaisedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+                name: eventName,
+                input: JSON.stringify(eventPayload),
+            }),
+        ];
+    }
+
+    /**
      * Regression history where the orchestrator yields an activity first, then
      * waits for an external event. The history places the `EventRaised` *before*
      * the activity's `TaskCompleted`, simulating an Azure Storage backend committing

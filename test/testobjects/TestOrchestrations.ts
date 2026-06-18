@@ -485,6 +485,17 @@ export class TestOrchestrations {
         return results;
     });
 
+    // Waits on an external event whose name is supplied as the orchestrator input.
+    // Used to verify that event names which collide with members of
+    // `Object.prototype` (e.g. "toString", "constructor", "hasOwnProperty") are
+    // handled correctly and do not resolve to inherited properties on the internal
+    // `openTasks`/`openEvents` maps.
+    public static WaitForNamedEvent: any = createOrchestrator(function* (context: any) {
+        const eventName = context.df.getInput();
+        const evt = yield context.df.waitForExternalEvent(eventName);
+        return evt;
+    });
+
     public static WaitOnTimer: any = createOrchestrator(function* (context: any) {
         const fireAt = context.df.getInput();
 
