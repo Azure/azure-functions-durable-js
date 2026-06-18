@@ -511,9 +511,10 @@ export class TaskOrchestrationExecutor {
 
             // If the task's ID can be found in deferred tasks, then we have already processed
             // a history event that contains a result for this task. Drain one entry from the
-            // per-ID FIFO queue so that the user-code may proceed executing. Multiple queued
-            // entries (e.g. two same-named external events that both arrived early) will be
-            // consumed across successive `trackOpenTask` registrations.
+            // per-ID FIFO queue so that the user-code may proceed executing. The drain may
+            // synchronously complete this task (and propagate to its parent); `tryResumingUserCode`
+            // then re-yields and registers the next waiter within the same execution, which is how
+            // multiple same-named early events are delivered to successive waits in one replay.
             const taskId = task.id as number | string;
             const deferredQueue = this.deferredTasks[taskId];
             if (deferredQueue !== undefined && deferredQueue.length > 0) {

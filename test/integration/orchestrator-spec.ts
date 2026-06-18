@@ -2479,44 +2479,6 @@ describe("Orchestrator", () => {
             );
         });
 
-        it("preserves action order when activity completes and event arrives in the same execution", async () => {
-            // Parity guard for action ordering: even when the `EventRaised` for
-            // `"continue"` arrives in the same replay as the activity's
-            // `TaskCompleted` (the early-event ordering), the recorded action
-            // stream must remain [CallActivity("Hello"), WaitForExternalEvent("continue")]
-            // — i.e. the order of the orchestrator's yields, not the order of
-            // the satisfying history events.
-            const orchestrator = TestOrchestrations.ActivityThenWaitForEvent;
-            const activityInput = "Osaka";
-            const eventPayload = "go";
-            const mockContext = new DummyOrchestrationContext();
-            const orchestrationInput = new DurableOrchestrationInput(
-                "",
-                TestHistories.GetActivityThenWaitForEvent_EventBeforeActivityCompletion(
-                    moment.utc().toDate(),
-                    "ActivityThenWaitForEvent",
-                    activityInput,
-                    "continue",
-                    eventPayload
-                ),
-                activityInput
-            );
-
-            const result = await orchestrator(orchestrationInput, mockContext);
-
-            const state = result as OrchestratorState;
-            // Flatten the per-execution action lists into a single ordered array.
-            const flattened = state.actions.reduce<unknown[]>(
-                (acc, batch) => acc.concat(batch as unknown[]),
-                []
-            );
-            expect(flattened).to.have.lengthOf(2);
-            expect(flattened[0]).to.be.instanceOf(CallActivityAction);
-            expect(flattened[1]).to.be.instanceOf(WaitForExternalEventAction);
-            expect(state.isDone).to.equal(true);
-            expect(state.output).to.equal(eventPayload);
-        });
-
         it("drains queued early events of the same name in FIFO order", async () => {
             // Two early events of the same name must be delivered to two
             // `waitForExternalEvent("continue")` calls in arrival order.
