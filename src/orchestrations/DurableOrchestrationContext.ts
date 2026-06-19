@@ -438,8 +438,8 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
     public lock(first: types.EntityId | types.EntityId[], ...rest: types.EntityId[]): Task {
         if (this.schemaVersion < ReplaySchema.V4) {
             throw new Error(
-                `lock requires a Durable Functions extension that advertises OOProc schema V4 or higher (negotiated V${
-                    (this.schemaVersion as number) + 1
+                `lock requires a Durable Functions extension that supports OOProc schema V4 or higher (this extension supports up to ${
+                    ReplaySchema[this.schemaVersion]
                 }). Please upgrade the Microsoft.Azure.WebJobs.Extensions.DurableTask package.`
             );
         }
