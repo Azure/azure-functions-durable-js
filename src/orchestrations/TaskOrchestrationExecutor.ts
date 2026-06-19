@@ -65,15 +65,12 @@ export class TaskOrchestrationExecutor {
 
         this.sequenceNumber = 0;
         this.willContinueAsNew = false;
+        this.actions = [];
         // Use prototype-less objects so that string keys which happen to match
         // members of `Object.prototype` (e.g. an external event named "toString")
         // do not collide with inherited properties.
         this.openTasks = Object.create(null);
         this.openEvents = Object.create(null);
-        this.actions = [];
-        // Use a prototype-less object so that string keys which happen to match
-        // members of `Object.prototype` (e.g. an external event named "toString")
-        // do not collide with inherited properties.
         this.deferredTasks = Object.create(null);
 
         this.output = undefined;
