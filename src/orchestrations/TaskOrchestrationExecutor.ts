@@ -487,10 +487,32 @@ export class TaskOrchestrationExecutor {
         }
     }
 
-    public recordFireAndForgetAction(action: IAction): void {
+    /**
+     * @hidden
+     * Record a fire-and-forget action (one with no awaitable task) and advance
+     * the sequence counter past the task-ID slots it consumes on the extension
+     * side.
+     *
+     * Most fire-and-forget actions emit a single backend message and therefore
+     * consume exactly one task-ID slot (the default). A critical-section
+     * release is the exception: the extension's `ReleaseLocks()` sends one
+     * entity message per locked entity, so releasing an N-entity lock consumes
+     * N slots. Passing the correct count keeps our predicted task IDs aligned
+     * with the extension's. Otherwise every durable task scheduled after a
+     * multi-entity release is assigned an ID that is too low by (N - 1), its
+     * completion event never matches an open task, and the orchestration
+     * stalls.
+     *
+     * @param action
+     *  The fire-and-forget action to record.
+     * @param sequenceNumberIncrement
+     *  The number of task-ID slots the action consumes on the extension side
+     *  (i.e. the number of backend messages it emits). Defaults to 1.
+     */
+    public recordFireAndForgetAction(action: IAction, sequenceNumberIncrement = 1): void {
         if (!this.willContinueAsNew) {
             this.addToActions(action);
-            this.sequenceNumber++;
+            this.sequenceNumber += sequenceNumberIncrement;
         }
     }
 
