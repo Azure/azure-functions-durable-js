@@ -810,6 +810,59 @@ describe("Critical Sections - early release then durable work", () => {
             ActionType.CallActivity,
         ]);
     });
+
+    it("double release() advances the counter only once and emits one ReleaseEntities", async () => {
+        // release() is idempotent: the second call is a no-op, so the counter
+        // advances by N exactly once and the activity still lands at
+        // TaskScheduledId = N + 1 = 3 for a 2-entity lock. A second advance
+        // would schedule the activity at id 5, leaving the id-3 completion
+        // unmatched and the orchestration stalled.
+        const a = new EntityId("Account", "A");
+        const b = new EntityId("Account", "B");
+
+        const orchestrator = createOrchestrator(function* (context) {
+            const lock = (yield context.df.lock(a, b)) as DurableLock;
+            lock.release();
+            lock.release(); // idempotent: must not advance the counter again
+            const receipt = yield context.df.callActivity("sendReceipt", { ok: true });
+            return { receipt };
+        });
+
+        const firstTs = moment.utc().toDate();
+        const probeInput = new DurableOrchestrationInput(
+            "double-release-instance",
+            buildLockReleaseActivityHistory(firstTs, [a, b], "placeholder", false, undefined),
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            ReplaySchema.V4
+        );
+        const probe = await orchestrator(probeInput, new DummyOrchestrationContextRuntime());
+        const lockRequestId = (probe.actions[0][0] as LockEntitiesAction).lockRequestId;
+
+        const replayInput = new DurableOrchestrationInput(
+            "double-release-instance",
+            buildLockReleaseActivityHistory(firstTs, [a, b], lockRequestId, true, "receipt-AB"),
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            ReplaySchema.V4
+        );
+        const result = await orchestrator(replayInput, new DummyOrchestrationContextRuntime());
+
+        expect(result.isDone).to.equal(true);
+        expect(result.output).to.deep.equal({ receipt: "receipt-AB" });
+        // Only one ReleaseEntities action despite two release() calls.
+        expect(
+            result.actions[0].map((x: { actionType: ActionType }) => x.actionType)
+        ).to.deep.equal([
+            ActionType.LockEntities,
+            ActionType.ReleaseEntities,
+            ActionType.CallActivity,
+        ]);
+    });
 });
 
 // -----------------------------------------------------------------------------
@@ -1288,5 +1341,77 @@ describe("Critical Sections - post-release op-type coverage", () => {
             ActionType.ReleaseEntities,
             ActionType.CallEntity,
         ]);
+    });
+});
+
+// -----------------------------------------------------------------------------
+// Fire-and-forget increment - signalEntity default path
+//
+// recordFireAndForgetAction is shared by two callers: the lock release (which
+// passes the lock-set size) and signalEntity (which uses the default increment
+// of 1). These tests pin that default: a signal consumes exactly one task-ID
+// slot, so a durable op scheduled after it lands at the next id and resolves.
+//   id 0 : the signal (fire-and-forget, no completion event)
+//   id 1 : the activity scheduled immediately after the signal
+// -----------------------------------------------------------------------------
+function buildSignalThenActivityHistory(
+    firstTimestamp: Date,
+    activityResult: unknown
+): HistoryEvent[] {
+    const orchestratorId = uuidv1();
+    const t0 = firstTimestamp;
+    const t1 = moment(firstTimestamp).add(1, "s").toDate();
+    const t2 = moment(firstTimestamp).add(2, "s").toDate();
+
+    return [
+        new OrchestratorStartedEvent({ eventId: -1, timestamp: t0, isPlayed: false }),
+        new ExecutionStartedEvent({
+            eventId: -1,
+            timestamp: t1,
+            isPlayed: true,
+            name: orchestratorId,
+            input: undefined,
+        }),
+        new OrchestratorCompletedEvent({ eventId: -1, timestamp: t1, isPlayed: true }),
+        new OrchestratorStartedEvent({ eventId: -1, timestamp: t2, isPlayed: false }),
+        // The signal consumed slot 0; the activity scheduled after it is slot 1.
+        new TaskCompletedEvent({
+            eventId: -1,
+            timestamp: t2,
+            isPlayed: false,
+            taskScheduledId: 1,
+            result: JSON.stringify(activityResult),
+        }),
+    ];
+}
+
+describe("Critical Sections - signalEntity fire-and-forget increment", () => {
+    it("a durable op after signalEntity stays aligned (default increment of 1)", async () => {
+        const orchestrator = createOrchestrator(function* (context) {
+            // signalEntity is the other caller of recordFireAndForgetAction and
+            // relies on the default increment of 1. The activity scheduled right
+            // after must land at task id 1 and resolve.
+            context.df.signalEntity(new EntityId("Account", "Z"), "ping");
+            const result = yield context.df.callActivity("afterSignal", null);
+            return { result };
+        });
+
+        const firstTs = moment.utc().toDate();
+        const input = new DurableOrchestrationInput(
+            "signal-then-activity",
+            buildSignalThenActivityHistory(firstTs, "signal-ok"),
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            ReplaySchema.V4
+        );
+        const result = await orchestrator(input, new DummyOrchestrationContextRuntime());
+
+        expect(result.isDone).to.equal(true);
+        expect(result.output).to.deep.equal({ result: "signal-ok" });
+        expect(
+            result.actions[0].map((x: { actionType: ActionType }) => x.actionType)
+        ).to.deep.equal([ActionType.SignalEntity, ActionType.CallActivity]);
     });
 });
