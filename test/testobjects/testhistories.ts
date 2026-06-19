@@ -2476,6 +2476,350 @@ export class TestHistories {
         ];
     }
 
+    /**
+     * Regression history for external event names that collide with `Object.prototype`
+     * members (e.g. "toString"). The orchestrator waits for the event name passed as
+     * its input, then the event is raised under that name. Before the prototype-less
+     * hardening of `openTasks`/`openEvents`, this threw a `TypeError`.
+     */
+    public static GetEventRaisedForName(
+        firstTimestamp: Date,
+        orchestratorName: string,
+        eventName: string,
+        eventPayload: unknown
+    ): HistoryEvent[] {
+        const t1 = moment(firstTimestamp).add(1, "s").toDate();
+        return [
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: orchestratorName,
+                input: JSON.stringify(eventName),
+            }),
+            new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+            }),
+            new EventRaisedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+                name: eventName,
+                input: JSON.stringify(eventPayload),
+            }),
+        ];
+    }
+
+    /**
+     * Regression history where the orchestrator yields an activity first, then
+     * waits for an external event. The history places the `EventRaised` *before*
+     * the activity's `TaskCompleted`, simulating an Azure Storage backend committing
+     * an early-arriving external event into history ahead of the activity completion.
+     */
+    public static GetActivityThenWaitForEvent_EventBeforeActivityCompletion(
+        firstTimestamp: Date,
+        orchestratorName: string,
+        activityInput: unknown,
+        eventName: string,
+        eventPayload: unknown
+    ): HistoryEvent[] {
+        const t1 = moment(firstTimestamp).add(1, "s").toDate();
+        return [
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: orchestratorName,
+                input: JSON.stringify(activityInput),
+            }),
+            new TaskScheduledEvent({
+                eventId: 0,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+                name: "Hello",
+                input: JSON.stringify(activityInput),
+            }),
+            new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+            }),
+            // Early event: arrives before the wait is registered, and before the
+            // activity completion is processed by the executor.
+            new EventRaisedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+                name: eventName,
+                input: JSON.stringify(eventPayload),
+            }),
+            new TaskCompletedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+                taskScheduledId: 0,
+                result: JSON.stringify(`Hello, ${activityInput}!`),
+            }),
+        ];
+    }
+
+    /**
+     * Regression history for the FIFO-drain path: the orchestrator yields on a
+     * `Hello` activity, then issues two same-named `waitForExternalEvent`
+     * calls. Both events arrive while the activity is still pending, so they
+     * are processed before either wait is registered and must therefore be
+     * queued in `deferredTasks["<eventName>"]` and drained in FIFO order when
+     * the waits register after the activity completes.
+     */
+    public static GetTwoEarlyEventsSameName(
+        firstTimestamp: Date,
+        orchestratorName: string,
+        eventName: string,
+        firstPayload: unknown,
+        secondPayload: unknown
+    ): HistoryEvent[] {
+        const t1 = moment(firstTimestamp).add(1, "s").toDate();
+        return [
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: orchestratorName,
+                input: undefined,
+            }),
+            new TaskScheduledEvent({
+                eventId: 0,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+                name: "Hello",
+                input: JSON.stringify("Prep"),
+            }),
+            new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+            }),
+            // Both events arrive before the activity completes, so neither wait
+            // is registered yet; they must end up in `deferredTasks[eventName]`.
+            new EventRaisedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+                name: eventName,
+                input: JSON.stringify(firstPayload),
+            }),
+            new EventRaisedEvent({
+                eventId: -1,
+                timestamp: moment(t1).add(1, "ms").toDate(),
+                isPlayed: false,
+                name: eventName,
+                input: JSON.stringify(secondPayload),
+            }),
+            // Activity completes — generator resumes, registers the first wait
+            // (drains the first queued entry), then the second wait (drains
+            // the second queued entry).
+            new TaskCompletedEvent({
+                eventId: -1,
+                timestamp: moment(t1).add(2, "ms").toDate(),
+                isPlayed: false,
+                taskScheduledId: 0,
+                result: JSON.stringify("Hello, Prep!"),
+            }),
+        ];
+    }
+
+    /**
+     * Regression history where two distinct external events arrive before either
+     * of two corresponding `waitForExternalEvent` calls is registered. As with
+     * `GetTwoEarlyEventsSameName`, the leading `Hello` activity is required to
+     * keep the orchestrator suspended on a non-event task while the two
+     * `EventRaised` history entries are processed, so each event is routed
+     * through `deferredTasks[<name>]` instead of `openEvents[<name>]`.
+     */
+    public static GetTwoEarlyEventsDistinctNames(
+        firstTimestamp: Date,
+        orchestratorName: string,
+        firstName: string,
+        firstPayload: unknown,
+        secondName: string,
+        secondPayload: unknown
+    ): HistoryEvent[] {
+        const t1 = moment(firstTimestamp).add(1, "s").toDate();
+        return [
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: orchestratorName,
+                input: undefined,
+            }),
+            new TaskScheduledEvent({
+                eventId: 0,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+                name: "Hello",
+                input: JSON.stringify("Prep"),
+            }),
+            new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+            }),
+            new EventRaisedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+                name: firstName,
+                input: JSON.stringify(firstPayload),
+            }),
+            new EventRaisedEvent({
+                eventId: -1,
+                timestamp: moment(t1).add(1, "ms").toDate(),
+                isPlayed: false,
+                name: secondName,
+                input: JSON.stringify(secondPayload),
+            }),
+            new TaskCompletedEvent({
+                eventId: -1,
+                timestamp: moment(t1).add(2, "ms").toDate(),
+                isPlayed: false,
+                taskScheduledId: 0,
+                result: JSON.stringify("Hello, Prep!"),
+            }),
+        ];
+    }
+
+    /**
+     * Regression history for `Task.all([waitForExternalEvent, callActivity])`
+     * where the external event arrives before the wait is registered. Both
+     * tasks must be satisfied for the all-task to complete.
+     *
+     * The orchestrator first yields on a leading `Hello`/`Prep` activity so it
+     * is provably suspended on a non-event task when the `EventRaised` history
+     * entry is processed. That forces the event through `deferredTasks` and
+     * exercises the deferred-drain path on the compound-task child registration
+     * inside `trackOpenTask`.
+     */
+    public static GetAllWaitAndActivity_EarlyEvent(
+        firstTimestamp: Date,
+        orchestratorName: string,
+        activityInput: string,
+        eventName: string,
+        eventPayload: unknown
+    ): HistoryEvent[] {
+        const t1 = moment(firstTimestamp).add(1, "s").toDate();
+        const t2 = moment(t1).add(1, "ms").toDate();
+        const t3 = moment(t1).add(2, "ms").toDate();
+        return [
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new ExecutionStartedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: true,
+                name: orchestratorName,
+                input: undefined,
+            }),
+            // Prep activity is registered first (sequence number 0).
+            new TaskScheduledEvent({
+                eventId: 0,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+                name: "Hello",
+                input: JSON.stringify("Prep"),
+            }),
+            new OrchestratorCompletedEvent({
+                eventId: -1,
+                timestamp: firstTimestamp,
+                isPlayed: false,
+            }),
+            new OrchestratorStartedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+            }),
+            // Early event: arrives before the `Task.all` (and therefore the wait)
+            // has been registered, so it is queued in `deferredTasks[eventName]`.
+            new EventRaisedEvent({
+                eventId: -1,
+                timestamp: t1,
+                isPlayed: false,
+                name: eventName,
+                input: JSON.stringify(eventPayload),
+            }),
+            // Prep activity completes — generator resumes, yields the `Task.all`,
+            // and the wait-child registration drains the deferred entry.
+            new TaskCompletedEvent({
+                eventId: -1,
+                timestamp: t2,
+                isPlayed: false,
+                taskScheduledId: 0,
+                result: JSON.stringify("Hello, Prep!"),
+            }),
+            // Tokyo activity (the second `Task.all` child) is scheduled when the
+            // `Task.all` is registered, then completes immediately afterward.
+            new TaskScheduledEvent({
+                eventId: 1,
+                timestamp: t2,
+                isPlayed: false,
+                name: "Hello",
+                input: JSON.stringify(activityInput),
+            }),
+            new TaskCompletedEvent({
+                eventId: -1,
+                timestamp: t3,
+                isPlayed: false,
+                taskScheduledId: 1,
+                result: JSON.stringify(`Hello, ${activityInput}!`),
+            }),
+        ];
+    }
+
     private static TimerCreated(timestamp: Date, fireAt: Date, timerId: number): HistoryEvent[] {
         return [
             new OrchestratorStartedEvent({

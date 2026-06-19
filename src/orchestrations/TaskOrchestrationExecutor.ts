@@ -29,7 +29,7 @@ export class TaskOrchestrationExecutor {
     private exception: Error | undefined;
     private orchestratorReturned: boolean;
     private generator: Generator<TaskBase, any, any>;
-    private deferredTasks: Record<number | string, () => void>;
+    private deferredTasks: Record<number | string, Array<() => void>>;
     private sequenceNumber: number;
     private schemaVersion: ReplaySchema;
     public willContinueAsNew: boolean;
@@ -67,10 +67,13 @@ export class TaskOrchestrationExecutor {
 
         this.sequenceNumber = 0;
         this.willContinueAsNew = false;
-        this.openTasks = {};
-        this.openEvents = {};
         this.actions = [];
-        this.deferredTasks = {};
+        // Use prototype-less objects so that string keys which happen to match
+        // members of `Object.prototype` (e.g. an external event named "toString")
+        // do not collide with inherited properties.
+        this.openTasks = Object.create(null);
+        this.openEvents = Object.create(null);
+        this.deferredTasks = Object.create(null);
 
         this.output = undefined;
         this.exception = undefined;
@@ -317,7 +320,10 @@ export class TaskOrchestrationExecutor {
                     this.setTaskValue(event, isSuccess, idKey);
                     return; // we return because the task is yet to be scheduled
                 };
-                this.deferredTasks[key] = updateTask.bind(this);
+                if (this.deferredTasks[key] === undefined) {
+                    this.deferredTasks[key] = [];
+                }
+                this.deferredTasks[key].push(updateTask.bind(this));
                 return;
             }
         } else {
@@ -448,13 +454,19 @@ export class TaskOrchestrationExecutor {
             if (newTask.state !== TaskState.Running) {
                 this.tryResumingUserCode();
             } else {
-                // The task hasn't completed, we add it to the open (incomplete) task list
+                // Record the action, but only for user-declared tasks we haven't scheduled yet
+                // (skip internal/history-processing tasks and replayed ones).
+                if (newTask instanceof DFTask && !newTask.alreadyScheduled) {
+                    this.markAsScheduled(newTask);
+                    this.addToActions(newTask.actionObj);
+                }
+
+                // Register the task as open (may resolve it immediately from a queued early event).
                 this.trackOpenTask(newTask);
-                // We only keep track of actions from user-declared tasks, not from
-                // tasks generated internally to facilitate history-processing.
-                if (this.currentTask instanceof DFTask && !this.currentTask.alreadyScheduled) {
-                    this.markAsScheduled(this.currentTask);
-                    this.addToActions(this.currentTask.actionObj);
+
+                // If the task got completed during registration, resume the generator now.
+                if (newTask.state !== TaskState.Running) {
+                    this.tryResumingUserCode();
                 }
             }
         }
@@ -519,10 +531,17 @@ export class TaskOrchestrationExecutor {
             }
 
             // If the task's ID can be found in deferred tasks, then we have already processed
-            // the history event that contains the result for this task. Therefore, we immediately
-            // assign this task's result so that the user-code may proceed executing.
-            if (this.deferredTasks.hasOwnProperty(task.id)) {
-                const taskUpdateAction = this.deferredTasks[task.id];
+            // a history event that contains a result for this task. Drain one entry from the
+            // per-ID FIFO queue to unblock the user code. The drain may complete this task
+            // synchronously, so when several events share a name, each queued one is handed to the
+            // next wait for that name as the generator advances.
+            const taskId = task.id as number | string;
+            const deferredQueue = this.deferredTasks[taskId];
+            if (deferredQueue !== undefined && deferredQueue.length > 0) {
+                const taskUpdateAction = deferredQueue.shift()!;
+                if (deferredQueue.length === 0) {
+                    delete this.deferredTasks[taskId];
+                }
                 taskUpdateAction();
             }
         }
