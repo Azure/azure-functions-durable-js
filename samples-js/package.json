@@ -8,7 +8,7 @@
         "test": "echo \"No tests yet...\""
     },
     "dependencies": {
-        "@azure/functions": "^4.16.1",
+        "@azure/functions": "4.8.2",
         "axios": "^1.18.0",
         "durable-functions": "file:..",
         "luxon": "^3.2.1",
