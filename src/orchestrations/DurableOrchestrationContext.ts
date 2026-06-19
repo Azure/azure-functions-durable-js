@@ -495,9 +495,8 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
             // locked entity), and each message consumes a task-ID slot in the
             // backend's sequence space. Advance our counter by the number of
             // locked entities so any durable task scheduled after the release is
-            // assigned the same ID the extension will use; otherwise a
-            // multi-entity early release leaves the next task waiting on a
-            // completion event that never matches, stalling the orchestration.
+            // assigned the same ID the extension will use and matches its
+            // completion event.
             this.taskOrchestratorExecutor.recordFireAndForgetAction(
                 new ReleaseEntitiesAction(),
                 deduped.length

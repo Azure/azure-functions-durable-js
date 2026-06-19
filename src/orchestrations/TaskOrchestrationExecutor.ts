@@ -498,10 +498,8 @@ export class TaskOrchestrationExecutor {
      * release is the exception: the extension's `ReleaseLocks()` sends one
      * entity message per locked entity, so releasing an N-entity lock consumes
      * N slots. Passing the correct count keeps our predicted task IDs aligned
-     * with the extension's. Otherwise every durable task scheduled after a
-     * multi-entity release is assigned an ID that is too low by (N - 1), its
-     * completion event never matches an open task, and the orchestration
-     * stalls.
+     * with the extension's, so durable work scheduled after the action still
+     * matches its completion events.
      *
      * @param action
      *  The fire-and-forget action to record.
