@@ -434,13 +434,14 @@ export class TaskOrchestrationExecutor {
             if (newTask.state !== TaskState.Running) {
                 this.tryResumingUserCode();
             } else {
-                // Record the task's action (only for user-declared, not-yet-scheduled tasks).
+                // Record the action, but only for user-declared tasks we haven't scheduled yet
+                // (skip internal/history-processing tasks and replayed ones).
                 if (newTask instanceof DFTask && !newTask.alreadyScheduled) {
                     this.markAsScheduled(newTask);
                     this.addToActions(newTask.actionObj);
                 }
 
-                // Register the task as open; this may complete it if its result was already processed.
+                // Register the task as open (may resolve it immediately from a queued early event).
                 this.trackOpenTask(newTask);
 
                 // If the task got completed during registration, resume the generator now.
@@ -511,10 +512,9 @@ export class TaskOrchestrationExecutor {
 
             // If the task's ID can be found in deferred tasks, then we have already processed
             // a history event that contains a result for this task. Drain one entry from the
-            // per-ID FIFO queue so that the user-code may proceed executing. The drain may
-            // synchronously complete this task (and propagate to its parent); `tryResumingUserCode`
-            // then re-yields and registers the next waiter within the same execution, which is how
-            // multiple same-named early events are delivered to successive waits in one replay.
+            // per-ID FIFO queue to unblock the user code. The drain may complete this task
+            // synchronously, so when several events share a name, each queued one is handed to the
+            // next wait for that name as the generator advances.
             const taskId = task.id as number | string;
             const deferredQueue = this.deferredTasks[taskId];
             if (deferredQueue !== undefined && deferredQueue.length > 0) {
