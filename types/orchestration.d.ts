@@ -1,6 +1,6 @@
 import { FunctionOptions, FunctionTrigger, InvocationContext, LogHandler } from "@azure/functions";
 import { RetryOptions, Task, TimerTask, TokenSource } from ".";
-import { EntityId } from "./entity";
+import { EntityId, LockState } from "./entity";
 
 /**
  * Type of a Generator that can be registered as an orchestration
@@ -179,6 +179,42 @@ export declare class DurableOrchestrationContext {
      * @param operationInput (optional) input for the operation.
      */
     signalEntity(entityId: EntityId, operationName: string, operationInput?: unknown): void;
+
+    /**
+     * Atomically acquires locks on one or more entities, forming a critical
+     * section. Yield the returned Task to receive a `DurableLock`.
+     *
+     * The lock set is sorted and deduplicated by entity id, then acquired
+     * in order to prevent deadlock.
+     *
+     * Release options (in recommended order):
+     *   1. `using` syntax (TS >=5.2 or plain JS on Node >=24).
+     *   2. `try/finally` calling `lock.release()`.
+     *   3. Implicit release at orchestration termination.
+     *
+     * Rules enforced inside a critical section (each throws
+     * `LockingRulesViolationError`):
+     *   - Cannot nest critical sections.
+     *   - Cannot invoke sub-orchestrations.
+     *   - `callEntity` only allowed on locked entities; no parallel calls to
+     *     the same locked entity.
+     *   - `signalEntity` only allowed on entities outside the lock set.
+     *
+     * @param entities One or more entities to lock. Supports varargs
+     *   (`lock(a, b)`) and array form (`lock([a, b])`).
+     *
+     * @throws RangeError when called with no arguments or an empty array.
+     * @throws TypeError when an element is not an EntityId.
+     * @throws LockingRulesViolationError when locking rules are violated.
+     */
+    lock(...entities: EntityId[]): Task;
+    lock(entities: EntityId[]): Task;
+
+    /**
+     * Returns whether the orchestration is currently inside a critical
+     * section and, if so, which entities are locked.
+     */
+    isLocked(): LockState;
 
     /**
      * Schedules an orchestration function named `name` for execution.

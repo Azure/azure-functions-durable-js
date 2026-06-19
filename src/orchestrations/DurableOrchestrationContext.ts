@@ -5,6 +5,7 @@ import {
     WhenAllTask,
     WhenAnyTask,
     AtomicTask,
+    LockTask,
     RetryableTask,
     DFTimerTask,
     DFTask,
@@ -25,12 +26,21 @@ import { CallSubOrchestratorWithRetryAction } from "../actions/CallSubOrchestrat
 import { ContinueAsNewAction } from "../actions/ContinueAsNewAction";
 import { CreateTimerAction } from "../actions/CreateTimerAction";
 import { ExternalEventType } from "../actions/ExternalEventType";
+import { LockEntitiesAction } from "../actions/LockEntitiesAction";
+import { ReleaseEntitiesAction } from "../actions/ReleaseEntitiesAction";
 import { WaitForExternalEventAction } from "../actions/WaitForExternalEventAction";
 import { GuidManager } from "../util/GuidManager";
 import { HistoryEvent } from "../history/HistoryEvent";
 import { DurableHttpRequest } from "../http/DurableHttpRequest";
 import { HistoryEventType } from "../history/HistoryEventType";
 import { ExecutionStartedEvent } from "../history/ExecutionStartedEvent";
+import { DurableLock } from "../entities/DurableLock";
+import { EntityId } from "../entities/EntityId";
+import { LockState } from "../entities/LockState";
+import {
+    LockingRulesViolationError,
+    LockingRulesViolationMessages,
+} from "../error/LockingRulesViolationError";
 
 /**
  * Parameter data for orchestration bindings that can be used to schedule
@@ -188,6 +198,24 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         operationName: string,
         operationInput?: unknown
     ): Task {
+        // Critical-section rules.
+        if (this.currentLock !== undefined) {
+            const targetSchedulerId = EntityId.getSchedulerIdFromEntityId(entityId as EntityId);
+            const isLocked = this.currentLock.ownedLocks.some(
+                (e) => EntityId.getSchedulerIdFromEntityId(e) === targetSchedulerId
+            );
+            if (!isLocked) {
+                throw new LockingRulesViolationError(
+                    LockingRulesViolationMessages.CallUnlockedEntity
+                );
+            }
+            if (this.currentLock.inFlightEntityCalls.has(targetSchedulerId)) {
+                throw new LockingRulesViolationError(
+                    LockingRulesViolationMessages.ParallelSameEntity
+                );
+            }
+            this.currentLock.inFlightEntityCalls.add(targetSchedulerId);
+        }
         const newAction = new CallEntityAction(entityId, operationName, operationInput);
         const task = new AtomicTask(false, newAction);
         return task;
@@ -197,6 +225,17 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         operationName: string,
         operationInput?: unknown
     ): void {
+        if (this.currentLock !== undefined) {
+            const targetSchedulerId = EntityId.getSchedulerIdFromEntityId(entityId as EntityId);
+            const isLocked = this.currentLock.ownedLocks.some(
+                (e) => EntityId.getSchedulerIdFromEntityId(e) === targetSchedulerId
+            );
+            if (isLocked) {
+                throw new LockingRulesViolationError(
+                    LockingRulesViolationMessages.SignalLockedEntity
+                );
+            }
+        }
         const action = new SignalEntityAction(entityId, operationName, operationInput);
         this.taskOrchestratorExecutor.recordFireAndForgetAction(action);
     }
@@ -210,6 +249,11 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"
+            );
+        }
+        if (this.currentLock !== undefined) {
+            throw new LockingRulesViolationError(
+                LockingRulesViolationMessages.SubOrchestrationInSection
             );
         }
 
@@ -228,6 +272,11 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         if (!name) {
             throw new Error(
                 "A sub-orchestration function name must be provided when attempting to create a suborchestration"
+            );
+        }
+        if (this.currentLock !== undefined) {
+            throw new LockingRulesViolationError(
+                LockingRulesViolationMessages.SubOrchestrationInSection
             );
         }
 
@@ -340,5 +389,135 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         const newAction = new WaitForExternalEventAction(name, ExternalEventType.ExternalEvent);
         const task = new AtomicTask(name, newAction);
         return task;
+    }
+
+    /**
+     * @hidden
+     * Tracks the active (or pending) critical section (if any). Set when `lock(...)` is scheduled;
+     * cleared when `release()` is invoked.
+     */
+    private currentLock: DurableLock | undefined;
+
+    /**
+     * @hidden
+     * Called by the executor when a `callEntity` task resolves (success or
+     * failure) so the "no parallel call to same locked entity" rule no
+     * longer treats the call as in flight.
+     */
+    public _onEntityCallResolved(schedulerId: string): void {
+        if (this.currentLock === undefined) {
+            return;
+        }
+        this.currentLock.inFlightEntityCalls.delete(schedulerId);
+    }
+
+    /**
+     * Acquires one or more entity locks, atomically, forming a critical
+     * section. Yield the returned task to receive a `DurableLock`.
+     *
+     * Supports both varargs and array form:
+     *   ctx.df.lock(a, b)
+     *   ctx.df.lock([a, b])
+     *
+     * @throws RangeError if no entities are supplied (zero arguments or empty array).
+     * @throws TypeError if any element is not an EntityId.
+     * @throws LockingRulesViolationError if called from inside an existing
+     *         critical section.
+     * @throws Error if the negotiated extension protocol does not support
+     *         critical sections (requires schema V4 or newer).
+     *
+     * @remarks
+     * **Replay-protocol contract:** the wire shape on replay is identical
+     * to `callEntity`. The extension sends a `RequestMessage`
+     * (history `EventSent`, with `Input.id` = lock-request GUID) and awaits
+     * an `EventRaised` whose `Name` equals that same GUID. The executor's
+     * `EventSent` handler re-keys this task to that GUID, so the subsequent
+     * `EventRaised` matches and resolves the lock task — without requiring
+     * any new history event type.
+     */
+    public lock(first: types.EntityId | types.EntityId[], ...rest: types.EntityId[]): Task {
+        if (this.schemaVersion < ReplaySchema.V4) {
+            throw new Error(
+                `lock requires a Durable Functions extension that supports OOProc schema V4 or higher (this extension supports up to ${
+                    ReplaySchema[this.schemaVersion]
+                }). Please upgrade the Microsoft.Azure.WebJobs.Extensions.DurableTask package.`
+            );
+        }
+
+        // Reject the no-args case up front. Without this check, normalization
+        // below would produce `[undefined]` and surface a TypeError, which
+        // contradicts the documented RangeError contract.
+        if (typeof first === "undefined" && rest.length === 0) {
+            throw new RangeError("lock requires at least one EntityId");
+        }
+
+        // Normalize varargs vs array form.
+        const entitiesRaw: unknown[] = Array.isArray(first) ? first : [first, ...rest];
+
+        if (entitiesRaw.length === 0) {
+            throw new RangeError("lock requires at least one EntityId");
+        }
+        for (const e of entitiesRaw) {
+            if (!(e instanceof EntityId)) {
+                throw new TypeError("lock expected EntityId[]");
+            }
+        }
+
+        if (this.currentLock !== undefined) {
+            throw new LockingRulesViolationError(LockingRulesViolationMessages.NestedSection);
+        }
+
+        const entities = entitiesRaw as EntityId[];
+
+        // Sort by scheduler id, then dedupe consecutive duplicates.
+        const sorted = [...entities].sort((a, b) => {
+            const aId = EntityId.getSchedulerIdFromEntityId(a);
+            const bId = EntityId.getSchedulerIdFromEntityId(b);
+            return aId < bId ? -1 : aId > bId ? 1 : 0;
+        });
+        const deduped = sorted.filter(
+            (e, i, arr) =>
+                i === 0 ||
+                EntityId.getSchedulerIdFromEntityId(arr[i - 1]) !==
+                    EntityId.getSchedulerIdFromEntityId(e)
+        );
+
+        const lockRequestId = this.newGuid(this.instanceId);
+        const action = new LockEntitiesAction(deduped, lockRequestId);
+
+        // The DurableLock the orchestrator generator receives on
+        // `yield ctx.df.lock(...)`. It is carried on the returned LockTask as a
+        // typed field (see LockTask), so the executor can hand it back on
+        // completion without a shared untyped property between the two.
+        const lock = new DurableLock(deduped, () => {
+            this.taskOrchestratorExecutor.recordFireAndForgetAction(new ReleaseEntitiesAction());
+            // Clear the active-section flag so subsequent code outside the
+            // section is no longer treated as locked.
+            if (this.currentLock === lock) {
+                this.currentLock = undefined;
+            }
+        });
+
+        const task = new LockTask(action, lock);
+
+        // Activate the section eagerly so subsequent yielded callEntity/etc
+        // inside the same generator frame see the rules. The lock won't
+        // *actually* be acquired by the extension until the action completes,
+        // but rule enforcement is purely worker-side bookkeeping and we want
+        // it to behave the same on first execution and on replay.
+        this.currentLock = lock;
+
+        return task;
+    }
+
+    /**
+     * Returns whether the orchestration is currently inside a critical
+     * section and, if so, which entities are locked.
+     */
+    public isLocked(): LockState {
+        if (this.currentLock === undefined) {
+            return new LockState(false, []);
+        }
+        return new LockState(true, [...this.currentLock.ownedLocks]);
     }
 }
