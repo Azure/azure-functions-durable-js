@@ -651,18 +651,16 @@ describe("Critical Sections - release-pattern parity", () => {
 });
 
 // -----------------------------------------------------------------------------
-// The extension's ReleaseLocks() sends one entity message per
-// locked entity, so releasing an N-entity lock consumes N task-ID slots in the
-// backend's sequence space. The worker previously advanced its own sequence
-// counter by only 1 for any release.
+// Builds the history for `lock(entities) -> release() -> callActivity`.
 //
-// Extension-side task IDs for `lock(entities) -> release() -> callActivity`:
+// The extension's ReleaseLocks() sends one entity message per locked entity, so
+// releasing an N-entity lock consumes N task-ID slots in the backend's sequence
+// space. The extension-side task IDs are:
 //   id 0        : lock request (single EventSent to the first entity)
 //   ids 1..N    : one release message per locked entity
 //   id N + 1    : the activity scheduled immediately after release
-// So the activity's TaskCompleted carries TaskScheduledId = N + 1.
-// The worker predicts that same ID and the orchestration completes; without
-// it the worker predicts ID 2 (N=2) / 2 (N=3) and stalls (isDone === false).
+// So the activity's TaskCompleted carries TaskScheduledId = N + 1, and the
+// worker advances its sequence counter by N at the release to match it.
 // -----------------------------------------------------------------------------
 function buildLockReleaseActivityHistory(
     firstTimestamp: Date,
@@ -728,7 +726,7 @@ function buildLockReleaseActivityHistory(
     return events;
 }
 
-describe("Critical Sections - early release then durable work (parity regression)", () => {
+describe("Critical Sections - early release then durable work", () => {
     // lock(entities) -> release() -> callActivity, driven through the full
     // replay pipeline. Returns the final orchestrator state.
     async function runLockReleaseThenActivity(
@@ -737,8 +735,7 @@ describe("Critical Sections - early release then durable work (parity regression
     ): Promise<{ isDone: boolean; output: unknown; actionTypes: ActionType[] }> {
         const orchestrator = createOrchestrator(function* (context) {
             const lock = (yield context.df.lock(entities)) as DurableLock;
-            // Release the section, then schedule further durable work -- the
-            // exact shape that used to stall for multi-entity locks.
+            // Release the section, then schedule further durable work.
             lock.release();
             const receipt = yield context.df.callActivity("sendReceipt", { ok: true });
             return { receipt, lockedAfter: context.df.isLocked().isLocked };
@@ -786,8 +783,8 @@ describe("Critical Sections - early release then durable work (parity regression
         const b = new EntityId("Account", "B");
         const result = await runLockReleaseThenActivity([a, b], "receipt-AB");
 
-        // Without the fix the activity's completion (TaskScheduledId = 3) never
-        // matches the worker-predicted ID (2), so isDone would be false.
+        // The activity completes as TaskScheduledId = N + 1 = 3; the worker must
+        // advance its counter by N = 2 at the release for the IDs to line up.
         expect(result.isDone).to.equal(true);
         expect(result.output).to.deep.equal({ receipt: "receipt-AB", lockedAfter: false });
         expect(result.actionTypes).to.deep.equal([
@@ -816,13 +813,13 @@ describe("Critical Sections - early release then durable work (parity regression
 });
 
 // -----------------------------------------------------------------------------
-// Many awaits after an early release (no cumulative drift)
+// Many awaits after an early release
 //
-// Extends the parity regression: after releasing a 2-entity lock, schedule
-// several sequential durable operations and prove every one of them resolves.
-// A single mis-count at the release knocks the IDs of *all* following awaits
-// out of alignment, so the failure surfaces on the first post-release await and
-// never recovers. These tests pin the whole post-release tail.
+// After releasing a 2-entity lock, schedule several sequential durable
+// operations and prove every one of them resolves. The release advances the
+// worker's task-ID counter by the lock-set size so the IDs of all following
+// awaits stay aligned with the extension; these tests pin the whole
+// post-release tail, not just the first op.
 //
 // ID layout for a 2-entity lock (N = 2):
 //   id 0        : lock request
@@ -967,8 +964,8 @@ describe("Critical Sections - many awaits after early release", () => {
             "release-4-awaits"
         );
 
-        // A miscounted release would strand the FIRST post-release await and
-        // never reach the 4th, so isDone proves the whole tail stayed aligned.
+        // Every post-release await must resolve in order; isDone confirms the
+        // whole tail stayed aligned with the extension's task IDs.
         expect(result.isDone).to.equal(true);
         expect(result.output).to.deep.equal(["r1", "r2", "r3", "r4"]);
         expect(result.actionTypes).to.deep.equal([
@@ -986,8 +983,7 @@ describe("Critical Sections - many awaits after early release", () => {
         const b = new EntityId("Account", "B");
         // Five post-release activities -> TaskScheduledId 3, 4, 5, 6, 7. The
         // plain `localSum` statement between them schedules nothing, so it must
-        // NOT consume a task-ID slot; if it (or the release) miscounts, ids 5-7
-        // never match and the orchestration stalls.
+        // NOT consume a task-ID slot.
         const results = [10, 20, 100, 200, 300];
 
         const orchestrator = createOrchestrator(function* (context) {
@@ -1034,16 +1030,14 @@ describe("Critical Sections - many awaits after early release", () => {
 // -----------------------------------------------------------------------------
 // Post-release op-type coverage (timer + entity)
 //
-// The early-release stall reproduced for EVERY durable op type scheduled after
-// the release, each of which resolves through a DIFFERENT completion-matching
-// path in the executor:
+// Each durable op type resolves through a different completion-matching path in
+// the executor:
 //   - activity -> TaskCompleted keyed by TaskScheduledId   (covered above)
 //   - timer    -> TimerFired    keyed by TimerId
 //   - entity   -> EventSent re-key (by request GUID) then EventRaised by Name
-// The activity tests already prove the counter realigns; these prove the
-// realigned id lands the post-release op correctly in the timer and entity
-// paths too. For a 2-entity lock the post-release op is id 3 (lock = 0, the two
-// release messages = 1 and 2).
+// These confirm the post-release op's task ID lands correctly in the timer and
+// entity paths too. For a 2-entity lock the post-release op is id 3 (lock = 0,
+// the two release messages = 1 and 2).
 // -----------------------------------------------------------------------------
 
 // Shared prefix: OrchestratorStarted + ExecutionStarted + the lock's EventSent
