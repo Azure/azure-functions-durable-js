@@ -433,6 +433,69 @@ export class TestOrchestrations {
         return returnValue;
     });
 
+    // Yields a single activity, then waits on an external event. If the event
+    // arrives before the wait is registered, the orchestration should still
+    // complete and return the event payload.
+    public static ActivityThenWaitForEvent: any = createOrchestrator(function* (context: any) {
+        const input = context.df.getInput();
+        yield context.df.callActivity("Hello", input);
+        const evt = yield context.df.waitForExternalEvent("continue");
+        return evt;
+    });
+
+    // Waits on the same-named event twice. If two `continue` events arrived early,
+    // the first wait should resolve with the first event's payload and the second
+    // wait with the second event's payload (FIFO drain).
+    //
+    // The leading activity yield is required so that the orchestrator is suspended
+    // on a non-event task when the two early `EventRaised` history entries are
+    // processed. Without it, the first wait would already be registered by the
+    // time the first event is replayed, so both events would be delivered via
+    // `openEvents` and the `deferredTasks` FIFO queue would never be exercised.
+    public static TwoWaitsSameEvent: any = createOrchestrator(function* (context: any) {
+        yield context.df.callActivity("Hello", "Prep");
+        const first = yield context.df.waitForExternalEvent("continue");
+        const second = yield context.df.waitForExternalEvent("continue");
+        return [first, second];
+    });
+
+    // Two waits on distinct early events. See `TwoWaitsSameEvent` for why a
+    // leading activity yield is required to actually exercise the deferred path.
+    public static TwoWaitsDistinctEvents: any = createOrchestrator(function* (context: any) {
+        yield context.df.callActivity("Hello", "Prep");
+        const a = yield context.df.waitForExternalEvent("alpha");
+        const b = yield context.df.waitForExternalEvent("beta");
+        return [a, b];
+    });
+
+    // `Task.all` over a wait and an activity, with the external event arriving
+    // before the wait is registered.
+    //
+    // The leading `Prep` activity yield is required for the same reason as
+    // `TwoWaitsSameEvent`: without it, the `Task.all` (and therefore the
+    // `waitForExternalEvent` child) would be registered during `ExecutionStarted`,
+    // so the early `EventRaised` would be delivered via `openEvents` instead of
+    // `deferredTasks`, and the new FIFO drain logic in `trackOpenTask` would
+    // never be hit on the compound-task path.
+    public static AllWaitAndActivity: any = createOrchestrator(function* (context: any) {
+        yield context.df.callActivity("Hello", "Prep");
+        const waitTask = context.df.waitForExternalEvent("continue");
+        const activityTask = context.df.callActivity("Hello", "Tokyo");
+        const results = yield context.df.Task.all([waitTask, activityTask]);
+        return results;
+    });
+
+    // Waits on an external event whose name is supplied as the orchestrator input.
+    // Used to verify that event names which collide with members of
+    // `Object.prototype` (e.g. "toString", "constructor", "hasOwnProperty") are
+    // handled correctly and do not resolve to inherited properties on the internal
+    // `openTasks`/`openEvents` maps.
+    public static WaitForNamedEvent: any = createOrchestrator(function* (context: any) {
+        const eventName = context.df.getInput();
+        const evt = yield context.df.waitForExternalEvent(eventName);
+        return evt;
+    });
+
     public static WaitOnTimer: any = createOrchestrator(function* (context: any) {
         const fireAt = context.df.getInput();
 

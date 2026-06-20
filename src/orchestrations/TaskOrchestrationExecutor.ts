@@ -1,10 +1,12 @@
 import { OrchestrationFailureError } from "../error/OrchestrationFailureError";
 import { OrchestratorState } from "./OrchestratorState";
-import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "../task";
+import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState, LockTask } from "../task";
 import { ReplaySchema } from "./ReplaySchema";
 import { Utils } from "../util/Utils";
 import { DurableOrchestrationContext, OrchestrationContext } from "durable-functions";
+import type { DurableOrchestrationContext as DurableOrchestrationContextImpl } from "./DurableOrchestrationContext";
 import { CallEntityAction } from "../actions/CallEntityAction";
+import { LockEntitiesAction } from "../actions/LockEntitiesAction";
 import { IAction } from "../actions/IAction";
 import { WaitForExternalEventAction } from "../actions/WaitForExternalEventAction";
 import { RequestMessage } from "../entities/RequestMessage";
@@ -27,7 +29,7 @@ export class TaskOrchestrationExecutor {
     private exception: Error | undefined;
     private orchestratorReturned: boolean;
     private generator: Generator<TaskBase, any, any>;
-    private deferredTasks: Record<number | string, () => void>;
+    private deferredTasks: Record<number | string, Array<() => void>>;
     private sequenceNumber: number;
     private schemaVersion: ReplaySchema;
     public willContinueAsNew: boolean;
@@ -65,10 +67,13 @@ export class TaskOrchestrationExecutor {
 
         this.sequenceNumber = 0;
         this.willContinueAsNew = false;
-        this.openTasks = {};
-        this.openEvents = {};
         this.actions = [];
-        this.deferredTasks = {};
+        // Use prototype-less objects so that string keys which happen to match
+        // members of `Object.prototype` (e.g. an external event named "toString")
+        // do not collide with inherited properties.
+        this.openTasks = Object.create(null);
+        this.openEvents = Object.create(null);
+        this.deferredTasks = Object.create(null);
 
         this.output = undefined;
         this.exception = undefined;
@@ -196,23 +201,30 @@ export class TaskOrchestrationExecutor {
             }
             case HistoryEventType.EventSent: {
                 // The EventSent event requires careful handling because it is re-used among
-                // CallEntity and WaitForExternalEvent APIs.
-                // For CallEntity, the EventRaised event that contains that API's result will
-                // expect a TaskID that is different from the TaskID found at the root of this
-                // EventSent event. Namely, the TaskID it expects can be found nested in the
-                // "Input" field of the corresponding EventSent event. Here, we handle that
-                // edge-case by correcting the expected TaskID in our openTask list.
+                // CallEntity, LockEntities, and WaitForExternalEvent APIs.
+                // For CallEntity/LockEntities, the completion event (EventRaised) carries
+                // a TaskID that is different from the TaskID at the root of this EventSent
+                // event. The expected TaskID lives in the "Input" field of the
+                // corresponding EventSent (as the `id` of the RequestMessage). We handle
+                // that edge-case here by re-keying the open task.
                 const key = event.EventId;
                 const task = this.openTasks[key];
                 if (task !== undefined) {
-                    if (task.actionObj instanceof CallEntityAction) {
+                    if (
+                        task.actionObj instanceof CallEntityAction ||
+                        task.actionObj instanceof LockEntitiesAction
+                    ) {
                         // extract TaskID from Input field
                         const eventSent = event as EventSentEvent;
                         const requestMessage = JSON.parse(
                             eventSent.Input as string
                         ) as RequestMessage;
 
-                        // Obtain correct Task ID and update the task to be associated with it
+                        // Obtain correct Task ID and update the task to be associated with it.
+                        // For LockEntitiesAction this id equals the action's lockRequestId,
+                        // and the upcoming EventRaised carrying "LockAcquisitionCompleted"
+                        // is named with the same GUID -- which is how the worker matches
+                        // lock-acquisition without a new history event type.
                         const eventId = requestMessage.id;
                         delete this.openTasks[key];
                         this.openTasks[eventId] = task;
@@ -308,7 +320,10 @@ export class TaskOrchestrationExecutor {
                     this.setTaskValue(event, isSuccess, idKey);
                     return; // we return because the task is yet to be scheduled
                 };
-                this.deferredTasks[key] = updateTask.bind(this);
+                if (this.deferredTasks[key] === undefined) {
+                    this.deferredTasks[key] = [];
+                }
+                this.deferredTasks[key].push(updateTask.bind(this));
                 return;
             }
         } else {
@@ -340,6 +355,11 @@ export class TaskOrchestrationExecutor {
                     taskResult = Error(taskResult as string);
                     isSuccess = false;
                 }
+            } else if (task instanceof LockTask) {
+                // Replace the raw extension response with the DurableLock that
+                // the LockTask carries (set at schedule time). This is the
+                // value the orchestrator generator sees on `yield ctx.df.lock(...)`.
+                taskResult = task.lockResult;
             }
         } else {
             // The task failed, we attempt to extract the Reason and Details from the event.
@@ -359,6 +379,15 @@ export class TaskOrchestrationExecutor {
         // Set result to the task, and update it's isPlayed flag.
         task.isPlayed = event.IsPlayed;
         task.setValue(!isSuccess, taskResult, this);
+
+        // If this was a callEntity inside a critical section, mark the call
+        // as no longer in flight so the orchestrator can issue another call
+        // to the same locked entity. Done in both success and failure paths.
+        if (task.actionObj instanceof CallEntityAction) {
+            (this.context as DurableOrchestrationContextImpl)._onEntityCallResolved(
+                task.actionObj.instanceId
+            );
+        }
     }
 
     /**
@@ -425,13 +454,19 @@ export class TaskOrchestrationExecutor {
             if (newTask.state !== TaskState.Running) {
                 this.tryResumingUserCode();
             } else {
-                // The task hasn't completed, we add it to the open (incomplete) task list
+                // Record the action, but only for user-declared tasks we haven't scheduled yet
+                // (skip internal/history-processing tasks and replayed ones).
+                if (newTask instanceof DFTask && !newTask.alreadyScheduled) {
+                    this.markAsScheduled(newTask);
+                    this.addToActions(newTask.actionObj);
+                }
+
+                // Register the task as open (may resolve it immediately from a queued early event).
                 this.trackOpenTask(newTask);
-                // We only keep track of actions from user-declared tasks, not from
-                // tasks generated internally to facilitate history-processing.
-                if (this.currentTask instanceof DFTask && !this.currentTask.alreadyScheduled) {
-                    this.markAsScheduled(this.currentTask);
-                    this.addToActions(this.currentTask.actionObj);
+
+                // If the task got completed during registration, resume the generator now.
+                if (newTask.state !== TaskState.Running) {
+                    this.tryResumingUserCode();
                 }
             }
         }
@@ -496,10 +531,17 @@ export class TaskOrchestrationExecutor {
             }
 
             // If the task's ID can be found in deferred tasks, then we have already processed
-            // the history event that contains the result for this task. Therefore, we immediately
-            // assign this task's result so that the user-code may proceed executing.
-            if (this.deferredTasks.hasOwnProperty(task.id)) {
-                const taskUpdateAction = this.deferredTasks[task.id];
+            // a history event that contains a result for this task. Drain one entry from the
+            // per-ID FIFO queue to unblock the user code. The drain may complete this task
+            // synchronously, so when several events share a name, each queued one is handed to the
+            // next wait for that name as the generator advances.
+            const taskId = task.id as number | string;
+            const deferredQueue = this.deferredTasks[taskId];
+            if (deferredQueue !== undefined && deferredQueue.length > 0) {
+                const taskUpdateAction = deferredQueue.shift()!;
+                if (deferredQueue.length === 0) {
+                    delete this.deferredTasks[taskId];
+                }
                 taskUpdateAction();
             }
         }

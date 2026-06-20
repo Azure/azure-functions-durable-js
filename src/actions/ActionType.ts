@@ -21,4 +21,6 @@ export enum ActionType {
     // ActionType 10 corresponds to ScheduledSignalEntity, which is not supported yet
     WhenAny = 11,
     WhenAll = 12,
+    LockEntities = 13,
+    ReleaseEntities = 14,
 }

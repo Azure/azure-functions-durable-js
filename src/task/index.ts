@@ -28,6 +28,7 @@ export * from "./TaskBase";
 export * from "./DFTask";
 export * from "./CompoundTask";
 export * from "./AtomicTask";
+export * from "./LockTask";
 export * from "./NoOpTask";
 export * from "./DFTimerTask";
 export * from "./CallHttpWithPollingTask";
