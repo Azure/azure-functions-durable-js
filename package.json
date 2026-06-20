@@ -44,12 +44,12 @@
     "dependencies": {
         "@azure/functions": "4.8.2",
         "@opentelemetry/api": "^1.9.0",
-        "axios": "^1.18.0",
+        "axios": "1.17.0",
         "debug": "~2.6.9",
         "lodash": "^4.18.1",
         "moment": "^2.29.2",
-        "uuid": "^10.0.0",
-        "validator": "~13.15.35"
+        "uuid": "^9.0.1",
+        "validator": "~13.15.20"
     },
     "devDependencies": {
         "@types/chai": "~4.1.6",
@@ -69,7 +69,7 @@
         "chai": "~4.2.0",
         "chai-as-promised": "~7.1.1",
         "chai-string": "~1.5.0",
-        "eslint": "^7.32.0",
+        "eslint": "^8.57.1",
         "eslint-config-prettier": "^6.15.0",
         "eslint-plugin-prettier": "^3.4.1",
         "mocha": "^11.2.2",

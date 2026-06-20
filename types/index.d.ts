@@ -1,5 +1,6 @@
 import { InvocationContext } from "@azure/functions";
 import { DurableClient } from "./durableClient";
+import "./symbol-dispose";
 
 export * from "./activity";
 export * from "./durableClient";
