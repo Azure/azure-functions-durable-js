@@ -15,7 +15,7 @@ export interface ActivityInvocationInfo {
      * True when the retry counter has reached the policy's `maxAttempts`
      * (i.e. `attempt === maxAttempts`). False when metadata is unavailable.
      *
-     * ⚠️ This does NOT mean "no further attempts will run." `RetryOptions.handle`
+     * NOTE: This does NOT mean "no further attempts will run." `RetryOptions.handle`
      * may abort the retry loop sooner by rejecting an exception, in which case
      * the actual last execution can have `isMaxAttempt === false`.
      */
@@ -74,7 +74,7 @@ export interface InstanceRetryHistory {
  * When metadata is unavailable (no retry policy, non-DTS backend, parsing
  * failure), returns a fallback shape with `metadataAvailable: false`.
  *
- * ⚠️ The `metadataAvailable` flag is the ONLY safe way to distinguish a genuine
+ * NOTE: The `metadataAvailable` flag is the ONLY safe way to distinguish a genuine
  * first attempt from missing metadata. `info.attempt === 1` is true in both
  * cases.
  *

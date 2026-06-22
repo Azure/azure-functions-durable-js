@@ -45,7 +45,7 @@ export interface ActivityInvocationInfo {
      * True when the retry counter has reached the policy's `maxAttempts`
      * (i.e. `attempt === maxAttempts`). False when metadata is unavailable.
      *
-     * ⚠️ This does NOT mean "no further attempts will run." `RetryOptions.handle`
+     * NOTE: This does NOT mean "no further attempts will run." `RetryOptions.handle`
      * may abort the retry loop sooner by rejecting an exception, in which case
      * the actual last execution can have `isMaxAttempt === false`.
      */
@@ -179,15 +179,36 @@ function makeUnavailable(): ActivityInvocationInfo {
 // getInstanceRetryHistory — client-side helper.
 // ---------------------------------------------------------------------------
 
-/** Minimal shape of getStatus payload we depend on.
- *  The extension's HTTP RPC layer returns history under the key `historyEvents`
- *  (per host-side post-processing), while older or alternate transports may use
- *  `history`. We accept either. */
+/** Minimal shape of the getStatus payload we depend on.
+ *  `DurableClient.getStatus` returns a `DurableOrchestrationStatus`, whose
+ *  constructor already normalizes the two possible history keys
+ *  (`history` from raw DTFx-style management APIs and `historyEvents` from the
+ *  HTTP RPC status response) into a single `history` field. We therefore only
+ *  depend on `history` here. */
 interface DurableClientLike {
     getStatus(
         instanceId: string,
         options?: { showHistory?: boolean; showInput?: boolean; showHistoryOutput?: boolean }
-    ): Promise<{ history?: Array<unknown>; historyEvents?: Array<unknown> } | undefined>;
+    ): Promise<{ history?: Array<unknown> } | undefined>;
+}
+
+/**
+ * Detects the "instance does not exist" signal from a thrown `getStatus` error.
+ *
+ * `DurableClient.getStatus` does not return `undefined` for a missing instance —
+ * it throws when the extension replies with HTTP 404. We recover that single case
+ * and map it back to the documented "missing instance" contract (return
+ * `undefined`), while letting every other error (e.g. HTTP 500) propagate.
+ */
+function isInstanceNotFoundError(error: unknown): boolean {
+    if (typeof error !== "object" || error === null) {
+        return false;
+    }
+    const e = error as { status?: unknown; statusCode?: unknown; message?: unknown };
+    if (e.status === 404 || e.statusCode === 404) {
+        return true;
+    }
+    return typeof e.message === "string" && /HTTP 404 response/.test(e.message);
 }
 
 /**
@@ -204,8 +225,9 @@ interface DurableClientLike {
  *      aggregated Completed/Failed event. This is what `DurableClient.getStatus`
  *      actually returns over the HTTP RPC endpoint.
  *
- * Returns `undefined` when the instance does not exist (matching the
- * missing-instance contract of `getStatus`).
+ * Returns `undefined` when the instance does not exist. `getStatus` signals a
+ * missing instance by throwing (HTTP 404); that throw is caught here and mapped
+ * to `undefined`. All other errors propagate.
  *
  * **Complexity:** `O(history length)`. Downloads the full history. For
  * long-running instances with very large histories (>10k events), expect
@@ -224,18 +246,26 @@ export async function getInstanceRetryHistory(
     client: DurableClientLike,
     instanceId: string
 ): Promise<InstanceRetryHistory | undefined> {
-    const status = await client.getStatus(instanceId, { showHistory: true });
+    let status: Awaited<ReturnType<DurableClientLike["getStatus"]>>;
+    try {
+        status = await client.getStatus(instanceId, { showHistory: true });
+    } catch (error) {
+        // getStatus throws (HTTP 404) when the instance does not exist. Map that
+        // to the documented missing-instance contract by returning undefined,
+        // and re-throw anything else so genuine failures are not swallowed.
+        if (isInstanceNotFoundError(error)) {
+            return undefined;
+        }
+        throw error;
+    }
+    // A conforming test double may still return undefined for a missing instance.
     if (!status) {
         return undefined;
     }
 
-    // Accept either casing: `history` (raw DTFx-style) or `historyEvents`
-    // (HTTP RPC status-response shape).
-    const events: Array<unknown> = Array.isArray(status.history)
-        ? status.history
-        : Array.isArray(status.historyEvents)
-        ? status.historyEvents
-        : [];
+    // `DurableOrchestrationStatus` already normalizes the `history`/`historyEvents`
+    // keys into `history`, so we only read from there.
+    const events: Array<unknown> = Array.isArray(status.history) ? status.history : [];
 
     interface NormalizedEvent {
         readonly eventType: string;
