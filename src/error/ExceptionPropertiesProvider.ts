@@ -46,6 +46,12 @@ export function extractExceptionProperties(error: unknown): Record<string, unkno
  * Returns `undefined` when the registered provider yields no properties for
  * the given error — callers should then leave the original error untouched so
  * existing JS wire-format behaviour is preserved for users who haven't opted in.
+ *
+ * Also returns `undefined` if serialization fails (for example, when the
+ * provider's properties contain circular references or non-serializable
+ * values such as `BigInt`). In that case the caller re-throws the original
+ * error untouched rather than surfacing a serialization error in place of the
+ * user's exception.
  */
 export function buildTaskFailureDetailsJson(error: unknown): string | undefined {
     const properties = extractExceptionProperties(error);
@@ -67,5 +73,10 @@ export function buildTaskFailureDetailsJson(error: unknown): string | undefined 
     if (errorObj?.stack) {
         payload.stackTrace = errorObj.stack;
     }
-    return JSON.stringify(payload);
+
+    try {
+        return JSON.stringify(payload);
+    } catch {
+        return undefined;
+    }
 }

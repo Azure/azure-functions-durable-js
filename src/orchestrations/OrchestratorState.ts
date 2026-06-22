@@ -1,6 +1,7 @@
 import { IAction } from "../actions/IAction";
 import { WhenAllAction } from "../actions/WhenAllAction";
 import { WhenAnyAction } from "../actions/WhenAnyAction";
+import { FailureDetailsDto } from "../history/FailureDetailsDto";
 import { IOrchestratorState } from "./IOrchestratorState";
 import { ReplaySchema } from "./ReplaySchema";
 
@@ -12,6 +13,7 @@ export class OrchestratorState implements IOrchestratorState {
     public readonly error?: string;
     public readonly customStatus?: unknown;
     public readonly schemaVersion: ReplaySchema;
+    public readonly failureDetails?: FailureDetailsDto;
 
     /**
      * @hidden
@@ -64,6 +66,10 @@ export class OrchestratorState implements IOrchestratorState {
 
         if (options.customStatus) {
             this.customStatus = options.customStatus;
+        }
+
+        if (options.failureDetails) {
+            this.failureDetails = options.failureDetails;
         }
         // Under replay protocol V1, compound actions are treated as lists of actions and
         // atomic actions are represented as a 1-element lists.

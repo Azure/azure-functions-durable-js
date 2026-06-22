@@ -37,3 +37,23 @@ function toFailureDetails(dto: FailureDetailsDto): types.FailureDetails {
         innerFailure: dto.InnerFailure ? toFailureDetails(dto.InnerFailure) : undefined,
     };
 }
+
+/**
+ * @hidden
+ * Converts a {@link types.FailureDetails} (camelCase, as reconstructed on the
+ * worker) back into the PascalCase {@link FailureDetailsDto} wire shape the host
+ * extension expects. Used when an uncaught {@link TaskFailedError} propagates out
+ * of an orchestrator so the host can relay the structured failure (including the
+ * full `InnerFailure` chain and custom `Properties`) to a calling parent
+ * orchestration. Inverse of `toFailureDetails`.
+ */
+export function toFailureDetailsDto(details: types.FailureDetails): FailureDetailsDto {
+    return {
+        ErrorType: details.errorType,
+        ErrorMessage: details.errorMessage,
+        StackTrace: details.stackTrace,
+        IsNonRetriable: details.isNonRetriable,
+        Properties: details.properties ?? undefined,
+        InnerFailure: details.innerFailure ? toFailureDetailsDto(details.innerFailure) : undefined,
+    };
+}

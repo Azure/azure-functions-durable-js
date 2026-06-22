@@ -1,5 +1,5 @@
 import { OrchestrationFailureError } from "../error/OrchestrationFailureError";
-import { TaskFailedError } from "../error/TaskFailedError";
+import { TaskFailedError, toFailureDetailsDto } from "../error/TaskFailedError";
 import { OrchestratorState } from "./OrchestratorState";
 import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "../task";
 import { ReplaySchema } from "./ReplaySchema";
@@ -152,6 +152,15 @@ export class TaskOrchestrationExecutor {
             error: this.exception?.message,
             customStatus: this.context.customStatus,
             schemaVersion: this.schemaVersion,
+            // If the orchestration failed because an uncaught sub-orchestration or
+            // activity failure propagated out, relay its structured FailureDetails
+            // (including the InnerFailure chain and any custom Properties) so the
+            // host can forward it to a calling parent orchestration. Only set on
+            // failure; omitted otherwise, leaving existing behavior unchanged.
+            failureDetails:
+                this.exception instanceof TaskFailedError
+                    ? toFailureDetailsDto(this.exception.failureDetails)
+                    : undefined,
         });
 
         // Throw errors, if any
