@@ -490,7 +490,17 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         // typed field (see LockTask), so the executor can hand it back on
         // completion without a shared untyped property between the two.
         const lock = new DurableLock(deduped, () => {
-            this.taskOrchestratorExecutor.recordFireAndForgetAction(new ReleaseEntitiesAction());
+            // Releasing the section emits one entity message per owned entity on
+            // the extension side (ReleaseLocks sends a ReleaseMessage to each
+            // locked entity), and each message consumes a task-ID slot in the
+            // backend's sequence space. Advance our counter by the number of
+            // locked entities so any durable task scheduled after the release is
+            // assigned the same ID the extension will use and matches its
+            // completion event.
+            this.taskOrchestratorExecutor.recordFireAndForgetAction(
+                new ReleaseEntitiesAction(),
+                deduped.length
+            );
             // Clear the active-section flag so subsequent code outside the
             // section is no longer treated as locked.
             if (this.currentLock === lock) {
