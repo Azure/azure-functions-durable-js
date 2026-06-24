@@ -16,7 +16,7 @@ export interface FailureDetails {
      * `ExceptionPropertiesProvider`. Undefined when the worker attached no
      * properties or when the host did not propagate them.
      */
-    properties?: Record<string, unknown> | null;
+    properties?: Record<string, unknown>;
     /** Inner failure cause, if any. */
     innerFailure?: FailureDetails;
 }
