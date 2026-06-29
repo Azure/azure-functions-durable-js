@@ -6,16 +6,17 @@ import {
     FunctionTrigger,
 } from "@azure/functions";
 import { RetryOptions, Task } from "durable-functions";
+import { DurableGrpcOptions } from "./durableGrpc";
 
 export type ActivityHandler = FunctionHandler;
 
-export interface ActivityOptions extends Partial<FunctionOptions> {
+export interface ActivityOptions extends Partial<FunctionOptions>, DurableGrpcOptions {
     handler: ActivityHandler;
     extraInputs?: FunctionInput[];
     extraOutputs?: FunctionOutput[];
 }
 
-export interface ActivityTrigger extends FunctionTrigger {
+export interface ActivityTrigger extends FunctionTrigger, DurableGrpcOptions {
     type: "activityTrigger";
 }
 

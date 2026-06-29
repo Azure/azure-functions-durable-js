@@ -20,6 +20,7 @@ import {
 } from "@azure/functions";
 import { DurableClient } from "./durableClient/DurableClient";
 import { getClient, isDurableClientInput } from "./durableClient/getClient";
+import { DurableGrpcOptions } from "./durableGrpc";
 
 export function http(functionName: string, options: HttpDurableClientOptions): void {
     addClientInput(options);
@@ -110,10 +111,10 @@ export function generic(functionName: string, options: DurableClientOptions): vo
     });
 }
 
-function addClientInput(options: Partial<DurableClientOptions>): void {
+function addClientInput(options: Partial<DurableClientOptions> & DurableGrpcOptions): void {
     options.extraInputs = options.extraInputs ?? [];
     if (!options.extraInputs.find(isDurableClientInput)) {
-        options.extraInputs.push(input.durableClient());
+        options.extraInputs.push(input.durableClient(options));
     }
 }
 

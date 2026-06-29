@@ -3,11 +3,13 @@ import { DurableClient } from "./durableClient";
 
 export * from "./activity";
 export * from "./durableClient";
+export * from "./durableGrpc";
 export * from "./entity";
 export * from "./orchestration";
 export * from "./task";
 
 export * as app from "./app";
+export * as grpc from "./grpc";
 export * as trigger from "./trigger";
 export * as input from "./input";
 

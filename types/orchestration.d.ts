@@ -1,5 +1,6 @@
 import { FunctionOptions, FunctionTrigger, InvocationContext, LogHandler } from "@azure/functions";
 import { RetryOptions, Task, TimerTask, TokenSource } from ".";
+import { DurableGrpcOptions } from "./durableGrpc";
 import { EntityId, LockState } from "./entity";
 
 /**
@@ -43,11 +44,11 @@ export declare class DummyOrchestrationContext extends InvocationContext
     df: DurableOrchestrationContext;
 }
 
-export interface OrchestrationOptions extends Partial<FunctionOptions> {
+export interface OrchestrationOptions extends Partial<FunctionOptions>, DurableGrpcOptions {
     handler: OrchestrationHandler;
 }
 
-export interface OrchestrationTrigger extends FunctionTrigger {
+export interface OrchestrationTrigger extends FunctionTrigger, DurableGrpcOptions {
     type: "orchestrationTrigger";
 }
 

@@ -1,12 +1,13 @@
 import { FunctionOptions, FunctionTrigger, InvocationContext, LogHandler } from "@azure/functions";
+import { DurableGrpcOptions } from "./durableGrpc";
 
 export type EntityHandler<T> = (context: EntityContext<T>) => void;
 
-export interface EntityOptions<T> extends Partial<FunctionOptions> {
+export interface EntityOptions<T> extends Partial<FunctionOptions>, DurableGrpcOptions {
     handler: EntityHandler<T>;
 }
 
-export interface EntityTrigger extends FunctionTrigger {
+export interface EntityTrigger extends FunctionTrigger, DurableGrpcOptions {
     type: "entityTrigger";
 }
 

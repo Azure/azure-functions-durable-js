@@ -1,20 +1,36 @@
 import { ActivityTrigger, EntityTrigger, OrchestrationTrigger } from "durable-functions";
 import { trigger as azFuncTrigger } from "@azure/functions";
+import { addDurableGrpcMetadata, DurableGrpcOptions } from "./durableGrpc";
 
-export function activity(): ActivityTrigger {
-    return azFuncTrigger.generic({
-        type: "activityTrigger",
-    }) as ActivityTrigger;
+export function activity(options: DurableGrpcOptions = {}): ActivityTrigger {
+    return azFuncTrigger.generic(
+        addDurableGrpcMetadata(
+            {
+                type: "activityTrigger",
+            },
+            options
+        )
+    ) as ActivityTrigger;
 }
 
-export function orchestration(): OrchestrationTrigger {
-    return azFuncTrigger.generic({
-        type: "orchestrationTrigger",
-    }) as OrchestrationTrigger;
+export function orchestration(options: DurableGrpcOptions = {}): OrchestrationTrigger {
+    return azFuncTrigger.generic(
+        addDurableGrpcMetadata(
+            {
+                type: "orchestrationTrigger",
+            },
+            options
+        )
+    ) as OrchestrationTrigger;
 }
 
-export function entity(): EntityTrigger {
-    return azFuncTrigger.generic({
-        type: "entityTrigger",
-    }) as EntityTrigger;
+export function entity(options: DurableGrpcOptions = {}): EntityTrigger {
+    return azFuncTrigger.generic(
+        addDurableGrpcMetadata(
+            {
+                type: "entityTrigger",
+            },
+            options
+        )
+    ) as EntityTrigger;
 }

@@ -19,10 +19,11 @@ import {
     Timer,
     TimerFunctionOptions,
 } from "@azure/functions";
+import { DurableGrpcOptions } from "./durableGrpc";
 import { EntityId, EntityStateResponse } from "./entity";
 import { DurableOrchestrationStatus, OrchestrationRuntimeStatus } from "./orchestration";
 
-export interface DurableClientInput extends FunctionInput {
+export interface DurableClientInput extends FunctionInput, DurableGrpcOptions {
     type: "durableClient";
 }
 
@@ -39,7 +40,7 @@ export type DurableClientHandler = (
 /**
  * Configures the inputs, outputs, and handler for a Durable Client function.
  */
-export interface DurableClientOptions extends Omit<FunctionOptions, "handler"> {
+export interface DurableClientOptions extends Omit<FunctionOptions, "handler">, DurableGrpcOptions {
     handler: DurableClientHandler;
 }
 
@@ -52,7 +53,9 @@ export type HttpDurableClientHandler = (
 /**
  * Configures options for an HTTP-triggered Durable Client function.
  */
-export interface HttpDurableClientOptions extends Omit<HttpFunctionOptions, "handler"> {
+export interface HttpDurableClientOptions
+    extends Omit<HttpFunctionOptions, "handler">,
+        DurableGrpcOptions {
     handler: HttpDurableClientHandler;
 }
 
@@ -65,7 +68,9 @@ export type TimerDurableClientHandler = (
 /**
  * Configures options for a timer-triggered Durable Client function.
  */
-export interface TimerDurableClientOptions extends Omit<TimerFunctionOptions, "handler"> {
+export interface TimerDurableClientOptions
+    extends Omit<TimerFunctionOptions, "handler">,
+        DurableGrpcOptions {
     handler: TimerDurableClientHandler;
 }
 
@@ -76,7 +81,8 @@ export type StorageBlobDurableClientHandler = (
 ) => FunctionResult;
 
 export interface StorageBlobDurableClientOptions
-    extends Omit<StorageBlobFunctionOptions, "handler"> {
+    extends Omit<StorageBlobFunctionOptions, "handler">,
+        DurableGrpcOptions {
     handler: StorageBlobDurableClientHandler;
 }
 
@@ -87,7 +93,8 @@ export type StorageQueueDurableClientHandler = (
 ) => FunctionResult;
 
 export interface StorageQueueDurableClientOptions
-    extends Omit<StorageQueueFunctionOptions, "handler"> {
+    extends Omit<StorageQueueFunctionOptions, "handler">,
+        DurableGrpcOptions {
     handler: StorageQueueDurableClientHandler;
 }
 
@@ -98,7 +105,8 @@ export type ServiceBusQueueDurableClientHandler = (
 ) => FunctionResult;
 
 export interface ServiceBusQueueDurableClientOptions
-    extends Omit<ServiceBusQueueFunctionOptions, "handler"> {
+    extends Omit<ServiceBusQueueFunctionOptions, "handler">,
+        DurableGrpcOptions {
     handler: ServiceBusQueueDurableClientHandler;
 }
 
@@ -109,7 +117,8 @@ export type ServiceBusTopicDurableClientHandler = (
 ) => FunctionResult;
 
 export interface ServiceBusTopicDurableClientOptions
-    extends Omit<ServiceBusTopicFunctionOptions, "handler"> {
+    extends Omit<ServiceBusTopicFunctionOptions, "handler">,
+        DurableGrpcOptions {
     handler: ServiceBusTopicDurableClientHandler;
 }
 
@@ -119,7 +128,9 @@ export type EventHubDurableClientHandler = (
     context: InvocationContext
 ) => FunctionResult;
 
-export interface EventHubDurableClientOptions extends Omit<EventHubFunctionOptions, "handler"> {
+export interface EventHubDurableClientOptions
+    extends Omit<EventHubFunctionOptions, "handler">,
+        DurableGrpcOptions {
     handler: EventHubDurableClientHandler;
 }
 
@@ -129,7 +140,9 @@ export type EventGridDurableClientHandler = (
     context: InvocationContext
 ) => FunctionResult;
 
-export interface EventGridDurableClientOptions extends Omit<EventGridFunctionOptions, "handler"> {
+export interface EventGridDurableClientOptions
+    extends Omit<EventGridFunctionOptions, "handler">,
+        DurableGrpcOptions {
     handler: EventGridDurableClientHandler;
 }
 
@@ -143,11 +156,15 @@ export type CosmosDBDurableClientOptions =
     | CosmosDBv3DurableClientOptions
     | CosmosDBv4DurableClientOptions;
 
-export interface CosmosDBv3DurableClientOptions extends Omit<CosmosDBv3FunctionOptions, "handler"> {
+export interface CosmosDBv3DurableClientOptions
+    extends Omit<CosmosDBv3FunctionOptions, "handler">,
+        DurableGrpcOptions {
     handler: CosmosDBDurableClientHandler;
 }
 
-export interface CosmosDBv4DurableClientOptions extends Omit<CosmosDBv4FunctionOptions, "handler"> {
+export interface CosmosDBv4DurableClientOptions
+    extends Omit<CosmosDBv4FunctionOptions, "handler">,
+        DurableGrpcOptions {
     handler: CosmosDBDurableClientHandler;
 }
 
