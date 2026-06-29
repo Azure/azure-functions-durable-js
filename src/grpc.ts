@@ -1,52 +1,23 @@
 import { StartNewOptions } from "durable-functions";
 
-export interface DurableTaskGrpcProtobufHelpers {
-    decodeOrchestratorRequestFromBase64(encodedRequest: string): unknown;
-    encodeOrchestratorResponseToBase64(response: unknown): string;
-    decodeEntityBatchRequestFromBase64(encodedRequest: string): unknown;
-    encodeEntityBatchResultToBase64(response: unknown): string;
-    decodeEntityRequestFromBase64(encodedRequest: string): unknown;
-}
-
 export interface DurableTaskGrpcWorker {
-    executeOrchestratorRequest(request: unknown): Promise<unknown>;
-    executeEntityBatchRequest(request: unknown): Promise<unknown>;
-    executeEntityRequest(request: unknown): Promise<unknown>;
-}
-
-export interface DurableFunctionsWorkerOptions {
-    protobuf?: DurableTaskGrpcProtobufHelpers;
+    processOrchestratorRequest(request: Uint8Array | Buffer): Promise<Uint8Array | Buffer>;
+    processEntityBatchRequest(request: Uint8Array | Buffer): Promise<Uint8Array | Buffer>;
 }
 
 export class DurableFunctionsWorker {
-    private readonly protobuf: DurableTaskGrpcProtobufHelpers;
-
-    public constructor(
-        private readonly worker: DurableTaskGrpcWorker,
-        options: DurableFunctionsWorkerOptions = {}
-    ) {
-        this.protobuf = options.protobuf ?? loadDurableTaskGrpcProtobufHelpers();
-    }
+    public constructor(private readonly worker: DurableTaskGrpcWorker) {}
 
     public async handleOrchestratorRequest(encodedRequest: string): Promise<string> {
-        validateBase64Request(encodedRequest, "orchestrator");
-        const request = this.protobuf.decodeOrchestratorRequestFromBase64(encodedRequest);
-        const response = await this.worker.executeOrchestratorRequest(request);
-        return this.protobuf.encodeOrchestratorResponseToBase64(response);
+        const request = decodeBase64Request(encodedRequest, "orchestrator");
+        const response = await this.worker.processOrchestratorRequest(request);
+        return Buffer.from(response).toString("base64");
     }
 
     public async handleEntityBatchRequest(encodedRequest: string): Promise<string> {
-        validateBase64Request(encodedRequest, "entity batch");
-        const request = this.protobuf.decodeEntityBatchRequestFromBase64(encodedRequest);
-        const response = await this.worker.executeEntityBatchRequest(request);
-        return this.protobuf.encodeEntityBatchResultToBase64(response);
-    }
-
-    public async handleEntityRequest(encodedRequest: string): Promise<string> {
-        validateBase64Request(encodedRequest, "entity");
-        const request = this.protobuf.decodeEntityRequestFromBase64(encodedRequest);
-        const response = await this.worker.executeEntityRequest(request);
-        return this.protobuf.encodeEntityBatchResultToBase64(response);
+        const request = decodeBase64Request(encodedRequest, "entity batch");
+        const response = await this.worker.processEntityBatchRequest(request);
+        return Buffer.from(response).toString("base64");
     }
 }
 
@@ -202,21 +173,12 @@ export class DurableFunctionsClient implements DurableTaskGrpcClient {
     }
 }
 
-function validateBase64Request(encodedRequest: string, requestType: string): void {
+function decodeBase64Request(encodedRequest: string, requestType: string): Buffer {
     if (!encodedRequest) {
         throw new TypeError(`${requestType} request must be a non-empty base64 string.`);
     }
-}
 
-function loadDurableTaskGrpcProtobufHelpers(): DurableTaskGrpcProtobufHelpers {
-    try {
-        return module.require("@microsoft/durabletask-js") as DurableTaskGrpcProtobufHelpers;
-    } catch (error) {
-        const message = error instanceof Error ? ` ${error.message}` : "";
-        throw new Error(
-            `Durable gRPC execution requires @microsoft/durabletask-js with Functions gRPC helpers.${message}`
-        );
-    }
+    return Buffer.from(encodedRequest, "base64");
 }
 
 function callOptionalClientMethod<TArgs extends unknown[], TResult>(
