@@ -247,7 +247,7 @@
     <p class="subtitle">
         这个页面展示最终目标流：JS v4 worker indexing 生成 Durable 绑定元数据，
         Durable Extension 看到 <code>durableRequiresGrpc</code> 后打开本地 gRPC 通道，
-        JS 侧只负责显式 opt-in、base64 边界和调用 durabletask-js 公共执行/客户端 API。
+        JS 侧只负责显式 opt-in，并调用 durabletask-js 公共 base64/protobuf、执行器和客户端 API。
     </p>
 
     <section class="grid">
@@ -298,7 +298,7 @@
             </div>
             <div class="node response" data-node="response">
                 <strong>base64 protobuf 响应</strong>
-                <span>JS adapter 只做 base64 边界；protobuf 和运行时语义由 durabletask-js 拥有。</span>
+                <span>JS adapter 调用 durabletask-js helper 编解码；protobuf 和运行时语义由 durabletask-js 拥有。</span>
             </div>
         </div>
 
@@ -339,13 +339,13 @@
         },
         {
             title: "Client 流",
-            body: "Client function 的 durableClient input 也发出 durableRequiresGrpc。未来 DurableFunctionsClient 将委托 durabletask-js 的 gRPC client API 来启动、查询和发送事件。",
+            body: "Client function 的 durableClient input 也发出 durableRequiresGrpc。DurableFunctionsClient 委托 durabletask-js 的 gRPC client API 来启动、查询和发送事件。",
             nodes: ["client", "taskhub"],
             path: "path-client"
         },
         {
             title: "Orchestrator 流",
-            body: "Task Hub 触发编排时，Extension 通过 gRPC 传 base64 protobuf OrchestratorRequest；JS adapter 解 base64，然后交给 durabletask-js 核心执行 replay。",
+            body: "Task Hub 触发编排时，Extension 通过 gRPC 传 base64 protobuf OrchestratorRequest；JS adapter 调用 durabletask-js helper 解码，然后交给 durabletask-js 核心执行 replay。",
             nodes: ["taskhub", "orchestrator"],
             path: "path-schedule"
         },
@@ -357,7 +357,7 @@
         },
         {
             title: "响应返回",
-            body: "durabletask-js 产出 protobuf 响应，JS adapter 编成 base64 返回给 Extension。谁说话：Extension <-> JS worker 走 gRPC；Durable 后端仍由 Extension/Task Hub 管理。",
+            body: "durabletask-js 产出 protobuf 响应，JS adapter 调用 durabletask-js helper 编成 base64 返回给 Extension。谁说话：Extension <-> JS worker 走 gRPC；Durable 后端仍由 Extension/Task Hub 管理。",
             nodes: ["work", "response"],
             path: "path-response"
         }
