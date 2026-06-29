@@ -1,23 +1,52 @@
 import { StartNewOptions } from "durable-functions";
 
+export interface DurableTaskGrpcProtobufHelpers {
+    decodeOrchestratorRequestFromBase64(encodedRequest: string): unknown;
+    encodeOrchestratorResponseToBase64(response: unknown): string;
+    decodeEntityBatchRequestFromBase64(encodedRequest: string): unknown;
+    encodeEntityBatchResultToBase64(response: unknown): string;
+    decodeEntityRequestFromBase64(encodedRequest: string): unknown;
+}
+
 export interface DurableTaskGrpcWorker {
-    processOrchestratorRequest(request: Uint8Array | Buffer): Promise<Uint8Array | Buffer>;
-    processEntityBatchRequest(request: Uint8Array | Buffer): Promise<Uint8Array | Buffer>;
+    executeOrchestratorRequest(request: unknown): Promise<unknown>;
+    executeEntityBatchRequest(request: unknown): Promise<unknown>;
+    executeEntityRequest(request: unknown): Promise<unknown>;
+}
+
+export interface DurableFunctionsWorkerOptions {
+    protobuf?: DurableTaskGrpcProtobufHelpers;
 }
 
 export class DurableFunctionsWorker {
-    public constructor(private readonly worker: DurableTaskGrpcWorker) {}
+    private readonly protobuf: DurableTaskGrpcProtobufHelpers;
+
+    public constructor(
+        private readonly worker: DurableTaskGrpcWorker,
+        options: DurableFunctionsWorkerOptions = {}
+    ) {
+        this.protobuf = options.protobuf ?? loadDurableTaskGrpcProtobufHelpers();
+    }
 
     public async handleOrchestratorRequest(encodedRequest: string): Promise<string> {
-        const request = decodeBase64Request(encodedRequest, "orchestrator");
-        const response = await this.worker.processOrchestratorRequest(request);
-        return Buffer.from(response).toString("base64");
+        validateBase64Request(encodedRequest, "orchestrator");
+        const request = this.protobuf.decodeOrchestratorRequestFromBase64(encodedRequest);
+        const response = await this.worker.executeOrchestratorRequest(request);
+        return this.protobuf.encodeOrchestratorResponseToBase64(response);
     }
 
     public async handleEntityBatchRequest(encodedRequest: string): Promise<string> {
-        const request = decodeBase64Request(encodedRequest, "entity batch");
-        const response = await this.worker.processEntityBatchRequest(request);
-        return Buffer.from(response).toString("base64");
+        validateBase64Request(encodedRequest, "entity batch");
+        const request = this.protobuf.decodeEntityBatchRequestFromBase64(encodedRequest);
+        const response = await this.worker.executeEntityBatchRequest(request);
+        return this.protobuf.encodeEntityBatchResultToBase64(response);
+    }
+
+    public async handleEntityRequest(encodedRequest: string): Promise<string> {
+        validateBase64Request(encodedRequest, "entity");
+        const request = this.protobuf.decodeEntityRequestFromBase64(encodedRequest);
+        const response = await this.worker.executeEntityRequest(request);
+        return this.protobuf.encodeEntityBatchResultToBase64(response);
     }
 }
 
@@ -165,20 +194,31 @@ export class DurableFunctionsClient implements DurableTaskGrpcClient {
         entityId: DurableTaskEntityId,
         includeState?: boolean
     ): Promise<T | undefined> {
-        if (!this.client.getEntity) {
-            return Promise.reject(new Error("Durable gRPC client does not provide getEntity()."));
-        }
-
-        return this.client.getEntity<T>(entityId, includeState);
+        return callOptionalClientMethod<[DurableTaskEntityId, boolean | undefined], T | undefined>(
+            this.client,
+            this.client.getEntity,
+            "getEntity",
+            entityId,
+            includeState
+        );
     }
 }
 
-function decodeBase64Request(encodedRequest: string, requestType: string): Buffer {
+function validateBase64Request(encodedRequest: string, requestType: string): void {
     if (!encodedRequest) {
         throw new TypeError(`${requestType} request must be a non-empty base64 string.`);
     }
+}
 
-    return Buffer.from(encodedRequest, "base64");
+function loadDurableTaskGrpcProtobufHelpers(): DurableTaskGrpcProtobufHelpers {
+    try {
+        return module.require("@microsoft/durabletask-js") as DurableTaskGrpcProtobufHelpers;
+    } catch (error) {
+        const message = error instanceof Error ? ` ${error.message}` : "";
+        throw new Error(
+            `Durable gRPC execution requires @microsoft/durabletask-js with Functions gRPC helpers.${message}`
+        );
+    }
 }
 
 function callOptionalClientMethod<TArgs extends unknown[], TResult>(

@@ -1,14 +1,28 @@
 import { StartNewOptions } from "./durableClient";
 
+export interface DurableTaskGrpcProtobufHelpers {
+    decodeOrchestratorRequestFromBase64(encodedRequest: string): unknown;
+    encodeOrchestratorResponseToBase64(response: unknown): string;
+    decodeEntityBatchRequestFromBase64(encodedRequest: string): unknown;
+    encodeEntityBatchResultToBase64(response: unknown): string;
+    decodeEntityRequestFromBase64(encodedRequest: string): unknown;
+}
+
 export interface DurableTaskGrpcWorker {
-    processOrchestratorRequest(request: Uint8Array | Buffer): Promise<Uint8Array | Buffer>;
-    processEntityBatchRequest(request: Uint8Array | Buffer): Promise<Uint8Array | Buffer>;
+    executeOrchestratorRequest(request: unknown): Promise<unknown>;
+    executeEntityBatchRequest(request: unknown): Promise<unknown>;
+    executeEntityRequest(request: unknown): Promise<unknown>;
+}
+
+export interface DurableFunctionsWorkerOptions {
+    protobuf?: DurableTaskGrpcProtobufHelpers;
 }
 
 export declare class DurableFunctionsWorker {
-    constructor(worker: DurableTaskGrpcWorker);
+    constructor(worker: DurableTaskGrpcWorker, options?: DurableFunctionsWorkerOptions);
     handleOrchestratorRequest(encodedRequest: string): Promise<string>;
     handleEntityBatchRequest(encodedRequest: string): Promise<string>;
+    handleEntityRequest(encodedRequest: string): Promise<string>;
 }
 
 export interface DurableTaskStartOrchestrationOptions {
