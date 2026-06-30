@@ -1,4 +1,5 @@
-import { StartNewOptions } from "./durableClient";
+import { HttpRequest, HttpResponse } from "@azure/functions";
+import { HttpManagementPayload, StartNewOptions } from "./durableClient";
 
 export interface DurableTaskGrpcWorker {
     processOrchestratorRequest(request: Uint8Array | Buffer): Promise<Uint8Array | Buffer>;
@@ -39,19 +40,27 @@ export interface DurableTaskGrpcClient {
         operationName: string,
         input?: unknown
     ): Promise<void>;
-    getEntity?<T = unknown>(
-        entityId: DurableTaskEntityId,
-        includeState?: boolean
-    ): Promise<T | undefined>;
+    getEntity?(entityId: DurableTaskEntityId, includeState?: boolean): Promise<unknown>;
+    stop?(): Promise<void>;
+}
+
+export interface GrpcDurableClientConfig {
+    taskHubName?: string;
+    rpcBaseUrl?: string;
+    requiredQueryStringParameters?: string;
+    httpBaseUrl?: string;
 }
 
 export interface DurableFunctionsClientOptions {
     taskHubName?: string;
+    requiredQueryStringParameters?: string;
+    httpBaseUrl?: string;
 }
 
 export declare class DurableFunctionsClient implements DurableTaskGrpcClient {
     readonly taskHubName: string | undefined;
     constructor(client: DurableTaskGrpcClient, options?: DurableFunctionsClientOptions);
+    static fromConfig(config: GrpcDurableClientConfig): DurableFunctionsClient;
     startNew(orchestratorFunctionName: string, options?: StartNewOptions): Promise<string>;
     scheduleNewOrchestration(
         orchestratorFunctionName: string,
@@ -69,8 +78,8 @@ export declare class DurableFunctionsClient implements DurableTaskGrpcClient {
         operationName: string,
         input?: unknown
     ): Promise<void>;
-    getEntity<T = unknown>(
-        entityId: DurableTaskEntityId,
-        includeState?: boolean
-    ): Promise<T | undefined>;
+    getEntity(entityId: DurableTaskEntityId, includeState?: boolean): Promise<unknown>;
+    createCheckStatusResponse(request: HttpRequest | undefined, instanceId: string): HttpResponse;
+    createHttpManagementPayload(instanceId: string): HttpManagementPayload;
+    stop(): Promise<void>;
 }

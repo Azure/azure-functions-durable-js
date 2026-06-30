@@ -11,6 +11,7 @@ import { getClient, input } from "../../src";
 import { Constants } from "../../src/Constants";
 import { OrchestrationClientInputData } from "../../src/durableClient/OrchestrationClientInputData";
 import { DurableClient } from "../../src/durableClient/DurableClient";
+import { DurableFunctionsClient } from "../../src/grpc";
 
 chai.use(chaiAsPromised);
 
@@ -135,6 +136,50 @@ describe("getClient()", () => {
 
             const expectedUniqueWebhookOrigins: string[] = [Constants.DefaultLocalOrigin];
             expect(client.uniqueWebhookOrigins).to.deep.equal(expectedUniqueWebhookOrigins);
+        });
+    });
+
+    describe("gRPC mode (durableRequiresGrpc opt-in)", () => {
+        const grpcClientData = {
+            taskHubName: defaultTaskHub,
+            connectionName: defaultConnection,
+            rpcBaseUrl: "http://127.0.0.1:4001",
+            requiredQueryStringParameters: "code=secret",
+            httpBaseUrl: "http://localhost:7071/runtime/webhooks/durabletask",
+        };
+
+        function createGrpcContext(): InvocationContext {
+            const clientInput: DurableClientInput = input.durableClient();
+            const context: InvocationContext = new InvocationContext({
+                options: {
+                    extraInputs: [clientInput],
+                },
+            });
+            context.extraInputs.set(clientInput, grpcClientData);
+            return context;
+        }
+
+        it("returns a gRPC-backed DurableFunctionsClient when the payload carries rpcBaseUrl and no HTTP URLs", async () => {
+            const client = getClient(createGrpcContext());
+
+            try {
+                expect(client).to.be.instanceOf(DurableFunctionsClient);
+                const grpcClient = (client as unknown) as DurableFunctionsClient;
+                expect(grpcClient.taskHubName).to.equal(defaultTaskHub);
+
+                const payload = grpcClient.createHttpManagementPayload("instance-9");
+                expect(payload.statusQueryGetUri).to.equal(
+                    "http://localhost:7071/runtime/webhooks/durabletask/instances/instance-9?code=secret"
+                );
+            } finally {
+                await ((client as unknown) as DurableFunctionsClient).stop();
+            }
+        });
+
+        it("does not take the gRPC path for legacy payloads carrying management URLs", async () => {
+            const client = getClient(defaultContext);
+            expect(client).to.be.instanceOf(DurableClient);
+            expect(client).to.not.be.instanceOf(DurableFunctionsClient);
         });
     });
 });

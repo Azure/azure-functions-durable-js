@@ -116,5 +116,84 @@ describe("Durable gRPC adapters", () => {
                 );
             }
         });
+
+        it("resolves stop() even when the underlying client cannot stop", async () => {
+            const client = new grpc.DurableFunctionsClient({
+                scheduleNewOrchestration: sinon.stub().resolves("unused"),
+            });
+
+            await client.stop();
+        });
+    });
+
+    describe("DurableFunctionsClient HTTP management helpers", () => {
+        it("builds management payloads from httpBaseUrl and substitutes the instance id", () => {
+            const client = new grpc.DurableFunctionsClient(
+                { scheduleNewOrchestration: sinon.stub().resolves("unused") },
+                {
+                    taskHubName: "task-hub",
+                    httpBaseUrl: "http://localhost:7071/runtime/webhooks/durabletask",
+                    requiredQueryStringParameters: "code=secret",
+                }
+            );
+
+            const payload = client.createHttpManagementPayload("instance-42");
+
+            expect(payload.id).to.equal("instance-42");
+            expect(payload.statusQueryGetUri).to.equal(
+                "http://localhost:7071/runtime/webhooks/durabletask/instances/instance-42?code=secret"
+            );
+            expect(payload.sendEventPostUri).to.equal(
+                "http://localhost:7071/runtime/webhooks/durabletask/instances/instance-42/raiseEvent/{eventName}?code=secret"
+            );
+            expect(payload.terminatePostUri).to.equal(
+                "http://localhost:7071/runtime/webhooks/durabletask/instances/instance-42/terminate?reason={text}&code=secret"
+            );
+            expect(payload.purgeHistoryDeleteUri).to.equal(
+                "http://localhost:7071/runtime/webhooks/durabletask/instances/instance-42?code=secret"
+            );
+        });
+
+        it("falls back to the default local origin when httpBaseUrl is absent", () => {
+            const client = new grpc.DurableFunctionsClient(
+                { scheduleNewOrchestration: sinon.stub().resolves("unused") },
+                { taskHubName: "task-hub" }
+            );
+
+            const payload = client.createHttpManagementPayload("abc");
+
+            expect(payload.statusQueryGetUri).to.equal(
+                "http://localhost:7071/runtime/webhooks/durabletask/instances/abc"
+            );
+        });
+    });
+
+    describe("DurableFunctionsClient.fromConfig", () => {
+        it("builds a gRPC-backed client from the durable client binding payload", async () => {
+            const client = grpc.DurableFunctionsClient.fromConfig({
+                taskHubName: "task-hub",
+                rpcBaseUrl: "http://127.0.0.1:4001",
+                httpBaseUrl: "http://localhost:7071/runtime/webhooks/durabletask",
+                requiredQueryStringParameters: "code=secret",
+            });
+
+            try {
+                expect(client).to.be.instanceOf(grpc.DurableFunctionsClient);
+                expect(client.taskHubName).to.equal("task-hub");
+
+                const payload = client.createHttpManagementPayload("instance-7");
+                expect(payload.statusQueryGetUri).to.equal(
+                    "http://localhost:7071/runtime/webhooks/durabletask/instances/instance-7?code=secret"
+                );
+            } finally {
+                await client.stop();
+            }
+        });
+
+        it("throws when the gRPC sidecar address (rpcBaseUrl) is missing", () => {
+            expect(() =>
+                grpc.DurableFunctionsClient.fromConfig({ taskHubName: "task-hub" })
+            ).to.throw(/rpcBaseUrl/);
+        });
     });
 });
