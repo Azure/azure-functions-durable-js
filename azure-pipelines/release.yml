@@ -56,5 +56,8 @@ extends:
             owners: $(Build.RequestedForEmail)
             approvers: $(Build.RequestedForEmail)
             serviceendpointurl: "https://api.esrp.microsoft.com"
+            # durabletask-java is the publisher name we selected when we
+            # first set up ESRP for durable packages (we did Java first),
+            # but is also correct for all other languages.
             mainpublisher: "durabletask-java"
             domaintenantid: "33e01921-4d64-4f8c-a055-5bdaffd5e33d"
