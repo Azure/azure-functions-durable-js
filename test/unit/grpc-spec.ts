@@ -3,105 +3,57 @@ import sinon = require("sinon");
 import { grpc } from "../../src";
 
 describe("Durable gRPC adapters", () => {
-    const protobuf: grpc.DurableTaskGrpcProtobufHelpers = {
-        decodeOrchestratorRequestFromBase64: (encodedRequest: string): unknown => ({
-            kind: "orchestrator",
-            value: Buffer.from(encodedRequest, "base64").toString(),
-        }),
-        encodeOrchestratorResponseToBase64: (response: unknown): string =>
-            Buffer.from(JSON.stringify(response)).toString("base64"),
-        decodeEntityBatchRequestFromBase64: (encodedRequest: string): unknown => ({
-            kind: "entityBatch",
-            value: Buffer.from(encodedRequest, "base64").toString(),
-        }),
-        encodeEntityBatchResultToBase64: (response: unknown): string =>
-            Buffer.from(JSON.stringify(response)).toString("base64"),
-        decodeEntityRequestFromBase64: (encodedRequest: string): unknown => ({
-            kind: "entity",
-            value: Buffer.from(encodedRequest, "base64").toString(),
-        }),
-    };
-
     describe("DurableFunctionsWorker", () => {
-        it("uses durabletask-js protobuf helpers and worker execute API for orchestrator requests", async () => {
-            const executeOrchestratorRequest = sinon.stub().resolves({
-                kind: "orchestratorResponse",
+        it("decodes base64, delegates to processOrchestratorRequest, and re-encodes the response", async () => {
+            const responseBytes = Buffer.from("orchestrator response");
+            const processOrchestratorRequest = sinon.stub().resolves(responseBytes);
+            const worker = new grpc.DurableFunctionsWorker({
+                processOrchestratorRequest,
+                processEntityBatchRequest: sinon.stub().resolves(Buffer.from("unused")),
             });
-            const worker = new grpc.DurableFunctionsWorker(
-                {
-                    executeOrchestratorRequest,
-                    executeEntityBatchRequest: sinon.stub().resolves({ kind: "unused" }),
-                    executeEntityRequest: sinon.stub().resolves({ kind: "unused" }),
-                },
-                { protobuf }
-            );
 
             const actual = await worker.handleOrchestratorRequest(
                 Buffer.from("orchestrator request").toString("base64")
             );
 
-            expect(JSON.parse(Buffer.from(actual, "base64").toString())).to.deep.equal({
-                kind: "orchestratorResponse",
-            });
-            expect(executeOrchestratorRequest.callCount).to.equal(1);
-            expect(executeOrchestratorRequest.args[0][0]).to.deep.equal({
-                kind: "orchestrator",
-                value: "orchestrator request",
-            });
+            expect(actual).to.equal(responseBytes.toString("base64"));
+            expect(processOrchestratorRequest.callCount).to.equal(1);
+            expect(Buffer.from(processOrchestratorRequest.args[0][0]).toString()).to.equal(
+                "orchestrator request"
+            );
         });
 
-        it("uses durabletask-js protobuf helpers and worker execute API for entity batch requests", async () => {
-            const executeEntityBatchRequest = sinon.stub().resolves({
-                kind: "entityBatchResponse",
+        it("decodes base64, delegates to processEntityBatchRequest, and re-encodes the result", async () => {
+            const responseBytes = Buffer.from("entity batch result");
+            const processEntityBatchRequest = sinon.stub().resolves(responseBytes);
+            const worker = new grpc.DurableFunctionsWorker({
+                processOrchestratorRequest: sinon.stub().resolves(Buffer.from("unused")),
+                processEntityBatchRequest,
             });
-            const worker = new grpc.DurableFunctionsWorker(
-                {
-                    executeOrchestratorRequest: sinon.stub().resolves({ kind: "unused" }),
-                    executeEntityBatchRequest,
-                    executeEntityRequest: sinon.stub().resolves({ kind: "unused" }),
-                },
-                { protobuf }
-            );
 
             const actual = await worker.handleEntityBatchRequest(
                 Buffer.from("entity batch request").toString("base64")
             );
 
-            expect(JSON.parse(Buffer.from(actual, "base64").toString())).to.deep.equal({
-                kind: "entityBatchResponse",
-            });
-            expect(executeEntityBatchRequest.callCount).to.equal(1);
-            expect(executeEntityBatchRequest.args[0][0]).to.deep.equal({
-                kind: "entityBatch",
-                value: "entity batch request",
-            });
+            expect(actual).to.equal(responseBytes.toString("base64"));
+            expect(processEntityBatchRequest.callCount).to.equal(1);
+            expect(Buffer.from(processEntityBatchRequest.args[0][0]).toString()).to.equal(
+                "entity batch request"
+            );
         });
 
-        it("uses durabletask-js protobuf helpers and worker execute API for entity requests", async () => {
-            const executeEntityRequest = sinon.stub().resolves({
-                kind: "entityResponse",
+        it("rejects empty base64 requests", async () => {
+            const worker = new grpc.DurableFunctionsWorker({
+                processOrchestratorRequest: sinon.stub().resolves(Buffer.from("unused")),
+                processEntityBatchRequest: sinon.stub().resolves(Buffer.from("unused")),
             });
-            const worker = new grpc.DurableFunctionsWorker(
-                {
-                    executeOrchestratorRequest: sinon.stub().resolves({ kind: "unused" }),
-                    executeEntityBatchRequest: sinon.stub().resolves({ kind: "unused" }),
-                    executeEntityRequest,
-                },
-                { protobuf }
-            );
 
-            const actual = await worker.handleEntityRequest(
-                Buffer.from("entity request").toString("base64")
-            );
-
-            expect(JSON.parse(Buffer.from(actual, "base64").toString())).to.deep.equal({
-                kind: "entityResponse",
-            });
-            expect(executeEntityRequest.callCount).to.equal(1);
-            expect(executeEntityRequest.args[0][0]).to.deep.equal({
-                kind: "entity",
-                value: "entity request",
-            });
+            try {
+                await worker.handleOrchestratorRequest("");
+                throw new Error("Expected handleOrchestratorRequest to throw.");
+            } catch (error) {
+                expect(error).to.be.instanceOf(TypeError);
+            }
         });
     });
 
