@@ -12,12 +12,11 @@ export interface ActivityInvocationInfo {
      *  defaults to 1 when metadata is unavailable. */
     readonly maxAttempts: number;
     /**
-     * True when the retry counter has reached the policy's `maxAttempts`
-     * (i.e. `attempt === maxAttempts`). False when metadata is unavailable.
+     * True when `attempt === maxAttempts`. False when metadata is unavailable.
      *
-     * NOTE: This does NOT mean "no further attempts will run." `RetryOptions.handle`
-     * may abort the retry loop sooner by rejecting an exception, in which case
-     * the actual last execution can have `isMaxAttempt === false`.
+     * This only means the attempt reached the policy's ceiling, not that it was
+     * the last one to run: if `retryTimeoutInMilliseconds` stops retries early,
+     * the final attempt can have `isMaxAttempt === false`.
      */
     readonly isMaxAttempt: boolean;
     /**
@@ -49,8 +48,7 @@ export interface InstanceRetryHistory {
     readonly instanceId: string;
     /** All activity scheduling events that carried retry tags, in history order. */
     readonly attempts: ActivityRetryRecord[];
-    /** Same aggregate semantics as the orchestration-span attribute:
-     *  count of TaskScheduledEvents with attempt > 1. */
+    /** Count of TaskScheduled events with attempt > 1. */
     readonly retryAttemptCount: number;
     /** True iff at least one retried activity has a TaskFailed for an
      *  attempt where attempt === maxAttempts. */
@@ -68,11 +66,12 @@ export interface InstanceRetryHistory {
  * Read the current retry attempt information for an activity invocation.
  *
  * When the activity was scheduled with a `RetryOptions` policy AND the backend
- * preserves `TaskScheduledEvent.Tags` (currently DTS only), returns the parsed
- * attempt counter, policy ceiling, and an `isMaxAttempt` flag.
+ * preserves `TaskScheduledEvent.Tags`, returns the parsed attempt counter,
+ * policy ceiling, and an `isMaxAttempt` flag.
  *
- * When metadata is unavailable (no retry policy, non-DTS backend, parsing
- * failure), returns a fallback shape with `metadataAvailable: false`.
+ * When metadata is unavailable (no retry policy, a backend that does not
+ * preserve the tags, or parsing failure), returns a fallback shape with
+ * `metadataAvailable: false`.
  *
  * NOTE: The `metadataAvailable` flag is the ONLY safe way to distinguish a genuine
  * first attempt from missing metadata. `info.attempt === 1` is true in both

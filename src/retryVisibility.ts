@@ -2,32 +2,31 @@
  * Native activity retry visibility — helpers for inspecting per-attempt
  * retry metadata recorded on activity history events.
  *
- * Two surfaces are exported from this module:
+ * Two helpers are exported from this module:
  *
  *  - `getActivityInvocationInfo(context)` — read from inside an activity to learn
- *    the current retry attempt and policy ceiling (Goal #1).
+ *    the current retry attempt and policy ceiling.
  *  - `getInstanceRetryHistory(client, instanceId)` — read from outside an orchestration
- *    to project the retry trail per activity (Goal #4).
+ *    to project the retry trail per activity.
  *
- * Both helpers share a single strict-decimal parser (see `parsePositiveInt`) to
- * guarantee identical interpretation of `dt.retry.*` history tags across
- * activity-side and client-side consumers. The shared parser is exported privately
- * via `internalParsePositiveInt` for the cross-stack test-vector fixture.
+ * Both helpers share a single strict-decimal parser (see `parsePositiveInt`) so
+ * that `dt.retry.*` history tags are interpreted identically on the activity side
+ * and the client side.
  */
 
 import type { InvocationContext } from "@azure/functions";
 
 // ---------------------------------------------------------------------------
 // Trigger metadata key constants — camelCase, `durabletask.` prefix.
-// These names are part of the cross-stack wire contract and must not change
-// without a coordinated update to every consumer of activity-trigger metadata.
+// These key names must match the names written to the activity trigger
+// metadata; renaming them here breaks reading that metadata.
 // ---------------------------------------------------------------------------
 const TRIGGER_KEY_ATTEMPT = "durabletask.attempt";
 const TRIGGER_KEY_MAX_ATTEMPTS = "durabletask.maxAttempts";
 const TRIGGER_KEY_IS_MAX_ATTEMPT = "durabletask.isMaxAttempt";
 
-// History tag keys — names are part of the cross-stack wire contract and must
-// match every producer / consumer of `TaskScheduledEvent.Tags`.
+// History tag keys — these key names must match the tag names written to
+// `TaskScheduledEvent.Tags`.
 const HISTORY_TAG_ATTEMPT = "dt.retry.attempt";
 const HISTORY_TAG_MAX_ATTEMPTS = "dt.retry.maxAttempts";
 
@@ -42,12 +41,11 @@ export interface ActivityInvocationInfo {
      *  defaults to 1 when metadata is unavailable. */
     readonly maxAttempts: number;
     /**
-     * True when the retry counter has reached the policy's `maxAttempts`
-     * (i.e. `attempt === maxAttempts`). False when metadata is unavailable.
+     * True when `attempt === maxAttempts`. False when metadata is unavailable.
      *
-     * NOTE: This does NOT mean "no further attempts will run." `RetryOptions.handle`
-     * may abort the retry loop sooner by rejecting an exception, in which case
-     * the actual last execution can have `isMaxAttempt === false`.
+     * This only means the attempt reached the policy's ceiling, not that it was
+     * the last one to run: if `retryTimeoutInMilliseconds` stops retries early,
+     * the final attempt can have `isMaxAttempt === false`.
      */
     readonly isMaxAttempt: boolean;
     /**
@@ -71,8 +69,7 @@ export interface InstanceRetryHistory {
     readonly instanceId: string;
     /** All activity scheduling events that carried retry tags, in history order. */
     readonly attempts: ActivityRetryRecord[];
-    /** Same aggregate semantics as the orchestration-span attribute:
-     *  count of TaskScheduledEvents with attempt > 1. */
+    /** Count of TaskScheduled events with attempt > 1. */
     readonly retryAttemptCount: number;
     /** True iff at least one retried activity has a TaskFailed for an
      *  attempt where attempt === maxAttempts. */
@@ -92,10 +89,8 @@ export interface InstanceRetryHistory {
 
 /**
  * Strict decimal parser. Returns the integer when input is a non-empty string
- * matching `^[1-9][0-9]*$` (or `"0"`); returns `undefined` otherwise.
- * Matches `int.TryParse(s, NumberStyles.None, CultureInfo.InvariantCulture)`
- * semantics on the extension side. No whitespace, signs, hex, or scientific
- * notation. ASCII decimal only.
+ * matching `^[1-9][0-9]*$` (or `"0"`); returns `undefined` otherwise. No
+ * whitespace, signs, hex, or scientific notation. ASCII decimal only.
  */
 function parsePositiveInt(raw: unknown): number | undefined {
     if (typeof raw === "number" && Number.isInteger(raw) && raw >= 0) {
@@ -116,8 +111,8 @@ function parsePositiveInt(raw: unknown): number | undefined {
     return n;
 }
 
-/** Internal test hook — exported under a deliberately-ugly name for use by
- *  the cross-stack test-vector fixture. NOT part of the public API. */
+/** Internal test hook, exported under a deliberately-ugly name. NOT part of
+ *  the public API. */
 export const __internalParsePositiveInt = parsePositiveInt;
 
 // ---------------------------------------------------------------------------
@@ -157,13 +152,14 @@ export function getActivityInvocationInfo(context: InvocationContext): ActivityI
         attempt === undefined ||
         maxAttempts === undefined ||
         attempt < 1 ||
+        maxAttempts < 1 ||
         maxAttempts < attempt
     ) {
         return makeUnavailable();
     }
 
-    // Prefer the precomputed boolean from the extension when present (saves the
-    // round-trip and lets future telemetry distinguish Handle()-aborted cases).
+    // Prefer the precomputed boolean when present; otherwise fall back to
+    // comparing the attempt counter against maxAttempts.
     const isMaxAttemptRaw = meta[TRIGGER_KEY_IS_MAX_ATTEMPT];
     const isMaxAttempt =
         typeof isMaxAttemptRaw === "boolean" ? isMaxAttemptRaw : attempt === maxAttempts;
@@ -181,10 +177,9 @@ function makeUnavailable(): ActivityInvocationInfo {
 
 /** Minimal shape of the getStatus payload we depend on.
  *  `DurableClient.getStatus` returns a `DurableOrchestrationStatus`, whose
- *  constructor already normalizes the two possible history keys
- *  (`history` from raw DTFx-style management APIs and `historyEvents` from the
- *  HTTP RPC status response) into a single `history` field. We therefore only
- *  depend on `history` here. */
+ *  constructor already normalizes the two possible history keys (`history` and
+ *  `historyEvents`) into a single `history` field. We therefore only depend on
+ *  `history` here. */
 interface DurableClientLike {
     getStatus(
         instanceId: string,
@@ -196,7 +191,7 @@ interface DurableClientLike {
  * Detects the "instance does not exist" signal from a thrown `getStatus` error.
  *
  * `DurableClient.getStatus` does not return `undefined` for a missing instance —
- * it throws when the extension replies with HTTP 404. We recover that single case
+ * it throws when the status request returns HTTP 404. We recover that single case
  * and map it back to the documented "missing instance" contract (return
  * `undefined`), while letting every other error (e.g. HTTP 500) propagate.
  */
@@ -218,12 +213,10 @@ function isInstanceNotFoundError(error: unknown): boolean {
  * returned history to identify activity invocations carrying `dt.retry.*` tags.
  *
  * **Tag-location compatibility.** Tags are read from two places, in priority order:
- *   1. `TaskScheduledEvent.Tags` — the canonical source of truth (raw DTFx history).
- *   2. `TaskCompletedEvent.Tags` / `TaskFailedEvent.Tags` — set by the Functions
- *      extension's `AddScheduledEventDataAndAggregate` post-processor, which
- *      folds TaskScheduled events away and propagates their Tags onto the
- *      aggregated Completed/Failed event. This is what `DurableClient.getStatus`
- *      actually returns over the HTTP RPC endpoint.
+ *   1. `TaskScheduledEvent.Tags` — the canonical source of truth in raw history.
+ *   2. `TaskCompletedEvent.Tags` / `TaskFailedEvent.Tags` — some status responses
+ *      fold the TaskScheduled events away and propagate their Tags onto the
+ *      aggregated Completed/Failed event, so we read them there as well.
  *
  * Returns `undefined` when the instance does not exist. `getStatus` signals a
  * missing instance by throwing (HTTP 404); that throw is caught here and mapped
@@ -234,8 +227,8 @@ function isInstanceNotFoundError(error: unknown): boolean {
  * proportional payload size on the underlying `getStatus` call — there is
  * no pagination.
  *
- * **Latency:** polling latency = customer's polling interval. There is no push
- * notification — for subscribe-style alerts use OTel span attributes instead.
+ * **Latency:** polling latency = the caller's polling interval. There is no push
+ * notification.
  *
  * **Backend dependency:** Backends that do not preserve
  * `TaskScheduledEvent.Tags` through persistence drop retry metadata.
@@ -278,9 +271,9 @@ export async function getInstanceRetryHistory(
         readonly tags?: Record<string, string>;
     }
 
-    // Property casing on getStatus payload — Spike #2 in the design called for
-    // empirical verification. We defensively accept both Tags/tags and
-    // EventType/eventType etc. Adjust this normalizer once Spike #2 resolves.
+    // The getStatus payload may use either Pascal-case or camel-case property
+    // names depending on the transport, so we defensively accept both
+    // (Tags/tags, EventType/eventType, etc.).
     function normalize(raw: unknown): NormalizedEvent | undefined {
         if (typeof raw !== "object" || raw === null) {
             return undefined;
@@ -298,10 +291,9 @@ export async function getInstanceRetryHistory(
             eventType === "TaskScheduled"
                 ? o["EventId"] ?? o["eventId"]
                 : o["TaskScheduledId"] ?? o["taskScheduledId"];
-        // The activity name lives under different keys depending on whether
-        // the response is raw DTFx history (`Name`/`name`) or post-processed
-        // by the extension's HTTP RPC layer (`FunctionName`/`functionName` —
-        // moved over by AddScheduledEventDataAndAggregate).
+        // The activity name lives under different keys depending on the
+        // response shape: raw history uses `Name`/`name`, while aggregated
+        // status responses use `FunctionName`/`functionName`.
         const name = (o["Name"] ?? o["name"] ?? o["FunctionName"] ?? o["functionName"]) as
             | string
             | undefined;
@@ -343,8 +335,7 @@ export async function getInstanceRetryHistory(
     let sawAnyTaskScheduled = false;
     let sawAnyAggregated = false;
 
-    // Path A: raw DTFx-style history with TaskScheduled events that still carry
-    // Tags. This is what direct backend history APIs would return.
+    // Path A: raw history where TaskScheduled events still carry their Tags.
     for (const e of normalized) {
         if (e.eventType !== "TaskScheduled") continue;
         sawAnyTaskScheduled = true;
@@ -358,6 +349,7 @@ export async function getInstanceRetryHistory(
             attempt === undefined ||
             maxAttempts === undefined ||
             attempt < 1 ||
+            maxAttempts < 1 ||
             maxAttempts < attempt
         ) {
             continue;
@@ -385,11 +377,11 @@ export async function getInstanceRetryHistory(
         if (isMax && recordStatus === "failed") retryMaxAttemptsReached = true;
     }
 
-    // Path B: HTTP RPC status-response shape — TaskScheduled events
-    // are folded away by the host's response post-processor and their Tags are
-    // propagated onto the aggregated TaskCompleted / TaskFailed event. Only run
-    // when Path A produced nothing (i.e. no raw TaskScheduled events were
-    // present in the response) to avoid double-counting on hybrid shapes.
+    // Path B: aggregated status-response shape — the TaskScheduled events are
+    // folded away and their Tags are propagated onto the aggregated
+    // TaskCompleted / TaskFailed event. Only run when Path A produced nothing
+    // (i.e. no raw TaskScheduled events were present) to avoid double-counting
+    // on hybrid shapes.
     if (attempts.length === 0) {
         for (const e of normalized) {
             if (e.eventType !== "TaskCompleted" && e.eventType !== "TaskFailed") continue;
@@ -403,6 +395,7 @@ export async function getInstanceRetryHistory(
                 attempt === undefined ||
                 maxAttempts === undefined ||
                 attempt < 1 ||
+                maxAttempts < 1 ||
                 maxAttempts < attempt
             ) {
                 continue;
@@ -413,8 +406,8 @@ export async function getInstanceRetryHistory(
             const recordStatus = e.eventType === "TaskCompleted" ? "completed" : "failed";
 
             attempts.push({
-                // For aggregated events, the FunctionName (set by the
-                // extension's post-processor) is the activity name source.
+                // For aggregated events, the FunctionName is the activity name
+                // source.
                 activityName: e.name ?? "",
                 taskScheduledId: e.scheduledId ?? -1,
                 attempt,
