@@ -1,5 +1,5 @@
 import { IAction } from "../actions/IAction";
-import { FailureDetailsDto } from "../history/FailureDetailsDto";
+import { FailureDetailsPayload } from "../history/FailureDetailsPayload";
 import { ReplaySchema } from "./ReplaySchema";
 
 /** @hidden */
@@ -18,5 +18,5 @@ export interface IOrchestratorState {
      * Only present on failure; absent (and omitted from the wire payload)
      * otherwise, so existing host behavior is unaffected.
      */
-    failureDetails?: FailureDetailsDto;
+    failureDetails?: FailureDetailsPayload;
 }

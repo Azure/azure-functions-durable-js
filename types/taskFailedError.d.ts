@@ -19,6 +19,14 @@ export interface FailureDetails {
     properties?: Record<string, unknown>;
     /** Inner failure cause, if any. */
     innerFailure?: FailureDetails;
+    /**
+     * Returns true if this failure, or any failure in its `innerFailure`
+     * chain, has the given `errorType`. Mirrors .NET's
+     * `FailureDetails.IsCausedBy<T>()`.
+     *
+     * @param errorType The error type to look for (matched against `errorType`).
+     */
+    isCausedBy(errorType: string): boolean;
 }
 
 /**
@@ -47,4 +55,8 @@ export interface FailureDetails {
 export declare class TaskFailedError extends Error {
     constructor(failureDetails: FailureDetails);
     readonly failureDetails: FailureDetails;
+    /** The name of the failed activity or sub-orchestration, when available. */
+    readonly taskName?: string;
+    /** The scheduled task ID of the failed task, when available. */
+    readonly taskId?: number;
 }

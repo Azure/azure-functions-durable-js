@@ -127,6 +127,96 @@ describe("TaskFailedError (orchestrator replay)", () => {
         expect(tfe.failureDetails.innerFailure?.properties).to.deep.equal({ cause: "io" });
     });
 
+    it("surfaces the failed task's name and id on the TaskFailedError", async () => {
+        const history = buildHistory({
+            eventId: -1,
+            timestamp: moment.utc().toDate(),
+            isPlayed: false,
+            taskScheduledId: 0,
+            reason: "boom",
+            details: "boom details",
+            failureDetails: {
+                ErrorType: "MyError",
+                ErrorMessage: "boom",
+                IsNonRetriable: false,
+            },
+        });
+
+        let caught: unknown;
+        const orchestrator = createOrchestrator(function* (context: OrchestrationContext) {
+            try {
+                yield context.df.callActivity("Failing");
+            } catch (err) {
+                caught = err;
+            }
+            return undefined;
+        });
+
+        await orchestrator(
+            new DurableOrchestrationInput("", history),
+            new DummyOrchestrationContext()
+        );
+
+        const tfe = caught as TaskFailedError;
+        expect(tfe).to.be.instanceOf(TaskFailedError);
+        expect(tfe.taskName).to.equal("Failing");
+        expect(tfe.taskId).to.equal(0);
+    });
+
+    it("isCausedBy walks the failure and its InnerFailure chain by errorType", async () => {
+        const history = buildHistory({
+            eventId: -1,
+            timestamp: moment.utc().toDate(),
+            isPlayed: false,
+            taskScheduledId: 0,
+            reason: "outer",
+            details: "outer details",
+            failureDetails: {
+                ErrorType: "OuterError",
+                ErrorMessage: "outer",
+                IsNonRetriable: true,
+                InnerFailure: {
+                    ErrorType: "InnerError",
+                    ErrorMessage: "inner",
+                    IsNonRetriable: false,
+                    InnerFailure: {
+                        ErrorType: "RootError",
+                        ErrorMessage: "root",
+                        IsNonRetriable: false,
+                    },
+                },
+            },
+        });
+
+        let caught: unknown;
+        const orchestrator = createOrchestrator(function* (context: OrchestrationContext) {
+            try {
+                yield context.df.callActivity("Failing");
+            } catch (err) {
+                caught = err;
+            }
+            return undefined;
+        });
+
+        await orchestrator(
+            new DurableOrchestrationInput("", history),
+            new DummyOrchestrationContext()
+        );
+
+        const tfe = caught as TaskFailedError;
+        expect(tfe).to.be.instanceOf(TaskFailedError);
+        // Matches the top-level failure.
+        expect(tfe.failureDetails.isCausedBy("OuterError")).to.equal(true);
+        // Matches nested failures in the chain.
+        expect(tfe.failureDetails.isCausedBy("InnerError")).to.equal(true);
+        expect(tfe.failureDetails.isCausedBy("RootError")).to.equal(true);
+        // Does not match an absent error type.
+        expect(tfe.failureDetails.isCausedBy("NotThere")).to.equal(false);
+        // Works from a nested failure node as the starting point.
+        expect(tfe.failureDetails.innerFailure?.isCausedBy("RootError")).to.equal(true);
+        expect(tfe.failureDetails.innerFailure?.isCausedBy("OuterError")).to.equal(false);
+    });
+
     it("falls back to a plain Error when FailureDetails is absent (legacy host)", async () => {
         const history = buildHistory({
             eventId: -1,

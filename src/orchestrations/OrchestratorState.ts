@@ -1,7 +1,7 @@
 import { IAction } from "../actions/IAction";
 import { WhenAllAction } from "../actions/WhenAllAction";
 import { WhenAnyAction } from "../actions/WhenAnyAction";
-import { FailureDetailsDto } from "../history/FailureDetailsDto";
+import { FailureDetailsPayload } from "../history/FailureDetailsPayload";
 import { IOrchestratorState } from "./IOrchestratorState";
 import { ReplaySchema } from "./ReplaySchema";
 
@@ -13,7 +13,7 @@ export class OrchestratorState implements IOrchestratorState {
     public readonly error?: string;
     public readonly customStatus?: unknown;
     public readonly schemaVersion: ReplaySchema;
-    public readonly failureDetails?: FailureDetailsDto;
+    public readonly failureDetails?: FailureDetailsPayload;
 
     /**
      * @hidden
