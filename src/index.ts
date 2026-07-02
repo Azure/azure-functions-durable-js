@@ -8,6 +8,7 @@ import { LockingRulesViolationError } from "./error/LockingRulesViolationError";
 import { OrchestrationRuntimeStatus } from "./orchestrations/OrchestrationRuntimeStatus";
 import { RetryOptions } from "./RetryOptions";
 import { getClient } from "./durableClient/getClient";
+import { getActivityInvocationInfo, getInstanceRetryHistory } from "./retryVisibility";
 
 export * as app from "./app";
 export * as trigger from "./trigger";
@@ -20,6 +21,8 @@ export {
     LockState,
     LockingRulesViolationError,
     getClient,
+    getActivityInvocationInfo,
+    getInstanceRetryHistory,
     ManagedIdentityTokenSource,
     OrchestrationRuntimeStatus,
     RetryOptions,

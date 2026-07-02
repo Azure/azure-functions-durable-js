@@ -30,7 +30,9 @@ export class DurableOrchestrationStatus implements types.DurableOrchestrationSta
         this.output = init.output;
         this.runtimeStatus = init.runtimeStatus as OrchestrationRuntimeStatus;
         this.customStatus = init.customStatus;
-        this.history = init.history;
+        // Some status responses emit the history array under the key
+        // `historyEvents` instead of `history`. Accept either.
+        this.history = init.history ?? init.historyEvents;
     }
 
     private isDurableOrchestrationStatusInit(obj: unknown): obj is DurableOrchestrationStatusInit {
@@ -59,4 +61,6 @@ interface DurableOrchestrationStatusInit {
     runtimeStatus: string;
     customStatus?: unknown;
     history?: Array<unknown>;
+    /** Alternate key some status responses use for the history array. */
+    historyEvents?: Array<unknown>;
 }
