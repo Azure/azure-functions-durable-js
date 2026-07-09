@@ -25,14 +25,19 @@ export class TaskFailedError extends Error implements types.TaskFailedError {
             this.stack = failureDetails.stackTrace;
         }
     }
+}
 
-    public static fromWireDto(
-        dto: FailureDetailsPayload,
-        taskName?: string,
-        taskId?: number
-    ): TaskFailedError {
-        return new TaskFailedError(toFailureDetails(dto), taskName, taskId);
-    }
+/**
+ * @hidden
+ * Builds a {@link TaskFailedError} from the PascalCase {@link FailureDetailsPayload}
+ * wire shape sent by the host extension.
+ */
+export function taskFailedErrorFromWireDto(
+    dto: FailureDetailsPayload,
+    taskName?: string,
+    taskId?: number
+): TaskFailedError {
+    return new TaskFailedError(toFailureDetails(dto), taskName, taskId);
 }
 
 /**

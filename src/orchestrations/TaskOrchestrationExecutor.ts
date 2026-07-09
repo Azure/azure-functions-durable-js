@@ -1,5 +1,9 @@
 import { OrchestrationFailureError } from "../error/OrchestrationFailureError";
-import { TaskFailedError, toFailureDetailsPayload } from "../error/TaskFailedError";
+import {
+    TaskFailedError,
+    taskFailedErrorFromWireDto,
+    toFailureDetailsPayload,
+} from "../error/TaskFailedError";
 import { OrchestratorState } from "./OrchestratorState";
 import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState } from "../task";
 import { ReplaySchema } from "./ReplaySchema";
@@ -383,7 +387,7 @@ export class TaskOrchestrationExecutor {
                         ? action.functionName
                         : undefined;
                 const taskId = typeof task.id === "number" ? task.id : undefined;
-                taskResult = TaskFailedError.fromWireDto(failureDetails, taskName, taskId);
+                taskResult = taskFailedErrorFromWireDto(failureDetails, taskName, taskId);
             } else if (
                 Utils.hasStringProperty(event, "Reason") &&
                 Utils.hasStringProperty(event, "Details")
