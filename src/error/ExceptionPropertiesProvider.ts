@@ -10,13 +10,6 @@ export function setRegisteredExceptionPropertiesProvider(
     registeredProvider = provider;
 }
 
-/** @hidden */
-export function getRegisteredExceptionPropertiesProvider():
-    | types.ExceptionPropertiesProvider
-    | undefined {
-    return registeredProvider;
-}
-
 /**
  * @hidden
  * Safely invokes the registered provider. Returns `undefined` when no provider
@@ -59,22 +52,22 @@ export function buildTaskFailureDetailsJson(error: unknown): string | undefined 
         return undefined;
     }
 
+    const errorObj = error instanceof Error ? error : undefined;
+    const errorType = errorObj?.name ?? errorObj?.constructor?.name ?? "Error";
+    const errorMessage =
+        errorObj?.message ?? (typeof error === "string" ? error : JSON.stringify(error));
+
+    const payload: Record<string, unknown> = {
+        errorType,
+        errorMessage,
+        isNonRetriable: false,
+        properties,
+    };
+    if (errorObj?.stack) {
+        payload.stackTrace = errorObj.stack;
+    }
+
     try {
-        const errorObj = error instanceof Error ? error : undefined;
-        const errorType = errorObj?.constructor?.name ?? "Error";
-        const errorMessage =
-            errorObj?.message ?? (typeof error === "string" ? error : JSON.stringify(error));
-
-        const payload: Record<string, unknown> = {
-            errorType,
-            errorMessage,
-            isNonRetriable: false,
-            properties,
-        };
-        if (errorObj?.stack) {
-            payload.stackTrace = errorObj.stack;
-        }
-
         return JSON.stringify(payload);
     } catch {
         return undefined;

@@ -86,8 +86,10 @@ export function setExceptionPropertiesProvider(
  * If no provider is registered or it returns no properties, the error is
  * re-thrown untouched so the legacy `ExceptionType: Message` wire format is
  * preserved.
+ *
+ * @hidden
  */
-function wrapActivityHandler(handler: ActivityHandler): ActivityHandler {
+export function wrapActivityHandler(handler: ActivityHandler): ActivityHandler {
     return async (triggerInput, context) => {
         try {
             return await handler(triggerInput, context);

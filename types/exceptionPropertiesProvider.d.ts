@@ -1,7 +1,7 @@
 /**
  * Provides custom properties to attach to the `FailureDetails` of an error
- * thrown from an activity or orchestrator function. Register an implementation
- * once at app startup via {@link app.setExceptionPropertiesProvider}.
+ * thrown from an activity function. Register an implementation once at app
+ * startup via {@link app.setExceptionPropertiesProvider}.
  *
  * @example
  * ```typescript
@@ -31,6 +31,10 @@ export interface ExceptionPropertiesProvider {
      *
      * Any error thrown by this method is swallowed by the SDK so that a
      * faulty provider cannot mask the original failure.
+     *
+     * Avoid secret-shaped values (e.g. `token=`, `code=`, or `user:pass@host`
+     * URLs): the worker sanitizes error content before sending it, which can
+     * redact such values and cause a fallback to the legacy failure format.
      *
      * @param error The thrown value. May be an `Error` instance, a thrown
      * primitive, or any other value.

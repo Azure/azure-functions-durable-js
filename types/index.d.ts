@@ -89,9 +89,13 @@ export declare class RetryOptions {
 }
 
 /**
- * A specfic error thrown when a scheduled activity or suborchestrator has failed.
- * This error can be checked for via `instanceof` guards to catch only exceptions thrown
- * by the DurableJS library.
+ * A specific error thrown by the DurableJS library. It is raised when a task's
+ * retry policy has exhausted all attempts. This error can be checked for via
+ * `instanceof` guards to catch only exceptions thrown by the DurableJS library.
+ *
+ * Note: a failed activity or sub-orchestration surfaces as a
+ * {@link TaskFailedError} (which extends `Error`, not `DurableError`), carrying
+ * the structured `FailureDetails` reported by the host.
  */
 export declare class DurableError extends Error {
     /**

@@ -5,6 +5,7 @@ import {
     extractExceptionProperties,
     setRegisteredExceptionPropertiesProvider,
 } from "../../src/error/ExceptionPropertiesProvider";
+import { wrapActivityHandler } from "../../src/app";
 
 describe("ExceptionPropertiesProvider", () => {
     // Module-level singleton; reset between tests so cases don't leak.
@@ -199,6 +200,74 @@ describe("ExceptionPropertiesProvider", () => {
                     isRetryable: true,
                 },
             });
+        });
+    });
+
+    // wrapActivityHandler is applied to every registered activity. It must
+    // reshape a thrown error into the TaskFailureDetails JSON payload when a
+    // provider contributes properties, and otherwise leave the error untouched.
+    describe("wrapActivityHandler", () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyContext: any = {};
+
+        it("rethrows the error untouched when no provider contributes properties", async () => {
+            const original = new Error("boom");
+            const wrapped = wrapActivityHandler(() => {
+                throw original;
+            });
+            let caught: unknown;
+            try {
+                await wrapped(undefined, anyContext);
+            } catch (e) {
+                caught = e;
+            }
+            expect(caught).to.equal(original);
+            expect((caught as Error).message).to.equal("boom");
+        });
+
+        it("rethrows with the JSON payload as the message when a provider adds properties", async () => {
+            setRegisteredExceptionPropertiesProvider({
+                getExceptionProperties: () => ({ code: 42 }),
+            });
+            const wrapped = wrapActivityHandler(() => {
+                throw new Error("boom");
+            });
+            let caught: unknown;
+            try {
+                await wrapped(undefined, anyContext);
+            } catch (e) {
+                caught = e;
+            }
+            const parsed = JSON.parse((caught as Error).message);
+            expect(parsed.errorType).to.equal("Error");
+            expect(parsed.errorMessage).to.equal("boom");
+            expect(parsed.properties).to.deep.equal({ code: 42 });
+        });
+
+        it("falls back to a fresh Error (preserving the stack) when message is non-writable", async () => {
+            setRegisteredExceptionPropertiesProvider({
+                getExceptionProperties: () => ({ code: 7 }),
+            });
+            const frozen = new Error("frozen");
+            Object.defineProperty(frozen, "message", {
+                value: "frozen",
+                writable: false,
+                configurable: false,
+            });
+            frozen.stack = "STACK-MARKER";
+            const wrapped = wrapActivityHandler(() => {
+                throw frozen;
+            });
+            let caught: unknown;
+            try {
+                await wrapped(undefined, anyContext);
+            } catch (e) {
+                caught = e;
+            }
+            expect(caught).to.not.equal(frozen);
+            const parsed = JSON.parse((caught as Error).message);
+            expect(parsed.properties).to.deep.equal({ code: 7 });
+            expect((caught as Error).stack).to.equal("STACK-MARKER");
         });
     });
 });
