@@ -1,4 +1,9 @@
 import { OrchestrationFailureError } from "../error/OrchestrationFailureError";
+import {
+    TaskFailedError,
+    taskFailedErrorFromWireDto,
+    toFailureDetailsPayload,
+} from "../error/TaskFailedError";
 import { OrchestratorState } from "./OrchestratorState";
 import { TaskBase, NoOpTask, DFTask, CompoundTask, TaskState, LockTask } from "../task";
 import { ReplaySchema } from "./ReplaySchema";
@@ -13,10 +18,29 @@ import { RequestMessage } from "../entities/RequestMessage";
 import { ResponseMessage } from "../entities/ResponseMessage";
 import { EventRaisedEvent } from "../history/EventRaisedEvent";
 import { EventSentEvent } from "../history/EventSentEvent";
+import { FailureDetailsPayload } from "../history/FailureDetailsPayload";
 import { HistoryEvent } from "../history/HistoryEvent";
 import { HistoryEventType } from "../history/HistoryEventType";
 import { SubOrchestrationInstanceCompletedEvent } from "../history/SubOrchestrationInstanceCompletedEvent";
 import { TaskCompletedEvent } from "../history/TaskCompletedEvent";
+
+/**
+ * @hidden
+ * Returns the structured `FailureDetails` payload from a TaskFailed /
+ * SubOrchestrationInstanceFailed history event when the host extension has
+ * included one, or `undefined` for legacy events that carry only the flat
+ * `Reason` / `Details` strings.
+ */
+function extractFailureDetailsPayload(event: HistoryEvent): FailureDetailsPayload | undefined {
+    if (!Utils.hasOwnProperty(event, "FailureDetails")) {
+        return undefined;
+    }
+    const value = (event as { FailureDetails?: unknown }).FailureDetails;
+    if (value && typeof value === "object") {
+        return value as FailureDetailsPayload;
+    }
+    return undefined;
+}
 
 /**
  * @hidden
@@ -137,6 +161,15 @@ export class TaskOrchestrationExecutor {
             error: this.exception?.message,
             customStatus: this.context.customStatus,
             schemaVersion: this.schemaVersion,
+            // If the orchestration failed because an uncaught sub-orchestration or
+            // activity failure propagated out, relay its structured FailureDetails
+            // (including the InnerFailure chain and any custom Properties) so the
+            // host can forward it to a calling parent orchestration. Only set on
+            // failure; omitted otherwise, leaving existing behavior unchanged.
+            failureDetails:
+                this.exception instanceof TaskFailedError
+                    ? toFailureDetailsPayload(this.exception.failureDetails)
+                    : undefined,
         });
 
         // Throw errors, if any
@@ -362,8 +395,20 @@ export class TaskOrchestrationExecutor {
                 taskResult = task.lockResult;
             }
         } else {
-            // The task failed, we attempt to extract the Reason and Details from the event.
-            if (
+            // The task failed. Prefer structured FailureDetails (carries
+            // any custom Properties attached by the failing worker via its
+            // ExceptionPropertiesProvider); fall back to the legacy flat
+            // Reason/Details strings when the host hasn't sent FailureDetails.
+            const failureDetails = extractFailureDetailsPayload(event);
+            if (failureDetails) {
+                const action = (task.actionObj as unknown) as { functionName?: unknown };
+                const taskName =
+                    action && typeof action.functionName === "string"
+                        ? action.functionName
+                        : undefined;
+                const taskId = typeof task.id === "number" ? task.id : undefined;
+                taskResult = taskFailedErrorFromWireDto(failureDetails, taskName, taskId);
+            } else if (
                 Utils.hasStringProperty(event, "Reason") &&
                 Utils.hasStringProperty(event, "Details")
             ) {

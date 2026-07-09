@@ -4,8 +4,10 @@ import { DurableClient } from "./durableClient";
 export * from "./activity";
 export * from "./durableClient";
 export * from "./entity";
+export * from "./exceptionPropertiesProvider";
 export * from "./orchestration";
 export * from "./task";
+export * from "./taskFailedError";
 
 export * as app from "./app";
 export * as trigger from "./trigger";
@@ -87,9 +89,13 @@ export declare class RetryOptions {
 }
 
 /**
- * A specfic error thrown when a scheduled activity or suborchestrator has failed.
- * This error can be checked for via `instanceof` guards to catch only exceptions thrown
- * by the DurableJS library.
+ * An internal framework error thrown by the DurableJS library. This error can
+ * be checked for via `instanceof` guards to catch only exceptions thrown by the
+ * DurableJS library itself.
+ *
+ * Note: a failed activity or sub-orchestration surfaces as a
+ * {@link TaskFailedError} (which extends `Error`, not `DurableError`), carrying
+ * the structured `FailureDetails` reported by the host.
  */
 export declare class DurableError extends Error {
     /**

@@ -1,5 +1,6 @@
 import { ActivityOptions, RegisteredActivity } from "./activity";
 import { EntityHandler, EntityOptions } from "./entity";
+import { ExceptionPropertiesProvider } from "./exceptionPropertiesProvider";
 import {
     OrchestrationHandler,
     OrchestrationOptions,
@@ -55,5 +56,26 @@ export function entity<T = unknown>(functionName: string, options: EntityOptions
  * @param options the configuration options for this activity, specifying the handler and the inputs and outputs
  */
 export function activity(functionName: string, options: ActivityOptions): RegisteredActivity;
+
+/**
+ * Registers a global {@link ExceptionPropertiesProvider} for the function app.
+ *
+ * When an activity function throws, the provider is consulted to extract custom
+ * properties from the error. Those properties are propagated to the Durable Task
+ * host extension and surfaced on the resulting `FailureDetails.Properties` field.
+ *
+ * Requires a Durable Functions host extension version >= 3.14.0, which includes
+ * the parser for the structured failure payload. On older extensions the payload
+ * is not recognized and the error message may be garbled, so only opt in when
+ * running against a supported extension version.
+ *
+ * Call this once at app startup. Calling it again replaces the previous
+ * provider. Pass `undefined` to unregister.
+ *
+ * @param provider the provider implementation, or `undefined` to clear.
+ */
+export function setExceptionPropertiesProvider(
+    provider: ExceptionPropertiesProvider | undefined
+): void;
 
 export * as client from "./app.client";
