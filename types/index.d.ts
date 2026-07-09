@@ -89,9 +89,9 @@ export declare class RetryOptions {
 }
 
 /**
- * A specific error thrown by the DurableJS library. It is raised when a task's
- * retry policy has exhausted all attempts. This error can be checked for via
- * `instanceof` guards to catch only exceptions thrown by the DurableJS library.
+ * An internal framework error thrown by the DurableJS library. This error can
+ * be checked for via `instanceof` guards to catch only exceptions thrown by the
+ * DurableJS library itself.
  *
  * Note: a failed activity or sub-orchestration surfaces as a
  * {@link TaskFailedError} (which extends `Error`, not `DurableError`), carrying

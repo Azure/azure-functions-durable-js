@@ -54,8 +54,18 @@ export function buildTaskFailureDetailsJson(error: unknown): string | undefined 
 
     const errorObj = error instanceof Error ? error : undefined;
     const errorType = errorObj?.name ?? errorObj?.constructor?.name ?? "Error";
-    const errorMessage =
-        errorObj?.message ?? (typeof error === "string" ? error : JSON.stringify(error));
+    let errorMessage: string;
+    if (errorObj?.message !== undefined) {
+        errorMessage = errorObj.message;
+    } else if (typeof error === "string") {
+        errorMessage = error;
+    } else {
+        try {
+            errorMessage = JSON.stringify(error) ?? String(error);
+        } catch {
+            errorMessage = String(error);
+        }
+    }
 
     const payload: Record<string, unknown> = {
         errorType,
