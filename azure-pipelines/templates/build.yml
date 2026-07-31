@@ -14,6 +14,10 @@ jobs:
             inputs:
                 versionSpec: 20.x
             displayName: "Install Node.js"
+          - task: npmAuthenticate@0
+            displayName: "Authenticate to CFS npm feed"
+            inputs:
+                workingFile: "$(System.DefaultWorkingDirectory)/.npmrc"
           - script: npm ci
             displayName: "npm ci"
           - script: npm run-script build
@@ -25,6 +29,6 @@ jobs:
           - task: CopyFiles@2
             displayName: "Copy package to staging"
             inputs:
-                SourceFolder: $(System.DefaultWorkingDirectory)
+                SourceFolder: "$(System.DefaultWorkingDirectory)"
                 Contents: "*.tgz"
-                TargetFolder: $(Build.ArtifactStagingDirectory)
+                TargetFolder: "$(Build.ArtifactStagingDirectory)"

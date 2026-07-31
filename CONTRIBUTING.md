@@ -40,7 +40,7 @@ Note: [Azurite V3](https://github.com/Azure/Azurite) does not have support for T
 
 Create a folder say AzureWebJobsStorage
 
-`npm install azurite@2.7.1 -g`
+`sudo env NPM_CONFIG_USERCONFIG="$(git rev-parse --show-toplevel)/.npmrc" npm install azurite@2.7.1 -g`
 
 `azurite -l ./AzureWebJobsStorage`
 
