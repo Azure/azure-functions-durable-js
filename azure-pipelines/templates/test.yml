@@ -17,6 +17,10 @@ jobs:
             inputs:
                 versionSpec: $(NODE_VERSION)
             displayName: "Install Node dependencies"
+          - task: npmAuthenticate@0
+            displayName: "Authenticate to CFS npm feed"
+            inputs:
+                workingFile: "$(System.DefaultWorkingDirectory)/.npmrc"
           - script: npm ci
             displayName: "npm ci"
           - script: npm run test
@@ -36,12 +40,16 @@ jobs:
                 Contents: "**"
                 TargetFolder: "$(Agent.BuildDirectory)/test-app"
                 CleanTargetFolder: true
-          - script: npm install $(System.DefaultWorkingDirectory)/package.tgz
+          - task: npmAuthenticate@0
+            displayName: "Authenticate copied test app to CFS npm feed"
+            inputs:
+                workingFile: "$(Agent.BuildDirectory)/test-app/.npmrc"
+          - script: npm install "$(System.DefaultWorkingDirectory)/package.tgz"
             displayName: "Install packed durable-functions module (test app)"
-            workingDirectory: $(Agent.BuildDirectory)/test-app
+            workingDirectory: "$(Agent.BuildDirectory)/test-app"
           - script: npm install
             displayName: "npm install (test app)"
-            workingDirectory: $(Agent.BuildDirectory)/test-app
+            workingDirectory: "$(Agent.BuildDirectory)/test-app"
           - script: npm run build
             displayName: "Build smoke test app"
             workingDirectory: "$(Agent.BuildDirectory)/test-app"
