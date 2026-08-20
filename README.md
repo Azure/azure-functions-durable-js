@@ -111,6 +111,8 @@ The [Durable Functions samples](https://docs.microsoft.com/azure/azure-functions
 -   [Monitors - Weather Watcher](https://docs.microsoft.com/azure/azure-functions/durable-functions-monitor?tabs=javascript)
 -   [Human Interaction & Timeouts - Phone Verification](https://docs.microsoft.com/azure/azure-functions/durable-functions-phone-verification?tabs=javascript-v4)
 
+The cloud backup sample only reads files under `BACKUP_ROOT_DIRECTORY` or the function app's working directory when that setting is not configured.
+
 ```javascript
 const df = require("durable-functions");
 

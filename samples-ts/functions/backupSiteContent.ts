@@ -13,26 +13,28 @@ import { Stats } from "fs";
 
 const getFileListActivityName = "getFileList";
 const copyFileToBlobActivityName = "copyFileToBlob";
+const backupRootDirectorySettingName = "BACKUP_ROOT_DIRECTORY";
+
+interface BackupFile {
+    backupPath: string;
+    filePath: string;
+    rootDirectory: string;
+}
 
 const backupSiteContentOrchestration: OrchestrationHandler = function* (
     context: OrchestrationContext
 ) {
-    const rootDir: string = context.df.getInput<string>();
-    if (!rootDir) {
+    const rootDir: unknown = context.df.getInput<unknown>();
+    if (typeof rootDir !== "string" || !rootDir.trim()) {
         throw new Error("A directory path is required as an input.");
     }
 
-    const rootDirAbs: string = path.resolve(rootDir);
-    const files: string[] = yield context.df.callActivity(getFileListActivityName, rootDirAbs);
+    const files: BackupFile[] = yield context.df.callActivity(getFileListActivityName, rootDir);
 
     // Backup Files and save Tasks into array
     const tasks: Task[] = [];
     for (const file of files) {
-        const input = {
-            backupPath: path.relative(rootDirAbs, file).replace(/\\/g, "/"),
-            filePath: file,
-        };
-        tasks.push(context.df.callActivity(copyFileToBlobActivityName, input));
+        tasks.push(context.df.callActivity(copyFileToBlobActivityName, file));
     }
 
     // wait for all the Backup Files Activities to complete, sum total bytes
@@ -45,17 +47,27 @@ const backupSiteContentOrchestration: OrchestrationHandler = function* (
 df.app.orchestration("backupSiteContent", backupSiteContentOrchestration);
 
 const getFileListActivity: ActivityHandler = async function (
-    rootDirectory: string,
+    requestedRootDirectory: string,
     context: InvocationContext
-): Promise<string[]> {
+): Promise<BackupFile[]> {
+    const backupRootDirectory = await getBackupRootDirectory();
+    const rootDirectory = await resolvePathWithinRoot(
+        backupRootDirectory,
+        requestedRootDirectory
+    );
     context.log(`Searching for files under '${rootDirectory}'...`);
 
-    const allFilePaths = [];
+    const allFiles: BackupFile[] = [];
     for await (const entry of readdirp(rootDirectory, { type: "files" })) {
-        allFilePaths.push(entry.fullPath);
+        const filePath = await resolvePathWithinRoot(rootDirectory, entry.fullPath);
+        allFiles.push({
+            backupPath: path.relative(rootDirectory, filePath).replace(/\\/g, "/"),
+            filePath,
+            rootDirectory,
+        });
     }
-    context.log(`Found ${allFilePaths.length} under ${rootDirectory}.`);
-    return allFilePaths;
+    context.log(`Found ${allFiles.length} under ${rootDirectory}.`);
+    return allFiles;
 };
 
 df.app.activity(getFileListActivityName, {
@@ -68,9 +80,29 @@ const blobOutput = output.storageBlob({
 });
 
 const copyFileToBlobActivity: ActivityHandler = async function (
-    { backupPath, filePath }: { backupPath: string; filePath: string },
+    input: BackupFile,
     context: InvocationContext
 ): Promise<number> {
+    if (
+        !input ||
+        typeof input.backupPath !== "string" ||
+        typeof input.filePath !== "string" ||
+        typeof input.rootDirectory !== "string"
+    ) {
+        throw new Error("A valid backup file is required as an input.");
+    }
+
+    const backupRootDirectory = await getBackupRootDirectory();
+    const rootDirectory = await resolvePathWithinRoot(
+        backupRootDirectory,
+        input.rootDirectory
+    );
+    const filePath = await resolvePathWithinRoot(rootDirectory, input.filePath);
+    const backupPath = path.relative(rootDirectory, filePath).replace(/\\/g, "/");
+    if (input.backupPath !== backupPath) {
+        throw new Error("The backup path does not match the source file path.");
+    }
+
     const outputLocation = `backups/${backupPath}`;
     const stats: Stats = await fs.stat(filePath);
     context.log(`Copying '${filePath}' to '${outputLocation}'. Total bytes = ${stats.size}.`);
@@ -85,3 +117,32 @@ df.app.activity(copyFileToBlobActivityName, {
     extraOutputs: [blobOutput],
     handler: copyFileToBlobActivity,
 });
+
+async function getBackupRootDirectory(): Promise<string> {
+    const configuredRootDirectory =
+        process.env[backupRootDirectorySettingName] || process.cwd();
+    return fs.realpath(path.resolve(configuredRootDirectory));
+}
+
+async function resolvePathWithinRoot(
+    rootDirectory: string,
+    requestedPath: unknown
+): Promise<string> {
+    if (typeof requestedPath !== "string" || !requestedPath.trim()) {
+        throw new Error("A non-empty path is required.");
+    }
+
+    const resolvedPath = await fs.realpath(path.resolve(rootDirectory, requestedPath));
+    const relativePath = path.relative(rootDirectory, resolvedPath);
+    if (
+        relativePath === ".." ||
+        relativePath.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(relativePath)
+    ) {
+        throw new Error(
+            `The requested path must be within the ${backupRootDirectorySettingName} directory.`
+        );
+    }
+
+    return resolvedPath;
+}
