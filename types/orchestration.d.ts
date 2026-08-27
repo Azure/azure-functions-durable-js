@@ -339,6 +339,13 @@ export declare class DurableOrchestrationStatus {
     readonly name: string;
 
     /**
+     * The version assigned to the orchestration instance.
+     *
+     * This value is `undefined` when version information is unavailable.
+     */
+    readonly version?: string;
+
+    /**
      * The unique ID of the instance.
      *
      * The instance ID is generated and fixed when the orchestrator

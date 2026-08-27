@@ -3,6 +3,7 @@ import { OrchestrationRuntimeStatus } from "./OrchestrationRuntimeStatus";
 
 export class DurableOrchestrationStatus implements types.DurableOrchestrationStatus {
     public readonly name: string;
+    public readonly version?: string;
     public readonly instanceId: string;
     public readonly createdTime: Date;
     public readonly lastUpdatedTime: Date;
@@ -23,6 +24,7 @@ export class DurableOrchestrationStatus implements types.DurableOrchestrationSta
         }
 
         this.name = init.name;
+        this.version = init.version;
         this.instanceId = init.instanceId;
         this.createdTime = new Date(init.createdTime);
         this.lastUpdatedTime = new Date(init.lastUpdatedTime);
@@ -38,6 +40,7 @@ export class DurableOrchestrationStatus implements types.DurableOrchestrationSta
         return (
             objAsInit !== undefined &&
             typeof objAsInit.name === "string" &&
+            (objAsInit.version === undefined || typeof objAsInit.version === "string") &&
             typeof objAsInit.instanceId === "string" &&
             (typeof objAsInit.createdTime === "string" || objAsInit.createdTime instanceof Date) &&
             (typeof objAsInit.lastUpdatedTime === "string" ||
@@ -51,6 +54,7 @@ export class DurableOrchestrationStatus implements types.DurableOrchestrationSta
 
 interface DurableOrchestrationStatusInit {
     name: string;
+    version?: string;
     instanceId: string;
     createdTime: string | Date;
     lastUpdatedTime: string | Date;

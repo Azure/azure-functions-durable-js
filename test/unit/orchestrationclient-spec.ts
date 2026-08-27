@@ -138,6 +138,7 @@ describe("Orchestration Client", () => {
 
             const expectedStatus = new DurableOrchestrationStatus({
                 name: defaultOrchestrationName,
+                version: "2.0",
                 instanceId: defaultInstanceId,
                 createdTime: new Date(),
                 lastUpdatedTime: new Date(),
@@ -161,6 +162,7 @@ describe("Orchestration Client", () => {
 
             const result = await client.getStatus(defaultInstanceId);
             expect(scope.isDone()).to.be.equal(true);
+            expect(result.version).to.be.equal("2.0");
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatus));
         });
 
@@ -535,6 +537,7 @@ describe("Orchestration Client", () => {
             const expectedStatuses: DurableOrchestrationStatus[] = [
                 new DurableOrchestrationStatus({
                     name: defaultOrchestrationName,
+                    version: "2.0",
                     instanceId: defaultInstanceId,
                     createdTime: new Date(),
                     lastUpdatedTime: new Date(),
@@ -552,6 +555,7 @@ describe("Orchestration Client", () => {
 
             const result = await client.getStatusAll();
             expect(scope.isDone()).to.be.equal(true);
+            expect(result[0].version).to.be.equal("2.0");
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatuses));
         });
     });
@@ -586,6 +590,7 @@ describe("Orchestration Client", () => {
             const expectedStatuses: DurableOrchestrationStatus[] = [
                 new DurableOrchestrationStatus({
                     name: defaultOrchestrationName,
+                    version: "2.0",
                     instanceId: defaultInstanceId,
                     createdTime: new Date(),
                     lastUpdatedTime: new Date(),
@@ -607,6 +612,7 @@ describe("Orchestration Client", () => {
                 runtimeStatus: runtimeStatuses,
             });
             expect(scope.isDone()).to.be.equal(true);
+            expect(result[0].version).to.be.equal("2.0");
             expect(JSON.stringify(result)).to.be.equal(JSON.stringify(expectedStatuses));
         });
 
