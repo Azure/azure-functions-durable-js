@@ -1,5 +1,6 @@
 import { HttpRequest } from "@azure/functions";
 import chai = require("chai");
+import chaiAsPromised = require("chai-as-promised");
 import chaiString = require("chai-string");
 import nock = require("nock");
 import url = require("url");
@@ -13,6 +14,7 @@ import { DurableClient } from "../../src/durableClient/DurableClient";
 import { PurgeHistoryResult } from "../../src/durableClient/PurgeHistoryResult";
 
 chai.use(chaiString);
+chai.use(chaiAsPromised);
 const expect = chai.expect;
 const URL = url.URL;
 
@@ -35,6 +37,7 @@ const durableClientBindingInputJson = JSON.stringify({
         terminatePostUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
         rewindPostUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
         purgeHistoryDeleteUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
+        restartPostUri: `${externalBaseUrl}/instances/INSTANCEID/restart?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
         suspendPostUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
         resumePostUri: `${externalBaseUrl}/instances/INSTANCEID/?taskHub=${testTaskHubName}&connection=${testConnectionName}`,
     },
@@ -88,6 +91,7 @@ describe("Durable client RPC endpoint", () => {
             // URLs in the createCheckStatusResponse API result.
             expect(payload.purgeHistoryDeleteUri).to.startWith(externalBaseUrl);
             expect(payload.rewindPostUri).to.startWith(externalBaseUrl);
+            expect(payload.restartPostUri).to.startWith(externalBaseUrl);
             expect(payload.sendEventPostUri).to.startWith(externalBaseUrl);
             expect(payload.statusQueryGetUri).to.startWith(externalBaseUrl);
             expect(payload.terminatePostUri).to.startWith(externalBaseUrl);
@@ -115,6 +119,147 @@ describe("Durable client RPC endpoint", () => {
             const result = await client.startNew(functionName);
             expect(scope.isDone()).to.be.equal(true);
             expect(result).to.be.equal("abc123");
+        });
+    });
+
+    describe("restart()", () => {
+        it("uses the RPC endpoint with the existing generated-ID option", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableClient(input);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/source-instance/restart`
+            );
+            const scope = nock(expectedUrl.origin)
+                .post(expectedUrl.pathname)
+                .query({
+                    taskHub: testTaskHubName,
+                    connection: testConnectionName,
+                    restartWithNewInstanceId: true,
+                })
+                .reply(202, { id: "generated-instance" });
+
+            const result = await client.restart("source-instance");
+
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal("generated-instance");
+        });
+
+        it("uses the RPC endpoint with an exact instance ID and version", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableClient(input);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/source-instance/restartWithOptions`
+            );
+            const scope = nock(expectedUrl.origin)
+                .post(expectedUrl.pathname)
+                .query({
+                    taskHub: testTaskHubName,
+                    connection: testConnectionName,
+                    newInstanceId: "target-instance",
+                    version: "2.0",
+                })
+                .reply(202, { id: "target-instance" });
+
+            const result = await client.restart("source-instance", {
+                newInstanceId: "target-instance",
+                version: "2.0",
+            });
+
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal("target-instance");
+        });
+
+        it("encodes the source instance ID as a URL path segment", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableClient(input);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/source%2Bpercent%25instance/restartWithOptions`
+            );
+            const scope = nock(expectedUrl.origin)
+                .post(expectedUrl.pathname)
+                .query({
+                    taskHub: testTaskHubName,
+                    connection: testConnectionName,
+                    newInstanceId: "target-instance",
+                })
+                .reply(202, { id: "target-instance" });
+
+            const result = await client.restart("source+percent%instance", {
+                newInstanceId: "target-instance",
+            });
+
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal("target-instance");
+        });
+
+        it("uses the management endpoint when local RPC is unavailable", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            input.rpcBaseUrl = undefined;
+            const client = new DurableClient(input);
+            const expectedUrl = new URL(
+                `${externalBaseUrl}/instances/source-instance/restartWithOptions`
+            );
+            const scope = nock(expectedUrl.origin)
+                .post(expectedUrl.pathname)
+                .query({
+                    taskHub: testTaskHubName,
+                    connection: testConnectionName,
+                    newInstanceId: "target-instance",
+                    version: "2.0",
+                })
+                .reply(202, { id: "target-instance" });
+
+            const result = await client.restart("source-instance", {
+                newInstanceId: "target-instance",
+                version: "2.0",
+            });
+
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal("target-instance");
+        });
+
+        it("rejects a successful response without an instance ID", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableClient(input);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/source-instance/restart`
+            );
+            const scope = nock(expectedUrl.origin)
+                .post(expectedUrl.pathname)
+                .query({
+                    taskHub: testTaskHubName,
+                    connection: testConnectionName,
+                    restartWithNewInstanceId: true,
+                })
+                .reply(202, {});
+
+            await expect(client.restart("source-instance")).to.be.rejectedWith(
+                "The restart operation returned an invalid response."
+            );
+            expect(scope.isDone()).to.be.equal(true);
+        });
+
+        it("validates the requested target instance ID", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableClient(input);
+
+            await expect(
+                client.restart("source-instance", { newInstanceId: "" })
+            ).to.be.rejectedWith("newInstanceId must be a valid string.");
+        });
+    });
+
+    describe("createHttpManagementPayload()", () => {
+        it("keeps the payload ID raw while encoding it in management URLs", () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableClient(input);
+
+            const payload = client.createHttpManagementPayload("source+percent%instance");
+
+            expect(payload.id).to.equal("source+percent%instance");
+            expect(payload.restartPostUri).to.contain(
+                "/instances/source%2Bpercent%25instance/restart"
+            );
         });
     });
 

@@ -102,6 +102,15 @@ df.app.client.http("httpStart", {
 
 **Note:** Client functions can be started by any trigger binding supported in the Azure Functions runtime version 2.x+. Node.js v4 programming model apps require at least version 4.25 of the Azure Functions runtime. [Read more about trigger bindings and 2.x-supported bindings.](https://docs.microsoft.com/azure/azure-functions/functions-triggers-bindings#overview)
 
+An existing orchestration can be restarted with its original input while assigning an explicit instance ID and orchestration version:
+
+```javascript
+const restartedInstanceId = await client.restart("source-instance", {
+    newInstanceId: "target-instance",
+    version: "2.0",
+});
+```
+
 ## Samples
 
 The [Durable Functions samples](https://docs.microsoft.com/azure/azure-functions/durable-functions-install) demonstrate several common use cases. They are located in the samples directories ([JavaScript](./samples-js/)/[TypeScript](./samples-ts/)). Descriptive documentation is also available:
