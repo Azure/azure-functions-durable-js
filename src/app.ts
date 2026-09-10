@@ -18,6 +18,7 @@ import {
     buildTaskFailureDetailsJson,
     setRegisteredExceptionPropertiesProvider,
 } from "./error/ExceptionPropertiesProvider";
+import { runWithInvocationTraceContext } from "./util/OpenTelemetryUtils";
 
 export function orchestration(
     functionName: string,
@@ -92,7 +93,9 @@ export function setExceptionPropertiesProvider(
 export function wrapActivityHandler(handler: ActivityHandler): ActivityHandler {
     return async (triggerInput, context) => {
         try {
-            return await handler(triggerInput, context);
+            return await runWithInvocationTraceContext(context.traceContext, () =>
+                handler(triggerInput, context)
+            );
         } catch (err) {
             const serialized = buildTaskFailureDetailsJson(err);
             if (!serialized) {

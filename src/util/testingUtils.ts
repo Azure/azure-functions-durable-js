@@ -23,6 +23,7 @@ import { OrchestratorStartedEvent } from "../history/OrchestratorStartedEvent";
 import { DurableOrchestrationBindingInfo } from "../orchestrations/DurableOrchestrationBindingInfo";
 import { Orchestrator } from "../orchestrations/Orchestrator";
 import { OrchestratorState } from "../orchestrations/OrchestratorState";
+import { runWithInvocationTraceContext } from "./OpenTelemetryUtils";
 
 export class DummyOrchestrationContext extends InvocationContext
     implements OrchestrationContext, types.DummyOrchestrationContext {
@@ -135,7 +136,9 @@ export function createOrchestrator(fn: OrchestrationHandler): OrchestrationFunct
         orchestrationTrigger: DurableOrchestrationInput,
         context: OrchestrationContext
     ): Promise<OrchestratorState> => {
-        return await listener(orchestrationTrigger, context);
+        return await runWithInvocationTraceContext(context.traceContext, () =>
+            listener(orchestrationTrigger, context)
+        );
     };
 }
 

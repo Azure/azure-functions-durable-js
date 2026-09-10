@@ -52,6 +52,8 @@
         "validator": "~13.15.20"
     },
     "devDependencies": {
+        "@opentelemetry/context-async-hooks": "1.30.1",
+        "@opentelemetry/core": "1.30.1",
         "@types/chai": "~4.1.6",
         "@types/chai-as-promised": "~7.1.0",
         "@types/chai-string": "~1.4.1",

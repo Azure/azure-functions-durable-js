@@ -28,7 +28,7 @@ export function getClient(context: InvocationContext): DurableClient {
         clientData = correctClientData(clientData);
     }
 
-    return new DurableClient(clientData);
+    return new DurableClient(clientData, context.traceContext);
 }
 
 /** @hidden */
