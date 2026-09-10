@@ -37,7 +37,10 @@ function extractFailureDetailsPayload(event: HistoryEvent): FailureDetailsPayloa
     }
     const value = (event as { FailureDetails?: unknown }).FailureDetails;
     if (value && typeof value === "object") {
-        return value as FailureDetailsPayload;
+        const failureDetails = value as FailureDetailsPayload;
+        if (typeof failureDetails.ErrorType === "string" && failureDetails.ErrorType.length > 0) {
+            return failureDetails;
+        }
     }
     return undefined;
 }

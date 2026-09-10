@@ -248,6 +248,40 @@ describe("TaskFailedError (orchestrator replay)", () => {
         expect((caught as Error).message).to.contain("Serialized exception here");
     });
 
+    it("falls back to a plain Error when FailureDetails is empty", async () => {
+        const history = buildHistory({
+            eventId: -1,
+            timestamp: moment.utc().toDate(),
+            isPlayed: false,
+            taskScheduledId: 0,
+            reason: "Activity function 'raise_exception' failed:",
+            details: "InvalidOperationException: This activity failed",
+            failureDetails: {},
+        });
+
+        let caught: unknown;
+        const orchestrator = createOrchestrator(function* (context: OrchestrationContext) {
+            try {
+                yield context.df.callActivity("Failing");
+            } catch (err) {
+                caught = err;
+            }
+            return undefined;
+        });
+
+        await orchestrator(
+            new DurableOrchestrationInput("", history),
+            new DummyOrchestrationContext()
+        );
+
+        expect(caught).to.be.instanceOf(Error);
+        expect(caught).to.not.be.instanceOf(TaskFailedError);
+        expect((caught as Error).message).to.contain("Activity function 'raise_exception' failed:");
+        expect((caught as Error).message).to.contain(
+            "InvalidOperationException: This activity failed"
+        );
+    });
+
     it("propagates a failed activity's provider properties up to the parent orchestrator through a nested sub-orchestration's InnerFailure chain", async () => {
         // Mirrors durabletask-dotnet PR #482's NestedOrchestration test: a parent
         // orchestrator calls a sub-orchestrator, which calls an activity that throws
