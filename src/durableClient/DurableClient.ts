@@ -1,6 +1,6 @@
 // tslint:disable:member-access
 
-import { HttpRequest, HttpResponse } from "@azure/functions";
+import { HttpRequest, HttpResponse, TraceContext } from "@azure/functions";
 import OpenTelemetryApi = require("@opentelemetry/api");
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 /** @hidden */
@@ -25,6 +25,10 @@ import { EntityId } from "../entities/EntityId";
 import { EntityStateResponse } from "../entities/EntityStateResponse";
 import { OrchestrationRuntimeStatus } from "../orchestrations/OrchestrationRuntimeStatus";
 import { Utils } from "../util/Utils";
+import {
+    getInvocationTraceContextHeaders,
+    getValidActiveContext,
+} from "../util/OpenTelemetryUtils";
 
 /**
  * Client for starting, querying, terminating and raising events to
@@ -60,7 +64,10 @@ export class DurableClient implements types.DurableClient {
      * @param clientData The object representing the orchestrationClient input
      *  binding of the Azure function that will use this client.
      */
-    constructor(private readonly clientData: OrchestrationClientInputData) {
+    constructor(
+        private readonly clientData: OrchestrationClientInputData,
+        private readonly invocationTraceContext?: TraceContext
+    ) {
         if (!clientData) {
             throw new TypeError(
                 `clientData: Expected OrchestrationClientInputData but got ${typeof clientData}`
@@ -516,7 +523,7 @@ export class DurableClient implements types.DurableClient {
             }
         }
 
-        const headers = this.getDistributedTracingHeaders();
+        const headers = this.getDistributedTracingHeaders(true);
 
         const input: unknown = options?.input !== undefined ? JSON.stringify(options.input) : "";
         const response = await this.axiosInstance.post(requestUrl, input, { headers });
@@ -663,14 +670,15 @@ export class DurableClient implements types.DurableClient {
         }
     }
 
-    private getDistributedTracingHeaders(): Record<string, string> {
-        // Get the current active span
-        const currentSpan = OpenTelemetryApi.trace.getSpan(OpenTelemetryApi.context.active());
-
-        // Create the headers object and inject the current span context if it exists
+    private getDistributedTracingHeaders(
+        useInvocationContextFallback = false
+    ): Record<string, string> {
         const headers: Record<string, string> = {};
-        if (currentSpan) {
-            OpenTelemetryApi.propagation.inject(OpenTelemetryApi.context.active(), headers);
+        const activeContext = getValidActiveContext();
+        if (activeContext) {
+            OpenTelemetryApi.propagation.inject(activeContext, headers);
+        } else if (useInvocationContextFallback) {
+            Object.assign(headers, getInvocationTraceContextHeaders(this.invocationTraceContext));
         }
 
         return headers;
