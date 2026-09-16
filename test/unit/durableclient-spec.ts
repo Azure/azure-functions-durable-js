@@ -169,6 +169,53 @@ describe("Durable client RPC endpoint", () => {
             expect(result).to.be.equal("target-instance");
         });
 
+        it("reports when restart options are unsupported by the extension", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableClient(input);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/source-instance/restartWithOptions`
+            );
+            const scope = nock(expectedUrl.origin)
+                .post(expectedUrl.pathname)
+                .query({
+                    taskHub: testTaskHubName,
+                    connection: testConnectionName,
+                    newInstanceId: "target-instance",
+                })
+                .reply(404);
+
+            await expect(
+                client.restart("source-instance", { newInstanceId: "target-instance" })
+            ).to.be.rejectedWith(
+                "The restart operation with options requires a newer version of the Durable Task Extension that supports the restartWithOptions API."
+            );
+            expect(scope.isDone()).to.be.equal(true);
+        });
+
+        it("snapshots the requested target instance ID before awaiting the response", async () => {
+            const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
+            const client = new DurableClient(input);
+            const expectedUrl = new URL(
+                `${testRpcOrigin}/durabletask/instances/source-instance/restartWithOptions`
+            );
+            const scope = nock(expectedUrl.origin)
+                .post(expectedUrl.pathname)
+                .query({
+                    taskHub: testTaskHubName,
+                    connection: testConnectionName,
+                    newInstanceId: "first-target",
+                })
+                .reply(202, { id: "first-target" });
+            const options = { newInstanceId: "first-target" };
+
+            const restartPromise = client.restart("source-instance", options);
+            options.newInstanceId = "second-target";
+            const result = await restartPromise;
+
+            expect(scope.isDone()).to.be.equal(true);
+            expect(result).to.be.equal("first-target");
+        });
+
         it("encodes the source instance ID as a URL path segment", async () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
             const client = new DurableClient(input);

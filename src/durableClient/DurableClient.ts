@@ -539,7 +539,10 @@ export class DurableClient implements types.DurableClient {
         }
 
         const useOptions = typeof restartWithNewInstanceIdOrOptions !== "boolean";
-        if (useOptions && !restartWithNewInstanceIdOrOptions.newInstanceId) {
+        const requestedNewInstanceId = useOptions
+            ? restartWithNewInstanceIdOrOptions.newInstanceId
+            : undefined;
+        if (useOptions && !requestedNewInstanceId) {
             throw new Error("newInstanceId must be a valid string.");
         }
 
@@ -582,12 +585,9 @@ export class DurableClient implements types.DurableClient {
             }
         }
 
-        if (useOptions) {
-            restartUrl.searchParams.set(
-                "newInstanceId",
-                restartWithNewInstanceIdOrOptions.newInstanceId
-            );
-            if (restartWithNewInstanceIdOrOptions.version !== undefined) {
+        if (requestedNewInstanceId !== undefined) {
+            restartUrl.searchParams.set("newInstanceId", requestedNewInstanceId);
+            if (useOptions && restartWithNewInstanceIdOrOptions.version !== undefined) {
                 restartUrl.searchParams.set("version", restartWithNewInstanceIdOrOptions.version);
             }
         } else {
@@ -599,17 +599,19 @@ export class DurableClient implements types.DurableClient {
 
         const headers = this.getDistributedTracingHeaders();
         const response = await this.axiosInstance.post(restartUrl.href, undefined, { headers });
+        if (useOptions && response.status === 404) {
+            throw new Error(
+                "The restart operation with options requires a newer version of the Durable Task Extension that supports the restartWithOptions API."
+            );
+        }
         if (response.data && response.status <= 202) {
             const restartedInstanceId = (response.data as HttpManagementPayload).id;
             if (typeof restartedInstanceId !== "string" || !restartedInstanceId) {
                 throw new Error("The restart operation returned an invalid response.");
             }
-            if (
-                useOptions &&
-                restartedInstanceId !== restartWithNewInstanceIdOrOptions.newInstanceId
-            ) {
+            if (useOptions && restartedInstanceId !== requestedNewInstanceId) {
                 throw new Error(
-                    `The restart operation returned instance ID '${restartedInstanceId}' instead of the requested ID '${restartWithNewInstanceIdOrOptions.newInstanceId}'.`
+                    `The restart operation returned instance ID '${restartedInstanceId}' instead of the requested ID '${requestedNewInstanceId}'.`
                 );
             }
             return restartedInstanceId;
