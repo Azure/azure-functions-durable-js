@@ -71,14 +71,14 @@ HTTP starter
 └─ POST /durabletask/orchestrators/helloSequence
    └─ create_orchestration:helloSequence
       └─ orchestration:helloSequence
-         ├─ activity:sayHello
-         │  └─ activity:sayHello
+         ├─ activity:sayHello (Client)
+         │  └─ activity:sayHello (Server)
          │     └─ hello-world.activity.user-span
-         ├─ activity:sayHello
-         │  └─ activity:sayHello
+         ├─ activity:sayHello (Client)
+         │  └─ activity:sayHello (Server)
          │     └─ hello-world.activity.user-span
-         └─ activity:sayHello
-            └─ activity:sayHello
+         └─ activity:sayHello (Client)
+            └─ activity:sayHello (Server)
                └─ hello-world.activity.user-span
 ```
 

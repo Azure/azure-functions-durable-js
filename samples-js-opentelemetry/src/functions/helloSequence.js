@@ -26,6 +26,7 @@ df.app.activity(activityName, {
         return tracer.startActiveSpan("hello-world.activity.user-span", async (span) => {
             try {
                 span.setAttribute("greeting.name", name);
+                // Verify that the custom span stays active after an await.
                 await new Promise((resolve) => setTimeout(resolve, 10));
 
                 const userSpanContext = getActiveSpanContext("hello-world.activity.user-span");
