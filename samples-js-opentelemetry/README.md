@@ -7,8 +7,8 @@ The app exposes an HTTP endpoint that starts a `helloSequence` orchestration. Th
 ## Prerequisites
 
 -   Node.js 22 or later
--   Azure Functions Core Tools v4
--   Docker, for running Azurite locally
+-   Azure Functions Core Tools 4.14 or later
+-   Docker, for running Azurite and the OpenTelemetry Collector locally
 
 ## Run the sample locally
 
@@ -24,10 +24,10 @@ The app exposes an HTTP endpoint that starts a `helloSequence` orchestration. Th
     Copy-Item local.settings.json.example local.settings.json
     ```
 
-3. Start Azurite in a separate terminal:
+3. Start Azurite and the OpenTelemetry Collector in a separate terminal:
 
     ```powershell
-    docker run --rm --name durable-functions-azurite -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite
+    docker compose up
     ```
 
 4. Start the Functions host:
@@ -42,7 +42,9 @@ The app exposes an HTTP endpoint that starts a `helloSequence` orchestration. Th
     npm run verify
     ```
 
-The verification sends a known W3C `traceparent` and `tracestate`, waits for the orchestration to complete, and confirms that the same trace context is active in the orchestrator, every activity, and every custom activity span.
+The verification sends a known W3C `traceparent` and `tracestate`, waits for the orchestration to complete, and confirms that the same trace context is active in the orchestrator, every activity, and every custom activity span. The local OpenTelemetry Collector receives host telemetry and writes it to the Docker Compose logs.
+
+The verifier uses `http://localhost:7071` by default. Keep the `localhost` host name when testing incoming trace context locally; the Functions host excludes `127.0.0.1` requests from its OpenTelemetry HTTP instrumentation.
 
 When `APPLICATIONINSIGHTS_CONNECTION_STRING` is not configured, the sample writes worker telemetry to the console.
 
