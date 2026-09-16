@@ -1,0 +1,25 @@
+{
+    "name": "durable-functions-opentelemetry-sample",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Durable Functions JavaScript Hello Sequence sample with OpenTelemetry.",
+    "main": "src/{index.js,functions/*.js}",
+    "scripts": {
+        "start": "func start",
+        "verify": "node verify.js"
+    },
+    "dependencies": {
+        "@azure/functions": "4.16.2",
+        "@azure/functions-opentelemetry-instrumentation": "0.3.0",
+        "@azure/monitor-opentelemetry-exporter": "1.0.0-beta.44",
+        "@opentelemetry/api": "1.9.1",
+        "@opentelemetry/api-logs": "0.222.0",
+        "@opentelemetry/auto-instrumentations-node": "0.80.0",
+        "@opentelemetry/instrumentation": "0.222.0",
+        "@opentelemetry/resources": "2.11.0",
+        "@opentelemetry/sdk-logs": "0.222.0",
+        "@opentelemetry/sdk-trace-base": "2.11.0",
+        "@opentelemetry/sdk-trace-node": "2.11.0",
+        "durable-functions": "3.5.0"
+    }
+}

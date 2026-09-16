@@ -1,0 +1,7 @@
+node_modules
+.git*
+local.settings.json
+README.md
+compose.yaml
+otel-collector-config.yaml
+verify.js
