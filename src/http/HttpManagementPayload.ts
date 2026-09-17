@@ -13,6 +13,7 @@ export class HttpManagementPayload implements types.HttpManagementPayload {
         public readonly rewindPostUri: string,
         public readonly purgeHistoryDeleteUri: string,
         public readonly suspendPostUri: string,
-        public readonly resumePostUri: string
+        public readonly resumePostUri: string,
+        public readonly restartPostUri: string = ""
     ) {}
 }

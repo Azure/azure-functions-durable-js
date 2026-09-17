@@ -10,6 +10,7 @@ import url = require("url");
 import { isURL } from "validator";
 import {
     StartNewOptions,
+    RestartOptions,
     GetStatusOptions,
     OrchestrationFilter,
     TaskHubOptions,
@@ -527,6 +528,98 @@ export class DurableClient implements types.DurableClient {
         }
     }
 
+    public async restart(instanceId: string, restartWithNewInstanceId?: boolean): Promise<string>;
+    public async restart(instanceId: string, options: RestartOptions): Promise<string>;
+    public async restart(
+        instanceId: string,
+        restartWithNewInstanceIdOrOptions: boolean | RestartOptions = true
+    ): Promise<string> {
+        if (!instanceId) {
+            throw new Error("instanceId must be a valid string.");
+        }
+
+        const useOptions = typeof restartWithNewInstanceIdOrOptions !== "boolean";
+        const requestedNewInstanceId = useOptions
+            ? restartWithNewInstanceIdOrOptions.newInstanceId
+            : undefined;
+        if (useOptions && !requestedNewInstanceId) {
+            throw new Error("newInstanceId must be a valid string.");
+        }
+
+        const restartPostUri = this.clientData.managementUrls.restartPostUri;
+        if (!restartPostUri) {
+            throw new Error(
+                "Cannot use the restart API with this version of the Durable Task Extension."
+            );
+        }
+
+        const idPlaceholder = this.clientData.managementUrls.id;
+        const encodedInstanceId = encodeURIComponent(instanceId);
+        const managementRestartUrl = new URL(
+            restartPostUri.replace(idPlaceholder, encodedInstanceId)
+        );
+        let restartUrl: URL;
+        if (this.clientData.rpcBaseUrl) {
+            const operation = useOptions ? "restartWithOptions" : "restart";
+            restartUrl = new URL(
+                `instances/${encodedInstanceId}/${operation}`,
+                this.clientData.rpcBaseUrl
+            );
+            for (const queryKey of ["taskHub", "connection"]) {
+                const queryValue = managementRestartUrl.searchParams.get(queryKey);
+                if (queryValue !== null) {
+                    restartUrl.searchParams.set(queryKey, queryValue);
+                }
+            }
+        } else {
+            restartUrl = managementRestartUrl;
+            if (useOptions) {
+                const restartPathSuffix = "/restart";
+                if (!restartUrl.pathname.endsWith(restartPathSuffix)) {
+                    throw new Error(`Invalid restart management URL path: ${restartUrl.pathname}`);
+                }
+                restartUrl.pathname = `${restartUrl.pathname.slice(
+                    0,
+                    -restartPathSuffix.length
+                )}/restartWithOptions`;
+            }
+        }
+
+        if (requestedNewInstanceId !== undefined) {
+            restartUrl.searchParams.set("newInstanceId", requestedNewInstanceId);
+            if (useOptions && restartWithNewInstanceIdOrOptions.version !== undefined) {
+                restartUrl.searchParams.set("version", restartWithNewInstanceIdOrOptions.version);
+            }
+        } else {
+            restartUrl.searchParams.set(
+                "restartWithNewInstanceId",
+                restartWithNewInstanceIdOrOptions.toString()
+            );
+        }
+
+        const headers = this.getDistributedTracingHeaders();
+        const response = await this.axiosInstance.post(restartUrl.href, undefined, { headers });
+        if (useOptions && response.status === 404) {
+            throw new Error(
+                "The restart operation with options requires a newer version of the Durable Task Extension that supports the restartWithOptions API."
+            );
+        }
+        if (response.data && response.status <= 202) {
+            const restartedInstanceId = (response.data as HttpManagementPayload).id;
+            if (typeof restartedInstanceId !== "string" || !restartedInstanceId) {
+                throw new Error("The restart operation returned an invalid response.");
+            }
+            if (useOptions && restartedInstanceId !== requestedNewInstanceId) {
+                throw new Error(
+                    `The restart operation returned instance ID '${restartedInstanceId}' instead of the requested ID '${requestedNewInstanceId}'.`
+                );
+            }
+            return restartedInstanceId;
+        }
+
+        return Promise.reject(this.createGenericError(response));
+    }
+
     public async terminate(instanceId: string, reason: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
         let requestUrl: string;
@@ -702,7 +795,12 @@ export class DurableClient implements types.DurableClient {
                 payload[key] = payload[key].replace(dataUrl.origin, requestUrl.origin);
             }
 
-            payload[key] = payload[key].replace(this.clientData.managementUrls.id, instanceId);
+            const instanceIdReplacement =
+                key === "id" ? instanceId : encodeURIComponent(instanceId);
+            payload[key] = payload[key].replace(
+                this.clientData.managementUrls.id,
+                instanceIdReplacement
+            );
         });
 
         return payload;

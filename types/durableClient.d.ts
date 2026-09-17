@@ -304,6 +304,22 @@ export declare class DurableClient {
     startNew(orchestratorFunctionName: string, options?: StartNewOptions): Promise<string>;
 
     /**
+     * Restarts an orchestration instance with its original input.
+     * @param instanceId The ID of the orchestration instance to restart.
+     * @param restartWithNewInstanceId Whether to use a generated instance ID. Defaults to `true`.
+     * @returns The ID of the restarted orchestration instance.
+     */
+    restart(instanceId: string, restartWithNewInstanceId?: boolean): Promise<string>;
+
+    /**
+     * Restarts an orchestration instance with its original input.
+     * @param instanceId The ID of the source orchestration instance.
+     * @param options Options specifying the target instance ID and orchestration version.
+     * @returns The ID of the restarted orchestration instance.
+     */
+    restart(instanceId: string, options: RestartOptions): Promise<string>;
+
+    /**
      * Terminates a running orchestration instance.
      * @param instanceId The ID of the orchestration instance to terminate.
      * @param reason The reason for terminating the orchestration instance.
@@ -381,6 +397,22 @@ export interface StartNewOptions {
 }
 
 /**
+ * Options object provided to the `client.restart()` method.
+ */
+export interface RestartOptions {
+    /**
+     * The exact instance ID to use for the restarted orchestration.
+     */
+    newInstanceId: string;
+
+    /**
+     * The version to use for the restarted orchestration. If not specified,
+     * the default version from host.json will be used.
+     */
+    version?: string;
+}
+
+/**
  * Class to hold statistics about this execution of purge history.
  * The return type of DurableClient.purgeHistory()
  */
@@ -424,6 +456,10 @@ export declare class HttpManagementPayload {
      * The HTTP DELETE purge endpoint URL.
      */
     readonly purgeHistoryDeleteUri: string;
+    /**
+     * The HTTP POST instance restart endpoint URL.
+     */
+    readonly restartPostUri?: string;
     /**
      * The HTTP POST instance suspension endpoint URL.
      */
