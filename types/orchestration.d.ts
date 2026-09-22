@@ -85,6 +85,14 @@ export declare class DurableOrchestrationContext {
     readonly parentInstanceId: string | undefined;
 
     /**
+     * The ID of the orchestration instance from which this orchestration was cloned.
+     *
+     * This value is available only for orchestrations created as clones of a
+     * different source instance.
+     */
+    readonly sourceInstanceId: string | undefined;
+
+    /**
      * The version assigned to the orchestration instance on creation.
      */
     readonly version: string | undefined;
