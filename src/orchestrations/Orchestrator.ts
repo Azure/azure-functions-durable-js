@@ -90,7 +90,8 @@ export class Orchestrator {
                 orchestrationBinding.defaultHttpAsyncRequestSleepTimeMillseconds,
                 upperSchemaVersion,
                 input,
-                this.taskOrchestrationExecutor
+                this.taskOrchestrationExecutor,
+                orchestrationBinding.sourceInstanceId
             );
         }
 

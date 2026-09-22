@@ -62,6 +62,7 @@ export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
      * @param schemaVersion The schema version currently used after being negotiated with the extension
      * @param isReplaying Whether the orchestration is to be marked as isReplaying the its first event
      * @param parentInstanceId The instanceId of the orchestration's parent, if this is a sub-orchestration
+     * @param sourceInstanceId The instanceId of the orchestration from which this orchestration was cloned
      */
     constructor(
         instanceId = "",
@@ -72,7 +73,8 @@ export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
         defaultHttpAsyncRequestSleepTimeMillseconds = 30000,
         schemaVersion: ReplaySchema = ReplaySchema.V1,
         isReplaying = false,
-        parentInstanceId = ""
+        parentInstanceId = "",
+        sourceInstanceId?: string
     ) {
         if (history === undefined) {
             const opts = new HistoryEventOptions(0, new Date());
@@ -88,7 +90,8 @@ export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
             maximumShortTimerDuration,
             longRunningTimerIntervalDuration,
             defaultHttpAsyncRequestSleepTimeMillseconds,
-            schemaVersion
+            schemaVersion,
+            sourceInstanceId
         );
     }
 }
