@@ -58,13 +58,15 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
         defaultHttpAsyncRequestSleepTimeMillseconds: number | undefined,
         schemaVersion: ReplaySchema,
         input: unknown,
-        private taskOrchestratorExecutor: TaskOrchestrationExecutor
+        private taskOrchestratorExecutor: TaskOrchestrationExecutor,
+        sourceInstanceId?: string
     ) {
         this.state = state;
         this.instanceId = instanceId;
         this.isReplaying = isReplaying;
         this.currentUtcDateTime = currentUtcDateTime;
         this.parentInstanceId = parentInstanceId;
+        this.sourceInstanceId = sourceInstanceId;
         this.longRunningTimerIntervalDuration = longRunningTimerIntervalDuration
             ? moment.duration(longRunningTimerIntervalDuration)
             : undefined;
@@ -93,6 +95,7 @@ export class DurableOrchestrationContext implements types.DurableOrchestrationCo
 
     public readonly instanceId: string;
     public readonly parentInstanceId: string | undefined;
+    public readonly sourceInstanceId: string | undefined;
     public isReplaying: boolean;
     public currentUtcDateTime: Date;
 
