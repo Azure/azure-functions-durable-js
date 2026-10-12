@@ -88,7 +88,8 @@ export declare class DurableOrchestrationContext {
      * The ID of the orchestration instance from which this orchestration was cloned.
      *
      * This value is available only for orchestrations created as clones of a
-     * different source instance.
+     * different source instance. It is undefined when the extension supplies
+     * a null source instance ID or omits it.
      */
     readonly sourceInstanceId: string | undefined;
 

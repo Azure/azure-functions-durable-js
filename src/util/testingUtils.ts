@@ -62,7 +62,7 @@ export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
      * @param schemaVersion The schema version currently used after being negotiated with the extension
      * @param isReplaying Whether the orchestration is to be marked as isReplaying the its first event
      * @param parentInstanceId The instanceId of the orchestration's parent, if this is a sub-orchestration
-     * @param sourceInstanceId The instanceId of the orchestration from which this orchestration was cloned
+     * @param sourceInstanceId The instanceId of the orchestration from which this orchestration was cloned, or null/undefined if it was not cloned
      */
     constructor(
         instanceId = "",
@@ -74,7 +74,7 @@ export class DurableOrchestrationInput extends DurableOrchestrationBindingInfo {
         schemaVersion: ReplaySchema = ReplaySchema.V1,
         isReplaying = false,
         parentInstanceId = "",
-        sourceInstanceId?: string
+        sourceInstanceId?: string | null
     ) {
         if (history === undefined) {
             const opts = new HistoryEventOptions(0, new Date());

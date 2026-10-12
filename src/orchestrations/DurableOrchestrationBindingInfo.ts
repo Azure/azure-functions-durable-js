@@ -25,7 +25,7 @@ export class DurableOrchestrationBindingInfo extends DurableOrchestrationBinding
         public readonly longRunningTimerIntervalDuration?: string,
         public readonly defaultHttpAsyncRequestSleepTimeMillseconds?: number,
         public readonly upperSchemaVersion: ReplaySchema = ReplaySchema.V1, // TODO: Implement entity locking // public readonly contextLocks?: EntityId[],
-        public readonly sourceInstanceId?: string
+        public readonly sourceInstanceId?: string | null
     ) {
         super(history, instanceId, isReplaying, upperSchemaVersion);
     }

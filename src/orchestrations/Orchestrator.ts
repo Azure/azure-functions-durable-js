@@ -91,7 +91,7 @@ export class Orchestrator {
                 upperSchemaVersion,
                 input,
                 this.taskOrchestrationExecutor,
-                orchestrationBinding.sourceInstanceId
+                orchestrationBinding.sourceInstanceId ?? undefined
             );
         }
 

@@ -212,32 +212,49 @@ describe("Orchestrator", () => {
             expect(mockContext.df!.parentInstanceId).to.be.equal(id);
         });
 
-        it("assigns sourceInstanceId", async () => {
-            const orchestrator = TestOrchestrations.SayHelloSequence;
-            const name = "World";
-            const sourceInstanceId = uuidv1();
-            const mockContext = new DummyOrchestrationContext();
-            const orchestrationInput = new DurableOrchestrationInput(
-                "",
-                TestHistories.GetSayHelloWithActivityReplayOne(
-                    "SayHelloWithActivity",
-                    moment.utc().toDate(),
-                    name
-                ),
-                name,
-                undefined,
-                undefined,
-                undefined,
-                ReplaySchema.V1,
-                undefined,
-                undefined,
-                sourceInstanceId
-            );
+        for (const sourceInstanceId of [uuidv1(), null, undefined]) {
+            const description =
+                sourceInstanceId === undefined
+                    ? "omitted"
+                    : sourceInstanceId === null
+                    ? "null"
+                    : "a clone ID";
 
-            await orchestrator(orchestrationInput, mockContext);
+            it(`assigns sourceInstanceId when the wire value is ${description}`, async () => {
+                const orchestrator = TestOrchestrations.SayHelloSequence;
+                const name = "World";
+                const mockContext = new DummyOrchestrationContext();
+                const orchestrationInput = new DurableOrchestrationInput(
+                    "",
+                    TestHistories.GetSayHelloWithActivityReplayOne(
+                        "SayHelloWithActivity",
+                        moment.utc().toDate(),
+                        name
+                    ),
+                    name,
+                    undefined,
+                    undefined,
+                    undefined,
+                    ReplaySchema.V1,
+                    undefined,
+                    undefined,
+                    sourceInstanceId
+                );
+                const wireInput: DurableOrchestrationInput = JSON.parse(
+                    JSON.stringify(orchestrationInput)
+                );
 
-            expect(mockContext.df!.sourceInstanceId).to.be.equal(sourceInstanceId);
-        });
+                if (sourceInstanceId === undefined) {
+                    expect(wireInput).not.to.have.property("sourceInstanceId");
+                } else {
+                    expect(wireInput).to.have.property("sourceInstanceId", sourceInstanceId);
+                }
+
+                await orchestrator(wireInput, mockContext);
+
+                expect(mockContext.df!.sourceInstanceId).to.be.equal(sourceInstanceId ?? undefined);
+            });
+        }
 
         it("extracts version from history", async () => {
             const orchestrator = TestOrchestrations.SayHelloSequence;
