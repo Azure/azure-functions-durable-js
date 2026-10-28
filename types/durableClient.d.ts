@@ -154,6 +154,11 @@ export interface CosmosDBv4DurableClientOptions extends Omit<CosmosDBv4FunctionO
 /**
  * Client for starting, querying, terminating and raising events to
  * orchestration and entity instances.
+ *
+ * Orchestration instance IDs are raw, unencoded strings. The client encodes them
+ * when constructing URLs. IDs must not be empty, equal `.` or `..`, or contain
+ * `/`, `\`, `?`, `#`, or control characters. Percent sequences are treated literally.
+ * `startNew()` also accepts an omitted or empty ID to generate a random GUID.
  */
 export declare class DurableClient {
     /**
@@ -381,6 +386,9 @@ export interface StartNewOptions {
      *  The ID to use for the new orchestration instance. If
      *  no instanceId is specified, the Durable Functions extension will
      *  generate a random GUID (recommended).
+     *  Provide a raw, unencoded ID; percent sequences are treated literally.
+     *  An empty string also generates an ID. Otherwise, the ID must not equal
+     *  `.` or `..`, or contain `/`, `\`, `?`, `#`, or control characters.
      */
     instanceId?: string;
 
@@ -402,6 +410,8 @@ export interface StartNewOptions {
 export interface RestartOptions {
     /**
      * The exact instance ID to use for the restarted orchestration.
+     * Must be a non-empty, raw, unencoded ID following the same character
+     * restrictions as `StartNewOptions.instanceId`.
      */
     newInstanceId: string;
 
