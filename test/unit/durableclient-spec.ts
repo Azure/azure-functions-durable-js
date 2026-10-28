@@ -220,7 +220,7 @@ describe("Durable client RPC endpoint", () => {
             const input = JSON.parse(durableClientBindingInputJson) as OrchestrationClientInputData;
             const client = new DurableClient(input);
             const expectedUrl = new URL(
-                `${testRpcOrigin}/durabletask/instances/source%2Bpercent%25instance/restartWithOptions`
+                `${testRpcOrigin}/durabletask/instances/source%25252Bpercent%252525instance/restartWithOptions`
             );
             const scope = nock(expectedUrl.origin)
                 .post(expectedUrl.pathname)
@@ -305,7 +305,7 @@ describe("Durable client RPC endpoint", () => {
 
             expect(payload.id).to.equal("source+percent%instance");
             expect(payload.restartPostUri).to.contain(
-                "/instances/source%2Bpercent%25instance/restart"
+                "/instances/source%25252Bpercent%252525instance/restart"
             );
         });
     });

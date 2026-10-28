@@ -1,5 +1,29 @@
 /** @hidden */
 export class WebhookUtils {
+    public static encodePathSegment(value: unknown, parameterName: string): string {
+        if (typeof value !== "string" || value.length === 0) {
+            throw new Error(`${parameterName} must be a valid string.`);
+        }
+
+        // URL parsers normalize dot-only segments even when the dots are percent-encoded.
+        if (
+            value === "." ||
+            value === ".." ||
+            /[/\\?#]/.test(value) ||
+            Array.from(value).some((character) => {
+                const code = character.charCodeAt(0);
+                return code < 32 || (code >= 127 && code <= 159);
+            })
+        ) {
+            throw new Error(
+                `${parameterName} must not be '.' or '..', or contain '/', '\\', '?', '#', or control characters.`
+            );
+        }
+
+        // The HTTP host, Durable HTTP handler, and route matcher each decode path segments.
+        return encodeURIComponent(encodeURIComponent(encodeURIComponent(value)));
+    }
+
     public static getReadEntityUrl(
         baseUrl: string,
         requiredQueryStrings: string,
