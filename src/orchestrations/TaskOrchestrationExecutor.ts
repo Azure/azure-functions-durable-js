@@ -401,7 +401,7 @@ export class TaskOrchestrationExecutor {
             // The task failed. Prefer structured FailureDetails (carries
             // any custom Properties attached by the failing worker via its
             // ExceptionPropertiesProvider); fall back to the legacy flat
-            // Reason/Details strings when the host hasn't sent FailureDetails.
+            // Reason and optional Details strings when the host hasn't sent FailureDetails.
             const failureDetails = extractFailureDetailsPayload(event);
             if (failureDetails) {
                 const action = (task.actionObj as unknown) as { functionName?: unknown };
@@ -411,11 +411,12 @@ export class TaskOrchestrationExecutor {
                         : undefined;
                 const taskId = typeof task.id === "number" ? task.id : undefined;
                 taskResult = taskFailedErrorFromWireDto(failureDetails, taskName, taskId);
-            } else if (
-                Utils.hasStringProperty(event, "Reason") &&
-                Utils.hasStringProperty(event, "Details")
-            ) {
-                taskResult = new Error(`${event.Reason} \n ${event.Details}`);
+            } else if (Utils.hasStringProperty(event, "Reason")) {
+                taskResult = new Error(
+                    Utils.hasStringProperty(event, "Details")
+                        ? `${event.Reason} \n ${event.Details}`
+                        : event.Reason
+                );
             } else {
                 throw Error(
                     `Task with ID ${task.id} failed but we could not parse its exception data.` +

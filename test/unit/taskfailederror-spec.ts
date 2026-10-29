@@ -18,9 +18,18 @@ import { SubOrchestrationInstanceCreatedEvent } from "../../src/history/SubOrche
 import { SubOrchestrationInstanceFailedEvent } from "../../src/history/SubOrchestrationInstanceFailedEvent";
 
 describe("TaskFailedError (orchestrator replay)", () => {
-    function buildHistory(failedEventOptions: ConstructorParameters<typeof TaskFailedEvent>[0]) {
+    function buildHistory(
+        failedEventOptions: ConstructorParameters<typeof TaskFailedEvent>[0],
+        taskType: "activity" | "sub-orchestration" = "activity"
+    ) {
         const t0 = moment.utc().toDate();
         const t1 = moment(t0).add(1, "s").toDate();
+        const scheduledEventOptions = {
+            eventId: 0,
+            timestamp: t0,
+            isPlayed: false,
+            name: "Failing",
+        };
         return [
             new OrchestratorStartedEvent({ eventId: -1, timestamp: t0, isPlayed: false }),
             new ExecutionStartedEvent({
@@ -30,14 +39,16 @@ describe("TaskFailedError (orchestrator replay)", () => {
                 name: "TestOrch",
                 input: undefined,
             }),
-            new TaskScheduledEvent({
-                eventId: 0,
-                timestamp: t0,
-                isPlayed: false,
-                name: "Failing",
-            }),
+            taskType === "activity"
+                ? new TaskScheduledEvent(scheduledEventOptions)
+                : new SubOrchestrationInstanceCreatedEvent({
+                      ...scheduledEventOptions,
+                      instanceId: "sub-instance-id",
+                  }),
             new OrchestratorStartedEvent({ eventId: -1, timestamp: t1, isPlayed: false }),
-            new TaskFailedEvent(failedEventOptions),
+            taskType === "activity"
+                ? new TaskFailedEvent(failedEventOptions)
+                : new SubOrchestrationInstanceFailedEvent(failedEventOptions),
         ];
     }
 
@@ -469,4 +480,175 @@ describe("TaskFailedError (orchestrator replay)", () => {
         // eslint-disable-next-line no-prototype-builtins
         expect(state.hasOwnProperty("failureDetails")).to.equal(false);
     });
+
+    for (const taskType of ["activity", "sub-orchestration"] as const) {
+        describe(`${taskType} failure payloads`, () => {
+            function historyWithFailure(payload: Record<string, unknown>) {
+                const history = buildHistory(
+                    {
+                        eventId: -1,
+                        timestamp: moment.utc().toDate(),
+                        isPlayed: false,
+                        taskScheduledId: 0,
+                    },
+                    taskType
+                );
+                const failure = history[history.length - 1];
+                for (const field of ["Reason", "Details", "FailureDetails"]) {
+                    Reflect.deleteProperty(failure, field);
+                }
+                Object.assign(failure, payload);
+                return history;
+            }
+
+            const cases: {
+                name: string;
+                payload: Record<string, unknown>;
+                message: string;
+                structured?: boolean;
+            }[] = [
+                {
+                    name: "null Details and FailureDetails",
+                    payload: { Reason: "legacy reason", Details: null, FailureDetails: null },
+                    message: "legacy reason",
+                },
+                {
+                    name: "absent Details and FailureDetails",
+                    payload: { Reason: "legacy reason" },
+                    message: "legacy reason",
+                },
+                {
+                    name: "null Details and empty FailureDetails",
+                    payload: { Reason: "legacy reason", Details: null, FailureDetails: {} },
+                    message: "legacy reason",
+                },
+                {
+                    name: "absent Details and empty FailureDetails",
+                    payload: { Reason: "legacy reason", FailureDetails: {} },
+                    message: "legacy reason",
+                },
+                {
+                    name: "legacy string Details",
+                    payload: { Reason: "legacy reason", Details: "legacy details" },
+                    message: "legacy reason \n legacy details",
+                },
+                {
+                    name: "legacy string Details and empty FailureDetails",
+                    payload: {
+                        Reason: "legacy reason",
+                        Details: "legacy details",
+                        FailureDetails: {},
+                    },
+                    message: "legacy reason \n legacy details",
+                },
+                {
+                    name: "empty string Details",
+                    payload: { Reason: "legacy reason", Details: "" },
+                    message: "legacy reason \n ",
+                },
+                {
+                    name: "structured FailureDetails before a legacy reason",
+                    payload: {
+                        Reason: "legacy reason",
+                        Details: null,
+                        FailureDetails: {
+                            ErrorType: "MyError",
+                            ErrorMessage: "structured reason",
+                        },
+                    },
+                    message: "MyError: structured reason",
+                    structured: true,
+                },
+            ];
+
+            for (const { name, payload, message, structured } of cases) {
+                it(`runs catch and finally for ${name}`, async () => {
+                    let caught: unknown;
+                    const handlers: string[] = [];
+                    const orchestrator = createOrchestrator(function* (
+                        context: OrchestrationContext
+                    ) {
+                        try {
+                            handlers.push("try");
+                            yield taskType === "activity"
+                                ? context.df.callActivity("Failing")
+                                : context.df.callSubOrchestrator(
+                                      "Failing",
+                                      undefined,
+                                      "sub-instance-id"
+                                  );
+                        } catch (err) {
+                            caught = err;
+                            handlers.push("catch");
+                        } finally {
+                            handlers.push("finally");
+                        }
+                        return "handled";
+                    });
+
+                    const state = await orchestrator(
+                        new DurableOrchestrationInput("", historyWithFailure(payload)),
+                        new DummyOrchestrationContext()
+                    );
+
+                    expect(caught).to.be.instanceOf(Error);
+                    if (structured) {
+                        expect(caught).to.be.instanceOf(TaskFailedError);
+                    } else {
+                        expect(caught).to.not.be.instanceOf(TaskFailedError);
+                    }
+                    expect((caught as Error).message).to.equal(message);
+                    expect(handlers).to.deep.equal(["try", "catch", "finally"]);
+                    expect(state.isDone).to.equal(true);
+                    expect(state.output).to.equal("handled");
+                });
+            }
+
+            for (const payload of [
+                {},
+                { Reason: null, Details: "legacy details" },
+                { Reason: 42, Details: "legacy details", FailureDetails: {} },
+                { Details: "legacy details", FailureDetails: { ErrorMessage: "no error type" } },
+            ]) {
+                it(`rejects unusable failure data ${JSON.stringify(payload)}`, async () => {
+                    const handlers: string[] = [];
+                    const orchestrator = createOrchestrator(function* (
+                        context: OrchestrationContext
+                    ) {
+                        try {
+                            handlers.push("try");
+                            yield taskType === "activity"
+                                ? context.df.callActivity("Failing")
+                                : context.df.callSubOrchestrator(
+                                      "Failing",
+                                      undefined,
+                                      "sub-instance-id"
+                                  );
+                        } catch {
+                            handlers.push("catch");
+                        } finally {
+                            handlers.push("finally");
+                        }
+                    });
+
+                    let rejected: unknown;
+                    try {
+                        await orchestrator(
+                            new DurableOrchestrationInput("", historyWithFailure(payload)),
+                            new DummyOrchestrationContext()
+                        );
+                    } catch (err) {
+                        rejected = err;
+                    }
+
+                    expect(rejected).to.be.instanceOf(Error);
+                    expect((rejected as Error).message).to.equal(
+                        "Task with ID 0 failed but we could not parse its exception data." +
+                            "This is probably a replay failure, please file a bug report."
+                    );
+                    expect(handlers).to.deep.equal(["try"]);
+                });
+            }
+        });
+    }
 });
