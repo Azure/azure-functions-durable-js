@@ -110,8 +110,8 @@ export class DurableClient implements types.DurableClient {
         options: GetStatusOptions = {}
     ): Promise<DurableOrchestrationStatus> {
         const internalOptions: GetStatusInternalOptions = {
-            instanceId,
             ...options,
+            instanceId,
         };
         const response: AxiosResponse = await this.getStatusInternal(internalOptions);
 
@@ -168,15 +168,16 @@ export class DurableClient implements types.DurableClient {
     }
 
     public async purgeInstanceHistory(instanceId: string): Promise<PurgeHistoryResult> {
+        const encodedInstanceId = WebhookUtils.encodePathSegment(instanceId, "instanceId");
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
-            requestUrl = new URL(`instances/${instanceId}`, this.clientData.rpcBaseUrl).href;
+            requestUrl = new URL(`instances/${encodedInstanceId}`, this.clientData.rpcBaseUrl).href;
         } else {
             // Legacy app frontend path
             const template = this.clientData.managementUrls.purgeHistoryDeleteUri;
             const idPlaceholder = this.clientData.managementUrls.id;
-            requestUrl = template.replace(idPlaceholder, instanceId);
+            requestUrl = template.replace(idPlaceholder, () => encodedInstanceId);
         }
 
         const response = await this.axiosInstance.delete(requestUrl);
@@ -266,16 +267,18 @@ export class DurableClient implements types.DurableClient {
             throw new Error("eventName must be a valid string.");
         }
 
+        const encodedInstanceId = WebhookUtils.encodePathSegment(instanceId, "instanceId");
+        const encodedEventName = WebhookUtils.encodePathSegment(eventName, "eventName");
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
-            let path = `instances/${instanceId}/raiseEvent/${eventName}`;
+            let path = `instances/${encodedInstanceId}/raiseEvent/${encodedEventName}`;
             const query: string[] = [];
             if (taskHubName) {
-                query.push(`taskHub=${taskHubName}`);
+                query.push(`taskHub=${encodeURIComponent(taskHubName)}`);
             }
             if (connectionName) {
-                query.push(`connection=${connectionName}`);
+                query.push(`connection=${encodeURIComponent(connectionName)}`);
             }
 
             if (query.length > 0) {
@@ -287,15 +290,18 @@ export class DurableClient implements types.DurableClient {
             // Legacy app frontend path
             const idPlaceholder = this.clientData.managementUrls.id;
             requestUrl = this.clientData.managementUrls.sendEventPostUri
-                .replace(idPlaceholder, instanceId)
-                .replace(this.eventNamePlaceholder, eventName);
+                .replace(idPlaceholder, () => encodedInstanceId)
+                .replace(this.eventNamePlaceholder, () => encodedEventName);
 
-            if (taskHubName) {
-                requestUrl = requestUrl.replace(this.clientData.taskHubName, taskHubName);
-            }
-
-            if (connectionName) {
-                requestUrl = requestUrl.replace(/(connection=)([\w]+)/gi, "$1" + connectionName);
+            if (taskHubName || connectionName) {
+                const urlObj = new URL(requestUrl);
+                if (taskHubName) {
+                    urlObj.searchParams.set("taskHub", taskHubName);
+                }
+                if (connectionName) {
+                    urlObj.searchParams.set("connection", connectionName);
+                }
+                requestUrl = urlObj.href;
             }
         }
 
@@ -369,17 +375,19 @@ export class DurableClient implements types.DurableClient {
     ): Promise<void> {
         const { taskHubName, connectionName } = options;
         const idPlaceholder = this.clientData.managementUrls.id;
+        const encodedInstanceId = WebhookUtils.encodePathSegment(instanceId, "instanceId");
+        const encodedReason = encodeURIComponent(reason);
 
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
-            let path = `instances/${instanceId}/rewind?reason=${reason}`;
+            let path = `instances/${encodedInstanceId}/rewind?reason=${encodedReason}`;
             const query: string[] = [];
             if (taskHubName) {
-                query.push(`taskHub=${taskHubName}`);
+                query.push(`taskHub=${encodeURIComponent(taskHubName)}`);
             }
             if (connectionName) {
-                query.push(`connection=${connectionName}`);
+                query.push(`connection=${encodeURIComponent(connectionName)}`);
             }
 
             if (query.length > 0) {
@@ -390,8 +398,8 @@ export class DurableClient implements types.DurableClient {
         } else {
             // Legacy app frontend path
             requestUrl = this.clientData.managementUrls.rewindPostUri
-                .replace(idPlaceholder, instanceId)
-                .replace(this.reasonPlaceholder, reason);
+                .replace(idPlaceholder, () => encodedInstanceId)
+                .replace(this.reasonPlaceholder, () => encodedReason);
         }
 
         const response = await this.axiosInstance.post(requestUrl);
@@ -490,13 +498,20 @@ export class DurableClient implements types.DurableClient {
             throw new Error("orchestratorFunctionName must be a valid string.");
         }
 
+        const encodedFunctionName = WebhookUtils.encodePathSegment(
+            orchestratorFunctionName,
+            "orchestratorFunctionName"
+        );
         // TODO: Add support for specifying a task hub and a connection name
         let requestUrl: string;
-        const instanceIdPath: string = options?.instanceId ? `/${options.instanceId}` : "";
+        const instanceIdPath =
+            options?.instanceId === undefined || options.instanceId === ""
+                ? ""
+                : `/${WebhookUtils.encodePathSegment(options.instanceId, "instanceId")}`;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             const urlObj = new URL(
-                `orchestrators/${orchestratorFunctionName}${instanceIdPath}`,
+                `orchestrators/${encodedFunctionName}${instanceIdPath}`,
                 this.clientData.rpcBaseUrl
             );
             if (options?.version) {
@@ -507,8 +522,8 @@ export class DurableClient implements types.DurableClient {
             // Legacy app frontend path
             requestUrl = this.clientData.creationUrls.createNewInstancePostUri;
             requestUrl = requestUrl
-                .replace(this.functionNamePlaceholder, orchestratorFunctionName)
-                .replace(this.instanceIdPlaceholder, instanceIdPath);
+                .replace(this.functionNamePlaceholder, () => encodedFunctionName)
+                .replace(this.instanceIdPlaceholder, () => instanceIdPath);
             if (options?.version) {
                 const separator = requestUrl.includes("?") ? "&" : "?";
                 requestUrl = `${requestUrl}${separator}version=${encodeURIComponent(
@@ -534,9 +549,7 @@ export class DurableClient implements types.DurableClient {
         instanceId: string,
         restartWithNewInstanceIdOrOptions: boolean | RestartOptions = true
     ): Promise<string> {
-        if (!instanceId) {
-            throw new Error("instanceId must be a valid string.");
-        }
+        const encodedInstanceId = WebhookUtils.encodePathSegment(instanceId, "instanceId");
 
         const useOptions = typeof restartWithNewInstanceIdOrOptions !== "boolean";
         const requestedNewInstanceId = useOptions
@@ -544,6 +557,9 @@ export class DurableClient implements types.DurableClient {
             : undefined;
         if (useOptions && !requestedNewInstanceId) {
             throw new Error("newInstanceId must be a valid string.");
+        }
+        if (requestedNewInstanceId !== undefined) {
+            WebhookUtils.encodePathSegment(requestedNewInstanceId, "newInstanceId");
         }
 
         const restartPostUri = this.clientData.managementUrls.restartPostUri;
@@ -554,9 +570,8 @@ export class DurableClient implements types.DurableClient {
         }
 
         const idPlaceholder = this.clientData.managementUrls.id;
-        const encodedInstanceId = encodeURIComponent(instanceId);
         const managementRestartUrl = new URL(
-            restartPostUri.replace(idPlaceholder, encodedInstanceId)
+            restartPostUri.replace(idPlaceholder, () => encodedInstanceId)
         );
         let restartUrl: URL;
         if (this.clientData.rpcBaseUrl) {
@@ -622,18 +637,20 @@ export class DurableClient implements types.DurableClient {
 
     public async terminate(instanceId: string, reason: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
+        const encodedInstanceId = WebhookUtils.encodePathSegment(instanceId, "instanceId");
+        const encodedReason = encodeURIComponent(reason);
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             requestUrl = new URL(
-                `instances/${instanceId}/terminate?reason=${reason}`,
+                `instances/${encodedInstanceId}/terminate?reason=${encodedReason}`,
                 this.clientData.rpcBaseUrl
             ).href;
         } else {
             // Legacy app frontend path
             requestUrl = this.clientData.managementUrls.terminatePostUri
-                .replace(idPlaceholder, instanceId)
-                .replace(this.reasonPlaceholder, reason);
+                .replace(idPlaceholder, () => encodedInstanceId)
+                .replace(this.reasonPlaceholder, () => encodedReason);
         }
 
         const response = await this.axiosInstance.post(requestUrl);
@@ -650,18 +667,20 @@ export class DurableClient implements types.DurableClient {
 
     public async suspend(instanceId: string, reason: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
+        const encodedInstanceId = WebhookUtils.encodePathSegment(instanceId, "instanceId");
+        const encodedReason = encodeURIComponent(reason);
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             requestUrl = new URL(
-                `instances/${instanceId}/suspend?reason=${reason}`,
+                `instances/${encodedInstanceId}/suspend?reason=${encodedReason}`,
                 this.clientData.rpcBaseUrl
             ).href;
         } else {
             // Legacy app frontend path
             requestUrl = this.clientData.managementUrls.suspendPostUri
-                .replace(idPlaceholder, instanceId)
-                .replace(this.reasonPlaceholder, reason);
+                .replace(idPlaceholder, () => encodedInstanceId)
+                .replace(this.reasonPlaceholder, () => encodedReason);
         }
 
         const response = await this.axiosInstance.post(requestUrl);
@@ -678,18 +697,20 @@ export class DurableClient implements types.DurableClient {
 
     public async resume(instanceId: string, reason: string): Promise<void> {
         const idPlaceholder = this.clientData.managementUrls.id;
+        const encodedInstanceId = WebhookUtils.encodePathSegment(instanceId, "instanceId");
+        const encodedReason = encodeURIComponent(reason);
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
             requestUrl = new URL(
-                `instances/${instanceId}/resume?reason=${reason}`,
+                `instances/${encodedInstanceId}/resume?reason=${encodedReason}`,
                 this.clientData.rpcBaseUrl
             ).href;
         } else {
             // Legacy app frontend path
             requestUrl = this.clientData.managementUrls.resumePostUri
-                .replace(idPlaceholder, instanceId)
-                .replace(this.reasonPlaceholder, reason);
+                .replace(idPlaceholder, () => encodedInstanceId)
+                .replace(this.reasonPlaceholder, () => encodedReason);
         }
 
         const response = await this.axiosInstance.post(requestUrl);
@@ -783,6 +804,7 @@ export class DurableClient implements types.DurableClient {
         request: HttpRequest | undefined,
         instanceId: string
     ): HttpManagementPayload {
+        const encodedInstanceId = WebhookUtils.encodePathSegment(instanceId, "instanceId");
         const payload = { ...this.clientData.managementUrls };
 
         (Object.keys(payload) as Array<keyof HttpManagementPayload>).forEach((key) => {
@@ -795,12 +817,13 @@ export class DurableClient implements types.DurableClient {
                 payload[key] = payload[key].replace(dataUrl.origin, requestUrl.origin);
             }
 
-            const instanceIdReplacement =
-                key === "id" ? instanceId : encodeURIComponent(instanceId);
-            payload[key] = payload[key].replace(
-                this.clientData.managementUrls.id,
-                instanceIdReplacement
-            );
+            payload[key] =
+                key === "id"
+                    ? instanceId
+                    : payload[key].replace(
+                          this.clientData.managementUrls.id,
+                          () => encodedInstanceId
+                      );
         });
 
         return payload;
@@ -859,17 +882,20 @@ export class DurableClient implements types.DurableClient {
         continuationToken?: string,
         prevData?: unknown[]
     ): Promise<AxiosResponse> {
+        const encodedInstanceId =
+            "instanceId" in options
+                ? WebhookUtils.encodePathSegment(options.instanceId, "instanceId")
+                : "";
         let requestUrl: string;
         if (this.clientData.rpcBaseUrl) {
             // Fast local RPC path
-            let path = new URL(`instances/${options.instanceId || ""}`, this.clientData.rpcBaseUrl)
-                .href;
+            let path = new URL(`instances/${encodedInstanceId}`, this.clientData.rpcBaseUrl).href;
             const query: string[] = [];
             if (options.taskHubName) {
-                query.push(`taskHub=${options.taskHubName}`);
+                query.push(`taskHub=${encodeURIComponent(options.taskHubName)}`);
             }
             if (options.connectionName) {
-                query.push(`connection=${options.connectionName}`);
+                query.push(`connection=${encodeURIComponent(options.connectionName)}`);
             }
             if (options.showHistory) {
                 query.push(`showHistory=${options.showHistory}`);
@@ -903,18 +929,16 @@ export class DurableClient implements types.DurableClient {
             const template = this.clientData.managementUrls.statusQueryGetUri;
             const idPlaceholder = this.clientData.managementUrls.id;
 
-            requestUrl = template.replace(
-                idPlaceholder,
-                typeof options.instanceId === "string" ? options.instanceId : ""
-            );
-            if (options.taskHubName) {
-                requestUrl = requestUrl.replace(this.clientData.taskHubName, options.taskHubName);
-            }
-            if (options.connectionName) {
-                requestUrl = requestUrl.replace(
-                    /(connection=)([\w]+)/gi,
-                    "$1" + options.connectionName
-                );
+            requestUrl = template.replace(idPlaceholder, () => encodedInstanceId);
+            if (options.taskHubName || options.connectionName) {
+                const urlObj = new URL(requestUrl);
+                if (options.taskHubName) {
+                    urlObj.searchParams.set("taskHub", options.taskHubName);
+                }
+                if (options.connectionName) {
+                    urlObj.searchParams.set("connection", options.connectionName);
+                }
+                requestUrl = urlObj.href;
             }
             if (options.showHistory) {
                 requestUrl += `&${this.showHistoryQueryKey}=${options.showHistory}`;
