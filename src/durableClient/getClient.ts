@@ -61,7 +61,9 @@ function correctClientData(clientData: OrchestrationClientInputData): Orchestrat
     return returnValue;
 }
 
-function correctUrls(obj: { [key: string]: string }): { [key: string]: string } {
+function correctUrls(obj: {
+    [key: string]: string | Record<string, string>;
+}): { [key: string]: string | Record<string, string> } {
     const returnValue = cloneDeep(obj);
 
     const keys = Object.getOwnPropertyNames(obj);
@@ -69,6 +71,7 @@ function correctUrls(obj: { [key: string]: string }): { [key: string]: string } 
         const value = obj[key];
 
         if (
+            typeof value === "string" &&
             isURL(value, {
                 protocols: ["http", "https"],
                 require_tld: false,

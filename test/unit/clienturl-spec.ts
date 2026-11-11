@@ -210,13 +210,17 @@ describe("Client URL identifiers", () => {
                 )} and encodes its links`, () => {
                     const payload = createClient(rpc).createHttpManagementPayload(id);
                     expect(payload.id).to.equal(id);
-                    for (const key of Object.keys(payload).filter((key) => key !== "id")) {
-                        const link = new URL(payload[key]);
+                    expect(payload.requiredHeaders["x-functions-key"]).to.equal("base64string");
+                    for (const [key, value] of Object.entries(payload)) {
+                        if (key === "id" || typeof value !== "string") {
+                            continue;
+                        }
+                        const link = new URL(value);
                         expect(link.origin).to.equal(origin);
                         expect(link.pathname).to.contain(`/instances/${encodedId}`);
                         expect(link.searchParams.get("taskHub")).to.equal(taskHub);
                         expect(link.searchParams.get("connection")).to.equal(connection);
-                        expect(link.searchParams.get("code")).to.equal("base64string");
+                        expect(link.searchParams.has("code")).to.equal(false);
                     }
                 });
             }
@@ -283,7 +287,6 @@ describe("Client URL identifiers", () => {
                     .query({
                         taskHub: taskHubName,
                         connection: connectionName,
-                        ...(rpc ? {} : { code: "base64string" }),
                     })
                     .reply(202);
 
@@ -298,9 +301,7 @@ describe("Client URL identifiers", () => {
             for (const name of ["rewind", "terminate", "suspend", "resume"] as const) {
                 it(`${name} keeps reason text out of URL syntax`, async () => {
                     const reason = "why?taskHub=Other&connection=Other#fragment+$&";
-                    const query = rpc
-                        ? { reason }
-                        : { reason, taskHub, connection, code: "base64string" };
+                    const query = rpc ? { reason } : { reason, taskHub, connection };
                     const scope = nock(origin)
                         .post(`${basePath}/instances/normal/${name}`)
                         .query(query)

@@ -18,7 +18,9 @@ export class TestUtils {
             TestUtils.createHttpManagementPayload(id, host, taskHub, connection),
             // Returns baseURL with remaining whitespace trimmed.
             `${host}${TestConstants.webhookPath.replace(/\/$/, "")}`,
-            TestConstants.testCode
+            "",
+            undefined,
+            { "x-functions-key": "base64string" }
         );
     }
 
@@ -48,7 +50,8 @@ export class TestUtils {
             TestConstants.waitOnPostUriTemplate
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
-                .replace(TestConstants.connectionPlaceholder, connection)
+                .replace(TestConstants.connectionPlaceholder, connection),
+            { "x-functions-key": "base64string" }
         );
     }
 
@@ -94,7 +97,9 @@ export class TestUtils {
                 .replace(TestConstants.hostPlaceholder, host)
                 .replace(TestConstants.idPlaceholder, id)
                 .replace(TestConstants.taskHubPlaceholder, taskHub)
-                .replace(TestConstants.connectionPlaceholder, connection)
+                .replace(TestConstants.connectionPlaceholder, connection),
+            "",
+            { "x-functions-key": "base64string" }
         );
     }
 

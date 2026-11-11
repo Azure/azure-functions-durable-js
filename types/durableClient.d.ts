@@ -443,6 +443,11 @@ export declare class PurgeHistoryResult {
  */
 export declare class HttpManagementPayload {
     /**
+     * Headers callers must send when using the management URLs, including Location polling.
+     * Treat these values as secrets; do not log them or append them to URLs.
+     */
+    readonly requiredHeaders?: Readonly<Record<string, string>>;
+    /**
      * The ID of the orchestration instance.
      */
     readonly id: string;

@@ -79,6 +79,30 @@ export class DurableClient implements types.DurableClient {
         });
         this.taskHubName = this.clientData.taskHubName;
         this.uniqueWebhookOrigins = this.extractUniqueWebhookOrigins(this.clientData);
+        this.axiosInstance.interceptors.request.use((config) => {
+            if (!this.clientData.rpcBaseUrl && config.url) {
+                const requiredHeaders = this.getRequiredHttpHeaders();
+                config.url = WebhookUtils.removeSystemKey(config.url, requiredHeaders);
+                if (Object.keys(requiredHeaders).length > 0) {
+                    const origin = new URL(config.url).origin;
+                    if (
+                        !this.uniqueWebhookOrigins.includes(origin) &&
+                        (!this.clientData.baseUrl ||
+                            new URL(this.clientData.baseUrl).origin !== origin)
+                    ) {
+                        throw new Error(
+                            "Cannot send management authentication headers to an unknown webhook origin."
+                        );
+                    }
+                    for (const [name, value] of Object.entries(requiredHeaders)) {
+                        config.headers.set(name, value);
+                    }
+                    // Custom key headers must not follow redirects to another origin.
+                    config.maxRedirects = 0;
+                }
+            }
+            return config;
+        });
     }
 
     public createCheckStatusResponse(
@@ -97,6 +121,7 @@ export class DurableClient implements types.DurableClient {
                 "Content-Type": "application/json",
                 Location: httpManagementPayload.statusQueryGetUri,
                 "Retry-After": "10",
+                "Cache-Control": "no-store",
             },
         });
     }
@@ -341,7 +366,10 @@ export class DurableClient implements types.DurableClient {
             requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
         } else {
             // Legacy app frontend path
-            if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
+            if (
+                !this.clientData.baseUrl ||
+                this.clientData.requiredQueryStringParameters === undefined
+            ) {
                 throw new Error(
                     "Cannot use the readEntityState API with this version of the Durable Task Extension."
                 );
@@ -458,7 +486,10 @@ export class DurableClient implements types.DurableClient {
             requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
         } else {
             // Legacy app frontend path
-            if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
+            if (
+                !this.clientData.baseUrl ||
+                this.clientData.requiredQueryStringParameters === undefined
+            ) {
                 throw new Error(
                     "Cannot use the signalEntity API with this version of the Durable Task Extension."
                 );
@@ -806,27 +837,39 @@ export class DurableClient implements types.DurableClient {
     ): HttpManagementPayload {
         const encodedInstanceId = WebhookUtils.encodePathSegment(instanceId, "instanceId");
         const payload = { ...this.clientData.managementUrls };
+        const requiredHeaders = this.getRequiredHttpHeaders();
 
-        (Object.keys(payload) as Array<keyof HttpManagementPayload>).forEach((key) => {
-            if (
-                this.hasValidRequestUrl(request) &&
-                isURL(payload[key], this.urlValidationOptions)
-            ) {
+        for (const [key, value] of Object.entries(payload)) {
+            if (key === "id" || typeof value !== "string") {
+                continue;
+            }
+            let link = WebhookUtils.removeSystemKey(value, requiredHeaders);
+            if (this.hasValidRequestUrl(request) && isURL(link, this.urlValidationOptions)) {
                 const requestUrl = new url.URL((request as HttpRequest).url);
-                const dataUrl = new url.URL(payload[key]);
-                payload[key] = payload[key].replace(dataUrl.origin, requestUrl.origin);
+                const dataUrl = new url.URL(link);
+                link = link.replace(dataUrl.origin, requestUrl.origin);
             }
 
-            payload[key] =
-                key === "id"
-                    ? instanceId
-                    : payload[key].replace(
-                          this.clientData.managementUrls.id,
-                          () => encodedInstanceId
-                      );
-        });
+            payload[key] = link.replace(this.clientData.managementUrls.id, () => encodedInstanceId);
+        }
+        payload.id = instanceId;
+        payload.requiredHeaders = requiredHeaders;
 
         return payload;
+    }
+
+    private getRequiredHttpHeaders(): Record<string, string> {
+        const headers: Record<string, string> = {};
+        for (const source of [
+            this.clientData.creationUrls.requiredHeaders,
+            this.clientData.managementUrls.requiredHeaders,
+            this.clientData.requiredHeaders,
+        ]) {
+            for (const [name, value] of Object.entries(source ?? {})) {
+                headers[name.toLowerCase()] = value;
+            }
+        }
+        return headers;
     }
 
     private hasValidRequestUrl(request: HttpRequest | undefined): boolean {
@@ -848,14 +891,16 @@ export class DurableClient implements types.DurableClient {
         return uniqueOrigins;
     }
 
-    private extractWebhookOrigins(obj: { [key: string]: string }): string[] {
+    private extractWebhookOrigins(obj: {
+        [key: string]: string | Record<string, string>;
+    }): string[] {
         const origins: string[] = [];
 
         const keys = Object.getOwnPropertyNames(obj);
         keys.forEach((key) => {
             const value = obj[key];
 
-            if (isURL(value, this.urlValidationOptions)) {
+            if (typeof value === "string" && isURL(value, this.urlValidationOptions)) {
                 const valueAsUrl = new url.URL(value);
                 const origin = valueAsUrl.origin;
                 origins.push(origin);

@@ -920,7 +920,7 @@ describe("Orchestration Client", () => {
             );
 
             const expectedWebhookUrl = new url.URL(
-                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?${TestConstants.testCode}`
+                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}`
             );
 
             const scope = nock(expectedWebhookUrl.origin)
@@ -952,7 +952,7 @@ describe("Orchestration Client", () => {
             );
 
             const expectedWebhookUrl = new url.URL(
-                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?taskHub=${testTaskHub}&connection=${testConn}&${TestConstants.testCode}`
+                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?taskHub=${testTaskHub}&connection=${testConn}`
             );
 
             const scope = nock(expectedWebhookUrl.origin)
@@ -979,7 +979,7 @@ describe("Orchestration Client", () => {
             };
 
             const expectedWebhookUrl = new url.URL(
-                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?${TestConstants.testCode}`
+                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}`
             );
 
             const scope = nock(expectedWebhookUrl.origin)
@@ -1205,7 +1205,7 @@ describe("Orchestration Client", () => {
             const client = new DurableClient(defaultClientInputData);
 
             const expectedWebhookUrl = new url.URL(
-                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?op=${defaultEntityOp}&${TestConstants.testCode}`
+                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?op=${defaultEntityOp}`
             );
 
             const scope = nock(expectedWebhookUrl.origin)
@@ -1232,7 +1232,7 @@ describe("Orchestration Client", () => {
             const client = new DurableClient(defaultClientInputData);
 
             const expectedWebhookUrl = new url.URL(
-                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?op=${defaultEntityOp}&taskHub=${testTaskHub}&connection=${testConn}&${TestConstants.testCode}`
+                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?op=${defaultEntityOp}&taskHub=${testTaskHub}&connection=${testConn}`
             );
 
             const scope = nock(expectedWebhookUrl.origin)
@@ -1261,7 +1261,7 @@ describe("Orchestration Client", () => {
             const client = new DurableClient(defaultClientInputData);
 
             const expectedWebhookUrl = new url.URL(
-                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}?${TestConstants.testCode}`
+                `${defaultClientInputData.baseUrl}/entities/${defaultEntityName}/${defaultEntityKey}`
             );
 
             const scope = nock(expectedWebhookUrl.origin)

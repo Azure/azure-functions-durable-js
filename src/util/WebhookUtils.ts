@@ -1,5 +1,39 @@
 /** @hidden */
 export class WebhookUtils {
+    public static removeSystemKey(value: string, requiredHeaders: Record<string, string>): string {
+        const queryStart = value.indexOf("?");
+        const fragmentStart = value.indexOf("#");
+        if (queryStart < 0 || (fragmentStart >= 0 && fragmentStart < queryStart)) {
+            return value;
+        }
+
+        const queryEnd = fragmentStart < 0 ? value.length : fragmentStart;
+        const parameters = value
+            .slice(queryStart + 1, queryEnd)
+            .split("&")
+            .filter((parameter) => {
+                if (!parameter) {
+                    return false;
+                }
+
+                for (const [name, key] of new URLSearchParams(parameter)) {
+                    if (name.toLowerCase() === "code") {
+                        if (
+                            parameter.includes("=") &&
+                            requiredHeaders["x-functions-key"] === undefined
+                        ) {
+                            requiredHeaders["x-functions-key"] = key;
+                        }
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+        const query = parameters.length > 0 ? `?${parameters.join("&")}` : "";
+        return value.slice(0, queryStart) + query + value.slice(queryEnd);
+    }
+
     public static encodePathSegment(value: unknown, parameterName: string): string {
         if (typeof value !== "string" || value.length === 0) {
             throw new Error(`${parameterName} must be a valid string.`);

@@ -25,6 +25,7 @@ export class OrchestrationClientInputData {
         public managementUrls: HttpManagementPayload,
         public baseUrl?: string,
         public requiredQueryStringParameters?: string,
-        public rpcBaseUrl?: string
+        public rpcBaseUrl?: string,
+        public requiredHeaders?: Record<string, string>
     ) {}
 }
