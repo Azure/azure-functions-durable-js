@@ -440,13 +440,11 @@ export declare class PurgeHistoryResult {
 
 /**
  * Data structure containing instance management HTTP endpoints.
+ * The Functions host controls whether URLs include a system key. When
+ * `httpSettings.excludeManagementKeyFromUrls` is enabled, callers must obtain
+ * a key separately and send it in the `x-functions-key` request header.
  */
 export declare class HttpManagementPayload {
-    /**
-     * Headers callers must send when using the management URLs, including Location polling.
-     * Treat these values as secrets; do not log them or append them to URLs.
-     */
-    readonly requiredHeaders?: Readonly<Record<string, string>>;
     /**
      * The ID of the orchestration instance.
      */

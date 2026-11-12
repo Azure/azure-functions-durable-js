@@ -15,7 +15,7 @@ export class TestConstants {
     public static readonly reasonPlaceholder: string = "{text}";
     public static readonly timeoutPlaceholder: string = "{timeoutInSeconds}";
 
-    public static readonly uriSuffix: string = `taskHub=${TestConstants.taskHubPlaceholder}&connection=${TestConstants.connectionPlaceholder}`; // tslint:disable-line max-line-length
+    public static readonly uriSuffix: string = `taskHub=${TestConstants.taskHubPlaceholder}&connection=${TestConstants.connectionPlaceholder}&${TestConstants.testCode}`; // tslint:disable-line max-line-length
     public static readonly webhookPath: string = "/runtime/webhooks/durabletask/";
 
     public static readonly statusQueryGetUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}instances/${TestConstants.idPlaceholder}?${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length
@@ -26,8 +26,8 @@ export class TestConstants {
     public static readonly suspendPostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}instances/${TestConstants.idPlaceholder}/suspend?reason=${TestConstants.reasonPlaceholder}&${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length
     public static readonly resumePostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}instances/${TestConstants.idPlaceholder}/resume?reason=${TestConstants.reasonPlaceholder}&${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length
 
-    public static readonly createPostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}orchestrators/${TestConstants.functionPlaceholder}${TestConstants.idPlaceholder}`; // tslint:disable-line max-line-length
-    public static readonly waitOnPostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}orchestrators/${TestConstants.functionPlaceholder}${TestConstants.idPlaceholder}?timeout=${TestConstants.timeoutPlaceholder}&pollingInterval=${TestConstants.intervalPlaceholder}`; // tslint:disable-line max-line-length
+    public static readonly createPostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}orchestrators/${TestConstants.functionPlaceholder}${TestConstants.idPlaceholder}?${TestConstants.testCode}`; // tslint:disable-line max-line-length
+    public static readonly waitOnPostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}orchestrators/${TestConstants.functionPlaceholder}${TestConstants.idPlaceholder}?timeout=${TestConstants.timeoutPlaceholder}&pollingInterval=${TestConstants.intervalPlaceholder}&${TestConstants.testCode}`; // tslint:disable-line max-line-length
 
     public static readonly entityGetUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}entities/${TestConstants.entityNamePlaceholder}/${TestConstants.entityKeyPlaceholder}&${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length
     public static readonly entityPostUriTemplate: string = `${TestConstants.hostPlaceholder}${TestConstants.webhookPath}entities/${TestConstants.entityNamePlaceholder}/${TestConstants.entityKeyPlaceholder}&op=${TestConstants.operationPlaceholder}&${TestConstants.uriSuffix}`; // tslint:disable-line max-line-length

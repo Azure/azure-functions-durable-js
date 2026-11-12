@@ -2,7 +2,7 @@ import * as types from "durable-functions";
 
 export class HttpManagementPayload implements types.HttpManagementPayload {
     /** @hidden */
-    [key: string]: string | Record<string, string>;
+    [key: string]: string;
 
     /** @hidden */
     constructor(
@@ -14,7 +14,6 @@ export class HttpManagementPayload implements types.HttpManagementPayload {
         public readonly purgeHistoryDeleteUri: string,
         public readonly suspendPostUri: string,
         public readonly resumePostUri: string,
-        public readonly restartPostUri: string = "",
-        public readonly requiredHeaders: Record<string, string> = {}
+        public readonly restartPostUri: string = ""
     ) {}
 }

@@ -79,30 +79,6 @@ export class DurableClient implements types.DurableClient {
         });
         this.taskHubName = this.clientData.taskHubName;
         this.uniqueWebhookOrigins = this.extractUniqueWebhookOrigins(this.clientData);
-        this.axiosInstance.interceptors.request.use((config) => {
-            if (!this.clientData.rpcBaseUrl && config.url) {
-                const requiredHeaders = this.getRequiredHttpHeaders();
-                config.url = WebhookUtils.removeSystemKey(config.url, requiredHeaders);
-                if (Object.keys(requiredHeaders).length > 0) {
-                    const origin = new URL(config.url).origin;
-                    if (
-                        !this.uniqueWebhookOrigins.includes(origin) &&
-                        (!this.clientData.baseUrl ||
-                            new URL(this.clientData.baseUrl).origin !== origin)
-                    ) {
-                        throw new Error(
-                            "Cannot send management authentication headers to an unknown webhook origin."
-                        );
-                    }
-                    for (const [name, value] of Object.entries(requiredHeaders)) {
-                        config.headers.set(name, value);
-                    }
-                    // Custom key headers must not follow redirects to another origin.
-                    config.maxRedirects = 0;
-                }
-            }
-            return config;
-        });
     }
 
     public createCheckStatusResponse(
@@ -121,7 +97,6 @@ export class DurableClient implements types.DurableClient {
                 "Content-Type": "application/json",
                 Location: httpManagementPayload.statusQueryGetUri,
                 "Retry-After": "10",
-                "Cache-Control": "no-store",
             },
         });
     }
@@ -252,7 +227,10 @@ export class DurableClient implements types.DurableClient {
             }
 
             if (createdTimeFrom) {
-                requestUrl += `&${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`;
+                const separator = requestUrl.includes("?") ? "&" : "?";
+                requestUrl += `${separator}${
+                    this.createdTimeFromQueryKey
+                }=${createdTimeFrom.toISOString()}`;
             }
 
             if (createdTimeTo) {
@@ -837,39 +815,27 @@ export class DurableClient implements types.DurableClient {
     ): HttpManagementPayload {
         const encodedInstanceId = WebhookUtils.encodePathSegment(instanceId, "instanceId");
         const payload = { ...this.clientData.managementUrls };
-        const requiredHeaders = this.getRequiredHttpHeaders();
 
-        for (const [key, value] of Object.entries(payload)) {
-            if (key === "id" || typeof value !== "string") {
-                continue;
-            }
-            let link = WebhookUtils.removeSystemKey(value, requiredHeaders);
-            if (this.hasValidRequestUrl(request) && isURL(link, this.urlValidationOptions)) {
+        (Object.keys(payload) as Array<keyof HttpManagementPayload>).forEach((key) => {
+            if (
+                this.hasValidRequestUrl(request) &&
+                isURL(payload[key], this.urlValidationOptions)
+            ) {
                 const requestUrl = new url.URL((request as HttpRequest).url);
-                const dataUrl = new url.URL(link);
-                link = link.replace(dataUrl.origin, requestUrl.origin);
+                const dataUrl = new url.URL(payload[key]);
+                payload[key] = payload[key].replace(dataUrl.origin, requestUrl.origin);
             }
 
-            payload[key] = link.replace(this.clientData.managementUrls.id, () => encodedInstanceId);
-        }
-        payload.id = instanceId;
-        payload.requiredHeaders = requiredHeaders;
+            payload[key] =
+                key === "id"
+                    ? instanceId
+                    : payload[key].replace(
+                          this.clientData.managementUrls.id,
+                          () => encodedInstanceId
+                      );
+        });
 
         return payload;
-    }
-
-    private getRequiredHttpHeaders(): Record<string, string> {
-        const headers: Record<string, string> = {};
-        for (const source of [
-            this.clientData.creationUrls.requiredHeaders,
-            this.clientData.managementUrls.requiredHeaders,
-            this.clientData.requiredHeaders,
-        ]) {
-            for (const [name, value] of Object.entries(source ?? {})) {
-                headers[name.toLowerCase()] = value;
-            }
-        }
-        return headers;
     }
 
     private hasValidRequestUrl(request: HttpRequest | undefined): boolean {
@@ -891,16 +857,14 @@ export class DurableClient implements types.DurableClient {
         return uniqueOrigins;
     }
 
-    private extractWebhookOrigins(obj: {
-        [key: string]: string | Record<string, string>;
-    }): string[] {
+    private extractWebhookOrigins(obj: { [key: string]: string }): string[] {
         const origins: string[] = [];
 
         const keys = Object.getOwnPropertyNames(obj);
         keys.forEach((key) => {
             const value = obj[key];
 
-            if (typeof value === "string" && isURL(value, this.urlValidationOptions)) {
+            if (isURL(value, this.urlValidationOptions)) {
                 const valueAsUrl = new url.URL(value);
                 const origin = valueAsUrl.origin;
                 origins.push(origin);
@@ -985,21 +949,20 @@ export class DurableClient implements types.DurableClient {
                 }
                 requestUrl = urlObj.href;
             }
+            const query: string[] = [];
             if (options.showHistory) {
-                requestUrl += `&${this.showHistoryQueryKey}=${options.showHistory}`;
+                query.push(`${this.showHistoryQueryKey}=${options.showHistory}`);
             }
             if (options.showHistoryOutput) {
-                requestUrl += `&${this.showHistoryOutputQueryKey}=${options.showHistoryOutput}`;
+                query.push(`${this.showHistoryOutputQueryKey}=${options.showHistoryOutput}`);
             }
             if (options.createdTimeFrom) {
-                requestUrl += `&${
-                    this.createdTimeFromQueryKey
-                }=${options.createdTimeFrom.toISOString()}`;
+                query.push(
+                    `${this.createdTimeFromQueryKey}=${options.createdTimeFrom.toISOString()}`
+                );
             }
             if (options.createdTimeTo) {
-                requestUrl += `&${
-                    this.createdTimeToQueryKey
-                }=${options.createdTimeTo.toISOString()}`;
+                query.push(`${this.createdTimeToQueryKey}=${options.createdTimeTo.toISOString()}`);
             }
             if (options.runtimeStatus && options.runtimeStatus.length > 0) {
                 const statusesString = options.runtimeStatus
@@ -1008,10 +971,14 @@ export class DurableClient implements types.DurableClient {
                         return acc + (i > 0 ? "," : "") + curr;
                     });
 
-                requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+                query.push(`${this.runtimeStatusQueryKey}=${statusesString}`);
             }
             if (typeof options.showInput === "boolean") {
-                requestUrl += `&${this.showInputQueryKey}=${options.showInput}`;
+                query.push(`${this.showInputQueryKey}=${options.showInput}`);
+            }
+            if (query.length > 0) {
+                const separator = requestUrl.includes("?") ? "&" : "?";
+                requestUrl += separator + query.join("&");
             }
         }
 
