@@ -443,6 +443,11 @@ export declare class PurgeHistoryResult {
  * The Functions host controls whether URLs include a system key. When
  * `httpSettings.excludeManagementKeyFromUrls` is enabled, callers must obtain
  * a key separately and send it in the `x-functions-key` request header.
+ * This applies to HTTP callers using these URLs; the SDK does not inject this header.
+ * Keep the host's local RPC endpoint enabled for SDK management operations against
+ * an authenticated host with key-free URLs. Without local RPC, the SDK's public-HTTP
+ * fallback cannot authenticate those requests unless the endpoint permits anonymous
+ * access. Use an HTTP client with an explicitly supplied key for that combination.
  */
 export declare class HttpManagementPayload {
     /**

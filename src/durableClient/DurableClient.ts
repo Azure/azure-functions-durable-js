@@ -226,15 +226,10 @@ export class DurableClient implements types.DurableClient {
                 throw new Error("createdTimeFrom must be a valid Date");
             }
 
-            if (createdTimeFrom) {
-                const separator = requestUrl.includes("?") ? "&" : "?";
-                requestUrl += `${separator}${
-                    this.createdTimeFromQueryKey
-                }=${createdTimeFrom.toISOString()}`;
-            }
+            const query = [`${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`];
 
             if (createdTimeTo) {
-                requestUrl += `&${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`;
+                query.push(`${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`);
             }
 
             if (runtimeStatus && runtimeStatus.length > 0) {
@@ -244,8 +239,11 @@ export class DurableClient implements types.DurableClient {
                         return acc + (i > 0 ? "," : "") + curr;
                     });
 
-                requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+                query.push(`${this.runtimeStatusQueryKey}=${statusesString}`);
             }
+
+            const separator = requestUrl.includes("?") ? "&" : "?";
+            requestUrl += separator + query.join("&");
         }
 
         const response = await this.axiosInstance.delete(requestUrl);
@@ -346,7 +344,7 @@ export class DurableClient implements types.DurableClient {
             // Legacy app frontend path
             if (
                 !this.clientData.baseUrl ||
-                this.clientData.requiredQueryStringParameters === undefined
+                typeof this.clientData.requiredQueryStringParameters !== "string"
             ) {
                 throw new Error(
                     "Cannot use the readEntityState API with this version of the Durable Task Extension."
@@ -466,7 +464,7 @@ export class DurableClient implements types.DurableClient {
             // Legacy app frontend path
             if (
                 !this.clientData.baseUrl ||
-                this.clientData.requiredQueryStringParameters === undefined
+                typeof this.clientData.requiredQueryStringParameters !== "string"
             ) {
                 throw new Error(
                     "Cannot use the signalEntity API with this version of the Durable Task Extension."

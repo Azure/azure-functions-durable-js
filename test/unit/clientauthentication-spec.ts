@@ -5,6 +5,7 @@ import nock = require("nock");
 import { DurableClient } from "../../src/durableClient/DurableClient";
 import { OrchestrationClientInputData } from "../../src/durableClient/OrchestrationClientInputData";
 import { EntityId } from "../../src/entities/EntityId";
+import { OrchestrationRuntimeStatus } from "../../src/orchestrations/OrchestrationRuntimeStatus";
 import { TestUtils } from "../testobjects/testutils";
 
 chai.use(chaiAsPromised);
@@ -127,9 +128,20 @@ const operations: Operation[] = [
         path: "/instances/",
         status: 200,
         body: { instancesDeleted: 1 },
-        query: { createdTimeFrom: "2026-01-01T00:00:00.000Z" },
+        query: {
+            createdTimeFrom: "2026-01-01T00:00:00.000Z",
+            createdTimeTo: "2026-01-02T00:00:00.000Z",
+            runtimeStatus: "Completed,Failed",
+        },
         invoke: (client) =>
-            client.purgeInstanceHistoryBy({ createdTimeFrom: new Date("2026-01-01T00:00:00Z") }),
+            client.purgeInstanceHistoryBy({
+                createdTimeFrom: new Date("2026-01-01T00:00:00Z"),
+                createdTimeTo: new Date("2026-01-02T00:00:00Z"),
+                runtimeStatus: [
+                    OrchestrationRuntimeStatus.Completed,
+                    OrchestrationRuntimeStatus.Failed,
+                ],
+            }),
     },
     {
         name: "raiseEvent",
@@ -271,6 +283,23 @@ describe("Client HTTP management compatibility", () => {
                 await operation.invoke(client);
 
                 expect(scope.isDone()).to.equal(true);
+            });
+        }
+    }
+
+    for (const query of [undefined, null, 123, true, {}]) {
+        for (const operation of operations.filter(
+            (operation) => operation.name === "readEntityState" || operation.name === "signalEntity"
+        )) {
+            it(`${operation.name} rejects a non-string binding query: ${JSON.stringify(
+                query
+            )}`, async () => {
+                const data = binding(false, "");
+                Object.defineProperty(data, "requiredQueryStringParameters", { value: query });
+
+                await expect(operation.invoke(new DurableClient(data))).to.be.rejectedWith(
+                    `Cannot use the ${operation.name} API with this version of the Durable Task Extension.`
+                );
             });
         }
     }
