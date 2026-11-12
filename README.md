@@ -111,6 +111,41 @@ const restartedInstanceId = await client.restart("source-instance", {
 });
 ```
 
+### Activity retry information
+
+Activities registered with `df.app.activity` can read durable retry information from the existing invocation context:
+
+```typescript
+import * as df from "durable-functions";
+import type { ActivityHandler } from "durable-functions";
+
+const processOrder: ActivityHandler = async (order, context) => {
+    const retry = context.activityRetryContext;
+    context.log("Processing order", {
+        attemptNumber: retry?.attemptNumber,
+        maxAttempts: retry?.maxAttempts,
+        retryGroupId: retry?.retryGroupId,
+    });
+};
+
+df.app.activity("processOrder", { handler: processOrder });
+df.app.orchestration("orderWorkflow", function* (context) {
+    return yield context.df.callActivityWithRetry(
+        "processOrder",
+        new df.RetryOptions(5000, 3),
+        context.df.getInput()
+    );
+});
+```
+
+`DurableActivityContext` extends the Functions `InvocationContext`; its optional, read-only `activityRetryContext` has type `DurableActivityRetryContext`. Existing JavaScript handlers and TypeScript handlers accepting `InvocationContext` remain compatible. Functions host-managed `context.retryContext` is unchanged and independent.
+
+The attempt number is one-based and available from attempt 1 when the scheduling host supplies durable retry metadata. `maxAttempts` includes the initial attempt; timeouts or non-retriable failures can stop the policy earlier. `retryGroupId` is stable across attempts and replay of one logical activity call. It is a correlation identifier, **not an idempotency key**. Redelivery or a worker restart does not increment the scheduled attempt.
+
+This requires supporting versions of the JavaScript SDK, Functions extension, and backend. Calls without a durable retry policy, older components, and old history may omit the metadata; the SDK leaves the property absent rather than inferring attempt 1. Invalid supplied metadata causes an explicit contract error before the activity handler runs. The extension sends `durableActivityRetryMetadata` as a JSON string containing `AttemptNumber`, `MaxAttempts`, and `RetryGroupId`. The Functions Node.js library parses this string and camel-cases the fields before exposing trigger metadata on the invocation context; the SDK validates that runtime object (or the original wire string when supplied directly). It does not calculate new retry counters or emit duplicate retry telemetry.
+
+Scheduled activity history preserves optional `RetryMetadata`. Completion and failure events still match their scheduled attempts by task ID. This does not add a history API or sub-orchestration retry metadata.
+
 ## Samples
 
 The [Durable Functions samples](https://docs.microsoft.com/azure/azure-functions/durable-functions-install) demonstrate several common use cases. They are located in the samples directories ([JavaScript](./samples-js/)/[TypeScript](./samples-ts/)). Descriptive documentation is also available:

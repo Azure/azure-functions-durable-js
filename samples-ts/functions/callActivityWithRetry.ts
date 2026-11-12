@@ -1,7 +1,7 @@
-import { InvocationContext } from "@azure/functions";
 import * as df from "durable-functions";
 import {
     ActivityHandler,
+    DurableActivityContext,
     OrchestrationContext,
     OrchestrationHandler,
     RetryOptions,
@@ -21,7 +21,12 @@ const callActivityWithRetry: OrchestrationHandler = function* (context: Orchestr
 };
 df.app.orchestration("callActivityWithRetry", callActivityWithRetry);
 
-const flakyFunction: ActivityHandler = function (_input: any, context: InvocationContext): void {
+const flakyFunction: ActivityHandler = function (
+    _input: any,
+    context: DurableActivityContext
+): void {
+    const retry = context.activityRetryContext;
+    context.log("Durable retry information", retry);
     context.log("Flaky Function Flaking!");
     throw new Error("FlakyFunction flaked");
 };

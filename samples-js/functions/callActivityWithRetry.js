@@ -15,6 +15,8 @@ df.app.orchestration("callActivityWithRetry", function* (context) {
 
 df.app.activity("flakyFunction", {
     handler: function (_input, context) {
+        const retry = context.activityRetryContext;
+        context.log("Durable retry information", retry);
         context.log("Flaky Function Flaking!");
         throw Error("FlakyFunction flaked");
     },

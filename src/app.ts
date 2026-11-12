@@ -18,6 +18,7 @@ import {
     buildTaskFailureDetailsJson,
     setRegisteredExceptionPropertiesProvider,
 } from "./error/ExceptionPropertiesProvider";
+import { setActivityRetryContext } from "./util/activityRetryContext";
 
 export function orchestration(
     functionName: string,
@@ -77,6 +78,8 @@ export function setExceptionPropertiesProvider(
 }
 
 /**
+ * Adds scheduled durable retry information to the existing invocation context,
+ * rejecting invalid metadata before invoking customer code.
  * Wraps a user-supplied activity handler so that thrown errors are reshaped
  * into a TaskFailureDetails JSON payload (with custom properties from the
  * registered {@link ExceptionPropertiesProvider}) before propagating to the
@@ -91,6 +94,7 @@ export function setExceptionPropertiesProvider(
  */
 export function wrapActivityHandler(handler: ActivityHandler): ActivityHandler {
     return async (triggerInput, context) => {
+        setActivityRetryContext(context);
         try {
             return await handler(triggerInput, context);
         } catch (err) {
