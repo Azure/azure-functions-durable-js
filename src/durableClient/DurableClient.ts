@@ -226,12 +226,10 @@ export class DurableClient implements types.DurableClient {
                 throw new Error("createdTimeFrom must be a valid Date");
             }
 
-            if (createdTimeFrom) {
-                requestUrl += `&${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`;
-            }
+            const query = [`${this.createdTimeFromQueryKey}=${createdTimeFrom.toISOString()}`];
 
             if (createdTimeTo) {
-                requestUrl += `&${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`;
+                query.push(`${this.createdTimeToQueryKey}=${createdTimeTo.toISOString()}`);
             }
 
             if (runtimeStatus && runtimeStatus.length > 0) {
@@ -241,8 +239,11 @@ export class DurableClient implements types.DurableClient {
                         return acc + (i > 0 ? "," : "") + curr;
                     });
 
-                requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+                query.push(`${this.runtimeStatusQueryKey}=${statusesString}`);
             }
+
+            const separator = requestUrl.includes("?") ? "&" : "?";
+            requestUrl += separator + query.join("&");
         }
 
         const response = await this.axiosInstance.delete(requestUrl);
@@ -341,7 +342,10 @@ export class DurableClient implements types.DurableClient {
             requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
         } else {
             // Legacy app frontend path
-            if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
+            if (
+                !this.clientData.baseUrl ||
+                typeof this.clientData.requiredQueryStringParameters !== "string"
+            ) {
                 throw new Error(
                     "Cannot use the readEntityState API with this version of the Durable Task Extension."
                 );
@@ -458,7 +462,10 @@ export class DurableClient implements types.DurableClient {
             requestUrl = new URL(path, this.clientData.rpcBaseUrl).href;
         } else {
             // Legacy app frontend path
-            if (!(this.clientData.baseUrl && this.clientData.requiredQueryStringParameters)) {
+            if (
+                !this.clientData.baseUrl ||
+                typeof this.clientData.requiredQueryStringParameters !== "string"
+            ) {
                 throw new Error(
                     "Cannot use the signalEntity API with this version of the Durable Task Extension."
                 );
@@ -940,21 +947,20 @@ export class DurableClient implements types.DurableClient {
                 }
                 requestUrl = urlObj.href;
             }
+            const query: string[] = [];
             if (options.showHistory) {
-                requestUrl += `&${this.showHistoryQueryKey}=${options.showHistory}`;
+                query.push(`${this.showHistoryQueryKey}=${options.showHistory}`);
             }
             if (options.showHistoryOutput) {
-                requestUrl += `&${this.showHistoryOutputQueryKey}=${options.showHistoryOutput}`;
+                query.push(`${this.showHistoryOutputQueryKey}=${options.showHistoryOutput}`);
             }
             if (options.createdTimeFrom) {
-                requestUrl += `&${
-                    this.createdTimeFromQueryKey
-                }=${options.createdTimeFrom.toISOString()}`;
+                query.push(
+                    `${this.createdTimeFromQueryKey}=${options.createdTimeFrom.toISOString()}`
+                );
             }
             if (options.createdTimeTo) {
-                requestUrl += `&${
-                    this.createdTimeToQueryKey
-                }=${options.createdTimeTo.toISOString()}`;
+                query.push(`${this.createdTimeToQueryKey}=${options.createdTimeTo.toISOString()}`);
             }
             if (options.runtimeStatus && options.runtimeStatus.length > 0) {
                 const statusesString = options.runtimeStatus
@@ -963,10 +969,14 @@ export class DurableClient implements types.DurableClient {
                         return acc + (i > 0 ? "," : "") + curr;
                     });
 
-                requestUrl += `&${this.runtimeStatusQueryKey}=${statusesString}`;
+                query.push(`${this.runtimeStatusQueryKey}=${statusesString}`);
             }
             if (typeof options.showInput === "boolean") {
-                requestUrl += `&${this.showInputQueryKey}=${options.showInput}`;
+                query.push(`${this.showInputQueryKey}=${options.showInput}`);
+            }
+            if (query.length > 0) {
+                const separator = requestUrl.includes("?") ? "&" : "?";
+                requestUrl += separator + query.join("&");
             }
         }
 

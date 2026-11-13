@@ -110,6 +110,11 @@ describe("getClient()", () => {
 
             const expectedUniqueWebhookOrigins: string[] = [Constants.DefaultLocalOrigin];
             expect(client.uniqueWebhookOrigins).to.deep.equal(expectedUniqueWebhookOrigins);
+            expect(
+                new URL(
+                    client.createHttpManagementPayload("instance").statusQueryGetUri
+                ).searchParams.get("code")
+            ).to.equal("base64string");
         });
 
         it("corrects API endpoints if WEBSITE_HOSTNAME environment variable is 0.0.0.0", async () => {
