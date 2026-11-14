@@ -1,4 +1,4 @@
-import { app as AzFuncApp, FunctionInput } from "@azure/functions";
+import { app as AzFuncApp, FunctionInput, InvocationContext } from "@azure/functions";
 import { expect } from "chai";
 import sinon = require("sinon");
 import { app, input, trigger } from "../../src";
@@ -92,6 +92,36 @@ describe("APIs to register functions", () => {
             });
 
             expect(appStub.args[0][1].extraInputs).to.deep.equal([extraInput]);
+        });
+
+        it("decorates the original context before invoking a registered activity", async () => {
+            const context = new InvocationContext({
+                triggerMetadata: {
+                    durableActivityRetryMetadata: JSON.stringify({
+                        AttemptNumber: 2,
+                        MaxAttempts: 3,
+                        RetryGroupId: "registered-group",
+                    }),
+                },
+            });
+            const input = { orderId: 7 };
+            let invoked = false;
+            app.activity("retryActivity", {
+                handler: (receivedInput, receivedContext) => {
+                    invoked = true;
+                    expect(receivedInput).to.equal(input);
+                    expect(receivedContext).to.equal(context);
+                    expect(receivedContext.activityRetryContext).to.deep.equal({
+                        attemptNumber: 2,
+                        maxAttempts: 3,
+                        retryGroupId: "registered-group",
+                    });
+                    return "done";
+                },
+            });
+
+            expect(await appStub.args[0][1].handler(input, context)).to.equal("done");
+            expect(invoked).to.equal(true);
         });
     });
 
